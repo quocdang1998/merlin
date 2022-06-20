@@ -1,0 +1,18 @@
+PROJECT_NAME           = "merlin"
+OUTPUT_DIRECTORY       = "source/"
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_PRIV_VIRTUAL   = YES
+EXTRACT_STATIC         = YES
+HIDE_FRIEND_COMPOUNDS  = NO
+INPUT                  = ../inc ../src
+FILE_PATTERNS          = *.hpp *.cpp
+RECURSIVE              = YES
+EXCLUDE                =
+EXCLUDE_PATTERNS       =
+GENERATE_HTML          = NO
+GENERATE_LATEX         = NO
+GENERATE_XML           = YES
+XML_OUTPUT             = xml
+XML_PROGRAMLISTING     = YES
+

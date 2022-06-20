@@ -20,9 +20,6 @@ class GridND {
     /*! \brief Default destructor.*/
     virtual ~GridND(void);
 
-    
-    
-
   protected:
     /*! \brief Number of dimension of the grid.*/
     unsigned int ndim_;

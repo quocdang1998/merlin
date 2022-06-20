@@ -1,0 +1,261 @@
+/* ============================================================================
+ USER SETTINGS
+============================================================================ */
+
+/* import fonts */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap');
+
+/* custom colors */
+:root {
+    --hue:                        207;  /* main hue color */
+    --hls:                        calc(var(--hue) -  5);  /* less hue */
+    --hmn:                        calc(var(--hue) + 10);  /* moderate hue*/
+    --hpl:                        calc(var(--hue) + 15);  /* more hue*/
+    --hrv:                        calc(var(--hue) + 180);  /* reverse hue */
+
+    --background:                 hsl(var(--hue), 100%, 98%); /* background */
+
+    --link:                       hsl(var(--hue), 100%, 42%); /* link */
+    --visited-link:               hsl(var(--hue),  81%, 24%); /* visited link */
+    --highlighted:                hsl(var(--hue),  96%, 73%); /* hightlighted text */
+    --literal:                    hsl(var(--hue),  59%, 47%); /* literal text */
+
+    --nav-title:                  hsl(var(--hue), 100%, 50%);  /* nav title */
+    --nav-caption:                hsl(var(--hue),  97%, 61%);  /* nav caption */
+    --nav-background:             hsl(var(--hue),  24%, 23%);  /* navigation bar color */
+    --nav-l1:                     hsl(var(--hue),  79%, 95%);  /* link level 1 */
+    --nav-l1-active-background:   hsl(var(--hue),  63%, 84%);  /* background active l1 */
+    --nav-l1-hover-background:    hsl(var(--hue),  76%, 75%);  /* background hovered l1 */
+    --nav-l23-background:         hsl(var(--hpl), 100%, 94%);  /* sublink bakcground */
+
+    --itembox-background:         hsl(var(--hue),  79%, 95%);  /* item box background */
+    --itembox-topborder:          hsl(var(--hue), 100%, 42%);  /* item topborder */
+
+    --keyword:                    hsl(var(--hpl), 100%, 50%);  /* keyworks of code language */
+    --inherited:                  hsl(var(--hpl),  59%, 47%);  /* interrnal reference to other classes */
+    --type:                       hsl(var(--hmn),  53%, 55%);  /* type */
+
+    --admonition-background:      hsl(var(--hue),  30%, 95%);  /* admonition content background */
+    --note:                       hsl(var(--hls),  80%, 60%);  /* note title */
+    --warning:                    hsl(var(--hrv), 100%, 50%);  /* warning title */
+}
+
+/* ============================================================================
+ WHOLE DOCUMENT
+============================================================================ */
+
+/* default font */
+body {
+    margin:0;
+    font-family: 'Nunito', sans-serif;
+}
+
+/* body background */
+.wy-body-for-nav {
+    background: var(--background);
+}
+
+/* content body width */
+.wy-nav-content {
+    max-width: 800px !important;
+    min-height: 100vh;
+}
+
+/* link color */
+.wy-breadcrumbs a, .rst-content a, footer > a, a.headerlink {
+    color: var(--link);
+}
+.wy-breadcrumbs a, #currentpage-breadcrumbs, footer > a, a.headerlink {
+    font-weight: 700;
+}
+.wy-breadcrumbs a:visited, .rst-content a:visited, footer > a:visited, a.headerlink:visited {
+    color: var(--visited-link);
+}
+
+/* highlighted text */
+.rst-content .highlighted {
+    background: var(--highlighted);
+    box-shadow: var(--highlighted);
+}
+
+/* literal text */
+.rst-content code.literal, .rst-content tt.literal {
+    color: var(--literal);
+    white-space: normal;
+    font-family: 'Fira Code', monospace;
+    font-weight: 600;
+}
+
+/* ============================================================================
+ NAVIGATION BAR + SEARCH RESULTS
+============================================================================ */
+
+/* navigation search background */
+.wy-side-nav-search {
+    background-color: var(--nav-title);
+}
+
+/* toctree caption */
+.wy-menu-vertical header, .wy-menu-vertical p.caption {
+    color: var(--nav-caption);
+}
+
+/* toctree */
+.wy-nav-side{
+    background: var(--nav-background);
+}
+.wy-menu.wy-menu-vertical .caption-text {
+    color: var(--nav-title);
+}
+.wy-menu-vertical a {
+    color: var(--nav-l1);
+}
+.wy-menu-vertical a:hover {
+    font-weight: 700;
+    background-color: var(--nav-l1-hover-background);
+}
+.wy-menu-vertical li.current > a, .wy-menu-vertical li.on a {
+    font-weight: 700;
+    background: var(--nav-l1-active-background);
+}
+.wy-menu-vertical li.current > a:hover, .wy-menu-vertical li.on a:hover{
+    background: var(--nav-l1-hover-background);
+}
+
+.wy-menu-vertical li.toctree-l2.current > a, .wy-menu-vertical li.toctree-l2.current li.toctree-l3 > a{
+    background: var(--nav-l23-background);
+}
+
+/* search link */
+#search-results .search li a {
+    font-size: 100%;
+    color: var(--link);
+    font-weight: 700;
+}
+#search-results .search li a:visited {
+    color: var(--visited-link);
+}
+
+/* mobile nav top */
+.wy-nav-top {
+    background: var(--nav-title);
+}
+
+/* ============================================================================
+ DESCRIPTION PAGE
+============================================================================ */
+
+/* item description box */
+html.writer-html4 .rst-content dl:not(.docutils)>dt, html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) > dt {
+    background: var(--itembox-background);
+    border-top: 3px solid var(--itembox-topborder);
+}
+
+/* item description content */
+.sig.sig-object {
+    font-family: 'Fira Code', monospace;
+    font-size: 12px !important;
+    font-variant-ligatures: none;
+    color: #555 !important;
+}
+
+/* C++ DESCRIPTION */
+
+/* scope name + item name */
+.sig-prename.descclassname, .sig-name.descname {
+    font-family: 'Fira Code', monospace !important;
+}
+
+/* C++ keyword (class, enum, const, inline, etc) */
+.sig.sig-object.cpp .k {
+    color: var(--keyword);
+    font-style: normal !important;
+}
+
+/* C++ name and scope of other objects */
+.sig.sig-object.cpp > .p, .sig.sig-object.cpp > .n:not(.sig-param) {
+    color: #000 !important;
+}
+
+/* C++ build-in type */
+.sig.sig-object.cpp .kt {
+    color: var(--type);
+}
+
+/* Inherited childclass */
+.std.std-ref {
+    color: var(--literal);
+    font-family: 'Fira Code', monospace;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Python DESCRIPTION */
+
+/* item argument in description box */
+.sig.sig-object.py .n {
+    font-style: normal !important;
+}
+
+/* Python keywords (class, etc) */
+.sig.sig-object.py .property {
+    color: var(--keyword);
+    font-style: normal !important;
+}
+
+/* Python operator (':', '=', etc) */
+.sig.sig-object.py .p, .sig.sig-object.py .o {
+    font-style: normal !important;
+}
+
+/* type of each argument */
+.field-list.simple em {
+    font-style: normal !important;
+    font-family: 'Fira Code', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--type);
+}
+
+/* return type */
+.return p {
+    color: var(--type);
+    font-family: 'Fira Code', monospace;
+    font-size: 12px !important;
+    font-weight: 600;
+}
+
+/* attribute type */
+.attributetype p {
+    color: var(--type);
+    font-family: 'Fira Code', monospace;
+    font-size: 12px !important;
+    font-weight: 600;
+}
+
+/* ============================================================================
+ ADMONITION TAB
+============================================================================ */
+
+.rst-content .admonition {
+    background: var(--admonition-background);
+}
+
+/* Note */
+.rst-content .note .admonition-title {
+    background: var(--note);
+}
+
+/* Warning */
+.rst-content .warning .admonition-title {
+    background: var(--warning);
+}
+
+/* ============================================================================
+ READ THE DOCS
+============================================================================ */
+
+[data-ea-publisher].loaded, [data-ea-type].loaded {
+    display: none !important;
+}
