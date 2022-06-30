@@ -16,7 +16,7 @@ list(APPEND MERLIN_SRC
      src/array.cpp)
 
 # options
-set(LIBRARY "AUTO"  # -DLIBRARY="STATIC" or -DLIBRARY="SHARED"
+set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or -DMERLIN_LIBKIND="SHARED"
        CACHE STRING "Type of the created library (static or shared/dynamic)")
 option(MERLIN_TEST "Build test executables" OFF)  # -DMERLIN_TEST=ON
 
@@ -47,7 +47,7 @@ endif()
 # =============================================================================
 
 # library kind
-if(LIBRARY MATCHES "AUTO")  # auto mode: dynamic on Linux, static on Windows
+if(MERLIN_LIBKIND MATCHES "AUTO")  # auto mode: dynamic on Linux, static on Windows
     message(STATUS "Auto-decide the kind of library")
     if (UNIX)
         message(STATUS "On Linux, build dynamic library")
@@ -57,10 +57,10 @@ if(LIBRARY MATCHES "AUTO")  # auto mode: dynamic on Linux, static on Windows
         message(STATUS "On Windows, build static library")
         add_library(libmerlin STATIC ${MERLIN_SRC})
     endif (WIN32)
-elseif(LIBRARY MATCHES "STATIC")
+elseif(MERLIN_LIBKIND MATCHES "STATIC")
     message(STATUS "Force build static library")
     add_library(libmerlin STATIC ${MERLIN_SRC})
-elseif(LIBRARY MATCHES "SHARED" OR LIBRARY MATCHES "DYNAMIC")
+elseif(MERLIN_LIBKIND MATCHES "SHARED" OR MERLIN_LIBKIND MATCHES "DYNAMIC")
     message(STATUS "Force build dynamic library")
     add_library(libmerlin SHARED ${MERLIN_SRC})
 else()
