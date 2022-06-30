@@ -13,25 +13,47 @@ class Array {
     /** @brief Multi-dimensional array iterator.*/
     class iterator {
       public:
-        /** @brief Constructor from a vector of index.*/
-        iterator(const std::vector<unsigned int> & it) : it_(it) {};
+        /** @brief Constructor from a vector of index and a dimension vector.*/
+        iterator(const std::vector<unsigned int> & it,
+                 std::vector<unsigned int> & dims) : it_(it), dims_(&dims) {}
 
-        /** @brief Increment operator.
-            
+        /** @brief Get index of current iterator.*/
+        std::vector<unsigned int> & it(void) {return this->it_;}
+        /** @brief Get index of constant iterator.*/
+        const std::vector<unsigned int> & it(void) const {return this->it_;}
+        /** @brief Get reference to the dimension vector of the iterator.*/
+        std::vector<unsigned int> & dims(void) {return *(this->dims_);}
+
+        /** @brief Pre-increment operator.
+
             Increase the index of the last dimension by 1. If the maximum is
             reached, set the index to zero and increment the next dimension.
-            
-            Example: \f$(0, 0) \rightarrow (0, 1) \rightarrow (0, 2) \rightarrow
-            (1, 0) \rightarrow (1, 1) \rightarrow (1, 2)\f$.*/
-        void inc(const std::vector<unsigned int> & dims);
 
+            Example: \f$(0, 0) \rightarrow (0, 1) \rightarrow (0, 2)
+            \rightarrow (1, 0) \rightarrow (1, 1) \rightarrow (1, 2)\f$.*/
+        iterator& operator++(void);
+        /** @brief Post-increment operator.
+        
+            Same role as pre-increment operator.*/
+        iterator operator++(int);
+        /** @brief Compare if the first iterator is smaller the second one.
+
+            This operator is used to check if current iterator is the end
+            iterator of Array.*/
+        friend bool operator< (const Array::iterator & left, const Array::iterator & right);
+
+      private:
         /** @brief Index vector.*/
         std::vector<unsigned int> it_;
+        /** @brief Pointer to max diemension vector.*/
+        std::vector<unsigned int> * dims_;
     };
 
   public:
     /** @brief Create array from NumPy array.*/
-    Array(double * data, unsigned int ndim, unsigned int * dims, unsigned int * strides, bool copy = true);
+    Array(double * data, unsigned int ndim,
+          unsigned int * dims, unsigned int * strides,
+          bool copy = true);
     /** @brief Destructor.*/
     ~Array(void);
 

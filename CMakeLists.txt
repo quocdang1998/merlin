@@ -16,7 +16,7 @@ list(APPEND MERLIN_SRC
      src/array.cpp)
 
 # options
-set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or -DMERLIN_LIBKIND="SHARED"
+set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
        CACHE STRING "Type of the created library (static or shared/dynamic)")
 option(MERLIN_TEST "Build test executables" OFF)  # -DMERLIN_TEST=ON
 
@@ -47,7 +47,8 @@ endif()
 # =============================================================================
 
 # library kind
-if(MERLIN_LIBKIND MATCHES "AUTO")  # auto mode: dynamic on Linux, static on Windows
+if(MERLIN_LIBKIND MATCHES "AUTO")
+    # auto: dynamic on Linux, static on Windows
     message(STATUS "Auto-decide the kind of library")
     if (UNIX)
         message(STATUS "On Linux, build dynamic library")
@@ -58,9 +59,11 @@ if(MERLIN_LIBKIND MATCHES "AUTO")  # auto mode: dynamic on Linux, static on Wind
         add_library(libmerlin STATIC ${MERLIN_SRC})
     endif (WIN32)
 elseif(MERLIN_LIBKIND MATCHES "STATIC")
+    # build static lib
     message(STATUS "Force build static library")
     add_library(libmerlin STATIC ${MERLIN_SRC})
 elseif(MERLIN_LIBKIND MATCHES "SHARED" OR MERLIN_LIBKIND MATCHES "DYNAMIC")
+    # build dynamic lib
     message(STATUS "Force build dynamic library")
     add_library(libmerlin SHARED ${MERLIN_SRC})
 else()
@@ -84,5 +87,7 @@ if (MERLIN_TEST)
         string(REPLACE ".cpp" "" TESTNAME ${TESTFILENAME})
         add_executable(${TESTNAME} ${TESTFILE})
         target_link_libraries(${TESTNAME} libmerlin)
+        set_target_properties(${TESTNAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
+                              ${CMAKE_CURRENT_BINARY_DIR}/tests)
     endforeach(TESTFILE ${MERLIN_TESTFILES})
 endif (MERLIN_TEST)

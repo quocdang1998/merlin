@@ -1,2 +1,8 @@
 # C++ build dir
 build/
+
+# Doxygen generated files
+docs/source/html/
+docs/source/latex/
+docs/source/xml/
+

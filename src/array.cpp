@@ -11,7 +11,13 @@
 namespace merlin {
 
 bool operator< (const Array::iterator & left, const Array::iterator & right) {
-    unsigned int length = left.it_.size();
+    // check if 2 iterators comes from the same array
+    if (left.dims_ != right.dims_) {
+        throw(std::runtime_error("2 iterators are not comming from the same array."));
+    }
+
+    // compare index of each iterator
+    unsigned int length = left.it().size();
     for (int i = 0; i < length; i++) {
         if (left.it_[i] > right.it_[i]) {
             return false;
@@ -20,16 +26,22 @@ bool operator< (const Array::iterator & left, const Array::iterator & right) {
     return true;
 }
 
-void Array::iterator::inc(const std::vector<unsigned int> & dims) {
+Array::iterator& Array::iterator::operator++(void) {
     this->it_[this->it_.size()-1]++;
     unsigned int current_dim = this->it_.size()-1;
+    std::vector<unsigned int> & dims = this->dims();
     while (this->it_[current_dim] >= dims[current_dim]) {
         if (current_dim == 0) {
-            return;
+            return *this;
         }
         this->it_[current_dim] = 0;
         this->it_[--current_dim] += 1;
     }
+    return *this;
+}
+
+Array::iterator Array::iterator::operator++(int) {
+    return ++(*this);
 }
 
 Array::Array(double * data, unsigned int ndim, unsigned int * dims, unsigned int * strides, bool copy) {
@@ -45,20 +57,29 @@ Array::Array(double * data, unsigned int ndim, unsigned int * dims, unsigned int
         // allocate a new array
         this->data_ = new double [this->size()];
 
-        // reform the stride array
+        // detect if original array is fortran or c
+        for (int i = 0; i < ndim; i++) {
+            if (strides[i] == sizeof(double)) {
+                fastest_index = i;
+                break;
+            }
+        }
+
+        // reform the stride array (force into C shape)
+        
         this->strides_[ndim-1] = sizeof(double);
         for (int i = ndim-2; i >= 0; i--) {
             this->strides_[i] = this->strides_[i+1] * this->dims_[i+1];
         }
 
-        // copy data from old array to new array
-        for (Array::iterator it = this->begin(); it < this->end(); it.inc(this->dims_)) {
+        // copy data from old array to new array (to be optimized with memcpy!)
+        for (Array::iterator it = this->begin(); it < this->end(); ++it) {
             unsigned int leap = 0;
-            for (int i = 0; i < it.it_.size(); i++) {
-                leap += it.it_[i] * strides_[i];
+            for (int i = 0; i < it.it().size(); i++) {
+                leap += it.it()[i] * strides_[i];
             }
             uintptr_t data_ptr = (uintptr_t) data_ + leap;
-            this->operator[](it.it_) = *((double *) data_ptr);
+            this->operator[](it.it()) = *((double *) data_ptr);
         }
     } else {
         this->data_ = data;
@@ -81,7 +102,7 @@ unsigned int Array::size() {
 }
 
 Array::iterator Array::begin(void) {
-    return Array::iterator(std::vector<unsigned int>(this->ndim_, 0));
+    return Array::iterator(std::vector<unsigned int>(this->ndim_, 0), this->dims_);
 }
 
 Array::iterator Array::end(void) {
@@ -90,7 +111,7 @@ Array::iterator Array::end(void) {
     for (int i = 0; i < this->ndim_; i++) {
         end[i] -= 1;
     }
-    return Array::iterator(end);
+    return Array::iterator(end, this->dims_);
 }
 
 double & Array::operator[] (const std::vector<unsigned int> & index) {
