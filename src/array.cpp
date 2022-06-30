@@ -106,20 +106,3 @@ double & Array::operator[] (const std::vector<unsigned int> & index) {
 }
 
 }  // namespace merlin
-
-/*    test
-int main (void) {
-    double A[10] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
-    unsigned int ndim = 2;
-    unsigned int dims[2] = {5, 2};
-    unsigned int strides[2] = {16, 8};
-
-    merlin::Array Ar(A, ndim, dims, strides);
-    merlin::Array Ar(A, ndim, dims, strides, false);
-
-    std::vector<unsigned int> index = {0, 1};
-    Ar[index] = 2.5;
-    std::printf("Original: %f\n", A[1]);
-    std::printf("Array:    %f\n", Ar[index]);
-}
-*/
