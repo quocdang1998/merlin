@@ -9,7 +9,7 @@ namespace merlin {
 
     This class make the interface between C array and Numpy array.*/
 class Array {
-
+  public:
     /** @brief Multi-dimensional array iterator.*/
     class iterator {
       public:
@@ -23,6 +23,17 @@ class Array {
         const std::vector<unsigned int> & it(void) const {return this->it_;}
         /** @brief Get reference to the dimension vector of the iterator.*/
         std::vector<unsigned int> & dims(void) {return *(this->dims_);}
+
+        /** @brief Update the indexes after increasing value of index.
+
+            User can manually add a certain amount to the index vector, making
+            some indexes greater than their corresponding dimensions. This
+            function will detect the surplus quantity, and update the indices
+            by carrying the surplus to higher stride dimensions.
+            
+            Example: Given a dimension vector \f$(5, 2)\f$, the index vector
+            \f$(1, 5)\f$ will be updated to \f$(3, 1)\f$*/
+        void update(void);
 
         /** @brief Pre-increment operator.
 
@@ -40,7 +51,7 @@ class Array {
 
             This operator is used to check if current iterator is the end
             iterator of Array.*/
-        friend bool operator< (const Array::iterator & left, const Array::iterator & right);
+        friend bool operator!= (const Array::iterator & left, const Array::iterator & right);
 
       private:
         /** @brief Index vector.*/
@@ -49,7 +60,6 @@ class Array {
         std::vector<unsigned int> * dims_;
     };
 
-  public:
     /** @brief Create array from NumPy array.*/
     Array(double * data, unsigned int ndim,
           unsigned int * dims, unsigned int * strides,
@@ -83,6 +93,8 @@ class Array {
     std::vector<unsigned int> dims_;
     std::vector<unsigned int> strides_;
 
+    std::vector<unsigned int> begin_;
+    std::vector<unsigned int>  end_;
 };
 
 }  // namespace merlin

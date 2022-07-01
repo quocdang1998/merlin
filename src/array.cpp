@@ -1,7 +1,9 @@
 #include "merlin/array.hpp"
 
 #include <cstdint>
+#include <cstring>
 #include <cstdio>
+#include <cstdlib>
 #include <vector>
 #include <algorithm>
 #include <stdexcept>
@@ -10,7 +12,46 @@
 
 namespace merlin {
 
-bool operator< (const Array::iterator & left, const Array::iterator & right) {
+// for debug purpose only
+static void print_vec(const merlin::Array::iterator & it) {
+    const std::vector<unsigned int> & v = it.it();
+    for (const unsigned int & i : v) {
+        std::printf("%d ", i);
+    }
+    std::printf("\n");
+}
+
+void Array::iterator::update(void) {
+    // detect dimensions having index bigger than dim
+    unsigned int current_dim = this->it_.size();
+    std::vector<unsigned int> & dims = this->dims();
+    for (int i = this->it_.size() - 1; i >=0; i--) {
+        if (this->it_[i] >= dims[i]) {
+            current_dim = i;
+            break;
+        }
+    }
+    if (current_dim == this->it_.size()) {  // no update needed
+        return;
+    }
+
+    // carry the surplus to the dimensions with bigger strides
+    while (this->it_[current_dim] >= dims[current_dim]) {
+        if (current_dim == 0) {
+            if (this->it_[current_dim] == dims[current_dim]) {
+                break;
+            }
+            else {
+                throw(std::out_of_range("Maximum size reached, cannot add more."));
+            }
+        }
+        div_t carry = div(this->it_[current_dim], dims[current_dim]);
+        this->it_[current_dim] = carry.rem;
+        this->it_[--current_dim] += carry.quot;
+    }
+}
+
+bool operator!= (const Array::iterator & left, const Array::iterator & right) {
     // check if 2 iterators comes from the same array
     if (left.dims_ != right.dims_) {
         throw(std::runtime_error("2 iterators are not comming from the same array."));
@@ -19,11 +60,11 @@ bool operator< (const Array::iterator & left, const Array::iterator & right) {
     // compare index of each iterator
     unsigned int length = left.it().size();
     for (int i = 0; i < length; i++) {
-        if (left.it_[i] > right.it_[i]) {
-            return false;
+        if (left.it_[i] != right.it_[i]) {
+            return true;
         }
     }
-    return true;
+    return false;
 }
 
 Array::iterator& Array::iterator::operator++(void) {
@@ -32,7 +73,12 @@ Array::iterator& Array::iterator::operator++(void) {
     std::vector<unsigned int> & dims = this->dims();
     while (this->it_[current_dim] >= dims[current_dim]) {
         if (current_dim == 0) {
-            return *this;
+            if (this->it_[current_dim] == dims[current_dim]) {
+                break;
+            }
+            else {
+                throw(std::out_of_range("Maximum size reached, cannot add more."));
+            }
         }
         this->it_[current_dim] = 0;
         this->it_[--current_dim] += 1;
@@ -44,42 +90,62 @@ Array::iterator Array::iterator::operator++(int) {
     return ++(*this);
 }
 
-Array::Array(double * data, unsigned int ndim, unsigned int * dims, unsigned int * strides, bool copy) {
+Array::Array(double * data, unsigned int ndim, unsigned int * dims,
+             unsigned int * strides, bool copy) {
     // copy meta data
     this->ndim_ = ndim;
     this->dims_ = std::vector<unsigned int>(dims, dims + ndim);
     this->strides_ = std::vector<unsigned int>(strides, strides + ndim);
     this->is_copy = copy;
 
+    // create begin and end iterator
+    this->begin_ = std::vector<unsigned int>(this->ndim_, 0);
+    this->end_ = std::vector<unsigned int>(this->ndim_, 0);
+    this->end_[0] = this->dims_[0];
 
     // copy / assign data
     if (is_copy) {  // copy data
         // allocate a new array
         this->data_ = new double [this->size()];
 
-        // detect if original array is fortran or c
-        for (int i = 0; i < ndim; i++) {
-            if (strides[i] == sizeof(double)) {
-                fastest_index = i;
-                break;
-            }
-        }
-
         // reform the stride array (force into C shape)
-        
         this->strides_[ndim-1] = sizeof(double);
         for (int i = ndim-2; i >= 0; i--) {
             this->strides_[i] = this->strides_[i+1] * this->dims_[i+1];
         }
 
-        // copy data from old array to new array (to be optimized with memcpy!)
-        for (Array::iterator it = this->begin(); it < this->end(); ++it) {
-            unsigned int leap = 0;
-            for (int i = 0; i < it.it().size(); i++) {
-                leap += it.it()[i] * strides_[i];
+        // longest contiguous array
+        unsigned int longest_contiguous_segment = sizeof(double);
+        int break_index = ndim-1;
+        for (int i = ndim-1; i >=0; i--) {
+            if (this->strides_[i] == strides[i]) {
+                longest_contiguous_segment *= dims[i];
+                break_index--;
+            } else {
+                break;
             }
-            uintptr_t data_ptr = (uintptr_t) data_ + leap;
-            this->operator[](it.it()) = *((double *) data_ptr);
+        }
+
+        // copy data from old array to new array (optimized with memcpy)
+        if (break_index == -1) {  // original array is perfectly contiguous
+            std::memcpy(this->data_, data, longest_contiguous_segment);
+        } else {  // memcpy each longest_contiguous_segment
+            for (Array::iterator it = this->begin(); it != this->end();) {
+                unsigned int leap = 0;
+                for (int i = 0; i < it.it().size(); i++) {
+                    leap += it.it()[i] * strides[i];
+                }
+                uintptr_t src_ptr = (uintptr_t) data + leap;
+                uintptr_t des_ptr = (uintptr_t) &(this->operator[](it.it()));
+                std::memcpy((double *) des_ptr, (double *) src_ptr,
+                            longest_contiguous_segment);
+                it.it()[break_index] += 1;
+                try {
+                    it.update();
+                } catch (const std::out_of_range & err) {
+                    break;
+                }
+            }
         }
     } else {
         this->data_ = data;
@@ -102,16 +168,11 @@ unsigned int Array::size() {
 }
 
 Array::iterator Array::begin(void) {
-    return Array::iterator(std::vector<unsigned int>(this->ndim_, 0), this->dims_);
+    return Array::iterator(this->begin_, this->dims_);
 }
 
 Array::iterator Array::end(void) {
-    std::vector<unsigned int> end;
-    std::copy(this->dims_.begin(), this->dims_.end(), std::back_inserter(end));
-    for (int i = 0; i < this->ndim_; i++) {
-        end[i] -= 1;
-    }
-    return Array::iterator(end, this->dims_);
+    return Array::iterator(this->end_, this->dims_);
 }
 
 double & Array::operator[] (const std::vector<unsigned int> & index) {
