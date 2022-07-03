@@ -1,6 +1,9 @@
 # C++ build dir
 build/
 
+# MSVC temporary dir
+.vs/
+
 # Doxygen generated files
 docs/source/html/
 docs/source/latex/

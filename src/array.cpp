@@ -45,7 +45,7 @@ void Array::iterator::update(void) {
                 throw(std::out_of_range("Maximum size reached, cannot add more."));
             }
         }
-        div_t carry = div(this->it_[current_dim], dims[current_dim]);
+        div_t carry = div((int) this->it_[current_dim], (int) dims[current_dim]);
         this->it_[current_dim] = carry.rem;
         this->it_[--current_dim] += carry.quot;
     }
