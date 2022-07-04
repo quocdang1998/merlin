@@ -68,12 +68,12 @@ class Array {
     ~Array(void);
 
     /** @brief Indicate array is copied or assigned to another array.
-    
+
     If the array is copy version, delete operator is called when the array is
     destroyed to avoid memory leak.*/
     bool is_copy;
     /** @brief Size of the array.
-    
+
     Product of the size of each dimension.*/
     unsigned int size();
     /** @brief Begin iterator.
@@ -81,19 +81,29 @@ class Array {
     Vector of index \f$(0, 0, ..., 0)\f$.*/
     Array::iterator begin(void);
     /** @brief End iterator.
-    
-    Vector of index \f$(d_0 - 1, d_1 - 1, ..., d_{n-1} - 1)\f$.*/
+
+    Vector of index \f$(d_0, 0, ..., 0)\f$.*/
     Array::iterator end(void);
-    friend bool operator< (const iterator & left, const iterator & right);
+    /** @brief Sciling operator.
+
+    Get an element at a given index.
+    @param index Vector of indices along each dimension.*/
     double & operator[] (const std::vector<unsigned int> & index);
 
   private:
+    /** @brief Pointer to data.*/
     double * data_;
+    /** @brief Number of dimension.*/
     unsigned int ndim_;
+    /** @brief Size of each dimension.*/
     std::vector<unsigned int> dims_;
+    /** @brief Strides (address jump) when increasing index of a dimension
+    by 1.*/
     std::vector<unsigned int> strides_;
 
+    /** @brief Begin iterator.*/
     std::vector<unsigned int> begin_;
+    /** @brief End iterator.*/
     std::vector<unsigned int>  end_;
 };
 

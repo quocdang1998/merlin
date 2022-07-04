@@ -21,8 +21,8 @@
             }
         },
         {
-            "name": "linux-debug",
-            "generator": "MinGW Makefiles",
+            "name": "linux",
+            "generator": "Unix Makefiles",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "gcc",
@@ -33,7 +33,7 @@
                 "type": "equals",
                 "lhs": "${hostSystemName}",
                 "rhs": "Linux"
-            },
-        },
+            }
+        }
     ]
 }

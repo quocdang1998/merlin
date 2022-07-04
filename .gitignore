@@ -9,3 +9,5 @@ docs/source/html/
 docs/source/latex/
 docs/source/xml/
 
+# Sphinx build files
+docs/build

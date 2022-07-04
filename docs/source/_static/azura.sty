@@ -1,0 +1,283 @@
+% =============================================================================
+% GENERAL SETTINGS
+% =============================================================================
+
+\usepackage{etoolbox}
+
+% Supress list of table and list of figure
+\usepackage[notlot,nottoc,notlof]{}
+
+% Overload sphinx table style
+\newcolumntype{L}[1]{>{\raggedright \arraybackslash}m{#1}}
+\makeatletter
+\newcounter{summarycol}
+\expandafter\let\csname NC@find@X\endcsname\relax
+%\newcolumntype{\X}[2]{l}
+\newcommand{\X}[2]{%
+    \ifnum \value{summarycol} < 1 {%
+        L{0.2\textwidth}%
+    } \else {%
+        L{0.6\textwidth}%
+    } \fi%
+}
+\makeatother
+
+% Font
+\usepackage{lmodern}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{fontspec}
+\setmonofont[Extension = .ttf, Scale = 0.8, Path = ./, UprightFont = *, BoldFont = *-SemiBold, ItalicFont = *]{FiraCode} % monofont
+\newcommand{\firabold}{%
+    \fontspec[Extension = .ttf, Scale = 0.8, Path = ./, UprightFont = *]{FiraCode-SemiBold}%
+}
+\newcommand{\chunkfive}{%
+    \fontspec[Extension = .ttf, Path = ./, UprightFont = *, BoldFont = *, ItalicFont = *]{ChunkFive}%
+}
+\newcommand{\spartan}{%
+    \fontspec[Extension = .otf, Path = ./, UprightFont = *, BoldFont = *, ItalicFont = *]{LeagueSpartan}%
+}
+\newcommand{\cocogoose}{%
+    \fontspec[Extension = .ttf, Path = ./, UprightFont = *, BoldFont = *, ItalicFont = *]{CoCoGoose}%
+}
+
+% Toc title
+\renewcommand{\contentsname}{Contents}
+
+% Datetime format
+\usepackage{datetime}
+\newdateformat{MonthYearFormat}{%
+\monthname[\THEMONTH], \THEYEAR}
+
+% Enumitem
+\usepackage{enumitem}
+\setlist{nosep}
+
+% Graphic
+\usepackage{tikz}
+\usetikzlibrary{calc, shapes}
+
+% Color
+\sphinxDeclareColorOption{main}{{RGB}{27, 130, 209}}
+\sphinxDeclareColorOption{second}{{RGB}{128, 200, 255}}
+\sphinxDeclareColorOption{autosummary}{{RGB}{21, 109, 191}}
+\sphinxDeclareColorOption{sigwrapbox}{{RGB}{232, 245, 255}}
+\sphinxDeclareColorOption{sigwrapborder}{{RGB}{37, 154, 245}}
+\sphinxDeclareColorOption{itemwrapbox}{{RGB}{242, 242, 242}}
+\sphinxDeclareColorOption{itemwrapborder}{{RGB}{140, 140, 140}}
+\sphinxDeclareColorOption{codedefault}{{RGB}{0, 41, 74}}
+\sphinxDeclareColorOption{codeprop}{{RGB}{0, 63, 224}}
+\sphinxDeclareColorOption{codearg}{{RGB}{93, 122, 166}}
+\sphinxDeclareColorOption{codetype}{{RGB}{31, 147, 255}}
+
+% Hyperref
+\usepackage{hyperref}
+\hypersetup{colorlinks = false, linkbordercolor = second, urlbordercolor = main}
+
+% Math
+\usepackage{amsmath,amsfonts,amssymb,amsthm}
+
+% =============================================================================
+% DECORATION
+% =============================================================================
+
+% Chapter
+\makeatletter
+\def\@makechapterhead#1{%
+	\vspace*{50\p@}%
+	{%
+	    \parindent \z@ \raggedright \normalfont%
+		\ifnum \c@secnumdepth >\m@ne%
+			\tikz [remember picture, overlay] {\node (C) [rectangle, fill = main, text = white, inner sep = 1em, outer sep = 0, anchor = north east, minimum width = {\Gm@tmargin + 2em}, minimum height = {\Gm@tmargin + 2em}] at ($(current page.north east) + (- \Gm@rmargin,0)$) {\fontsize{40}{48}\selectfont \bfseries \thechapter};}%
+		\fi%
+		\interlinepenalty\@M%
+		\tikz [remember picture, overlay] {\node (N) [rectangle, fill = main, text = white, inner sep = 1em, outer sep = 0, anchor = north, minimum width = \paperwidth, minimum height = 3em] at ($(current page.north) + (0,- \Gm@tmargin - 7em)$) {\parbox{\textwidth}{\Huge \bfseries \cocogoose \MakeUppercase{#1}}};}%
+		\par \vskip 60\p@%
+	}%
+	\label{chap:\thechapter}%
+}
+\def\@makeschapterhead#1{%
+	\vspace*{50\p@}%
+	{%
+	    \parindent \z@ \raggedright \normalfont%
+		\interlinepenalty\@M%
+		\tikz [remember picture, overlay] {\node (N) [rectangle, fill = main, text = white, inner sep = 1em, outer sep = 0, anchor = north, minimum width = \paperwidth, minimum height = 3em] at ($(current page.north) + (0,- \Gm@tmargin - 7em)$) {\parbox{\textwidth}{\Huge \bfseries \cocogoose \MakeUppercase{#1}}};}%
+		\par \vskip 60\p@%
+	}%
+}
+\makeatother
+
+% Section
+\newlength{\sectiontitle}
+\titleformat{name = \section}[block]{\Large\bfseries}{%
+    \tikz [remember picture, baseline] {\node (A) [rectangle, fill = main, text = white, inner sep = 0.5em, outer sep = 0, anchor = base] {\thesection};}\hspace{0.5em}%
+}{0pt}
+{%
+    \Large\bfseries #1%
+    \tikz[remember picture, overlay] {\fill[fill = second] (A.south west) rectangle (0,-0.25em);}%
+    \label{sec:\thesection}%
+}
+\titleformat{name=\section,numberless}[block]{\Large\bfseries}{}{0pt}{%
+    \Large\bfseries #1%
+    \settowidth{\sectiontitle}{#1}%
+    \tikz [remember picture, overlay] {\fill[fill = main] (-\sectiontitle,-0.25em) rectangle (0,-0.5em);}%
+}
+
+% Subsection and subsubsection
+\renewcommand{\thesubsection}{\Alph{subsection}.}
+\titleformat{name = \subsection}[block]{\large\bfseries}{\thesubsection~}{0pt}{\large\bfseries #1}
+\titleformat{name = \subsubsection}[block]{\bfseries}{}{0pt}{\bfseries #1}
+
+% Table of contents
+\setcounter{tocdepth}{2}
+
+% Header and footer
+\usepackage{fancyhdr}
+\fancypagestyle{normal}{
+    \renewcommand{\headrulewidth}{0pt}
+    \renewcommand{\footrulewidth}{0pt}
+    \fancyhf{}
+    \fancyhead[LE]{ \small \nouppercase{\leftmark} }
+    \fancyhead[RO]{ \small \nouppercase{\rightmark}}
+    \fancyfoot[RO, LE]{\textbf{\thepage}}
+}
+\fancypagestyle{plain}{
+    \renewcommand{\headrulewidth}{0pt}
+    \renewcommand{\footrulewidth}{0pt}
+    \fancyhf{}
+    \fancyfoot[RO, LE]{\textbf{\thepage}}
+}
+
+% =============================================================================
+% CLASS DEFINITION
+% =============================================================================
+
+% Title page
+\newlength{\titlepadding}
+\setlength{\titlepadding}{0.1\paperwidth}
+\makeatletter
+\renewcommand{\sphinxmaketitle}{%
+    \pagenumbering{gobble}%
+    \begin{titlepage}%
+    \begin{tikzpicture}[remember picture, overlay]
+        \node [anchor = center, outer sep = 0] at (current page.center) {\includegraphics[width = \paperwidth, height = \paperheight]{azura.pdf}};
+        \node [anchor = north west, inner sep = 0, outer sep = 0, text width = 0.7\paperwidth, align = left, font = \bfseries\color{white}] at ($(current page.north west) + (\titlepadding, -\titlepadding)$) {%
+            %Department AAA\\
+            %Institut BBB
+        };
+        \node [anchor = north, inner sep = 0, outer sep = 0, text width = 0.8\paperwidth, align = center] at ($(current page.north) + (0, -0.25\paperheight)$) {%
+            \color{white}%
+            {\fontsize{3em}{3.6em}\selectfont\chunkfive\MakeUppercase{\@title}}\\
+            \vspace{\baselineskip}%
+            {\normalsize\selectfont\spartan\MakeUppercase{\py@release \releaseinfo}}\\
+            \vspace{4\baselineskip}%
+            {\textbf{\@author}}
+        };
+        \node [anchor = south east, inner sep = 0, outer sep = 0, text width = 0.3\paperwidth, font = \bfseries\color{black}, align = right] at ($(current page.south east) + (-\titlepadding, \titlepadding)$) {%
+            \MonthYearFormat\today\\
+            %Technical Report No. NNN
+        };
+        \node [anchor = north east, inner sep = 0, outer sep = 0] at ($(current page.north east) + (-\titlepadding, -\titlepadding)$) {%
+            %\includegraphics[width = 0.1\paperwidth]{logo.pdf}
+        };
+        \node [anchor = south west, inner sep = 0, outer sep = 0, text width = 0.6\paperwidth, align = left, font = \color{black}] at ($(current page.south west) + (\titlepadding, \titlepadding)$) {%
+            %XXX YYY street\\
+            %ZZZ PostalCode
+        };
+    \end{tikzpicture}%
+    \end{titlepage}%
+    \cleardoublepage%
+}
+\makeatother
+
+% Item description
+\newcounter{siglevel}
+\makeatletter
+\renewenvironment{fulllineitems}{%
+    \addtocounter{siglevel}{1}
+    \begin{list}{}{\labelwidth \leftmargin
+                   \rightmargin \z@ \topsep -\parskip \partopsep \parskip
+                   \itemsep -\parsep
+                   \let\makelabel=\py@itemnewline}%
+}{\end{list}\addtocounter{siglevel}{-1}}
+\makeatother
+
+% =============================================================================
+% CODE DOCUMENTATION
+% =============================================================================
+
+% Code
+\protected\def\sphinxcode#1{{\firabold{#1}}}
+\renewcommand{\emph}[1]{#1}
+
+% Autosummary
+\protected\def\sphinxcrossref#1{{\firabold\color{autosummary}#1}}
+
+% Code wrapping box
+\newlength{\sigwrapboxwidth}
+\newcommand{\sigwrapbox}[1]{%
+    \settowidth{\sigwrapboxwidth}{#1}%
+    \ifnum \value{siglevel} = 1 {%
+        \ifdim \dimexpr \sigwrapboxwidth - \labelwidth + \labelsep > \linewidth \relax%
+            \setlength{\sigwrapboxwidth}{\dimexpr \linewidth + \labelwidth - \labelsep \relax}%
+        \fi%
+        \tikz [remember picture, baseline] {%
+            \node [rectangle, fill = sigwrapbox, outer sep = 0, inner sep = 3pt] (B) {\parbox{\sigwrapboxwidth}{\raggedright #1}};
+            \fill [sigwrapborder, outer sep = 0, inner sep = 0] (B.north west) rectangle ($(B.north east) + (0, 3pt)$);
+        }%
+    }%
+    \else {%
+        \ifdim \dimexpr \sigwrapboxwidth - \labelwidth + \labelsep > \linewidth \relax%
+            \setlength{\sigwrapboxwidth}{\dimexpr \linewidth + \labelwidth - \labelsep - 3pt \relax}%
+        \fi%
+        \tikz [remember picture, baseline] {%
+            \node [rectangle, fill = itemwrapbox, outer sep = 0, inner sep = 3pt] (B) {\parbox{\sigwrapboxwidth}{\raggedright #1}};
+            \fill [itemwrapborder, outer sep = 0, inner sep = 0] (B.north west) rectangle ($(B.south west) + (-3pt, 0)$);
+        }%
+    }%
+    \fi%
+}
+
+% Code styling based on language
+\newcounter{codelanguage}
+\setcounter{codelanguage}{0}  % 0 = Python, 1 = C++
+
+% Function / Method
+\let\oldsphinxbfcode\sphinxbfcode
+\makeatletter
+\renewcommand{\pysiglinewithargsret}[3]{%
+  % overload macro in sig desc
+    \ifnum \value{codelanguage} = 0 {% Python
+        \ifnum \value{siglevel} = 1 {%
+            \global\protected\def\sphinxbfcode##1{{\color{codeprop}\sphinxcode{##1}}}%
+        } \fi%
+        \global\expandafter\def\csname DUrolen\endcsname##1{\textcolor{codearg}{\sphinxcode{##1}}}%
+    } \fi%
+    \ifnum \value{codelanguage} = 1 {% C++
+        \global\protected\def\sphinxbfcode##1{{\color{codedefault}\sphinxcode{##1}}}%
+    } \fi%
+    % sig-box
+    \settowidth{\py@argswidth}{#1\sphinxcode{(}}%
+    \py@argswidth=\dimexpr\linewidth+\labelwidth-\py@argswidth\relax\relax%
+    \item[{\sigwrapbox{{\color{codedefault}\sphinxcode{#1(#2)#3}}}}]%
+    \leavevmode\par\nobreak\vskip-\parskip\prevdepth\dp\strutbox%
+    \let\sphinxbfcode\oldsphinxbfcode%
+}
+\makeatother
+
+% C++ code
+\makeatletter
+\renewcommand{\pysigline}[1]{%
+    % overload macro in sig desc
+    \global\protected\def\sphinxbfcode##1{\sphinxcode{##1}}%
+    \global\expandafter\def\csname DUrolen\endcsname##1{\textcolor{codedefault}{\sphinxcode{##1}}}%
+    \global\expandafter\def\csname DUrolek\endcsname##1{\textcolor{codeprop}{\sphinxcode{##1}}}%
+    \global\expandafter\def\csname DUrolep\endcsname##1{\textcolor{codedefault}{\sphinxcode{##1}}}%
+    \global\expandafter\def\csname DUrolew\endcsname##1{\textcolor{codedefault}{\sphinxcode{##1}}}%
+    \global\expandafter\def\csname DUrolekt\endcsname##1{\textcolor{codetype}{\sphinxcode{##1}}}%
+    \global\expandafter\def\csname DUrolen,sig-param\endcsname##1{\textcolor{codearg}{\sphinxcode{##1}}}%
+    % sig-box
+    \py@argswidth=\dimexpr\linewidth+\labelwidth\relax\relax%
+    \item[{\sigwrapbox{{\color{codedefault}#1}}}]%
+}
+\makeatother
+
