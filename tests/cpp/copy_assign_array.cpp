@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <vector>
 
-#include "merlin/array.hpp"
+#include "merlin/array"
 
 int main (void) {
     // initialize an array
@@ -20,7 +20,7 @@ int main (void) {
     // copy array
     {
         std::printf("Copy an Array object to the first array\n");
-        merlin::Array Ar_copy(A, ndim, dims, strides);
+        merlin::Array<double> Ar_copy(A, ndim, dims, strides);
         std::printf("Assign value 2.5 to the second element\n");
         Ar_copy[index] = 2.5;
         std::printf("Original:     %.1f\n", A[1]);
@@ -33,7 +33,7 @@ int main (void) {
     // assign array
     {
         std::printf("Assign an Array object to the first array\n");
-        merlin::Array Ar_assign(A, ndim, dims, strides, false);
+        merlin::Array<double> Ar_assign(A, ndim, dims, strides, false);
         std::printf("Assign value 2.5 to the second element\n");
         Ar_assign[index] = 2.5;
         std::printf("Original:     %.1f\n", A[1]);
