@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <vector>
 
-#include "merlin/array"
+#include "merlin/array.hpp"
 
 int main(void) {
     // initialize array
@@ -27,7 +27,7 @@ int main(void) {
     std::printf("Expected values : 1.0 2.0 5.0 6.0 9.0 10.0\n");
     std::printf("Result          : ");
     for (merlin::Array<double>::iterator it = Ar_copy.begin(); it != Ar_copy.end(); ++it) {
-        std::printf("%.1f ", Ar_copy[it.it()]);
+        std::printf("%.1f ", Ar_copy[it.index()]);
     }
     std::printf("\n");
 }

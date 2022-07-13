@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <vector>
 
-#include "merlin/array"
+#include "merlin/array.hpp"
 
 int main (void) {
     // initialize an array

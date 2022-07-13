@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 3.21)
 set(CMAKE_CXX_STANDARD 17)
 
 # build project
-project(merlin) # project name
+project(merlin LANGUAGES CXX CUDA) # project name
 
 # source list
 list(APPEND MERLIN_SRC
@@ -41,6 +41,11 @@ if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
         endif()
     endif()
 endif()
+
+# include(CheckLanguage)
+# check_language(CUDA)
+set(CMAKE_CUDA_STANDARD 17)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
 # =============================================================================
 # library and executable
@@ -80,11 +85,12 @@ target_include_directories(libmerlin PUBLIC inc/)
 # =============================================================================
 
 if (MERLIN_TEST)
-    file(GLOB MERLIN_TESTFILES "tests/cpp/*.cpp")
+    file(GLOB MERLIN_TESTFILES "tests/cpp/*")
     foreach (TESTFILE ${MERLIN_TESTFILES})
         message(STATUS "${TESTFILE}")
         get_filename_component(TESTFILENAME ${TESTFILE} NAME)
         string(REPLACE ".cpp" "" TESTNAME ${TESTFILENAME})
+        string(REPLACE ".cu" "" TESTNAME ${TESTFILENAME})
         add_executable(${TESTNAME} ${TESTFILE})
         target_link_libraries(${TESTNAME} libmerlin)
         set_target_properties(${TESTNAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
