@@ -4,24 +4,27 @@ Installation
 System requirements
 -------------------
 
-Before compiling the package, ensure these packages are installed:
+Before compiling the package, ensure that these prerequisites have been already
+installed:
 
-- C++ compiler: GNU ``g++``>=9.3.0 on Linux or Visual Studio 2022 ``cl.exe``
-  on Windows, with OpenMP enabled.
+- C++ compiler: GNU ``g++>=9.3.0`` on **Linux** or Visual Studio 2022
+  ``cl.exe`` on **Windows**, with OpenMP enabled.
 
-- Cmake: ``cmake``>=3.21.0 (detect -std=c++17 flag on CUDA).
+- Cmake: ``cmake>=3.21.0`` (detect -std=c++17 flag on CUDA).
 
-- Build-tool: GNU ``make`` on Linux or ``ninja`` extension of Visual Studio. 
+- Build-tool: GNU ``make`` on **Linux** or ``ninja`` on **Windows** (Ninja
+  extenstion of MSVC).
 
-- CUDA ``nvcc``>=11.4 (optional, if GPU parallelization option is ``ON``).
+- CUDA ``nvcc``>=11.4 (optional, required if GPU parallelization option is
+  ``ON``).
 
-To compile the Python interface of the code, install these package with ``pip``:
+The Python interface requires these additional packages:
 
-- ``Cython``>=3.0.0a10 (enum class)
+- ``Cython>=3.0.0a10`` (support enum class)
 
-- ``Numpy``>1.17
+- ``Numpy>1.17``
 
-- ``Scikit-build``>=0.15.0
+- ``Scikit-build>=0.15.0`` (support cmake build)
 
 To compile the documentation, install the following packages:
 
@@ -67,7 +70,7 @@ with Visual Studio application is strongly recommended. Inside the application:
    Visual Studio installed on their machine.
    
    **Any failure due to wrong settings of enviroment variables while compiling
-   the package in a WIndows terminal is not our responsibility**.
+   the package in a Windows terminal is not our responsibility**.
 
    .. code-block:: powershell
    

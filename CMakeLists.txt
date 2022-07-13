@@ -42,6 +42,11 @@ if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     endif()
 endif()
 
+include(CheckLanguage)
+check_language(CUDA)
+set(CMAKE_CUDA_STANDARD 17)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+
 # =============================================================================
 # library and executable
 # =============================================================================
