@@ -16,10 +16,15 @@ Array<Scalar>::Array(Scalar * data, unsigned int ndim, unsigned int * dims,
     this->end_[0] = this->dims_[0];
 
     // longest contiguous segment and break index
+    std::vector<unsigned int> contiguous_strides(this->ndim_);
+    contiguous_strides[this->ndim_-1] = sizeof(Scalar);
+    for (int i = ndim-2; i >= 0; i--) {
+        contiguous_strides[i] = contiguous_strides[i+1] * this->dims_[i+1];
+    }
     this->longest_contiguous_segment_ = sizeof(Scalar);
     this->break_index_ = ndim - 1;
     for (int i = ndim-1; i >= 0; i--) {
-        if (this->strides_[i] == strides[i]) {
+        if (this->strides_[i] == contiguous_strides[i]) {
             this->longest_contiguous_segment_ *= dims[i];
             this->break_index_--;
         } else {
@@ -33,10 +38,7 @@ Array<Scalar>::Array(Scalar * data, unsigned int ndim, unsigned int * dims,
         this->data_ = new Scalar [this->size()];
 
         // reform the stride array (force into C shape)
-        this->strides_[ndim-1] = sizeof(Scalar);
-        for (int i = ndim-2; i >= 0; i--) {
-            this->strides_[i] = this->strides_[i+1] * this->dims_[i+1];
-        }
+        this->strides_ = contiguous_strides;
 
         // copy data from old array to new array (optimized with memcpy)
         if (this->break_index_ == -1) {  // original array is perfectly contiguous
@@ -121,6 +123,7 @@ Array<Scalar>::~Array(void) {
     }
     #ifdef __NVCC__
     if (this->gpu_data_ != NULL) {
+        std::printf("Free GPU data.\n");
         cudaFree(this->gpu_data_);
     }
     #endif
@@ -182,9 +185,11 @@ void Array<Scalar>::iterator::update(void) {
 #ifdef __NVCC__
 // copy data to GPU
 template <typename Scalar>
-void Array<Scalar>::sync_to_gpu(void) {
+void Array<Scalar>::sync_to_gpu(cudaStream_t stream = NULL) {
     // allocate data on GPU
-    cudaMalloc(&(this->gpu_data_), sizeof(Scalar)*this->size());
+    if (this->gpu_data_ == NULL) {
+        cudaMalloc(&(this->gpu_data_), sizeof(Scalar)*this->size());
+    }
 
     // GPU stride array
     std::vector<unsigned int> gpu_strides_(this->ndim_, 0);
@@ -229,8 +234,47 @@ void Array<Scalar>::sync_to_gpu(void) {
 }
 
 template <typename Scalar>
-void Array<Scalar>::sync_from_gpu(void) {
-    
+void Array<Scalar>::sync_from_gpu(cudaStream_t stream = NULL) {
+    // GPU stride array
+    std::vector<unsigned int> gpu_strides_(this->ndim_, 0);
+    gpu_strides_[this->ndim_-1] = sizeof(Scalar);
+    for (int i = this->ndim_-2; i >= 0; i--) {
+        gpu_strides_[i] = gpu_strides_[i+1] * this->dims_[i+1];
+    }
+
+    // copy data from GPU
+    if (this->break_index_ == -1) {  // original array is perfectly contiguous
+        cudaMemcpy(this->data_, this->gpu_data_,
+                   this->longest_contiguous_segment_, cudaMemcpyDeviceToHost);
+    } else {  // copy each longest_contiguous_segment
+        for (Array::iterator it = this->begin(); it != this->end();) {
+            // cpu leap
+            unsigned int cpu_leap = 0;
+            for (int i = 0; i < it.index().size(); i++) {
+                cpu_leap += it.index()[i] * this->strides_[i];
+            }
+
+            // gpu leap
+            unsigned int gpu_leap = 0;
+            for (int i = 0; i < it.index().size(); i++) {
+                gpu_leap += it.index()[i] * gpu_strides_[i];
+            }
+
+            // clone data
+            uintptr_t src_ptr = (uintptr_t) this->gpu_data_ + gpu_leap;
+            uintptr_t des_ptr = (uintptr_t) this->data_ + cpu_leap;
+            cudaMemcpy((Scalar *) des_ptr, (Scalar *) src_ptr,
+                        this->longest_contiguous_segment_, cudaMemcpyDeviceToHost);
+
+            // increment iterator
+            it.index()[this->break_index_] += 1;
+            try {
+                it.update();
+            } catch (const std::out_of_range & err) {
+                break;
+            }
+        }
+    }
 }
 #endif
 

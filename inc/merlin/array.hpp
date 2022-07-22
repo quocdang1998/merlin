@@ -115,10 +115,29 @@ class Array {
     Scalar & operator[] (const std::vector<unsigned int> & index);
 
     #ifdef __NVCC__
-    /** @brief Copy data to GPU.*/
-    void sync_to_gpu(void);
-    /** @brief Copy data from GPU.*/
-    void sync_from_gpu(void);
+    /** @briefGet GPU data.*/
+    Scalar * gpu_data(void) {return this->gpu_data_;}
+    /** @brief Copy data to GPU.
+    
+        If the synchronization stream is not provided, this function will
+        create it own stream to copy and sync the data.
+
+        @code{.cpp}
+        merlin::Array<double> A(A_data, 2, dims, strides, false);
+        A.sync_to_gpu();
+        @endcode
+
+        @param stream Synchronization stream.
+    */
+    void sync_to_gpu(cudaStream_t stream = NULL);
+    /** @brief Copy data from GPU.
+    
+        If the synchronization stream is not provided, this function will
+        create it own stream to copy and sync the data.
+
+        @param stream Synchronization stream.
+    */
+    void sync_from_gpu(cudaStream_t stream = NULL);
     #endif
 
   private:
@@ -126,7 +145,7 @@ class Array {
     Scalar * data_;
     #ifdef __NVCC__
     /** @brief Pointer to data in GPU.*/
-    Scalar * gpu_data_;
+    Scalar * gpu_data_ = NULL;
     #endif
     /** @brief Number of dimension.*/
     unsigned int ndim_;
