@@ -8,15 +8,13 @@
 #include <cstdlib>
 #include <vector>
 #include <algorithm>
-#include <vector>
 #include <stdexcept>
 
 namespace merlin {
 
-/** @brief Multi-dimensional array.
+/** @brief Multi-dimensional array of simple precision real values.
 
     This class make the interface between C array and Numpy array.*/
-template <typename Scalar>
 class Array {
   public:
     /** @brief Multi-dimensional array iterator.*/
@@ -60,22 +58,7 @@ class Array {
 
             This operator is used to check if current iterator is the end
             iterator of Array.*/
-        friend bool operator!= (const typename Array<Scalar>::iterator & left,
-                                const typename Array<Scalar>::iterator & right) {
-            // check if 2 iterators comes from the same array
-            if (left.dims_ != right.dims_) {
-                throw(std::runtime_error("2 iterators are not comming from the same array."));
-            }
-    
-            // compare index of each iterator
-            unsigned int length = left.index().size();
-            for (int i = 0; i < length; i++) {
-                if (left.index_[i] != right.index_[i]) {
-                    return true;
-                }
-            }
-            return false;
-        }
+        friend bool operator!= (const Array::iterator& left, const Array::iterator& right);
 
       private:
         /** @brief Index vector.*/
@@ -85,11 +68,24 @@ class Array {
     };
 
     /** @brief Create array from NumPy array.*/
-    Array(Scalar * data, unsigned int ndim,
+    Array(float * data, unsigned int ndim,
           unsigned int * dims, unsigned int * strides,
           bool copy = true);
     /** @brief Destructor.*/
-    ~Array(void);
+    ~Array(void) {
+        // free CPU data if copy enabled
+        if (this->is_copy) {
+            std::printf("Free copied data.\n");
+            delete[] this->data_;
+        }
+        #ifdef __NVCC__
+        // free GPU data
+        if (this->gpu_data_ != NULL) {
+            std::printf("Free GPU data.\n");
+            cudaFree(this->gpu_data_);
+        }
+        #endif  // __NVCC__
+    }
 
     /** @brief Indicate array is copied or assigned to another array.
 
@@ -101,7 +97,7 @@ class Array {
     Product of the size of each dimension.*/
     unsigned int size(void);
     /** @brief Begin iterator.
-    
+
     Vector of index \f$(0, 0, ..., 0)\f$.*/
     Array::iterator begin(void);
     /** @brief End iterator.
@@ -112,11 +108,11 @@ class Array {
 
     Get an element at a given index.
     @param index Vector of indices along each dimension.*/
-    Scalar & operator[] (const std::vector<unsigned int> & index);
+    float & operator[] (const std::vector<unsigned int> & index);
 
     #ifdef __NVCC__
-    /** @briefGet GPU data.*/
-    Scalar * gpu_data(void) {return this->gpu_data_;}
+    /** @brief Get GPU data.*/
+    float * gpu_data(void) {return this->gpu_data_;}
     /** @brief Copy data to GPU.
     
         If the synchronization stream is not provided, this function will
@@ -138,15 +134,13 @@ class Array {
         @param stream Synchronization stream.
     */
     void sync_from_gpu(cudaStream_t stream = NULL);
-    #endif
+    #endif  // __NVCC__
 
   private:
     /** @brief Pointer to data.*/
-    Scalar * data_;
-    #ifdef __NVCC__
+    float * data_;
     /** @brief Pointer to data in GPU.*/
-    Scalar * gpu_data_ = NULL;
-    #endif
+    float * gpu_data_ = NULL;
     /** @brief Number of dimension.*/
     unsigned int ndim_;
     /** @brief Size of each dimension.*/
@@ -167,8 +161,5 @@ class Array {
 };
 
 }  // namespace merlin
-
-// include source of array manipulation
-#include "merlin/array/array_src.hpp"
 
 #endif  // MERLIN_ARRAY_HPP_

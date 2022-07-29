@@ -8,17 +8,33 @@ cmake_minimum_required(VERSION 3.21)
 # g++ standard
 set(CMAKE_CXX_STANDARD 17)
 
-# build project
-project(merlin LANGUAGES CXX CUDA) # project name
-
 # source list
-list(APPEND MERLIN_SRC
-     src/array.cpp)
+list(APPEND MERLIN_SRC_CPP
+     src/array.cpp
+)
+list(APPEND MERLIN_SRC_CU
+     src/array.cu
+)
 
 # options
+option(MERLIN_CUDA "Build library using CUDA" ON)  # -DMERLIN_CUDA=OFF
 set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
        CACHE STRING "Type of the created library (static or shared/dynamic)")
 option(MERLIN_TEST "Build test executables" OFF)  # -DMERLIN_TEST=ON
+
+# project name
+if(MERLIN_CUDA)
+    project(merlin LANGUAGES CXX CUDA)
+else()
+    project(merlin LANGUAGES CXX)
+endif(MERLIN_CUDA)
+
+# concatenate source lists
+list(APPEND MERLIN_SRC ${MERLIN_SRC_CPP})
+if(MERLIN_CUDA)
+    list(APPEND MERLIN_SRC ${MERLIN_SRC_CU})
+    set_source_files_properties(${MERLIN_SRC_CPP} PROPERTIES LANGUAGE CUDA)
+endif()
 
 # =============================================================================
 # external packages
@@ -42,10 +58,11 @@ if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     endif()
 endif()
 
-# include(CheckLanguage)
-# check_language(CUDA)
-set(CMAKE_CUDA_STANDARD 17)
-set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+# CUDA
+if(MERLIN_CUDA)
+    set(CMAKE_CUDA_STANDARD 17)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+endif(MERLIN_CUDA)
 
 # =============================================================================
 # library and executable
@@ -84,16 +101,23 @@ target_include_directories(libmerlin PUBLIC inc/)
 # tests
 # =============================================================================
 
-if (MERLIN_TEST)
-    file(GLOB MERLIN_TESTFILES "tests/cpp/*")
+function(CONFIGURE_TESTFILES LANGUAGE)
+    file(GLOB MERLIN_TESTFILES "tests/${LANGUAGE}/*")
     foreach (TESTFILE ${MERLIN_TESTFILES})
-        message(STATUS "${TESTFILE}")
         get_filename_component(TESTFILENAME ${TESTFILE} NAME)
-        string(REPLACE ".cpp" "" TESTNAME ${TESTFILENAME})
-        string(REPLACE ".cu" "" TESTNAME ${TESTFILENAME})
+        string(REPLACE ".${LANGUAGE}" "" TESTNAME ${TESTFILENAME})
         add_executable(${TESTNAME} ${TESTFILE})
         target_link_libraries(${TESTNAME} libmerlin)
         set_target_properties(${TESTNAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
                               ${CMAKE_CURRENT_BINARY_DIR}/tests)
     endforeach(TESTFILE ${MERLIN_TESTFILES})
-endif (MERLIN_TEST)
+endfunction()
+
+if(MERLIN_TEST)
+    # C++ test files
+    configure_testfiles(cpp)
+    # Cu test files
+    if(MERLIN_CUDA)
+        configure_testfiles(cu)
+    endif(MERLIN_CUDA)
+endif(MERLIN_TEST)
