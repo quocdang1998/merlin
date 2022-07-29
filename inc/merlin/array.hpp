@@ -2,21 +2,15 @@
 #ifndef MERLIN_ARRAY_HPP_
 #define MERLIN_ARRAY_HPP_
 
-#include <cstdint>
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
+#include <list>
 #include <vector>
-#include <algorithm>
-#include <vector>
-#include <stdexcept>
+#include <tuple>
 
 namespace merlin {
 
-/** @brief Multi-dimensional array.
+/** @brief Multi-dimensional array of simple precision real values.
 
     This class make the interface between C array and Numpy array.*/
-template <typename Scalar>
 class Array {
   public:
     /** @brief Multi-dimensional array iterator.*/
@@ -35,19 +29,18 @@ class Array {
 
         /** @brief Update the indexes after increasing value of index.
 
-            User can manually add a certain amount to the index vector, making
-            some indexes greater than their corresponding dimensions. This
-            function will detect the surplus quantity, and update the indices
-            by carrying the surplus to higher stride dimensions.
-            
+            User can manually add a certain amount to the index vector, making some indexes
+            greater than their corresponding dimensions. This function will detect the surplus
+            quantity, and update the indices by carrying the surplus to higher stride dimensions.
+
             Example: Given a dimension vector \f$(5, 2)\f$, the index vector
             \f$(1, 5)\f$ will be updated to \f$(3, 1)\f$*/
         void update(void);
 
         /** @brief Pre-increment operator.
 
-            Increase the index of the last dimension by 1. If the maximum is
-            reached, set the index to zero and increment the next dimension.
+            Increase the index of the last dimension by 1. If the maximum index is reached, set the
+            index to zero and increment the next dimension.
 
             Example: \f$(0, 0) \rightarrow (0, 1) \rightarrow (0, 2)
             \rightarrow (1, 0) \rightarrow (1, 1) \rightarrow (1, 2)\f$.*/
@@ -58,24 +51,8 @@ class Array {
         iterator operator++(int);
         /** @brief Compare if the first iterator is smaller the second one.
 
-            This operator is used to check if current iterator is the end
-            iterator of Array.*/
-        friend bool operator!= (const typename Array<Scalar>::iterator & left,
-                                const typename Array<Scalar>::iterator & right) {
-            // check if 2 iterators comes from the same array
-            if (left.dims_ != right.dims_) {
-                throw(std::runtime_error("2 iterators are not comming from the same array."));
-            }
-    
-            // compare index of each iterator
-            unsigned int length = left.index().size();
-            for (int i = 0; i < length; i++) {
-                if (left.index_[i] != right.index_[i]) {
-                    return true;
-                }
-            }
-            return false;
-        }
+            This operator is used to check if current iterator is the end iterator of Array.*/
+        friend bool operator!= (const Array::iterator& left, const Array::iterator& right);
 
       private:
         /** @brief Index vector.*/
@@ -84,24 +61,77 @@ class Array {
         std::vector<unsigned int> * dims_;
     };
 
-    /** @brief Create array from NumPy array.*/
-    Array(Scalar * data, unsigned int ndim,
+
+    /** @brief Default constructor.*/
+    Array(void) = default;
+    /** @brief Construct an array holding value of one element.
+
+    Construct a simplest array of dimension 1.*/
+    Array(float value);
+    /** @brief Constructor from dims vector.
+
+    Construct an empty contiguous array of dimension vector dims.
+
+    @param dims Vector of dimension of the array.*/
+    explicit Array(const std::vector<unsigned int> & dims);
+    /** @brief Create array from NumPy array.
+
+    @param data Pointer to data.
+    @param ndim Number of dimension of array.
+    @param dims Pointer to array to size per dimension.
+    @param strides Pointer to array to stride per dimension.
+    @param copy Copy the original array to C-contiguous array.
+    @note The original memory tied to the pointer will not be freed at destruction. However,
+    if copy is true, the copied array is freed inside the destructor.*/
+    Array(float * data, unsigned int ndim,
           unsigned int * dims, unsigned int * strides,
           bool copy = true);
-    /** @brief Destructor.*/
-    ~Array(void);
+    /** @brief Deep copy constructor.
 
-    /** @brief Indicate array is copied or assigned to another array.
+    @param src Source to copy from.
+    @note GPU data is not copied. GPU pointers to data is left untouched in old Array object.
+    */
+    Array(const Array & src);
+    /** @brief Deep copy assignment.
 
-    If the array is copy version, delete operator is called when the array is
-    destroyed to avoid memory leak.*/
-    bool is_copy;
+    @param src Source to copy from.
+    @note GPU data is not copied. GPU pointers to data is left untouched in old Array object.
+    */
+    Array & operator=(const Array & src);
+    /** @brief Move constructor.
+
+    @param src Source to move from.*/
+    Array(Array && src);
+    /** @brief Move assignment.
+
+    @param src Source to move from.*/
+    Array & operator=(Array && src);
+    /** @brief Destructor.
+
+        @note Destructor returns error when GPU data is not manually freed before its call.
+    */
+    ~Array(void) noexcept(false);
+
+
+    /** @brief Pointer to (first element in) the data.*/
+    float * data(void) {return this->data_;}
+    /** @brief Number of dimensions.*/
+    unsigned int ndim(void) {return this->ndim_;}
+    /** @brief Reference to vector of size on each dimension.*/
+    std::vector<unsigned int> & dims(void) {return this->dims_;}
+    /** @brief Reference to vector of strides on each dimension.*/
+    std::vector<unsigned int> & strides(void) {return this->strides_;}
+    /** @brief Indicate if array data on CPU RAM is should be freed at destruction.
+
+    If the array is copy version, or array data is dynamically allocated, delete operator must be
+    called when the array is destroyed to avoid memory leak.*/
+    bool force_free = false;
     /** @brief Size of the array.
 
     Product of the size of each dimension.*/
     unsigned int size(void);
     /** @brief Begin iterator.
-    
+
     Vector of index \f$(0, 0, ..., 0)\f$.*/
     Array::iterator begin(void);
     /** @brief End iterator.
@@ -112,41 +142,59 @@ class Array {
 
     Get an element at a given index.
     @param index Vector of indices along each dimension.*/
-    Scalar & operator[] (const std::vector<unsigned int> & index);
+    float & operator[] (const std::vector<unsigned int> & index);
 
+
+    /** @brief Get GPU data.*/
+    std::list<float *> & gpu_data(void) {return this->gpu_data_;}
     #ifdef __NVCC__
-    /** @briefGet GPU data.*/
-    Scalar * gpu_data(void) {return this->gpu_data_;}
     /** @brief Copy data to GPU.
-    
-        If the synchronization stream is not provided, this function will
-        create it own stream to copy and sync the data.
+
+        If the pointer to GPU data is not provided, new GPU memory will be allocated, and its
+        pointer is saved to the list of pointers Array::gpu_data_.
 
         @code{.cpp}
-        merlin::Array<double> A(A_data, 2, dims, strides, false);
-        A.sync_to_gpu();
+            merlin::Array<double> A(A_data, 2, dims, strides, false);
+            A.sync_to_gpu();  // allocate & copy data to gpu (this memory region has index 0)
+
+            // do sth to the array
+
+            A.sync_to_gpu(A.gpu_data().back())  // copy data to the same memory region allocated above
+
+            // do sth to array on GPU
+
+            A.sync_from_gpu(A.gpu_data().back())  // copy data on GPU back to CPU
+
+            A.free_data_from_gpu(0);
         @endcode
 
         @param stream Synchronization stream.
+        @param gpu_pdata Pointer to an allocated GPU data. If the pointer is NULL, allocate new
+        memory and save the pointer to Array::gpu_data_.
     */
-    void sync_to_gpu(cudaStream_t stream = NULL);
+    void sync_to_gpu(float * gpu_pdata = NULL, cudaStream_t stream = NULL);
     /** @brief Copy data from GPU.
-    
-        If the synchronization stream is not provided, this function will
-        create it own stream to copy and sync the data.
 
+     * @param gpu_pdata Pointer to data in the GPU.
         @param stream Synchronization stream.
     */
-    void sync_from_gpu(cudaStream_t stream = NULL);
-    #endif
+    void sync_from_gpu(float * gpu_pdata, cudaStream_t stream = NULL);
+    #endif  // __NVCC__
+    /** @brief Free data from GPU.
+
+        If index is \f$-1\f$, free all GPU data. Otherwise, free the data corresponding to the
+        index.
+
+        @param index Index of data pointer to be freed in the Array::gpu_data_ list.
+    */
+    void free_data_from_gpu(int index = -1);
+
 
   private:
     /** @brief Pointer to data.*/
-    Scalar * data_;
-    #ifdef __NVCC__
+    float * data_;
     /** @brief Pointer to data in GPU.*/
-    Scalar * gpu_data_ = NULL;
-    #endif
+    std::list<float *> gpu_data_;
     /** @brief Number of dimension.*/
     unsigned int ndim_;
     /** @brief Size of each dimension.*/
@@ -160,15 +208,25 @@ class Array {
     /** @brief End iterator.*/
     std::vector<unsigned int>  end_;
 
-    /** @brief Longest contiguous segment.*/
-    unsigned int longest_contiguous_segment_;
-    /** @brief Index at which the longest contiguous segment is break.*/
-    int break_index_;
+    /** @brief Copy from source array to a contiguous array.
+
+    Copy from a source array to a C-contiguous array. Here the number of dimension and the sizes
+    on each dimensions of the source and destination are the equal.
+    @param src Pointer to source data.
+    @param src_strides Pointer to strides array of the source.*/
+    void contiguous_copy_from_address_(float * src, const unsigned int * src_strides);
 };
 
-}  // namespace merlin
+std::vector<unsigned int> contiguous_strides(const std::vector<unsigned int> & dims,
+                                             unsigned int element_size);
 
-// include source of array manipulation
-#include "merlin/array/array_src.hpp"
+unsigned int leap(const std::vector<unsigned int> & index,
+                  const std::vector<unsigned int> & strides);
+
+std::tuple<unsigned int, int> lcseg_and_brindex(const std::vector<unsigned int> & dims,
+                                                const std::vector<unsigned int> & strides);
+
+
+}  // namespace merlin
 
 #endif  // MERLIN_ARRAY_HPP_

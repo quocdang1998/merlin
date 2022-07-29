@@ -5,11 +5,11 @@
 
 int main (void) {
     // initialize an array
-    double A[10] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
+    float A[10] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
     unsigned int ndim = 2;
     unsigned int dims[2] = {5, 2};
-    unsigned int strides[2] = {(unsigned int ) (dims[1] * sizeof(double)),
-                               sizeof(double)};
+    unsigned int strides[2] = {(unsigned int ) (dims[1] * sizeof(float)),
+                               sizeof(float)};
     std::vector<unsigned int> index = {0, 1};
     std::printf("Original array : ");
     for (int i = 0; i < 10; i++) {
@@ -20,7 +20,7 @@ int main (void) {
     // copy array
     {
         std::printf("Copy an Array object to the first array\n");
-        merlin::Array<double> Ar_copy(A, ndim, dims, strides);
+        merlin::Array Ar_copy(A, ndim, dims, strides);
         std::printf("Assign value 2.5 to the second element\n");
         Ar_copy[index] = 2.5;
         std::printf("Original:     %.1f\n", A[1]);
@@ -33,7 +33,7 @@ int main (void) {
     // assign array
     {
         std::printf("Assign an Array object to the first array\n");
-        merlin::Array<double> Ar_assign(A, ndim, dims, strides, false);
+        merlin::Array Ar_assign(A, ndim, dims, strides, false);
         std::printf("Assign value 2.5 to the second element\n");
         Ar_assign[index] = 2.5;
         std::printf("Original:     %.1f\n", A[1]);

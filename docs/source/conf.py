@@ -70,6 +70,9 @@ html_js_files = [('azura.js', {'defer': 'defer'})]
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+# Do not add an index to the HTML documents.
+html_use_index = False
+
 
 # -- Options for Latex output ------------------------------------------------
 
@@ -89,6 +92,6 @@ latex_elements = {
     'tableofcontents': ('\\renewcommand{\\contentsname}{Contents}\n'
                         r'\tableofcontents\clearpage\pagenumbering{arabic}'),
     'preamble': r'\usepackage{azura}',
-    'makeindex': r'\usepackage[columns=1]{idxlayout}\makeindex'
+    # 'makeindex': r'\usepackage[columns=1]{idxlayout}\makeindex',
+    'makeindex': '',
 }
-

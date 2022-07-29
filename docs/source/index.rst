@@ -25,4 +25,5 @@ performed in the C++ core of the package.
 
    installation
    capi/index
+   developper_guide
 
