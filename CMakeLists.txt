@@ -11,6 +11,8 @@ set(CMAKE_CXX_STANDARD 17)
 # source list
 list(APPEND MERLIN_SRC_CPP
      src/array.cpp
+     # src/autodiff.cpp
+     src/grid.cpp
 )
 list(APPEND MERLIN_SRC_CU
      src/array.cu

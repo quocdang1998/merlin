@@ -67,31 +67,41 @@ class Array {
         std::vector<unsigned int> * dims_;
     };
 
+    /** @brief Default constructor.*/
+    Array(void) = default;
+    /** @brief Construct an array holding value of one element.
+    
+    Construct a simplest array of dimension 1.*/
+    Array(float value);
+    /** @brief Constructor from dims vector.
+    
+    Construct an empty contiguous array of dimension vector dims.
+    
+    @param dims Vector of dimension of the array.*/
+    explicit Array(const std::vector<unsigned int> & dims);
     /** @brief Create array from NumPy array.*/
     Array(float * data, unsigned int ndim,
           unsigned int * dims, unsigned int * strides,
           bool copy = true);
+    /** @brief Deep copy constructor.
+    
+    @warning GPU data is not copied automatically. User must call the method sync_to_gpu to clone
+    data.*/
+    Array(const Array & src);
+    /** @brief Deep copy assignment.*/
+    Array& operator=(const Array & src);
+    /** @brief Move constructor.*/
+    Array(Array && src);
+    /** @brief Move assignment.*/
+    // Array& operator=(Array&& src);
     /** @brief Destructor.*/
-    ~Array(void) {
-        // free CPU data if copy enabled
-        if (this->is_copy) {
-            std::printf("Free copied data.\n");
-            delete[] this->data_;
-        }
-        #ifdef __NVCC__
-        // free GPU data
-        if (this->gpu_data_ != NULL) {
-            std::printf("Free GPU data.\n");
-            cudaFree(this->gpu_data_);
-        }
-        #endif  // __NVCC__
-    }
+    ~Array(void);
 
-    /** @brief Indicate array is copied or assigned to another array.
+    /** @brief Indicate if array data is should be freed at destruction.
 
-    If the array is copy version, delete operator is called when the array is
-    destroyed to avoid memory leak.*/
-    bool is_copy;
+    If the array is copy version, or array data is dynamically allocated, delete operator must be
+    called when the array is destroyed to avoid memory leak.*/
+    bool force_free;
     /** @brief Size of the array.
 
     Product of the size of each dimension.*/
@@ -110,9 +120,9 @@ class Array {
     @param index Vector of indices along each dimension.*/
     float & operator[] (const std::vector<unsigned int> & index);
 
-    #ifdef __NVCC__
     /** @brief Get GPU data.*/
     float * gpu_data(void) {return this->gpu_data_;}
+    #ifdef __NVCC__
     /** @brief Copy data to GPU.
     
         If the synchronization stream is not provided, this function will
