@@ -2,15 +2,13 @@
 #ifndef MERLIN_GRID_HPP_
 #define MERLIN_GRID_HPP_
 
-#include <initializer_list>
 #include <vector>
-#include <cstdio>
 
 #include "merlin/array.hpp"
 
 namespace merlin {
 
-/** @brief A set of multi-dimensional points.*/ 
+/** @brief A set of multi-dimensional points.*/
 class Grid {
   public:
     /** @brief Construct an empty grid from a given number of n-dim points.
@@ -19,52 +17,58 @@ class Grid {
     @param npoint Number of points in the grid.*/
     Grid(unsigned int ndim, unsigned int npoint);
     /** @brief Default destructor.*/
-    virtual ~Grid(void) {
-        std::printf("Freeing grid object.\n");
-    }
+    virtual ~Grid(void) = default;
+
 
     /** @brief Reference to array of grid points.*/
-    Array & grid_points(void) {return this->grid_points_;}
-    /** @brief %Constant reference to array of grid points.*/
-    const Array & grid_points(void) const {return this->grid_points_;}
+    Array grid_points(void);
     /** @brief Number of dimension of each point in the grid.*/
-    unsigned int ndim(void) {return this->ndim_;}
+    unsigned int ndim(void) {return this->capacity_points_.dims()[1];}
     /** @brief Number of points in the grid.*/
     unsigned int npoint(void) {return this->npoint_;}
+    /** @brief Maximum number of point which the Grid can hold without reallocating memory.*/
+    unsigned int capacity(void) {return this->capacity_points_.dims()[0];}
+
 
     /** @brief Grid iterator.*/
     using iterator = Array::iterator;
     /** @brief Begin iterator.*/
-    virtual Grid::iterator begin(void) {return this->grid_points_.begin();}
+    virtual Grid::iterator begin(void);
     /** @brief End iterator.*/
-    virtual Grid::iterator end(void) {return this->grid_points_.end();}
+    virtual Grid::iterator end(void);
     /** @brief Slicing operator.
-    
+
+
     @param index Index of point to get in the grid.*/
-    virtual std::vector<float> operator[] (unsigned int index);
+    virtual Array operator[] (unsigned int index);
+    /** @brief Append a point to the grid.*/
+    virtual void push_back(std::vector<float> && point);
+
 
   protected:
-    /** @brief Number of dimensions of the grid.*/
-    unsigned int ndim_;
-    /*! \brief Number of points in the grid.*/
+    /** @brief Number of points in the grid.*/
     unsigned int npoint_;
-    /*! \brief Maximum number of points  can be add to the grid without reallocate a brand new
-    memory zone.*/
-    unsigned int capacity_;
-    /*! \brief Array to a 2D C-contiguous array of size (npoint, ndim).
+    /** @brief Array to a 2D C-contiguous array of size (capacity, ndim).
+
+    This 2D table store the value of each n-dimensional point as a row vector.
     
-    This 2D table store the value of each n-dimensional point as a row vector.*/
-    Array grid_points_;
+    Capacity is the smallest \f$2^n\f$ so that \f$n_{point} <= 2^n\f$*/
+    Array capacity_points_;
+    /** @brief Begin iterator.*/
+    std::vector<unsigned int> begin_;
+    /** @brief End iterator.*/
+    std::vector<unsigned int> end_;
 };
 
+
 class CartesianGrid : public Grid {
-public:
+  public:
     CartesianGrid(std::initializer_list<Array> grid_vectors);
     CartesianGrid(std::initializer_list<std::vector<float>> grid_vectors);
 
 
 
-protected:
+  protected:
     std::vector<Array> grid_vectors_;
 };
 

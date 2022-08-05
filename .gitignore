@@ -1,13 +1,14 @@
 # C++ build dir
-build/
+build
 
 # MSVC temporary dir
-.vs/
+.vs
+.vscode
 
 # Doxygen generated files
-docs/source/html/
-docs/source/latex/
-docs/source/xml/
+docs/source/html
+docs/source/latex
+docs/source/xml
 
 # Sphinx build files
 docs/build

@@ -22,18 +22,21 @@ int main(void) {
 
     // copy data to GPU and print each element of the array
     A.sync_to_gpu();
-    print_gpu_array<<<1,A.size()>>>(A.gpu_data());
+    print_gpu_array<<<1,A.size()>>>(A.gpu_data().back());
     cudaDeviceSynchronize();
 
     // expected result [[1,3,5], [6,8,10]]
     std::printf("Expected result: 1.0 3.0 5.0 6.0 8.0 10.0\n");
 
     // doubling result
-    double_element<<<1,A.size()>>>(A.gpu_data());
-    A.sync_from_gpu();
+    double_element<<<1,A.size()>>>(A.gpu_data().back());
+    A.sync_from_gpu(A.gpu_data().back());
     std::printf("After doubling, each element of array is: ");
     for (merlin::Array::iterator it = A.begin(); it != A.end(); it++) {
         std::printf("%.1f ", A[it.index()]);
     }
     std::printf("\n");
+
+    // free the result
+    A.free_data_from_gpu();
 }

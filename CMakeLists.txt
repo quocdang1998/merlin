@@ -13,6 +13,7 @@ list(APPEND MERLIN_SRC_CPP
      src/array.cpp
      # src/autodiff.cpp
      src/grid.cpp
+     src/logger.cpp
 )
 list(APPEND MERLIN_SRC_CU
      src/array.cu
@@ -35,7 +36,7 @@ endif(MERLIN_CUDA)
 list(APPEND MERLIN_SRC ${MERLIN_SRC_CPP})
 if(MERLIN_CUDA)
     list(APPEND MERLIN_SRC ${MERLIN_SRC_CU})
-    set_source_files_properties(${MERLIN_SRC_CPP} PROPERTIES LANGUAGE CUDA)
+    # set_source_files_properties(${MERLIN_SRC_CPP} PROPERTIES LANGUAGE CUDA)
 endif()
 
 # =============================================================================
@@ -76,10 +77,12 @@ if(MERLIN_LIBKIND MATCHES "AUTO")
     message(STATUS "Auto-decide the kind of library")
     if (UNIX)
         message(STATUS "On Linux, build dynamic library")
+        set(MERLIN_LIBKIND "SHARED")
         add_library(libmerlin SHARED ${MERLIN_SRC})
     endif (UNIX)
     if (WIN32)
         message(STATUS "On Windows, build static library")
+        set(MERLIN_LIBKIND "STATIC")
         add_library(libmerlin STATIC ${MERLIN_SRC})
     endif (WIN32)
 elseif(MERLIN_LIBKIND MATCHES "STATIC")
@@ -123,3 +126,13 @@ if(MERLIN_TEST)
         configure_testfiles(cu)
     endif(MERLIN_CUDA)
 endif(MERLIN_TEST)
+
+# =============================================================================
+# write variable to file
+# =============================================================================
+
+# write
+# set(MERLIN_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/config.yaml)
+# file(WRITE ${MERLIN_CONFIG} "")
+# file(APPEND ${MERLIN_CONFIG} "MERLIN_CUDA:${MERLIN_CUDA}\n")
+# file(APPEND ${MERLIN_CONFIG} "MERLIN_LIBKIND:${MERLIN_LIBKIND}\n")

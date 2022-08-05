@@ -7,30 +7,36 @@ System requirements
 Before compiling the package, ensure that these prerequisites have been already
 installed:
 
-- C++ compiler: GNU ``g++>=9.3.0`` on **Linux** or Visual Studio 2022
-  ``cl.exe`` on **Windows**, with OpenMP enabled.
+-  C++ compiler: GNU ``g++>=9.3.0`` on **Linux** or Visual Studio 2022
+   ``cl.exe`` on **Windows**, with OpenMP enabled.
 
-- Cmake: ``cmake>=3.21.0`` (detect -std=c++17 flag on CUDA).
+-  Cmake: ``cmake>=3.21.0`` (detect -std=c++17 flag on CUDA).
 
-- Build-tool: GNU ``make`` on **Linux** or ``ninja`` on **Windows** (Ninja
-  extenstion of MSVC).
+-  Build-tool: GNU ``make`` on **Linux** or ``ninja`` on **Windows** (Ninja
+   extenstion of MSVC).
 
-- CUDA ``nvcc``>=11.4 (optional, required if GPU parallelization option is
-  ``ON``).
+-  CUDA ``nvcc>=11.4`` (optional, required if GPU parallelization option is
+   ``ON``).
 
 The Python interface requires these additional packages:
 
-- ``Cython>=3.0.0a10`` (support enum class)
+-  ``Cython>=3.0.0a10`` (support enum class)
 
-- ``Numpy>1.17``
+-  ``Numpy>1.17``
 
-- ``Scikit-build>=0.15.0`` (support cmake build)
+-  ``Scikit-build>=0.15.0`` (support cmake build)
 
 To compile the documentation, install the following packages:
 
-- ``Doxygen``
+-  ``Doxygen``
 
-- ``Sphinx`` + extensions (``breathe``, ``sphinx_doxysummary``)
+-  ``Sphinx`` + extensions (``breathe``, ``sphinx_doxysummary``)
+
+   .. code-block:: sh
+
+      pip install breathe
+      pip install https://github.com/quocdang1998/doxysummary.git
+
 
 Compilation
 -----------
@@ -52,12 +58,12 @@ On Linux, to compile the C++ core, open a the terminal and execute:
 On Windows, because MSVC pre-defines some enviroment variables, compilation
 with Visual Studio application is strongly recommended. Inside the application:
 
-1. Configure CMake: **Project** -> **Configure merlin**
+1. Configure CMake: **Project** ➜ **Configure merlin**
 
    .. image:: _img/installation_Configure.png
       :width: 100%
 
-2. Build: **Build** -> **Build All**
+2. Build: **Build** ➜ **Build All**
 
    .. image:: _img/installation_Build.png
       :width: 100%
@@ -96,5 +102,31 @@ package in the source directory with:
    python setup.py build_ext --inplace
 
 
+Build options
+-------------
 
+CMake build options
+^^^^^^^^^^^^^^^^^^^
 
+.. envvar:: MERLIN_CUDA
+
+   Build C++ Merlin library with CUDA ``nvcc``.
+
+   :Value: ``ON``, ``OFF``
+   :Default: ``ON``
+
+.. envvar:: MERLIN_LIBKIND
+
+   Specify the kind of compiled C++ library.
+
+   By default, compile dynamic library on Linux and static library on Windows.
+
+   :Value: ``AUTO``, ``STATIC``, ``SHARED``
+   :Default: ``AUTO``
+
+.. envvar:: MERLIN_TEST
+
+   Build test executable.
+
+   :Value: ``ON``, ``OFF``
+   :Default: ``OFF``
