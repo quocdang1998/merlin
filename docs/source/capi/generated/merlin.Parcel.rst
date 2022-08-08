@@ -1,7 +1,7 @@
-merlin::AutoNode
-================
+merlin::Parcel
+==============
 
-.. doxygenclass:: merlin::AutoNode
+.. doxygenclass:: merlin::Parcel
    :members:
    :protected-members:
    :private-members:

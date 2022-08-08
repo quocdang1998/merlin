@@ -5,25 +5,30 @@
 # cmake minimum version
 cmake_minimum_required(VERSION 3.21)
 
-# g++ standard
+# C++ standard
 set(CMAKE_CXX_STANDARD 17)
 
 # source list
 list(APPEND MERLIN_SRC_CPP
-     src/array.cpp
+     src/nddata.cpp
      # src/autodiff.cpp
      src/grid.cpp
-     src/logger.cpp
+     # src/interpolant.cpp
+     src/array.cpp
+     src/utils.cpp
+     src/parcel.cpp
 )
 list(APPEND MERLIN_SRC_CU
+     src/parcel.cu
      src/array.cu
+     src/utils.cu
 )
 
 # options
 option(MERLIN_CUDA "Build library using CUDA" ON)  # -DMERLIN_CUDA=OFF
-set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
+set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"/"DYNAMIC"
        CACHE STRING "Type of the created library (static or shared/dynamic)")
-option(MERLIN_TEST "Build test executables" OFF)  # -DMERLIN_TEST=ON
+option(MERLIN_TEST "Build test executables" ON)  # -DMERLIN_TEST=ON
 
 # project name
 if(MERLIN_CUDA)
@@ -36,7 +41,6 @@ endif(MERLIN_CUDA)
 list(APPEND MERLIN_SRC ${MERLIN_SRC_CPP})
 if(MERLIN_CUDA)
     list(APPEND MERLIN_SRC ${MERLIN_SRC_CU})
-    # set_source_files_properties(${MERLIN_SRC_CPP} PROPERTIES LANGUAGE CUDA)
 endif()
 
 # =============================================================================
@@ -46,7 +50,7 @@ endif()
 # git
 find_package(Git QUIET)
 if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
-    option(GIT_SUBMODULE "Check submodules during build" ON)
+    option(GIT_SUBMODULE "Check submodules during build" OFF)
     if(GIT_SUBMODULE)
         message(STATUS "Submodule update")
         execute_process(
@@ -67,6 +71,9 @@ if(MERLIN_CUDA)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 endif(MERLIN_CUDA)
 
+# OpenMP
+find_package(OpenMP)
+
 # =============================================================================
 # library and executable
 # =============================================================================
@@ -78,36 +85,40 @@ if(MERLIN_LIBKIND MATCHES "AUTO")
     if (UNIX)
         message(STATUS "On Linux, build dynamic library")
         set(MERLIN_LIBKIND "SHARED")
-        add_library(libmerlin SHARED ${MERLIN_SRC})
     endif (UNIX)
-    if (WIN32)
+    if (MSVC)
         message(STATUS "On Windows, build static library")
         set(MERLIN_LIBKIND "STATIC")
-        add_library(libmerlin STATIC ${MERLIN_SRC})
-    endif (WIN32)
-elseif(MERLIN_LIBKIND MATCHES "STATIC")
+    endif (MSVC)
+endif()
+if(MERLIN_LIBKIND MATCHES "STATIC")
     # build static lib
-    message(STATUS "Force build static library")
+    message(STATUS "Build static library")
     add_library(libmerlin STATIC ${MERLIN_SRC})
+    target_compile_definitions(libmerlin PUBLIC __MERLIN_BUILT_AS_STATIC__)
 elseif(MERLIN_LIBKIND MATCHES "SHARED" OR MERLIN_LIBKIND MATCHES "DYNAMIC")
     # build dynamic lib
-    message(STATUS "Force build dynamic library")
+    message(STATUS "Build dynamic library")
     add_library(libmerlin SHARED ${MERLIN_SRC})
 else()
     message(FATAL_ERROR "Library build mode not found")
 endif()
 
-# prperty
+# set property for main library
 set_property(TARGET libmerlin PROPERTY OUTPUT_NAME merlin)
 set_property(TARGET libmerlin PROPERTY POSITION_INDEPENDENT_CODE 1)
-target_include_directories(libmerlin PUBLIC inc/)
+target_include_directories(libmerlin PUBLIC inc)
+target_link_libraries(libmerlin PUBLIC OpenMP::OpenMP_CXX)
+if(MERLIN_CUDA)
+    target_compile_definitions(libmerlin PUBLIC __MERLIN_CUDA__)
+endif()
 
 # =============================================================================
 # tests
 # =============================================================================
 
 function(CONFIGURE_TESTFILES LANGUAGE)
-    file(GLOB MERLIN_TESTFILES "tests/${LANGUAGE}/*")
+    file(GLOB MERLIN_TESTFILES "tests/${LANGUAGE}/test_*")
     foreach (TESTFILE ${MERLIN_TESTFILES})
         get_filename_component(TESTFILENAME ${TESTFILE} NAME)
         string(REPLACE ".${LANGUAGE}" "" TESTNAME ${TESTFILENAME})
@@ -128,10 +139,9 @@ if(MERLIN_TEST)
 endif(MERLIN_TEST)
 
 # =============================================================================
-# write variable to file
+# write config variable to file
 # =============================================================================
 
-# write
 # set(MERLIN_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/config.yaml)
 # file(WRITE ${MERLIN_CONFIG} "")
 # file(APPEND ${MERLIN_CONFIG} "MERLIN_CUDA:${MERLIN_CUDA}\n")

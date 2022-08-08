@@ -9,17 +9,24 @@
 /* custom colors */
 :root {
     --hue:                        207;  /* main hue color */
-    --hls:                        calc(var(--hue) -  5);  /* less hue */
+    --hls:                        calc(var(--hue) - 10);  /* less hue */
     --hmn:                        calc(var(--hue) + 10);  /* moderate hue*/
     --hpl:                        calc(var(--hue) + 15);  /* more hue*/
     --hrv:                        calc(var(--hue) + 180);  /* reverse hue */
 
-    --background:                 hsl(var(--hue), 100%, 98%); /* background */
+    --text-color:                 hsl(var(--hue),  10%, 25%);  /* text color */
+    --header-color:               hsl(var(--hue),  10%, 25%);  /* header color */
+    --content-background:         hsl(var(--hue),  10%, 99%);  /* background */
+    --background:                 hsl(var(--hue),  10%, 95%);  /* background */
+    --table-odd-row:              hsl(var(--hue),  14%, 96%);  /* table odd row */
+    --table-border:               hsl(var(--hue),  10%, 90%);  /* table border */
 
-    --link:                       hsl(var(--hue), 100%, 42%); /* link */
-    --visited-link:               hsl(var(--hue),  81%, 24%); /* visited link */
-    --highlighted:                hsl(var(--hue),  96%, 73%); /* hightlighted text */
-    --literal:                    hsl(var(--hue),  59%, 47%); /* literal text */
+    --link:                       hsl(var(--hue), 100%, 42%);  /* link */
+    --visited-link:               hsl(var(--hue),  81%, 24%);  /* visited link */
+    --highlighted:                hsl(var(--hue),  96%, 73%);  /* hightlighted text */
+    --literal:                    hsl(var(--hue),  59%, 47%);  /* literal text */
+    --literal-background:         hsl(var(--hue),  10%, 99%);  /* literal background */
+    --codeblock-background:       hsl(var(--hue),  10%, 97%);  /* codeblock background */
 
     --nav-title:                  hsl(var(--hue), 100%, 50%);  /* nav title */
     --nav-caption:                hsl(var(--hue),  97%, 61%);  /* nav caption */
@@ -31,14 +38,57 @@
 
     --itembox-background:         hsl(var(--hue),  79%, 95%);  /* item box background */
     --itembox-topborder:          hsl(var(--hue), 100%, 42%);  /* item topborder */
+    --itembox-text-color:         hsl(var(--hue),  10%, 25%);  /* item text color */
+    --subitem-background:         hsl(var(--hue),  10%, 94%);  /* subitem box background */
 
-    --keyword:                    hsl(var(--hpl), 100%, 50%);  /* keyworks of code language */
+    --item-name:                  hsl(var(--hue), 100%, 40%);  /* item name */
+    --attribute:                  hsl(var(--hls),  85%, 55%);  /* attribute */
+    --keyword:                    hsl(var(--hpl), 100%, 40%);  /* keyworks of code language */
     --inherited:                  hsl(var(--hpl),  59%, 47%);  /* interrnal reference to other classes */
     --type:                       hsl(var(--hmn),  53%, 55%);  /* type */
 
     --admonition-background:      hsl(var(--hue),  30%, 95%);  /* admonition content background */
     --note:                       hsl(var(--hls),  80%, 60%);  /* note title */
     --warning:                    hsl(var(--hrv), 100%, 50%);  /* warning title */
+
+    --rtd-version:                hsl(var(--hue),  88%, 58%);  /* readthedocs version */
+
+    --sun-display:                none;  /* display of light mode icon */
+    --moon-display:               flex;  /* display of light mode icon */
+    --invert-color:               invert(0.0);  /* invert color of item */
+    --yinyang:                    black;  /* black and white */
+}
+
+:root[color-scheme="dark"] {
+    --text-color:                 hsl(var(--hue),  10%, 80%);  /* text color */
+    --header-color:               hsl(var(--hue),  10%, 95%);  /* header color */
+    --content-background:         hsl(var(--hue),  10%, 20%);  /* background */
+    --background:                 hsl(var(--hue),  10%, 10%);  /* background */
+    --table-odd-row:              hsl(var(--hue),  10%, 25%);  /* table odd row */
+    --table-border:               hsl(var(--hue),  10%, 50%);  /* table border */
+
+    --literal:                    hsl(var(--hue),  70%, 70%);  /* literal text */
+    --literal-background:         hsl(var(--hue),  10%, 15%);  /* literal background */
+    --codeblock-background:       hsl(var(--hue),  10%, 10%);  /* codeblock background */
+
+    --link:                       hsl(var(--hue),  81%, 76%);  /* link */
+    --visited-link:               hsl(var(--hue), 100%, 42%);  /* visited link */
+
+    --itembox-background:         hsl(var(--hue),  79%, 15%);  /* item box background */
+    --itembox-text-color:         hsl(var(--hue),  10%, 95%);  /* item text color */
+    --subitem-background:         hsl(var(--hue),  10%, 15%);  /* subitem box background */
+
+    --keyword:                    hsl(var(--hpl), 100%, 70%);  /* keyworks of code language */
+    --type:                       hsl(var(--hmn),  53%, 70%);  /* type */
+
+    --admonition-background:      hsl(var(--hue),  10%, 15%);  /* admonition content background */
+    --note:                       hsl(var(--hls),  80%, 40%);  /* note title */
+    --warning:                    hsl(var(--hrv), 100%, 50%);  /* warning title */
+
+    --sun-display:                flex;  /* display of light mode icon */
+    --moon-display:               none;  /* display of light mode icon */
+    --invert-color:               invert(1.0) hue-rotate(180deg);  /* invert color of item */
+    --yinyang:                    white;  /* black and white */
 }
 
 /* ============================================================================
@@ -49,10 +99,11 @@
 body {
     margin:0;
     font-family: 'Nunito', sans-serif;
+    color: var(--text-color);
 }
 
 /* body background */
-.wy-body-for-nav {
+.wy-nav-content-wrap {
     background: var(--background);
 }
 
@@ -60,6 +111,12 @@ body {
 .wy-nav-content {
     max-width: 800px !important;
     min-height: 100vh;
+    background: var(--content-background);
+}
+
+/* header color */
+.rst-content h1, .rst-content h2, .rst-content h3, .rst-content h4, .rst-content h5, .rst-content h6 {
+    color: var(--header-color);
 }
 
 /* link color */
@@ -85,6 +142,29 @@ body {
     white-space: normal;
     font-family: 'Fira Code', monospace;
     font-weight: 600;
+}
+
+/* literal background */
+.rst-content code, .rst-content tt, code  {
+    background: var(--literal-background);
+    border-color: var(--table-border);
+}
+
+/* table row odd */
+.rst-content table.docutils:not(.field-list) tr:nth-child(2n-1) td, .wy-table-backed, .wy-table-odd td, .wy-table-striped tr:nth-child(2n-1) td {
+    background-color: var(--table-odd-row);
+}
+
+/* Pygment code */
+.rst-content div[class^="highlight"], .rst-content pre.literal-block {
+    background: var(--codeblock-background);
+    color: var(--text-color);
+    border-color: var(--table-border);
+}
+
+/* footer */
+.btn, .btn-neutral {
+    filter: var(--invert-color);
 }
 
 /* ============================================================================
@@ -143,6 +223,35 @@ body {
 }
 
 /* ============================================================================
+ DARKMODE BUTTON
+============================================================================ */
+
+/* darmode button */
+button#darkmode-button {
+    display: block;
+    float: right;
+    border: none;
+    height: 38px;
+    background: none;
+}
+
+.button-image {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+}
+
+img#sun-button {
+    display: var(--sun-display);
+    filter: invert(0.95);
+}
+
+img#moon-button {
+    display: var(--moon-display);
+}
+
+
+/* ============================================================================
  DESCRIPTION PAGE
 ============================================================================ */
 
@@ -157,14 +266,49 @@ html.writer-html4 .rst-content dl:not(.docutils)>dt, html.writer-html5 .rst-cont
     font-family: 'Fira Code', monospace;
     font-size: 12px !important;
     font-variant-ligatures: none;
-    color: #555 !important;
+    color: var(--itembox-text-color) !important;
+}
+
+html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) .descclassname {
+    font-family: 'Fira Code', monospace;
+    font-size: 12px !important;
+    font-variant-ligatures: none;
+}
+
+/* itembox text color */
+html.writer-html4 .rst-content dl:not(.docutils) .descclassname, html.writer-html4 .rst-content dl:not(.docutils) .descname, html.writer-html4 .rst-content dl:not(.docutils) .sig-name, html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) .descclassname, html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) .descname, html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) .sig-name {
+    color: var(--itembox-text-color);
+}
+
+/* subitem box */
+html.writer-html4 .rst-content dl:not(.docutils) dl:not(.field-list) > dt, html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) dl:not(.field-list) > dt {
+    background: var(--subitem-background);
+}
+
+/* subitem hyperlink */
+html.writer-html4 .rst-content dl:not(.docutils) dl:not(.field-list) > dt .headerlink, html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) dl:not(.field-list) > dt .headerlink {
+    color: var(--yinyang);
 }
 
 /* C++ DESCRIPTION */
 
 /* scope name + item name */
-.sig-prename.descclassname, .sig-name.descname {
-    font-family: 'Fira Code', monospace !important;
+html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) .descname, html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) .sig-name {
+    font-family: 'Fira Code', monospace;
+}
+
+.sig.sig-object.cpp > .sig-name.descname > .n > * {
+    color: var(--item-name);
+}
+
+/* C++/CUDA attributes */
+.sig.sig-object.cpp > .pre {
+    color: var(--attribute);
+}
+
+/* Internal link as type */
+.sig.sig-object.cpp > a.reference.internal, .sig.sig-object.cpp > a.reference.internal:visited {
+    color: var(--type);
 }
 
 /* C++ keyword (class, enum, const, inline, etc) */
@@ -174,8 +318,8 @@ html.writer-html4 .rst-content dl:not(.docutils)>dt, html.writer-html5 .rst-cont
 }
 
 /* C++ name and scope of other objects */
-.sig.sig-object.cpp > .p, .sig.sig-object.cpp > .n:not(.sig-param) {
-    color: #000 !important;
+.sig.sig-object.cpp > .p, .sig.sig-object.cpp > .o, .sig.sig-object.cpp > .n:not(.sig-param), .sig.sig-object.cpp > .headerlink {
+    color: var(--yinyang) !important;
 }
 
 /* C++ build-in type */

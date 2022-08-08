@@ -14,7 +14,6 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
 
-
 # -- Project information -----------------------------------------------------
 
 project = 'Merlin'
@@ -62,8 +61,9 @@ pygments_style = 'rainbow_dash'
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
+html_favicon = '_static/merlin_favicon.svg'
 html_css_files = ['azura.css']
-html_js_files = [('azura.js', {'defer': 'defer'})]
+html_js_files = [('azura.js', {'defer': 'defer'}), 'hsl_rgb.js']
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -95,3 +95,13 @@ latex_elements = {
     # 'makeindex': r'\usepackage[columns=1]{idxlayout}\makeindex',
     'makeindex': '',
 }
+
+
+# -- Options for the C++ domain ----------------------------------------------
+
+# module namespace
+cpp_index_common_prefix = ["merlin::"]
+
+# CUDA decorators
+cpp_id_attributes = ['__host__', '__device__', '__global__', '__shared__',
+                     '__managed__']

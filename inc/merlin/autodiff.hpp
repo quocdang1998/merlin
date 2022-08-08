@@ -5,7 +5,7 @@
 #include <cstdio>
 #include <vector>
 
-#include "merlin/array.hpp"
+#include "merlin/tensor.hpp"
 
 namespace merlin {
 
@@ -26,17 +26,17 @@ public:
 
     /** @brief Value of the current node.
     
-    The value hold by the object. Return in form of an array.
+    The value hold by the object. Return in form of an tensor.
     
     Since this class is the base class for all other types of nodes, the value is the
-    array \f$[0.0]\f$
+    tensor \f$[0.0]\f$
     */
-    virtual Array value(void) {
-        return Array(0.0);
+    virtual Tensor value(void) {
+        return Tensor(0.0);
     }
     /*
-    virtual Array gradient(void) {
-        return Array(0.0);
+    virtual Tensor gradient(void) {
+        return Tensor(0.0);
     }
     */
 
@@ -48,14 +48,14 @@ protected:
 class Constant : public AutoNode {
 public:
     Constant(float value);
-    Constant(const Array& value) : data_(value) {}
+    Constant(const Tensor& value) : data_(value) {}
 
-    virtual Array value(void) {
+    virtual Tensor value(void) {
         return this->data_;
     }
 
 protected:
-    Array data_;
+    Tensor data_;
 };
 /*
 class Variable : public Constant {

@@ -1,0 +1,4 @@
+CUDAOUT
+=======
+
+.. doxygendefine:: CUDAOUT

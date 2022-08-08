@@ -1,4 +1,5 @@
 PROJECT_NAME           = "merlin"
+INLINE_INHERITED_MEMB  = NO
 OUTPUT_DIRECTORY       = "source/"
 EXTRACT_ALL            = YES
 EXTRACT_PRIVATE        = YES
@@ -15,5 +16,10 @@ GENERATE_LATEX         = NO
 GENERATE_XML           = YES
 XML_OUTPUT             = xml
 XML_PROGRAMLISTING     = YES
-ENABLE_PREPROCESSING   = NO
-
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
+PREDEFINED             = "__cuhost__=__host__" \
+                         "__cudevice__=__device__" \
+                         "__cuhostdev__=__host__ __device__" \
+                         __NVCC__=
