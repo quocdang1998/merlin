@@ -13,6 +13,7 @@ int main (void) {
     }
 
     gr.push_back(std::vector<float>({5.0, 10.0, 15.0}));
+    gr.pop_back();
 
     for (merlin::Array::iterator it = gr.begin(); it != gr.end(); it++) {
         for (int j = 0; j < 3; j++) {

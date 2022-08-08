@@ -2,6 +2,7 @@
 #ifndef MERLIN_ARRAY_HPP_
 #define MERLIN_ARRAY_HPP_
 
+#include <cstdint>
 #include <list>
 #include <vector>
 #include <tuple>
@@ -10,7 +11,8 @@ namespace merlin {
 
 /** @brief Multi-dimensional array of simple precision real values.
 
-    This class make the interface between C array and Numpy array.*/
+    This class make the interface between C array and Numpy array.
+*/
 class Array {
   public:
     /** @brief Multi-dimensional array iterator.*/
@@ -34,7 +36,8 @@ class Array {
             quantity, and update the indices by carrying the surplus to higher stride dimensions.
 
             Example: Given a dimension vector \f$(5, 2)\f$, the index vector
-            \f$(1, 5)\f$ will be updated to \f$(3, 1)\f$*/
+            \f$(1, 5)\f$ will be updated to \f$(3, 1)\f$.
+        */
         void update(void);
 
         /** @brief Pre-increment operator.
@@ -43,15 +46,18 @@ class Array {
             index to zero and increment the next dimension.
 
             Example: \f$(0, 0) \rightarrow (0, 1) \rightarrow (0, 2)
-            \rightarrow (1, 0) \rightarrow (1, 1) \rightarrow (1, 2)\f$.*/
+            \rightarrow (1, 0) \rightarrow (1, 1) \rightarrow (1, 2)\f$.
+        */
         iterator& operator++(void);
         /** @brief Post-increment operator.
         
-            Same role as pre-increment operator.*/
+            Same role as pre-increment operator.
+        */
         iterator operator++(int);
         /** @brief Compare if the first iterator is smaller the second one.
 
-            This operator is used to check if current iterator is the end iterator of Array.*/
+            This operator is used to check if current iterator is the end iterator of Array.
+        */
         friend bool operator!= (const Array::iterator& left, const Array::iterator& right);
 
       private:
@@ -66,45 +72,48 @@ class Array {
     Array(void) = default;
     /** @brief Construct an array holding value of one element.
 
-    Construct a simplest array of dimension 1.*/
+        Construct a simplest array of dimension 1.*/
     Array(float value);
     /** @brief Constructor from dims vector.
 
-    Construct an empty contiguous array of dimension vector dims.
+        Construct an empty contiguous array of dimension vector dims.
 
-    @param dims Vector of dimension of the array.*/
+        @param dims Vector of dimension of the array.*/
     explicit Array(const std::vector<unsigned int> & dims);
     /** @brief Create array from NumPy array.
 
-    @param data Pointer to data.
-    @param ndim Number of dimension of array.
-    @param dims Pointer to array to size per dimension.
-    @param strides Pointer to array to stride per dimension.
-    @param copy Copy the original array to C-contiguous array.
-    @note The original memory tied to the pointer will not be freed at destruction. However,
-    if copy is true, the copied array is freed inside the destructor.*/
+        @param data Pointer to data.
+        @param ndim Number of dimension of array.
+        @param dims Pointer to array to size per dimension.
+        @param strides Pointer to array to stride per dimension.
+        @param copy Copy the original array to C-contiguous array.
+        @note The original memory tied to the pointer will not be freed at destruction. However,
+        if copy is true, the copied array is freed inside the destructor.
+    */
     Array(float * data, unsigned int ndim,
           unsigned int * dims, unsigned int * strides,
           bool copy = true);
     /** @brief Deep copy constructor.
 
-    @param src Source to copy from.
-    @note GPU data is not copied. GPU pointers to data is left untouched in old Array object.
+        @param src Source to copy from.
+        @note GPU data is not copied. GPU pointers to data is left untouched in old Array object.
     */
     Array(const Array & src);
     /** @brief Deep copy assignment.
 
-    @param src Source to copy from.
-    @note GPU data is not copied. GPU pointers to data is left untouched in old Array object.
+        @param src Source to copy from.
+        @note GPU data is not copied. GPU pointers to data is left untouched in old Array object.
     */
     Array & operator=(const Array & src);
     /** @brief Move constructor.
 
-    @param src Source to move from.*/
+        @param src Source to move from.
+    */
     Array(Array && src);
     /** @brief Move assignment.
 
-    @param src Source to move from.*/
+        @param src Source to move from.
+    */
     Array & operator=(Array && src);
     /** @brief Destructor.
 
@@ -123,31 +132,35 @@ class Array {
     std::vector<unsigned int> & strides(void) {return this->strides_;}
     /** @brief Indicate if array data on CPU RAM is should be freed at destruction.
 
-    If the array is copy version, or array data is dynamically allocated, delete operator must be
-    called when the array is destroyed to avoid memory leak.*/
+        If the array is copy version, or array data is dynamically allocated, delete operator must
+        be called when the array is destroyed to avoid memory leak.
+    */
     bool force_free = false;
     /** @brief Size of the array.
 
-    Product of the size of each dimension.*/
+        Product of the size of each dimension.
+    */
     unsigned int size(void);
     /** @brief Begin iterator.
 
-    Vector of index \f$(0, 0, ..., 0)\f$.*/
+        Vector of index \f$(0, 0, ..., 0)\f$.
+    */
     Array::iterator begin(void);
     /** @brief End iterator.
 
-    Vector of index \f$(d_0, 0, ..., 0)\f$.*/
+        Vector of index \f$(d_0, 0, ..., 0)\f$.
+    */
     Array::iterator end(void);
     /** @brief Sciling operator.
 
-    Get an element at a given index.
-    @param index Vector of indices along each dimension.*/
+        Get an element at a given index.
+        @param index Vector of indices along each dimension.
+    */
     float & operator[] (const std::vector<unsigned int> & index);
 
 
     /** @brief Get GPU data.*/
     std::list<float *> & gpu_data(void) {return this->gpu_data_;}
-    #ifdef __NVCC__
     /** @brief Copy data to GPU.
 
         If the pointer to GPU data is not provided, new GPU memory will be allocated, and its
@@ -172,14 +185,13 @@ class Array {
         @param gpu_pdata Pointer to an allocated GPU data. If the pointer is NULL, allocate new
         memory and save the pointer to Array::gpu_data_.
     */
-    void sync_to_gpu(float * gpu_pdata = NULL, cudaStream_t stream = NULL);
+    void sync_to_gpu(float * gpu_pdata = NULL, uintptr_t stream = 0);
     /** @brief Copy data from GPU.
 
-     * @param gpu_pdata Pointer to data in the GPU.
+        @param gpu_pdata Pointer to data in the GPU.
         @param stream Synchronization stream.
     */
-    void sync_from_gpu(float * gpu_pdata, cudaStream_t stream = NULL);
-    #endif  // __NVCC__
+    void sync_from_gpu(float * gpu_pdata, uintptr_t stream = 0);
     /** @brief Free data from GPU.
 
         If index is \f$-1\f$, free all GPU data. Otherwise, free the data corresponding to the
@@ -199,8 +211,7 @@ class Array {
     unsigned int ndim_;
     /** @brief Size of each dimension.*/
     std::vector<unsigned int> dims_;
-    /** @brief Strides (address jump) when increasing index of a dimension
-    by 1.*/
+    /** @brief Strides (address jump) when increasing index of a dimension by 1.*/
     std::vector<unsigned int> strides_;
 
     /** @brief Begin iterator.*/
@@ -210,19 +221,47 @@ class Array {
 
     /** @brief Copy from source array to a contiguous array.
 
-    Copy from a source array to a C-contiguous array. Here the number of dimension and the sizes
-    on each dimensions of the source and destination are the equal.
-    @param src Pointer to source data.
-    @param src_strides Pointer to strides array of the source.*/
+        Copy from a source array to a C-contiguous array. Here the number of dimension and the sizes
+        on each dimensions of the source and destination are the equal.
+        @param src Pointer to source data.
+        @param src_strides Pointer to strides array of the source.
+    */
     void contiguous_copy_from_address_(float * src, const unsigned int * src_strides);
 };
 
+
+/** @brief Get the strides from dims vector and size of one element if the Array is C-contiguous.
+
+    @param dims Dimension vector.
+    @param size Size on one element in the array.
+*/
 std::vector<unsigned int> contiguous_strides(const std::vector<unsigned int> & dims,
                                              unsigned int element_size);
 
+
+/** @brief Calculate the leap.
+
+    Get the number of bytes between zeroth element and element with a given index.
+    @param index Index of the element to get.
+    @param strides Strides array.
+*/
 unsigned int leap(const std::vector<unsigned int> & index,
                   const std::vector<unsigned int> & strides);
 
+
+/** @brief Calculate the longest contiguous segment and break index.
+
+    Longest contiguous segment is the length (in bytes) of the longest sub-array that is
+    C-contiguous in the memory.
+
+    Break index is the index at which the array break.
+
+    For exmample, suppose ``A = [[1.0,2.0,3.0],[4.0,5.0,6.0]]``, then ``A[:,::2]`` will have
+    longest contiguous segment of 4 and break index of 0.
+    
+    @param dims Dimension vector.
+    @param strides Strides vector.
+*/
 std::tuple<unsigned int, int> lcseg_and_brindex(const std::vector<unsigned int> & dims,
                                                 const std::vector<unsigned int> & strides);
 

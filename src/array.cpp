@@ -1,7 +1,6 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array.hpp"
 
-#include <cstdint>
 #include <cstring>
 
 #include "merlin/logger.hpp"
@@ -15,7 +14,7 @@ namespace merlin {
 bool operator!= (const Array::iterator& left, const Array::iterator& right) {
     // check if 2 iterators comes from the same array
     if (left.dims_ != right.dims_) {
-        throw(std::runtime_error("2 iterators are not comming from the same array."));
+        FAILURE("2 iterators are not comming from the same array.");
     }
 
     // compare index of each iterator
@@ -49,7 +48,7 @@ void Array::iterator::update(void) {
             if (this->index_[current_dim] == dims[current_dim]) {
                 break;
             } else {
-                throw(std::out_of_range("Maximum size reached, cannot add more."));
+                FAILURE("Maximum size reached, cannot add more.");
             }
         }
         div_t carry = div(static_cast<int>(this->index_[current_dim]),
@@ -69,7 +68,7 @@ Array::iterator & Array::iterator::operator++(void) {
             if (this->index_[current_dim] == dims[current_dim]) {
                 break;
             } else {
-                throw(std::out_of_range("Maximum size reached, cannot add more."));
+                FAILURE("Maximum size reached, cannot add more.");
             }
         }
         this->index_[current_dim] = 0;
@@ -325,12 +324,22 @@ Array::iterator Array::end(void) {
     return Array::iterator(this->end_, this->dims_);
 }
 
+// Diable GPU features
+#ifndef __NVCC__
+void Array::sync_to_gpu(float * gpu_pdata, uintptr_t stream) {
+    FAILURE("Merlin is not compiled with nvcc.");
+}
+void Array::sync_from_gpu(float * gpu_pdata, uintptr_t stream) {
+    FAILURE("Merlin is not compiled with nvcc.");
+}
+#endif  // __NVCC__
+
 // Destructor
 // ----------
 
 Array::~Array(void) noexcept(false) {
     if (this->force_free) {
-        MESSAGE("Free CPU data.");
+        // MESSAGE("Free CPU data.");
         delete[] this->data_;
     }
     if (this->gpu_data_.size() > 0) {

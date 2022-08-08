@@ -36,7 +36,7 @@ endif(MERLIN_CUDA)
 list(APPEND MERLIN_SRC ${MERLIN_SRC_CPP})
 if(MERLIN_CUDA)
     list(APPEND MERLIN_SRC ${MERLIN_SRC_CU})
-    # set_source_files_properties(${MERLIN_SRC_CPP} PROPERTIES LANGUAGE CUDA)
+    set_source_files_properties(${MERLIN_SRC_CPP} PROPERTIES LANGUAGE CUDA)
 endif()
 
 # =============================================================================

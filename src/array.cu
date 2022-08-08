@@ -11,7 +11,7 @@ namespace merlin {
 // Array (GPU)
 // ------------------------------------------------------------------------------------------------
 
-void Array::sync_to_gpu(float * gpu_pdata, cudaStream_t stream) {
+void Array::sync_to_gpu(float * gpu_pdata, uintptr_t stream) {
     // allocate data on GPU
     if (gpu_pdata == NULL) {
         this->gpu_data_.push_back(NULL);
@@ -32,9 +32,10 @@ void Array::sync_to_gpu(float * gpu_pdata, cudaStream_t stream) {
                                                                             this->strides_);
 
     // copy data to GPU
+    cudaStream_t stream_ = reinterpret_cast<cudaStream_t>(stream);
     if (break_index_ == -1) {  // original array is perfectly contiguous
-        cudaMemcpy(gpu_pdata, this->data_,
-                   longest_contiguous_segment_, cudaMemcpyHostToDevice);
+        cudaMemcpyAsync(gpu_pdata, this->data_,
+                        longest_contiguous_segment_, cudaMemcpyHostToDevice, stream_);
     } else {  // copy each longest_contiguous_segment
         unsigned int cpu_leap = 0;
         unsigned int gpu_leap = 0;
@@ -46,7 +47,7 @@ void Array::sync_to_gpu(float * gpu_pdata, cudaStream_t stream) {
             cudaError_t err_ = cudaMemcpyAsync(reinterpret_cast<float *>(des_ptr),
                                                reinterpret_cast<float *>(src_ptr),
                                                longest_contiguous_segment_,
-                                               cudaMemcpyHostToDevice);
+                                               cudaMemcpyHostToDevice, stream_);
             if (err_ != cudaSuccess) {
                 FAILURE("Memory copy failed with message \"%s\".", cudaGetErrorString(err_));
             }
@@ -57,7 +58,7 @@ void Array::sync_to_gpu(float * gpu_pdata, cudaStream_t stream) {
 }
 
 
-void Array::sync_from_gpu(float * gpu_pdata, cudaStream_t stream) {
+void Array::sync_from_gpu(float * gpu_pdata, uintptr_t stream) {
     // GPU stride array
     std::vector<unsigned int> gpu_strides_ = contiguous_strides(this->dims_, sizeof(float));
 
@@ -68,9 +69,10 @@ void Array::sync_from_gpu(float * gpu_pdata, cudaStream_t stream) {
                                                                             this->strides_);
 
     // copy data from GPU
+    cudaStream_t stream_ = reinterpret_cast<cudaStream_t>(stream);
     if (break_index_ == -1) {  // original array is perfectly contiguous
-        cudaMemcpy(this->data_, gpu_pdata,
-                   longest_contiguous_segment_, cudaMemcpyDeviceToHost);
+        cudaMemcpyAsync(this->data_, gpu_pdata,
+                        longest_contiguous_segment_, cudaMemcpyDeviceToHost, stream_);
     } else {  // copy each longest_contiguous_segment
         unsigned int cpu_leap = 0;
         unsigned int gpu_leap = 0;
@@ -82,7 +84,7 @@ void Array::sync_from_gpu(float * gpu_pdata, cudaStream_t stream) {
             cudaError_t err_ = cudaMemcpyAsync(reinterpret_cast<float *>(des_ptr),
                                                reinterpret_cast<float *>(src_ptr),
                                                longest_contiguous_segment_,
-                                               cudaMemcpyDeviceToHost);
+                                               cudaMemcpyDeviceToHost, stream_);
             if (err_ != cudaSuccess) {
                 FAILURE("Memory copy failed with message \"%s\".", cudaGetErrorString(err_));
             }

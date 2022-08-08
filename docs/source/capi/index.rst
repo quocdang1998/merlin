@@ -8,6 +8,9 @@ Array API
    :toctree: generated
 
    merlin::Array
+   merlin::contiguous_strides
+   merlin::leap
+   merlin::lcseg_and_brindex
 
 Autodiff API
 ------------
@@ -25,3 +28,4 @@ Grid of points
    :toctree: generated
 
    merlin::Grid
+   merlin::CartesianGrid
