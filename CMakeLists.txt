@@ -13,7 +13,9 @@ list(APPEND MERLIN_SRC_CPP
      src/array.cpp
      # src/autodiff.cpp
      src/grid.cpp
+     src/interpolant.cpp
      src/logger.cpp
+     src/utils.cpp
 )
 list(APPEND MERLIN_SRC_CU
      src/array.cu
@@ -36,7 +38,8 @@ endif(MERLIN_CUDA)
 list(APPEND MERLIN_SRC ${MERLIN_SRC_CPP})
 if(MERLIN_CUDA)
     list(APPEND MERLIN_SRC ${MERLIN_SRC_CU})
-    set_source_files_properties(${MERLIN_SRC_CPP} PROPERTIES LANGUAGE CUDA)
+    # set_source_files_properties(${MERLIN_SRC_CPP} PROPERTIES LANGUAGE CUDA)
+    add_compile_definitions(__NVCC__)
 endif()
 
 # =============================================================================
@@ -67,6 +70,13 @@ if(MERLIN_CUDA)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 endif(MERLIN_CUDA)
 
+# OpenMP
+find_package(OpenMP)
+#if (OPENMP_FOUND)
+#    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+#    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+#endif()
+
 # =============================================================================
 # library and executable
 # =============================================================================
@@ -80,11 +90,11 @@ if(MERLIN_LIBKIND MATCHES "AUTO")
         set(MERLIN_LIBKIND "SHARED")
         add_library(libmerlin SHARED ${MERLIN_SRC})
     endif (UNIX)
-    if (WIN32)
+    if (MSVC)
         message(STATUS "On Windows, build static library")
         set(MERLIN_LIBKIND "STATIC")
         add_library(libmerlin STATIC ${MERLIN_SRC})
-    endif (WIN32)
+    endif (MSVC)
 elseif(MERLIN_LIBKIND MATCHES "STATIC")
     # build static lib
     message(STATUS "Force build static library")
@@ -101,6 +111,7 @@ endif()
 set_property(TARGET libmerlin PROPERTY OUTPUT_NAME merlin)
 set_property(TARGET libmerlin PROPERTY POSITION_INDEPENDENT_CODE 1)
 target_include_directories(libmerlin PUBLIC inc/)
+target_link_libraries(libmerlin PUBLIC OpenMP::OpenMP_CXX)
 
 # =============================================================================
 # tests
@@ -131,7 +142,6 @@ endif(MERLIN_TEST)
 # write variable to file
 # =============================================================================
 
-# write
 # set(MERLIN_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/config.yaml)
 # file(WRITE ${MERLIN_CONFIG} "")
 # file(APPEND ${MERLIN_CONFIG} "MERLIN_CUDA:${MERLIN_CUDA}\n")

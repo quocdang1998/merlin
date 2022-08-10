@@ -10,9 +10,18 @@ int main(void) {
     std::vector<float> v3 = {0.0, 0.25};
     merlin::CartesianGrid cart_gr(std::vector<std::vector<float>>({v1, v2, v3}));
 
+    MESSAGE("Loop with begin/end iterator.");
     for (merlin::Grid::iterator it = cart_gr.begin(); it != cart_gr.end(); it++) {
         merlin::Array ar = cart_gr[it.index()];
         MESSAGE("%f %f %f", ar.data()[0], ar.data()[1], ar.data()[2]);
     }
+
+    MESSAGE("Loop with C-contiguous index.");
+    for (unsigned int i = 0; i < cart_gr.npoint(); i++) {
+        merlin::Array ar = cart_gr[i];
+        MESSAGE("%f %f %f", ar.data()[0], ar.data()[1], ar.data()[2]);
+    }
+
+    merlin::Array ar = cart_gr.grid_points();
 
 }

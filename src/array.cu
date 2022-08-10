@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "merlin/logger.hpp"
+#include "merlin/utils.hpp"
 
 namespace merlin {
 

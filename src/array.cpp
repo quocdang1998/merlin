@@ -2,16 +2,18 @@
 #include "merlin/array.hpp"
 
 #include <cstring>
+#include <tuple>
 
 #include "merlin/logger.hpp"
+#include "merlin/utils.hpp"
 
 namespace merlin {
 
-// ------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // Array::iterator
-// ------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
-bool operator!= (const Array::iterator& left, const Array::iterator& right) {
+bool operator!= (const Array::iterator & left, const Array::iterator & right) {
     // check if 2 iterators comes from the same array
     if (left.dims_ != right.dims_) {
         FAILURE("2 iterators are not comming from the same array.");
@@ -51,8 +53,7 @@ void Array::iterator::update(void) {
                 FAILURE("Maximum size reached, cannot add more.");
             }
         }
-        div_t carry = div(static_cast<int>(this->index_[current_dim]),
-                          static_cast<int>(dims[current_dim]));
+        div_t carry = div(static_cast<int>(this->index_[current_dim]), static_cast<int>(dims[current_dim]));
         this->index_[current_dim] = carry.rem;
         this->index_[--current_dim] += carry.quot;
     }
@@ -82,80 +83,26 @@ Array::iterator Array::iterator::operator++(int) {
     return ++(*this);
 }
 
-// ------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // Array (CPU)
-// ------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 // Tools
 // -----
-
-std::vector<unsigned int> contiguous_strides(const std::vector<unsigned int> & dims,
-                                             unsigned int element_size) {
-    std::vector<unsigned int> contiguous_strides(dims.size(), element_size);
-    for (int i = dims.size()-2; i >= 0; i--) {
-        contiguous_strides[i] = contiguous_strides[i+1] * dims[i+1];
-    }
-    return contiguous_strides;
-}
-
-
-unsigned int leap(const std::vector<unsigned int> & index,
-                  const std::vector<unsigned int> & strides) {
-    if (index.size() != strides.size()) {
-        FAILURE("Size of index (%d) and size of strides (%d) are not equal.",
-                index.size(), strides.size());
-    }
-    unsigned int leap = 0;
-    for (int i = 0; i < index.size(); i++) {
-        leap += index[i] * strides[i];
-    }
-    return leap;
-}
-
-
-std::tuple<unsigned int, int> lcseg_and_brindex(const std::vector<unsigned int> & dims,
-                                                const std::vector<unsigned int> & strides) {
-    // check size of 2 vectors
-    if (dims.size() != strides.size()) {
-        FAILURE("Size of dims (%d) and size of strides (%d) are not equal.",
-                dims.size(), strides.size());
-    }
-
-    // initialize elements
-    unsigned int ndim_ = dims.size();
-    std::vector<unsigned int> contiguous_strides_ = contiguous_strides(dims, sizeof(float));
-    unsigned int longest_contiguous_segment_ = sizeof(float);
-    int break_index_ = ndim_ - 1;
-
-    // check if i-th element of strides equals to i-th element of contiguous_strides,
-    // break at the element of different index
-    for (int i = ndim_-1; i >= 0; i--) {
-        if (strides[i] == contiguous_strides_[i]) {
-            longest_contiguous_segment_ *= dims[i];
-            break_index_--;
-        } else {
-            break;
-        }
-    }
-
-    return std::tuple<unsigned int, int>(longest_contiguous_segment_, break_index_);
-}
-
 
 void Array::contiguous_copy_from_address_(float * src, const unsigned int * src_strides) {
     // longest cntiguous segment and break index
     unsigned int longest_contiguous_segment_;
     int break_index_;
     std::vector<unsigned int> src_strides_vec(src_strides, src_strides + this->ndim_);
-    std::tie(longest_contiguous_segment_, break_index_) = lcseg_and_brindex(this->dims_,
-                                                                            src_strides_vec);
+    std::tie(longest_contiguous_segment_, break_index_) = lcseg_and_brindex(this->dims_, src_strides_vec);
 
     if (break_index_ == -1) {  // original array is perfectly contiguous
         std::memcpy(this->data_, src, longest_contiguous_segment_);
     } else {  // memcpy each longest_contiguous_segment
         unsigned int src_leap = 0;
         unsigned int des_leap = 0;
-        
+
         for (Array::iterator it = this->begin(); it != this->end();) {
             src_leap = leap(it.index(), src_strides_vec);
             uintptr_t src_ptr = reinterpret_cast<uintptr_t>(src) + src_leap;
@@ -329,6 +276,8 @@ Array::iterator Array::end(void) {
 void Array::sync_to_gpu(float * gpu_pdata, uintptr_t stream) {
     FAILURE("Merlin is not compiled with nvcc.");
 }
+
+
 void Array::sync_from_gpu(float * gpu_pdata, uintptr_t stream) {
     FAILURE("Merlin is not compiled with nvcc.");
 }

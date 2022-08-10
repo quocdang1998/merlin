@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <list>
 #include <vector>
-#include <tuple>
 
 namespace merlin {
 
@@ -18,9 +17,12 @@ class Array {
     /** @brief Multi-dimensional array iterator.*/
     class iterator {
       public:
-        /** @brief Constructor from a vector of index and a dimension vector.*/
-        iterator(const std::vector<unsigned int> & it,
-                 std::vector<unsigned int> & dims) : index_(it), dims_(&dims) {}
+        /** @brief Constructor from a vector of index and a dimension vector.
+
+            @param it Vector of index.
+            @param dims Reference to l-value vector of dimension.
+        */
+        iterator(const std::vector<unsigned int> & it, std::vector<unsigned int> & dims) : index_(it), dims_(&dims) {}
 
         /** @brief Get index of current iterator.*/
         std::vector<unsigned int> & index(void) {return this->index_;}
@@ -31,32 +33,35 @@ class Array {
 
         /** @brief Update the indexes after increasing value of index.
 
-            User can manually add a certain amount to the index vector, making some indexes
-            greater than their corresponding dimensions. This function will detect the surplus
-            quantity, and update the indices by carrying the surplus to higher stride dimensions.
+            User can manually add a certain amount to the index vector, making some indexes greater than their
+            corresponding dimensions. This function will detect the surplus quantity, and update the indices by
+            carrying the surplus to higher stride dimensions.
 
-            Example: Given a dimension vector \f$(5, 2)\f$, the index vector
-            \f$(1, 5)\f$ will be updated to \f$(3, 1)\f$.
+            Example: Given a dimension vector \f$(5, 2)\f$, the index vector \f$(1, 5)\f$ will be updated to
+            \f$(3, 1)\f$.
         */
         void update(void);
 
         /** @brief Pre-increment operator.
 
-            Increase the index of the last dimension by 1. If the maximum index is reached, set the
-            index to zero and increment the next dimension.
+            Increase the index of the last dimension by 1. If the maximum index is reached, set the index to zero and
+            increment the next dimension.
 
-            Example: \f$(0, 0) \rightarrow (0, 1) \rightarrow (0, 2)
-            \rightarrow (1, 0) \rightarrow (1, 1) \rightarrow (1, 2)\f$.
+            Example: \f$(0, 0) \rightarrow (0, 1) \rightarrow (0, 2) \rightarrow (1, 0) \rightarrow (1, 1) \rightarrow
+            (1, 2)\f$.
         */
         iterator& operator++(void);
         /** @brief Post-increment operator.
-        
+
             Same role as pre-increment operator.
         */
         iterator operator++(int);
         /** @brief Compare if the first iterator is smaller the second one.
 
             This operator is used to check if current iterator is the end iterator of Array.
+
+            @param left Left iterator
+            @param right Right iterator
         */
         friend bool operator!= (const Array::iterator& left, const Array::iterator& right);
 
@@ -72,14 +77,16 @@ class Array {
     Array(void) = default;
     /** @brief Construct an array holding value of one element.
 
-        Construct a simplest array of dimension 1.*/
+        Construct a simplest array of dimension 1.
+    */
     Array(float value);
     /** @brief Constructor from dims vector.
 
         Construct an empty contiguous array of dimension vector dims.
 
-        @param dims Vector of dimension of the array.*/
-    explicit Array(const std::vector<unsigned int> & dims);
+        @param dims Vector of dimension of the array.
+    */
+    Array(const std::vector<unsigned int> & dims);
     /** @brief Create array from NumPy array.
 
         @param data Pointer to data.
@@ -87,8 +94,8 @@ class Array {
         @param dims Pointer to array to size per dimension.
         @param strides Pointer to array to stride per dimension.
         @param copy Copy the original array to C-contiguous array.
-        @note The original memory tied to the pointer will not be freed at destruction. However,
-        if copy is true, the copied array is freed inside the destructor.
+        @note The original memory tied to the pointer will not be freed at destruction. However, if copy is true, the
+        copied array is freed inside the destructor.
     */
     Array(float * data, unsigned int ndim,
           unsigned int * dims, unsigned int * strides,
@@ -96,12 +103,14 @@ class Array {
     /** @brief Deep copy constructor.
 
         @param src Source to copy from.
+
         @note GPU data is not copied. GPU pointers to data is left untouched in old Array object.
     */
     Array(const Array & src);
     /** @brief Deep copy assignment.
 
         @param src Source to copy from.
+
         @note GPU data is not copied. GPU pointers to data is left untouched in old Array object.
     */
     Array & operator=(const Array & src);
@@ -132,8 +141,8 @@ class Array {
     std::vector<unsigned int> & strides(void) {return this->strides_;}
     /** @brief Indicate if array data on CPU RAM is should be freed at destruction.
 
-        If the array is copy version, or array data is dynamically allocated, delete operator must
-        be called when the array is destroyed to avoid memory leak.
+        If the array is copy version, or array data is dynamically allocated, delete operator must be called when the
+        array is destroyed to avoid memory leak.
     */
     bool force_free = false;
     /** @brief Size of the array.
@@ -154,6 +163,7 @@ class Array {
     /** @brief Sciling operator.
 
         Get an element at a given index.
+
         @param index Vector of indices along each dimension.
     */
     float & operator[] (const std::vector<unsigned int> & index);
@@ -163,8 +173,8 @@ class Array {
     std::list<float *> & gpu_data(void) {return this->gpu_data_;}
     /** @brief Copy data to GPU.
 
-        If the pointer to GPU data is not provided, new GPU memory will be allocated, and its
-        pointer is saved to the list of pointers Array::gpu_data_.
+        If the pointer to GPU data is not provided, new GPU memory will be allocated, and its pointer is saved to the
+        list of pointers Array::gpu_data_.
 
         @code{.cpp}
             merlin::Array<double> A(A_data, 2, dims, strides, false);
@@ -182,8 +192,8 @@ class Array {
         @endcode
 
         @param stream Synchronization stream.
-        @param gpu_pdata Pointer to an allocated GPU data. If the pointer is NULL, allocate new
-        memory and save the pointer to Array::gpu_data_.
+        @param gpu_pdata Pointer to an allocated GPU data. If the pointer is NULL, allocate new memory and save the
+        pointer to Array::gpu_data_.
     */
     void sync_to_gpu(float * gpu_pdata = NULL, uintptr_t stream = 0);
     /** @brief Copy data from GPU.
@@ -194,8 +204,7 @@ class Array {
     void sync_from_gpu(float * gpu_pdata, uintptr_t stream = 0);
     /** @brief Free data from GPU.
 
-        If index is \f$-1\f$, free all GPU data. Otherwise, free the data corresponding to the
-        index.
+        If index is \f$-1\f$, free all GPU data. Otherwise, free the data corresponding to the index.
 
         @param index Index of data pointer to be freed in the Array::gpu_data_ list.
     */
@@ -221,50 +230,14 @@ class Array {
 
     /** @brief Copy from source array to a contiguous array.
 
-        Copy from a source array to a C-contiguous array. Here the number of dimension and the sizes
-        on each dimensions of the source and destination are the equal.
+        Copy from a source array to a C-contiguous array. Here the number of dimension and the sizes on each dimensions
+        of the source and destination are the equal.
+
         @param src Pointer to source data.
         @param src_strides Pointer to strides array of the source.
     */
     void contiguous_copy_from_address_(float * src, const unsigned int * src_strides);
 };
-
-
-/** @brief Get the strides from dims vector and size of one element if the Array is C-contiguous.
-
-    @param dims Dimension vector.
-    @param size Size on one element in the array.
-*/
-std::vector<unsigned int> contiguous_strides(const std::vector<unsigned int> & dims,
-                                             unsigned int element_size);
-
-
-/** @brief Calculate the leap.
-
-    Get the number of bytes between zeroth element and element with a given index.
-    @param index Index of the element to get.
-    @param strides Strides array.
-*/
-unsigned int leap(const std::vector<unsigned int> & index,
-                  const std::vector<unsigned int> & strides);
-
-
-/** @brief Calculate the longest contiguous segment and break index.
-
-    Longest contiguous segment is the length (in bytes) of the longest sub-array that is
-    C-contiguous in the memory.
-
-    Break index is the index at which the array break.
-
-    For exmample, suppose ``A = [[1.0,2.0,3.0],[4.0,5.0,6.0]]``, then ``A[:,::2]`` will have
-    longest contiguous segment of 4 and break index of 0.
-    
-    @param dims Dimension vector.
-    @param strides Strides vector.
-*/
-std::tuple<unsigned int, int> lcseg_and_brindex(const std::vector<unsigned int> & dims,
-                                                const std::vector<unsigned int> & strides);
-
 
 }  // namespace merlin
 
