@@ -4,7 +4,7 @@
 
 #include <vector>
 
-#include "merlin/array.hpp"
+#include "merlin/tensor.hpp"
 
 namespace merlin {
 
@@ -21,8 +21,8 @@ class Grid {
     virtual ~Grid(void) = default;
 
 
-    /** @brief Reference to array of grid points.*/
-    virtual Array grid_points(void);
+    /** @brief Reference to tensor of grid points.*/
+    virtual Tensor grid_points(void);
     /** @brief Number of dimension of each point in the grid.*/
     virtual unsigned int ndim(void) {return this->capacity_points_.dims()[1];}
     /** @brief Number of points in the grid.*/
@@ -32,7 +32,7 @@ class Grid {
 
 
     /** @brief Grid iterator.*/
-    using iterator = Array::iterator;
+    using iterator = Tensor::iterator;
     /** @brief Begin iterator.*/
     virtual Grid::iterator begin(void);
     /** @brief End iterator.*/
@@ -41,7 +41,7 @@ class Grid {
 
 
     @param index Index of point to get in the grid.*/
-    virtual Array operator[] (unsigned int index);
+    virtual Tensor operator[] (unsigned int index);
     /** @brief Append a point at the end of the grid.*/
     virtual void push_back(std::vector<float> && point);
     /** @brief Remove a point at the end of the grid.*/
@@ -50,12 +50,12 @@ class Grid {
   protected:
     /** @brief Number of points in the grid.*/
     unsigned int npoint_;
-    /** @brief Array to a 2D C-contiguous array of size (capacity, ndim).
+    /** @brief Tensor to a 2D C-contiguous tensor of size (capacity, ndim).
 
     This 2D table store the value of each n-dimensional point as a row vector.
 
     Capacity is the smallest \f$2^n\f$ so that \f$n_{point} \le 2^n\f$*/
-    Array capacity_points_;
+    Tensor capacity_points_;
     /** @brief Begin iterator.*/
     std::vector<unsigned int> begin_;
     /** @brief End iterator.*/
@@ -73,8 +73,8 @@ class CartesianGrid : public Grid {
 
     /** @brief Get grid vectors.*/
     std::vector<std::vector<float>> & grid_vectors(void) {return this->grid_vectors_;}
-    /** @brief Full array of each point in the CartesianGrid in form of 2D table.*/
-    Array grid_points(void);
+    /** @brief Full tensor of each point in the CartesianGrid in form of 2D table.*/
+    Tensor grid_points(void);
     /** @brief Number of dimension of the CartesianGrid.*/
     unsigned int ndim(void);
     /** @brief Number of points in the CartesianGrid.*/
@@ -90,11 +90,11 @@ class CartesianGrid : public Grid {
     /** @brief Get element at a given index.
 
     @param index Index of point in the CartesianGrid::grid_points table.*/
-    Array operator[] (unsigned int index);
+    Tensor operator[] (unsigned int index);
     /** @brief Get element at a given index vector.
 
     @param index Vector of index on each dimension.*/
-    Array operator[] (const std::vector<unsigned int> & index);
+    Tensor operator[] (const std::vector<unsigned int> & index);
 
 
   protected:

@@ -1,10 +1,10 @@
 #include <cstdio>
 #include <vector>
 
-#include "merlin/array.hpp"
+#include "merlin/tensor.hpp"
 
 int main(void) {
-    // initialize array
+    // initialize tensor
 
     // original:
     // [1.0, 3.0, 5.0, 7.0, 9.0]
@@ -20,13 +20,13 @@ int main(void) {
     unsigned int strides[2] = {(unsigned int) (2*(dims[1] * sizeof(float))),
                                sizeof(float)};
 
-    // copy array
-    merlin::Array Ar_copy(A, ndim, dims, strides);
+    // copy tensor
+    merlin::Tensor Ar_copy(A, ndim, dims, strides);
 
-    // print array
+    // print tensor
     std::printf("Expected values : 1.0 2.0 5.0 6.0 9.0 10.0\n");
     std::printf("Result          : ");
-    for (merlin::Array::iterator it = Ar_copy.begin(); it != Ar_copy.end(); ++it) {
+    for (merlin::Tensor::iterator it = Ar_copy.begin(); it != Ar_copy.end(); ++it) {
         std::printf("%.1f ", Ar_copy[it.index()]);
     }
     std::printf("\n");

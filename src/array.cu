@@ -1,5 +1,5 @@
 // Copyright 2022 quocdang1998
-#include "merlin/array.hpp"
+#include "merlin/tensor.hpp"
 
 #include <cstdint>
 
@@ -9,10 +9,10 @@
 namespace merlin {
 
 // ------------------------------------------------------------------------------------------------
-// Array (GPU)
+// Tensor (GPU)
 // ------------------------------------------------------------------------------------------------
 
-void Array::sync_to_gpu(float * gpu_pdata, uintptr_t stream) {
+void Tensor::sync_to_gpu(float * gpu_pdata, uintptr_t stream) {
     // allocate data on GPU
     if (gpu_pdata == NULL) {
         this->gpu_data_.push_back(NULL);
@@ -23,7 +23,7 @@ void Array::sync_to_gpu(float * gpu_pdata, uintptr_t stream) {
         gpu_pdata = this->gpu_data_.back();
     }
 
-    // GPU stride array
+    // GPU stride tensor
     std::vector<unsigned int> gpu_strides_ = contiguous_strides(this->dims_, sizeof(float));
 
     // longest cntiguous segment and break index
@@ -34,13 +34,13 @@ void Array::sync_to_gpu(float * gpu_pdata, uintptr_t stream) {
 
     // copy data to GPU
     cudaStream_t stream_ = reinterpret_cast<cudaStream_t>(stream);
-    if (break_index_ == -1) {  // original array is perfectly contiguous
+    if (break_index_ == -1) {  // original tensor is perfectly contiguous
         cudaMemcpyAsync(gpu_pdata, this->data_,
                         longest_contiguous_segment_, cudaMemcpyHostToDevice, stream_);
     } else {  // copy each longest_contiguous_segment
         unsigned int cpu_leap = 0;
         unsigned int gpu_leap = 0;
-        for (Array::iterator it = this->begin(); it != this->end();) {
+        for (Tensor::iterator it = this->begin(); it != this->end();) {
             cpu_leap = leap(it.index(), this->strides_);
             uintptr_t src_ptr = (uintptr_t) this->data_ + cpu_leap;
             gpu_leap = leap(it.index(), gpu_strides_);
@@ -59,8 +59,8 @@ void Array::sync_to_gpu(float * gpu_pdata, uintptr_t stream) {
 }
 
 
-void Array::sync_from_gpu(float * gpu_pdata, uintptr_t stream) {
-    // GPU stride array
+void Tensor::sync_from_gpu(float * gpu_pdata, uintptr_t stream) {
+    // GPU stride tensor
     std::vector<unsigned int> gpu_strides_ = contiguous_strides(this->dims_, sizeof(float));
 
     // longest cntiguous segment and break index
@@ -71,13 +71,13 @@ void Array::sync_from_gpu(float * gpu_pdata, uintptr_t stream) {
 
     // copy data from GPU
     cudaStream_t stream_ = reinterpret_cast<cudaStream_t>(stream);
-    if (break_index_ == -1) {  // original array is perfectly contiguous
+    if (break_index_ == -1) {  // original tensor is perfectly contiguous
         cudaMemcpyAsync(this->data_, gpu_pdata,
                         longest_contiguous_segment_, cudaMemcpyDeviceToHost, stream_);
     } else {  // copy each longest_contiguous_segment
         unsigned int cpu_leap = 0;
         unsigned int gpu_leap = 0;
-        for (Array::iterator it = this->begin(); it != this->end();) {
+        for (Tensor::iterator it = this->begin(); it != this->end();) {
             gpu_leap = leap(it.index(), gpu_strides_);
             uintptr_t src_ptr = (uintptr_t) gpu_pdata + gpu_leap;
             cpu_leap = leap(it.index(), this->strides_);
@@ -96,7 +96,7 @@ void Array::sync_from_gpu(float * gpu_pdata, uintptr_t stream) {
 }
 
 
-void Array::free_data_from_gpu(int index) {
+void Tensor::free_data_from_gpu(int index) {
     if (index == -1) {
         while (!this->gpu_data_.empty()) {
             cudaFree(this->gpu_data_.back());

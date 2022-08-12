@@ -11,15 +11,15 @@ namespace merlin {
 // CartesianInterpolant
 // --------------------------------------------------------------------------------------------------------------------
 
-CartesianInterpolant::CartesianInterpolant(CartesianGrid & grid, Array & value) : grid_(&grid), value_(&value) {
+CartesianInterpolant::CartesianInterpolant(CartesianGrid & grid, Tensor & value) : grid_(&grid), value_(&value) {
     // check number of points of grid and value vector
     if (this->grid_->npoint() != this->value_->size()) {
-        FAILURE("Size of Grid (%d) and sizeof value array (%d) are not the same.",
+        FAILURE("Size of Grid (%d) and sizeof value tensor (%d) are not the same.",
                 this->grid_->npoint(), this->value_->size());
     }
     // check number of dimension of grid and value vector
     if (this->grid_->ndim() != this->value_->ndim()) {
-        FAILURE("Inconsistent ndim of Grid (%d) and ndim of value array (%d).",
+        FAILURE("Inconsistent ndim of Grid (%d) and ndim of value tensor (%d).",
                 this->grid_->ndim(), this->value_->ndim());
     }
 }
@@ -32,11 +32,11 @@ float CartesianInterpolant::operator() (const std::vector<float> & x) {
 // LagrangeInterpolant
 // --------------------------------------------------------------------------------------------------------------------
 
-LagrangeInterpolant::LagrangeInterpolant(CartesianGrid & grid, Array & value) : CartesianInterpolant(grid, value) {
-    // copy value to coef_ array
+LagrangeInterpolant::LagrangeInterpolant(CartesianGrid & grid, Tensor & value) : CartesianInterpolant(grid, value) {
+    // copy value to coef_ tensor
     this->coef_ = value;
     // loop on each point in value
-    for (Array::iterator it = this->coef_.begin(); it != this->coef_.end(); it++) {
+    for (Tensor::iterator it = this->coef_.begin(); it != this->coef_.end(); it++) {
         // calculate f(x_i) / prod((x-i-x_j) for j != i)
         float weight_ = 1.0;
         std::vector<unsigned int> & index_ = it.index();

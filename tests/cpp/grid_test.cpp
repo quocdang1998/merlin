@@ -1,6 +1,6 @@
 #include <cstdio>
 
-#include "merlin/array.hpp"
+#include "merlin/tensor.hpp"
 #include "merlin/grid.hpp"
 
 int main (void) {
@@ -15,7 +15,7 @@ int main (void) {
     gr.push_back(std::vector<float>({5.0, 10.0, 15.0}));
     gr.pop_back();
 
-    for (merlin::Array::iterator it = gr.begin(); it != gr.end(); it++) {
+    for (merlin::Tensor::iterator it = gr.begin(); it != gr.end(); it++) {
         for (int j = 0; j < 3; j++) {
             std::printf("%.3f", gr.grid_points()[it.index()]);
             if (j != 2) {

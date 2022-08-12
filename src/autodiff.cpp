@@ -4,7 +4,7 @@
 namespace merlin {
 
 Constant::Constant(float value) {
-	this->data_ = Array(value);
+	this->data_ = Tensor(value);
 }
 
 }  // namespace merlin

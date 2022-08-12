@@ -1,5 +1,5 @@
 // Copyright 2022 quocdang1998
-#include "merlin/array.hpp"
+#include "merlin/tensor.hpp"
 
 #include <cstring>
 #include <tuple>
@@ -10,13 +10,13 @@
 namespace merlin {
 
 // --------------------------------------------------------------------------------------------------------------------
-// Array::iterator
+// Tensor::iterator
 // --------------------------------------------------------------------------------------------------------------------
 
-bool operator!= (const Array::iterator & left, const Array::iterator & right) {
-    // check if 2 iterators comes from the same array
+bool operator!= (const Tensor::iterator & left, const Tensor::iterator & right) {
+    // check if 2 iterators comes from the same tensor
     if (left.dims_ != right.dims_) {
-        FAILURE("2 iterators are not comming from the same array.");
+        FAILURE("2 iterators are not comming from the same tensor.");
     }
 
     // compare index of each iterator
@@ -30,7 +30,7 @@ bool operator!= (const Array::iterator & left, const Array::iterator & right) {
 }
 
 
-void Array::iterator::update(void) {
+void Tensor::iterator::update(void) {
     // detect dimensions having index bigger than dim
     unsigned int current_dim = this->index_.size();
     std::vector<unsigned int>& dims = this->dims();
@@ -60,7 +60,7 @@ void Array::iterator::update(void) {
 }
 
 
-Array::iterator & Array::iterator::operator++(void) {
+Tensor::iterator & Tensor::iterator::operator++(void) {
     this->index_[this->index_.size() - 1]++;
     unsigned int current_dim = this->index_.size() - 1;
     std::vector<unsigned int>& dims = this->dims();
@@ -79,31 +79,31 @@ Array::iterator & Array::iterator::operator++(void) {
 }
 
 
-Array::iterator Array::iterator::operator++(int) {
+Tensor::iterator Tensor::iterator::operator++(int) {
     return ++(*this);
 }
 
 // --------------------------------------------------------------------------------------------------------------------
-// Array (CPU)
+// Tensor (CPU)
 // --------------------------------------------------------------------------------------------------------------------
 
 // Tools
 // -----
 
-void Array::contiguous_copy_from_address_(float * src, const unsigned int * src_strides) {
+void Tensor::contiguous_copy_from_address_(float * src, const unsigned int * src_strides) {
     // longest cntiguous segment and break index
     unsigned int longest_contiguous_segment_;
     int break_index_;
     std::vector<unsigned int> src_strides_vec(src_strides, src_strides + this->ndim_);
     std::tie(longest_contiguous_segment_, break_index_) = lcseg_and_brindex(this->dims_, src_strides_vec);
 
-    if (break_index_ == -1) {  // original array is perfectly contiguous
+    if (break_index_ == -1) {  // original tensor is perfectly contiguous
         std::memcpy(this->data_, src, longest_contiguous_segment_);
     } else {  // memcpy each longest_contiguous_segment
         unsigned int src_leap = 0;
         unsigned int des_leap = 0;
 
-        for (Array::iterator it = this->begin(); it != this->end();) {
+        for (Tensor::iterator it = this->begin(); it != this->end();) {
             src_leap = leap(it.index(), src_strides_vec);
             uintptr_t src_ptr = reinterpret_cast<uintptr_t>(src) + src_leap;
             des_leap = leap(it.index(), this->strides_);
@@ -119,7 +119,7 @@ void Array::contiguous_copy_from_address_(float * src, const unsigned int * src_
 // Constructors
 // ------------
 
-Array::Array(float value) {
+Tensor::Tensor(float value) {
     // allocate data
     this->data_ = new float[1];
     this->data_[0] = value;
@@ -132,7 +132,7 @@ Array::Array(float value) {
 }
 
 
-Array::Array(const std::vector<unsigned int> & dims) {
+Tensor::Tensor(const std::vector<unsigned int> & dims) {
     // initialize dims ans ndim
     this->ndim_ = dims.size();
     this->dims_ = dims;
@@ -148,8 +148,7 @@ Array::Array(const std::vector<unsigned int> & dims) {
 }
 
 
-Array::Array(float * data, unsigned int ndim, unsigned int * dims,
-             unsigned int * strides, bool copy) {
+Tensor::Tensor(float * data, unsigned int ndim, unsigned int * dims, unsigned int * strides, bool copy) {
     // copy meta data
     this->ndim_ = ndim;
     this->dims_ = std::vector<unsigned int>(dims, dims + ndim);
@@ -158,13 +157,13 @@ Array::Array(float * data, unsigned int ndim, unsigned int * dims,
 
     // copy / assign data
     if (copy) {  // copy data
-        // allocate a new array
+        // allocate a new tensor
         this->data_ = new float[this->size()];
 
-        // reform the stride array (force into C shape)
+        // reform the stride tensor (force into C shape)
         this->strides_ = contiguous_strides(this->dims_, sizeof(float));
 
-        // copy data from old array to new array (optimized with memcpy)
+        // copy data from old tensor to new tensor (optimized with memcpy)
         this->contiguous_copy_from_address_(data, strides);
     } else {
         this->data_ = data;
@@ -172,7 +171,7 @@ Array::Array(float * data, unsigned int ndim, unsigned int * dims,
 }
 
 
-Array::Array(const Array & src) {
+Tensor::Tensor(const Tensor & src) {
     // copy meta data
     this->ndim_ = src.ndim_;
     this->dims_ = src.dims_;
@@ -185,7 +184,7 @@ Array::Array(const Array & src) {
 }
 
 
-Array & Array::operator=(const Array & src) {
+Tensor & Tensor::operator=(const Tensor & src) {
     // copy meta data
     this->ndim_ = src.ndim_;
     this->dims_ = src.dims_;
@@ -200,7 +199,7 @@ Array & Array::operator=(const Array & src) {
 }
 
 
-Array::Array(Array && src) {
+Tensor::Tensor(Tensor && src) {
     // move meta data
     this->ndim_ = src.ndim_;
     this->dims_ = std::move(src.dims_);
@@ -217,7 +216,7 @@ Array::Array(Array && src) {
 }
 
 
-Array & Array::operator=(Array && src) {
+Tensor & Tensor::operator=(Tensor && src) {
     // move meta data
     this->ndim_ = src.ndim_;
     this->dims_ = std::move(src.dims_);
@@ -241,14 +240,14 @@ Array & Array::operator=(Array && src) {
 // Get members
 // -----------
 
-float & Array::operator[] (const std::vector<unsigned int> & index) {
+float & Tensor::operator[] (const std::vector<unsigned int> & index) {
     unsigned int leap_ = leap(index, this->strides_);
     uintptr_t data_ptr = reinterpret_cast<uintptr_t>(this->data_) + leap_;
     return *(reinterpret_cast<float *>(data_ptr));
 }
 
 
-unsigned int Array::size(void) {
+unsigned int Tensor::size(void) {
     unsigned int size = 1;
     for (int i = 0; i < this->ndim_; i++) {
         size *= this->dims_[i];
@@ -259,26 +258,26 @@ unsigned int Array::size(void) {
 // Iterator
 // --------
 
-Array::iterator Array::begin(void) {
+Tensor::iterator Tensor::begin(void) {
     this->begin_ = std::vector<unsigned int>(this->ndim_, 0);
     this->end_ = std::vector<unsigned int>(this->ndim_, 0);
     this->end_[0] = this->dims_[0];
-    return Array::iterator(this->begin_, this->dims_);
+    return Tensor::iterator(this->begin_, this->dims_);
 }
 
 
-Array::iterator Array::end(void) {
-    return Array::iterator(this->end_, this->dims_);
+Tensor::iterator Tensor::end(void) {
+    return Tensor::iterator(this->end_, this->dims_);
 }
 
 // Diable GPU features
 #ifndef __NVCC__
-void Array::sync_to_gpu(float * gpu_pdata, uintptr_t stream) {
+void Tensor::sync_to_gpu(float * gpu_pdata, uintptr_t stream) {
     FAILURE("Merlin is not compiled with nvcc.");
 }
 
 
-void Array::sync_from_gpu(float * gpu_pdata, uintptr_t stream) {
+void Tensor::sync_from_gpu(float * gpu_pdata, uintptr_t stream) {
     FAILURE("Merlin is not compiled with nvcc.");
 }
 #endif  // __NVCC__
@@ -286,7 +285,7 @@ void Array::sync_from_gpu(float * gpu_pdata, uintptr_t stream) {
 // Destructor
 // ----------
 
-Array::~Array(void) noexcept(false) {
+Tensor::~Tensor(void) noexcept(false) {
     if (this->force_free) {
         // MESSAGE("Free CPU data.");
         delete[] this->data_;

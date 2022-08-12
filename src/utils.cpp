@@ -6,7 +6,7 @@
 namespace merlin {
 
 // --------------------------------------------------------------------------------------------------------------------
-// array tools
+// tensor tools
 // --------------------------------------------------------------------------------------------------------------------
 
 std::vector<unsigned int> contiguous_strides(const std::vector<unsigned int> & dims, unsigned int element_size) {

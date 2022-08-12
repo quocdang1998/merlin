@@ -1,6 +1,6 @@
 // Copyright 2022 quocdang1998
-#ifndef MERLIN_ARRAY_HPP_
-#define MERLIN_ARRAY_HPP_
+#ifndef MERLIN_TENSOR_HPP_
+#define MERLIN_TENSOR_HPP_
 
 #include <cstdint>
 #include <list>
@@ -8,13 +8,13 @@
 
 namespace merlin {
 
-/** @brief Multi-dimensional array of simple precision real values.
+/** @brief Multi-dimensional tensor of simple precision real values.
 
-    This class make the interface between C array and Numpy array.
+    This class make the interface between C tensor and Numpy tensor.
 */
-class Array {
+class Tensor {
   public:
-    /** @brief Multi-dimensional array iterator.*/
+    /** @brief Multi-dimensional tensor iterator.*/
     class iterator {
       public:
         /** @brief Constructor from a vector of index and a dimension vector.
@@ -58,12 +58,12 @@ class Array {
         iterator operator++(int);
         /** @brief Compare if the first iterator is smaller the second one.
 
-            This operator is used to check if current iterator is the end iterator of Array.
+            This operator is used to check if current iterator is the end iterator of Tensor.
 
             @param left Left iterator
             @param right Right iterator
         */
-        friend bool operator!= (const Array::iterator& left, const Array::iterator& right);
+        friend bool operator!= (const Tensor::iterator& left, const Tensor::iterator& right);
 
       private:
         /** @brief Index vector.*/
@@ -74,61 +74,59 @@ class Array {
 
 
     /** @brief Default constructor.*/
-    Array(void) = default;
-    /** @brief Construct an array holding value of one element.
+    Tensor(void) = default;
+    /** @brief Construct an tensor holding value of one element.
 
-        Construct a simplest array of dimension 1.
+        Construct a simplest tensor of dimension 1.
     */
-    Array(float value);
+    Tensor(float value);
     /** @brief Constructor from dims vector.
 
-        Construct an empty contiguous array of dimension vector dims.
+        Construct an empty contiguous tensor of dimension vector dims.
 
-        @param dims Vector of dimension of the array.
+        @param dims Vector of dimension of the tensor.
     */
-    Array(const std::vector<unsigned int> & dims);
-    /** @brief Create array from NumPy array.
+    Tensor(const std::vector<unsigned int> & dims);
+    /** @brief Create tensor from NumPy tensor.
 
         @param data Pointer to data.
-        @param ndim Number of dimension of array.
-        @param dims Pointer to array to size per dimension.
-        @param strides Pointer to array to stride per dimension.
-        @param copy Copy the original array to C-contiguous array.
+        @param ndim Number of dimension of tensor.
+        @param dims Pointer to tensor to size per dimension.
+        @param strides Pointer to tensor to stride per dimension.
+        @param copy Copy the original tensor to C-contiguous tensor.
         @note The original memory tied to the pointer will not be freed at destruction. However, if copy is true, the
-        copied array is freed inside the destructor.
+        copied tensor is freed inside the destructor.
     */
-    Array(float * data, unsigned int ndim,
-          unsigned int * dims, unsigned int * strides,
-          bool copy = true);
+    Tensor(float * data, unsigned int ndim, unsigned int * dims, unsigned int * strides, bool copy = true);
     /** @brief Deep copy constructor.
 
         @param src Source to copy from.
 
-        @note GPU data is not copied. GPU pointers to data is left untouched in old Array object.
+        @note GPU data is not copied. GPU pointers to data is left untouched in old Tensor object.
     */
-    Array(const Array & src);
+    Tensor(const Tensor & src);
     /** @brief Deep copy assignment.
 
         @param src Source to copy from.
 
-        @note GPU data is not copied. GPU pointers to data is left untouched in old Array object.
+        @note GPU data is not copied. GPU pointers to data is left untouched in old Tensor object.
     */
-    Array & operator=(const Array & src);
+    Tensor & operator=(const Tensor & src);
     /** @brief Move constructor.
 
         @param src Source to move from.
     */
-    Array(Array && src);
+    Tensor(Tensor && src);
     /** @brief Move assignment.
 
         @param src Source to move from.
     */
-    Array & operator=(Array && src);
+    Tensor & operator=(Tensor && src);
     /** @brief Destructor.
 
         @note Destructor returns error when GPU data is not manually freed before its call.
     */
-    ~Array(void) noexcept(false);
+    ~Tensor(void) noexcept(false);
 
 
     /** @brief Pointer to (first element in) the data.*/
@@ -139,13 +137,13 @@ class Array {
     std::vector<unsigned int> & dims(void) {return this->dims_;}
     /** @brief Reference to vector of strides on each dimension.*/
     std::vector<unsigned int> & strides(void) {return this->strides_;}
-    /** @brief Indicate if array data on CPU RAM is should be freed at destruction.
+    /** @brief Indicate if tensor data on CPU RAM is should be freed at destruction.
 
-        If the array is copy version, or array data is dynamically allocated, delete operator must be called when the
-        array is destroyed to avoid memory leak.
+        If the tensor is copy version, or tensor data is dynamically allocated, delete operator must be called when the
+        tensor is destroyed to avoid memory leak.
     */
     bool force_free = false;
-    /** @brief Size of the array.
+    /** @brief Size of the tensor.
 
         Product of the size of each dimension.
     */
@@ -154,12 +152,12 @@ class Array {
 
         Vector of index \f$(0, 0, ..., 0)\f$.
     */
-    Array::iterator begin(void);
+    Tensor::iterator begin(void);
     /** @brief End iterator.
 
         Vector of index \f$(d_0, 0, ..., 0)\f$.
     */
-    Array::iterator end(void);
+    Tensor::iterator end(void);
     /** @brief Sciling operator.
 
         Get an element at a given index.
@@ -174,17 +172,17 @@ class Array {
     /** @brief Copy data to GPU.
 
         If the pointer to GPU data is not provided, new GPU memory will be allocated, and its pointer is saved to the
-        list of pointers Array::gpu_data_.
+        list of pointers Tensor::gpu_data_.
 
         @code{.cpp}
-            merlin::Array<double> A(A_data, 2, dims, strides, false);
+            merlin::Tensor<double> A(A_data, 2, dims, strides, false);
             A.sync_to_gpu();  // allocate & copy data to gpu (this memory region has index 0)
 
-            // do sth to the array
+            // do sth to the tensor
 
             A.sync_to_gpu(A.gpu_data().back())  // copy data to the same memory region allocated above
 
-            // do sth to array on GPU
+            // do sth to tensor on GPU
 
             A.sync_from_gpu(A.gpu_data().back())  // copy data on GPU back to CPU
 
@@ -193,7 +191,7 @@ class Array {
 
         @param stream Synchronization stream.
         @param gpu_pdata Pointer to an allocated GPU data. If the pointer is NULL, allocate new memory and save the
-        pointer to Array::gpu_data_.
+        pointer to Tensor::gpu_data_.
     */
     void sync_to_gpu(float * gpu_pdata = NULL, uintptr_t stream = 0);
     /** @brief Copy data from GPU.
@@ -206,7 +204,7 @@ class Array {
 
         If index is \f$-1\f$, free all GPU data. Otherwise, free the data corresponding to the index.
 
-        @param index Index of data pointer to be freed in the Array::gpu_data_ list.
+        @param index Index of data pointer to be freed in the Tensor::gpu_data_ list.
     */
     void free_data_from_gpu(int index = -1);
 
@@ -228,17 +226,17 @@ class Array {
     /** @brief End iterator.*/
     std::vector<unsigned int>  end_;
 
-    /** @brief Copy from source array to a contiguous array.
+    /** @brief Copy from source tensor to a contiguous tensor.
 
-        Copy from a source array to a C-contiguous array. Here the number of dimension and the sizes on each dimensions
+        Copy from a source tensor to a C-contiguous tensor. Here the number of dimension and the sizes on each dimensions
         of the source and destination are the equal.
 
         @param src Pointer to source data.
-        @param src_strides Pointer to strides array of the source.
+        @param src_strides Pointer to strides tensor of the source.
     */
     void contiguous_copy_from_address_(float * src, const unsigned int * src_strides);
 };
 
 }  // namespace merlin
 
-#endif  // MERLIN_ARRAY_HPP_
+#endif  // MERLIN_TENSOR_HPP_

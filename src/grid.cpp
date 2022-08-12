@@ -25,14 +25,14 @@ Grid::Grid(unsigned int ndim, unsigned int npoint) : npoint_(npoint) {
         capacity_ <<= 1;
     }
     // allocate data
-    this->capacity_points_ = Array(std::vector<unsigned int>({capacity_, ndim}));
+    this->capacity_points_ = Tensor(std::vector<unsigned int>({capacity_, ndim}));
 }
 
 // Get members
 // -----------
 
-Array Grid::grid_points(void) {
-    return Array(this->capacity_points_.data(), this->capacity_points_.ndim(), &(this->capacity_points_.dims()[0]),
+Tensor Grid::grid_points(void) {
+    return Tensor(this->capacity_points_.data(), this->capacity_points_.ndim(), &(this->capacity_points_.dims()[0]),
                  &(this->capacity_points_.strides()[0]), false);
 }
 
@@ -48,18 +48,18 @@ Grid::iterator Grid::begin(void) {
 
 
 Grid::iterator Grid::end(void) {
-    return Array::iterator(this->end_, this->capacity_points_.dims());
+    return Tensor::iterator(this->end_, this->capacity_points_.dims());
 }
 
 // Append/Remove/Get point
 // -----------------------
 
-Array Grid::operator[] (unsigned int index) {
+Tensor Grid::operator[] (unsigned int index) {
     std::vector<unsigned int> index_grid = {index, 0};
     float * target = &(this->capacity_points_[index_grid]);
     unsigned int dims_[1] = {this->ndim()};
     unsigned int strides_[1] = {sizeof(float)};
-    return Array(target, 1, dims_, strides_, false);
+    return Tensor(target, 1, dims_, strides_, false);
 }
 
 
@@ -72,7 +72,7 @@ void Grid::push_back(std::vector<float> && point) {
     this->npoint_ += 1;
     if (this->npoint_ > this->capacity()) {
         // reallocate data
-        Array new_location = Array(std::vector<unsigned int>({2*this->capacity(), this->ndim()}));
+        Tensor new_location = Tensor(std::vector<unsigned int>({2*this->capacity(), this->ndim()}));
         // copy data from old location to new location
         std::memcpy(new_location.data(), this->capacity_points_.data(), sizeof(float)*this->npoint_*this->ndim());
         this->capacity_points_ = std::move(new_location);
@@ -86,7 +86,7 @@ void Grid::pop_back(void) {
     this->npoint_ -= 1;
     if (this->npoint_ <= this->capacity()/2) {
         // reallocate data
-        Array new_location = Array(std::vector<unsigned int>({this->capacity()/2, this->ndim()}));
+        Tensor new_location = Tensor(std::vector<unsigned int>({this->capacity()/2, this->ndim()}));
         // copy data from old location to new location
         std::memcpy(new_location.data(), this->capacity_points_.data(), sizeof(float)*this->npoint_*this->ndim());
         this->capacity_points_ = std::move(new_location);
@@ -114,13 +114,13 @@ CartesianGrid::CartesianGrid(const std::vector<std::vector<float>> & grid_vector
 // Get members
 // -----------
 
-Array CartesianGrid::grid_points(void) {
+Tensor CartesianGrid::grid_points(void) {
     // create index vector
     unsigned int npoint_ = this->npoint();
     std::vector<unsigned int> indexes_(npoint_);
     std::iota(indexes_.begin(), indexes_.end(), 0);
     // get value
-    Array grid_points(std::vector<unsigned int>({npoint_, this->ndim()}));
+    Tensor grid_points(std::vector<unsigned int>({npoint_, this->ndim()}));
     std::vector<std::vector<unsigned int>> n_indexes = contiguous_to_ndim_idx(indexes_, this->dims_);
     std::vector<float> value_(this->ndim());
     for (unsigned int i = 0; i < npoint_; i++) {
@@ -157,7 +157,7 @@ unsigned int CartesianGrid::capacity(void) {
 // --------
 
 Grid::iterator CartesianGrid::begin(void) {
-    // initialize index array
+    // initialize index tensor
     this->begin_ = std::vector<unsigned int>(this->ndim(), 0);
     this->end_ = std::vector<unsigned int>(this->ndim(), 0);
     this->end_[0] = this->grid_vectors_[0].size();
@@ -166,17 +166,17 @@ Grid::iterator CartesianGrid::begin(void) {
 
 
 Grid::iterator CartesianGrid::end(void) {
-    return Array::iterator(this->end_, this->dims_);
+    return Tensor::iterator(this->end_, this->dims_);
 }
 
 // Append/Remove/Get point
 // -----------------------
 
-Array CartesianGrid::operator[] (unsigned int index) {
+Tensor CartesianGrid::operator[] (unsigned int index) {
     // convert C-contiguous index to ndim index
     std::vector<unsigned int> index_ = contiguous_to_ndim_idx({index}, this->dims_)[0];
     // get value
-    Array value_(std::vector<unsigned int>({this->ndim()}));
+    Tensor value_(std::vector<unsigned int>({this->ndim()}));
     for (unsigned int j = 0; j < index_.size(); j++) {
         value_[std::vector<unsigned int>({j})] = this->grid_vectors_[j][index_[j]];
     }
@@ -184,14 +184,14 @@ Array CartesianGrid::operator[] (unsigned int index) {
 }
 
 
-Array CartesianGrid::operator[] (const std::vector<unsigned int> & index) {
+Tensor CartesianGrid::operator[] (const std::vector<unsigned int> & index) {
     // check size of index
     if (index.size() != this->ndim()) {
         FAILURE("Size of index (%d) is different from ndim of CartesianGrid (%d).",
                 index.size(), this->ndim());
     }
-    // assign to result array
-    Array result(std::vector<unsigned int>({this->ndim()}));
+    // assign to result tensor
+    Tensor result(std::vector<unsigned int>({this->ndim()}));
     for (unsigned int i = 0; i < index.size(); i++) {
         if (index[i] >= this->dims_[i]) {
             FAILURE("Size of dimension %d of index (%d) must be less than %d.",
