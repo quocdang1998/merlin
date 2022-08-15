@@ -1,7 +1,7 @@
-merlin::Grid
-============
+merlin::Tensor
+==============
 
-.. doxygenclass:: merlin::Grid
+.. doxygenclass:: merlin::Tensor
    :members:
    :protected-members:
    :private-members:

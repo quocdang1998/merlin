@@ -4,28 +4,41 @@ C++ API
 Array API
 ---------
 
+This API allow manipulation with multi-dimensional array CPU, out-of-core and
+GPU array:
+
 .. doxysummary::
    :toctree: generated
 
    merlin::Array
-   merlin::contiguous_strides
-   merlin::leap
-   merlin::lcseg_and_brindex
+   merlin::Tensor
+   merlin::Parcel
 
-Autodiff API
-------------
+Some classes facilitates array abstraction:
 
 .. doxysummary::
    :toctree: generated
 
-   merlin::AutoNode
-   merlin::Constant
+   merlin::Slice
 
-Grid of points
---------------
+
+Log API
+-------
+
+Macro functions for printing log messages and throwing an exception:
 
 .. doxysummary::
    :toctree: generated
 
-   merlin::Grid
-   merlin::CartesianGrid
+   MESSAGE
+   WARNING
+   FAILURE
+   CUDAOUT
+
+Exception classes reserved for errors related to CUDA:
+
+.. doxysummary::
+   :toctree: generated
+
+   cuda_compile_error
+   cuda_runtime_error

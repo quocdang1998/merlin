@@ -52,7 +52,6 @@ LagrangeInterpolant::LagrangeInterpolant(CartesianGrid & grid, Tensor & value) :
         // multiply weight to coef
         float & coef_ = this->coef_[it.index()];
         coef_ = static_cast<float>(coef_) / static_cast<float>(weight_);
-        MESSAGE("%f", this->coef_[it.index()]);
     }
 }
 

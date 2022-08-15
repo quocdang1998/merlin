@@ -12,20 +12,22 @@ set(CMAKE_CXX_STANDARD 17)
 list(APPEND MERLIN_SRC_CPP
      src/array.cpp
      # src/autodiff.cpp
-     src/grid.cpp
-     src/interpolant.cpp
-     src/logger.cpp
+     # src/grid.cpp
+     # src/interpolant.cpp
+     src/tensor.cpp
      src/utils.cpp
+     src/parcel.cpp
 )
 list(APPEND MERLIN_SRC_CU
-     src/array.cu
+     src/parcel.cu
+     src/tensor.cu
 )
 
 # options
 option(MERLIN_CUDA "Build library using CUDA" ON)  # -DMERLIN_CUDA=OFF
 set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
        CACHE STRING "Type of the created library (static or shared/dynamic)")
-option(MERLIN_TEST "Build test executables" OFF)  # -DMERLIN_TEST=ON
+option(MERLIN_TEST "Build test executables" ON)  # -DMERLIN_TEST=ON
 
 # project name
 if(MERLIN_CUDA)
@@ -38,8 +40,7 @@ endif(MERLIN_CUDA)
 list(APPEND MERLIN_SRC ${MERLIN_SRC_CPP})
 if(MERLIN_CUDA)
     list(APPEND MERLIN_SRC ${MERLIN_SRC_CU})
-    # set_source_files_properties(${MERLIN_SRC_CPP} PROPERTIES LANGUAGE CUDA)
-    add_compile_definitions(__NVCC__)
+    add_compile_definitions(MERLIN_CUDA_)
 endif()
 
 # =============================================================================
@@ -72,10 +73,6 @@ endif(MERLIN_CUDA)
 
 # OpenMP
 find_package(OpenMP)
-#if (OPENMP_FOUND)
-#    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-#    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-#endif()
 
 # =============================================================================
 # library and executable
@@ -118,7 +115,7 @@ target_link_libraries(libmerlin PUBLIC OpenMP::OpenMP_CXX)
 # =============================================================================
 
 function(CONFIGURE_TESTFILES LANGUAGE)
-    file(GLOB MERLIN_TESTFILES "tests/${LANGUAGE}/*")
+    file(GLOB MERLIN_TESTFILES "tests/${LANGUAGE}/test_*")
     foreach (TESTFILE ${MERLIN_TESTFILES})
         get_filename_component(TESTFILENAME ${TESTFILE} NAME)
         string(REPLACE ".${LANGUAGE}" "" TESTNAME ${TESTFILENAME})

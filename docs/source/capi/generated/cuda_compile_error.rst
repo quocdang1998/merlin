@@ -1,7 +1,7 @@
-merlin::Constant
-================
+cuda_compile_error
+==================
 
-.. doxygenclass:: merlin::Constant
+.. doxygenclass:: cuda_compile_error
    :members:
    :protected-members:
    :private-members:

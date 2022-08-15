@@ -1,0 +1,4 @@
+FAILURE
+=======
+
+.. doxygendefine:: FAILURE
