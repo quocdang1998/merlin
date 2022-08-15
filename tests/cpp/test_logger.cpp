@@ -9,5 +9,7 @@ int main (void) {
     MESSAGE("Status message %d.", 0);
     WARNING("Warning message %.3f.", 1.0/3.0);
     foo();
-    FAILURE("Fatal error: %s.", "Runtime error");
+    try {
+        FAILURE(std::runtime_error, "Fatal error: %s.", "Runtime error");
+    } catch (std::exception & e) {}
 }
