@@ -35,7 +35,7 @@ To compile the documentation, install the following packages:
    .. code-block:: sh
 
       pip install breathe
-      pip install https://github.com/quocdang1998/doxysummary.git
+      pip install git+https://github.com/quocdang1998/doxysummary.git
 
 
 Compilation
@@ -58,12 +58,12 @@ On Linux, to compile the C++ core, open a the terminal and execute:
 On Windows, because MSVC pre-defines some enviroment variables, compilation
 with Visual Studio application is strongly recommended. Inside the application:
 
-1. Configure CMake: **Project** ➜ **Configure merlin**
+1. Configure CMake: **Project** -> **Configure merlin**
 
    .. image:: _img/installation_Configure.png
       :width: 100%
 
-2. Build: **Build** ➜ **Build All**
+2. Build: **Build** -> **Build All**
 
    .. image:: _img/installation_Build.png
       :width: 100%
@@ -130,3 +130,4 @@ CMake build options
 
    :Value: ``ON``, ``OFF``
    :Default: ``OFF``
+

@@ -10,8 +10,8 @@ GPU array:
 .. doxysummary::
    :toctree: generated
 
+   merlin::NdData
    merlin::Array
-   merlin::Tensor
    merlin::Parcel
 
 Some classes facilitates array abstraction:
@@ -19,7 +19,8 @@ Some classes facilitates array abstraction:
 .. doxysummary::
    :toctree: generated
 
-   merlin::Slice
+   merlin::Vector
+   merlin::intvec
 
 
 Log API

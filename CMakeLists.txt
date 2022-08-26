@@ -10,17 +10,17 @@ set(CMAKE_CXX_STANDARD 17)
 
 # source list
 list(APPEND MERLIN_SRC_CPP
-     src/array.cpp
+     src/nddata.cpp
      # src/autodiff.cpp
      # src/grid.cpp
      # src/interpolant.cpp
-     src/tensor.cpp
+     src/array.cpp
      src/utils.cpp
      src/parcel.cpp
 )
 list(APPEND MERLIN_SRC_CU
      src/parcel.cu
-     src/tensor.cu
+     src/array.cu
 )
 
 # options
@@ -50,7 +50,7 @@ endif()
 # git
 find_package(Git QUIET)
 if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
-    option(GIT_SUBMODULE "Check submodules during build" ON)
+    option(GIT_SUBMODULE "Check submodules during build" OFF)
     if(GIT_SUBMODULE)
         message(STATUS "Submodule update")
         execute_process(
@@ -69,6 +69,7 @@ endif()
 if(MERLIN_CUDA)
     set(CMAKE_CUDA_STANDARD 17)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
 endif(MERLIN_CUDA)
 
 # OpenMP
@@ -136,7 +137,7 @@ if(MERLIN_TEST)
 endif(MERLIN_TEST)
 
 # =============================================================================
-# write variable to file
+# write config variable to file
 # =============================================================================
 
 # set(MERLIN_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/config.yaml)

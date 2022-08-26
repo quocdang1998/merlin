@@ -1,8 +1,8 @@
 // Copyright 2022 quocdang1998
 #include "merlin/parcel.hpp"
 
-#include "merlin/tensor.hpp"  // Tensor
-#include "merlin/logger.hpp"  // FAILURE
+#include "merlin/array.hpp"  // merlin::Array
+#include "merlin/logger.hpp"  // FAILURE, cuda_compile_error
 
 namespace merlin {
 
@@ -14,7 +14,7 @@ Parcel::Parcel(void) {
 }
 
 // Constructor from CPU array
-Parcel::Parcel(const Tensor & cpu_array, uintptr_t stream) {
+Parcel::Parcel(const Array & cpu_array, uintptr_t stream) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 
@@ -26,6 +26,7 @@ Parcel::Parcel(const Parcel & src) {
 // Copy assignment
 Parcel & Parcel::operator=(const Parcel & src) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
+    return *this;
 }
 
 // Move constructor
@@ -33,13 +34,14 @@ Parcel::Parcel(Parcel && src) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 
-// Free old data
-void Parcel::free_current_data(void) {
+// Move assignment
+Parcel & Parcel::operator=(Parcel && src) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
+    return *this;
 }
 
-// Update the shape vector and strides vector on GPU memory
-void Parcel::copy_metadata(void) {
+// Free old data
+void Parcel::free_current_data(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 

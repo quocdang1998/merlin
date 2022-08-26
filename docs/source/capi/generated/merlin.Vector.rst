@@ -1,7 +1,7 @@
-merlin::Slice
-=============
+merlin::Vector
+==============
 
-.. doxygenclass:: merlin::Slice
+.. doxygenclass:: merlin::Vector
    :members:
    :protected-members:
    :private-members:

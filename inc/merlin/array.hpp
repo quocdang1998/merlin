@@ -1,159 +1,148 @@
-// Copyright 2022 quocdang1998
-/** @file array.hpp
-    @brief Provide definition of a basic array.
-*/
-#ifndef MERLIN_ARRAY_HPP_
-#define MERLIN_ARRAY_HPP_
+// Copyright 2022 quocdang1998NdData
+#ifndef MERLIN_TENSOR_HPP_
+#define MERLIN_TENSOR_HPP_
 
 #include <cstdint>  // uintptr_t
 #include <initializer_list>  // std::initializer_list
-#include <tuple>  // std::tie
-#include <vector>  // std::vector
+
+#include "merlin/nddata.hpp"  // merlin::NdData, merlin::Parcel
+#include "merlin/vector.hpp"  // merlin::intvec
 
 namespace merlin {
 
-/** @brief Basic array object.*/
-class Array {
-  public:
-    // Constructor
-    // -----------
-    /** @brief Default constructor (do nothing).*/
-    Array(void) = default;
-    /** @brief Constructor from data pointer and meta-data.
-     *  @details This constructor is used to construct explicitly an Array in C++ interface.
-     *  @param data Pointer to data.
-     *  @param ndim Number of dimension.
-     *  @param shape Shape vector.
-     *  @param strides Strides vector.
-     */
-    Array(float * data, unsigned int ndim, std::initializer_list<unsigned int> shape,
-          std::initializer_list<unsigned int> strides);
-    /** @brief Constructor from data pointer and meta-data pointers.
-     *  @details This constructor is designed for initializing object from Numpy np.array.
-     *  @param data Pointer to data.
-     *  @param ndim Number of dimension.
-     *  @param shape Pointer to shape vector.
-     *  @param strides Pointer to strides vector.
-     */
-    Array(float * data, unsigned int ndim, unsigned int * shape, unsigned int * strides);
-
-    // Copy and move
-    // -------------
-    /** @brief Shallow copy constructor.*/
-    Array(const Array & source) = default;
-    /** @brief Shallow copy assignment.*/
-    Array & operator= (const Array & source) = default;
-    /** @brief Move constructor.*/
-    Array(Array && source) = default;
-    /** @brief Move assignment.*/
-    Array & operator= (Array && source) = default;
-
-    // Get members
-    // -----------
-    /** @brief Get element pointer to data.*/
-    float * data(void) const {return this->data_;}
-    /** @brief Get number of dimension.*/
-    unsigned int ndim(void) const {return this->ndim_;}
-    /** @brief Get reference to shape vector.*/
-    std::vector<unsigned int> & shape(void) {return this->shape_;}
-    /** @brief Get constant reference to shape vector.*/
-    const std::vector<unsigned int> & shape(void) const {return this->shape_;}
-    /** @brief Get reference to shape vector.*/
-    std::vector<unsigned int> & strides(void) {return this->strides_;}
-    /** @brief Get constant reference to shape vector.*/
-    const std::vector<unsigned int> & strides(void) const {return this->strides_;}
-
-    // Atributes
-    // ---------
-    /** @brief Number of element.*/
-    unsigned int size(void);
-
-    // Destructor
-    // ----------
-    /** @brief Default destructor.*/
-    virtual ~Array(void) = default;
-
-
-  protected:
-    // Members
-    // -------
-    /** @brief Pointer to data.*/
-    float * data_ = NULL;
-    /** @brief Number of dimension.*/
-    unsigned int ndim_;
-    /** @brief Shape vector.
-     *  @details Size of each dimension.
-     */
-    std::vector<unsigned int> shape_;
-    /** @brief Stride vector.\
-     *  @details Number of incresing bytes in memory when an index of a dimension jumps by 1.
-     */
-    std::vector<unsigned int> strides_;
-};
-
-/** @brief Slice of an Array.*/
-class Slice {
+/** @brief Multi-dimensional array on CPU.*/
+class Array : public NdData {
   public:
     // Constructors
     // ------------
-    /** @brief Default constructor.
-     *  @details Construct a full slice (start at 0, end at last element, step 1).
+    /** @brief Default constructor (do nothing).*/
+    Array(void) = default;
+    /** @brief Construct 1D array holding a float value.
+     *  @param value Assigned value.
      */
-    Slice(void) = default;
-    /** @brief Member constructor.
-     *  @details Construct Slice obejct from value of its members.
-     *  @param start Start position (must be positive).
-     *  @param stop Stop position (count from the last element, modulo if range exceeded).
-     *  @param step Step (positive means step to right, negative means step to the left).
+    Array(float value);
+    /** @brief Construct C-contiguous empty array from dimension vector.
+     *  @param shape Shape vector.
      */
-    Slice(unsigned int start, int stop, int step);
-    /** @brief Constructor from an initializer list.
-     *  @param list Initializer list of length 3.
+    Array(std::initializer_list<unsigned long int> shape);
+    /** @brief Construct array from pointer, to data and meta-data.
+     *  @param data Pointer to data.
+     *  @param ndim Number of dimension of tensor.
+     *  @param shape Pointer to tensor to size per dimension.
+     *  @param strides Pointer to tensor to stride per dimension.
+     *  @param copy Copy the original tensor to C-contiguous tensor.
+     *  @note The original memory tied to the pointer will not be freed at destruction. But if copy is true, the
+        copied tensor is automatically deallocated inside the destructor.
      */
-    Slice(std::initializer_list<int> list);
+    Array(float * data, unsigned long int ndim,
+           unsigned long int * shape, unsigned long int * strides, bool copy = false);
 
-    // Get members
-    // -----------
-    /** @brief Get reference to start value.*/
-    unsigned int & start(void) {return this->start_;}
-    /** @brief Get constant reference to start value.*/
-    const unsigned int & start(void) const {return this->start_;}
-    /** @brief Get reference to stop value.*/
-    int & stop(void) {return this->stop_;}
-    /** @brief Get constant reference to stop value.*/
-    const int & stop(void) const {return this->stop_;}
-    /** @brief Get reference to step value.*/
-    int & step(void) {return this->step_;}
-    /** @brief Get constant reference to step value.*/
-    const int & step(void) const {return this->step_;}
+    // Copy and move
+    // -------------
+    /** @brief Deep copy constructor.*/
+    Array(const Array & src);
+    /** @brief Deep copy assignment.*/
+    Array & operator=(const Array & src);
+    /** @brief Move constructor.*/
+    Array(Array && src);
+    /** @brief Move assignment.*/
+    Array & operator=(Array && src);
 
-    // Convert to range
-    // ----------------
-    /** @brief Get indices corresponding to element represented by the slice.
-     *  @param length Length of the array.
+    // Iterator
+    // --------
+    class iterator {
+      public:
+        // Constructor
+        // ^^^^^^^^^^^
+        /** @brief Constructor from a vector of index and a dimension vector.
+         *  @param it Vector of index.
+         *  @param shape Reference to l-value vector of dimension.
+         */
+        iterator(const intvec & it, intvec & shape) : index_(it), shape_(&shape) {}
+
+        // Get members
+        // ^^^^^^^^^^^
+        /** @brief Get index of current iterator.*/
+        intvec & index(void) {return this->index_;}
+        /** @brief Get index of constant iterator.*/
+        const intvec & index(void) const {return this->index_;}
+        /** @brief Get reference to the dimension vector of the iterator.*/
+        intvec & shape(void) {return *(this->shape_);}
+
+        // Attributes
+        // ^^^^^^^^^^
+        [[deprecated("This function should only be used when jumping a step bigger than 1.")]]
+        void update(void);
+
+        // Operators
+        // ^^^^^^^^^
+        /** @brief Pre-increment operator.
+         *  @details Increase the index of the last dimension by 1. If the maximum index is reached, set the index to
+         *  zero and increment the next dimension.
+         *
+         *  Example: \f$(0, 0) \rightarrow (0, 1) \rightarrow (0, 2) \rightarrow (1, 0) \rightarrow (1, 1) \rightarrow
+         *  (1, 2)\f$.
+         */
+        iterator& operator++(void);
+        /** @brief Post-increment operator.
+         *  @details Same role as pre-increment operator.
+         */
+        iterator operator++(int);
+        /** @brief Compare if the first iterator is different than the second one.
+         *  @details This operator is used to check if current iterator is the end iterator of Array.
+         *  @param left Left iterator.
+         *  @param right Right iterator.
+         *  @return True if 2 iterators have the same index.
+        */
+        friend bool operator!= (const Array::iterator& left, const Array::iterator& right);
+
+        private:
+        // Members
+        // ^^^^^^^
+        /** @brief Index vector.*/
+        intvec index_;
+        /** @brief Pointer to max diemension vector.*/
+        intvec * shape_;
+    };
+
+    // Atributes
+    // ---------
+    /** @brief Begin iterator.
+     *  @details Vector of index \f$(0, 0, ..., 0)\f$.
      */
-    std::vector<unsigned int> range(unsigned int length);
+    Array::iterator begin(void);
+    /** @brief End iterator.
+     *  @details Vector of index \f$(d_0, 0, ..., 0)\f$.
+     */
+    Array::iterator end(void);
+    /** @brief Sciling operator.
+     *  @details Get an element at a given index.
+     *  @param index Vector of indices along each dimension.
+     *  @return Reference to the element at the provided index.
+     */
+    float & operator[] (const intvec & idx);
+
+    // Transfer data
+    // -------------
+    // Copy data from GPU array
+    void sync_from_gpu(const Parcel & gpu_array, uintptr_t stream = 0);
+
+    // Destructor
+    // ----------
+    /** @brief Destructor.*/
+    ~Array(void);
 
   protected:
     // Members
     // -------
-    /** @brief Start index.*/
-    unsigned int start_ = 0;
-    /** @brief Stop index, count from last element.
-     *  @details Positive means count from zeroth element, negative means count from last element.
-     */
-    int stop_ = 0;
-    /** @brief Step
-     * @details Positive means stepping to the right, Negative means stepping to the left.
-     */
-    int step_ = 1;
+    /** @brief Decision to delete Array::data_ at destruction or not.*/
+    bool force_free;
+    /** @brief Index vector of begin element.*/
+    intvec begin_;
+    /** @brief Index vector of last element.*/
+    intvec end_;
 };
-
-// Forward declaration of subclasses
-class Tensor;  // CPU Array, defined in tensor.hpp
-class Parcel;  // GPU Array, defined in parcel.hpp
-
 
 }  // namespace merlin
 
-#endif  // MERLIN_ARRAY_HPP_
+#endif  // MERLIN_TENSOR_HPP_
