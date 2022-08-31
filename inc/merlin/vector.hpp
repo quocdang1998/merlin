@@ -62,11 +62,11 @@ class Vector {
     /// @name GPU related features
     /// @{
     /** @brief Minimum number of bytes to allocate in the memory to store the object and its data.
-     *  @details <b> Callable on both CPU and GPU. </b>
+     *  @details <b>Callable on both CPU and GPU.</b>
      */
     __cuhostdev__ unsigned long int malloc_size(void) {return sizeof(Vector<T>) + this->size_*sizeof(unsigned long int);}
     /** @brief Copy data from CPU to a pre-allocated memory on GPU.
-     *  @details <b> Callable only on CPU. </b>
+     *  @details <b>Callable only on CPU.</b>
      *
      *  The data is copied to the memory region that comes right after the copied object.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory. Note that this memory reagion must be big enough to store

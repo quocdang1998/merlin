@@ -63,7 +63,7 @@ pygments_style = 'rainbow_dash'
 #
 html_theme = 'sphinx_rtd_theme'
 html_css_files = ['azura.css']
-html_js_files = [('azura.js', {'defer': 'defer'})]
+html_js_files = [('azura.js', {'defer': 'defer'}), 'hsl_rgb.js']
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
