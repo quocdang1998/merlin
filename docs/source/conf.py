@@ -13,7 +13,6 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
-sys.path.insert(0, '/home/catC/dn266595/These/doxysummary')
 
 # -- Project information -----------------------------------------------------
 
@@ -95,3 +94,13 @@ latex_elements = {
     # 'makeindex': r'\usepackage[columns=1]{idxlayout}\makeindex',
     'makeindex': '',
 }
+
+
+# -- Options for the C++ domain ----------------------------------------------
+
+# module namespace
+cpp_index_common_prefix = ["merlin::"]
+
+# CUDA decorators
+cpp_id_attributes = ['__host__', '__device__', '__global__', '__shared__',
+                     '__managed__']

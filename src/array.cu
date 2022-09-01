@@ -9,6 +9,8 @@
 
 namespace merlin {
 
+#if !defined(__LIBMERLINCUDA_STATIC__) || defined(__MERLIN_FORCE_STATIC__)
+
 void Array::sync_from_gpu(const Parcel & gpu_array, uintptr_t stream) {
     // check device
     int check_result = gpu_array.check_device();
@@ -24,5 +26,7 @@ void Array::sync_from_gpu(const Parcel & gpu_array, uintptr_t stream) {
     // copy data to GPU
     array_copy(dynamic_cast<NdData *>(this), dynamic_cast<const NdData *>(&gpu_array), copy_func);
 }
+
+#endif  // __LIBMERLINCUDA_STATIC__ || __MERLIN_FORCE_STATIC__
 
 }  // namespace merlin

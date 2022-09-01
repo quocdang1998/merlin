@@ -1,0 +1,10 @@
+   merlin
+   ├── inc
+   │   └── merlin
+   │       ├── foo.hpp  # declarations and inline function definitions
+   │       ├── foo.tpp  # template definitions
+   │       │
+   ├── src
+   │   ├── foo.cpp      # C++ source
+   │   ├── foo.cu       # CUDA source
+   │

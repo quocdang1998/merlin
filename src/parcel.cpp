@@ -6,7 +6,7 @@
 
 namespace merlin {
 
-#ifndef MERLIN_CUDA_
+#ifndef __MERLIN_CUDA__
 
 // Default constructor
 Parcel::Parcel(void) {
@@ -48,6 +48,6 @@ void Parcel::free_current_data(void) {
 // Destructor (do nothing)
 Parcel::~Parcel(void) {}
 
-#endif  // MERLIN_CUDA_
+#endif  // __MERLIN_CUDA__
 
 }  // namespace merlin

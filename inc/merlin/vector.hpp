@@ -20,26 +20,26 @@ class Vector {
     /** @brief Default constructor.*/
     __cuhostdev__ Vector(void) {}
     /** @brief Constructor from initializer list.*/
-    Vector(std::initializer_list<T> data);
+    __cuhostdev__ Vector(std::initializer_list<T> data);
     /** @brief Constructor from size and fill-in value.*/
-    Vector(unsigned long int size, T value = 0);
+    __cuhostdev__ Vector(unsigned long int size, T value = 0);
     /** @brief Copy constructor from a pointer to first and last element.*/
-    Vector(T * ptr_first, T * ptr_last);
+    __cuhostdev__ Vector(const T * ptr_first, const T * ptr_last);
     /// @}
 
     /// @name Copy and move
     /// @{
     /** @brief Copy constructor.*/
-    Vector(const Vector<T> & src);
+    __cuhostdev__ Vector(const Vector<T> & src);
     /** @brief Copy assignment.*/
-    Vector<T> & operator=(const Vector<T> & src);
+    __cuhostdev__ Vector<T> & operator=(const Vector<T> & src);
     /** @brief Move constructor.*/
-    Vector(Vector<T> && src);
+    __cuhostdev__ Vector(Vector<T> && src);
     /** @brief Move assignment.*/
-    Vector<T> & operator=(Vector<T> && src);
+    __cuhostdev__ Vector<T> & operator=(Vector<T> && src);
     /// @}
 
-    /// @name Get members (Callable on both CPU and GPU)
+    /// @name Get members
     /// @{
     /** @brief Get reference to pointer of data.*/
     __cuhostdev__ T * & data(void) {return this->data_;}
@@ -51,7 +51,7 @@ class Vector {
     __cuhostdev__ const unsigned long int & size(void) const {return this->size_;}
     /// @}
 
-    /// @name Slicing operator (Callable on both CPU and GPU)
+    /// @name Slicing operator
     /// @{
     /** @brief Get reference to an element.*/
     __cuhostdev__ T & operator[](unsigned long int index) {return this->data_[index];}
@@ -59,23 +59,23 @@ class Vector {
     __cuhostdev__ const T & operator[](unsigned long int index) const {return this->data_[index];}
     /// @}
 
-    /// @name GPU related features
+    /// @name Transfer data from/to GPU
     /// @{
-    /** @brief Minimum number of bytes to allocate in the memory to store the object and its data.
-     *  @details <b>Callable on both CPU and GPU.</b>
-     */
+    /** @brief Calculate the minimum number of bytes to allocate in the memory to store the object and its data.*/
     __cuhostdev__ unsigned long int malloc_size(void) {return sizeof(Vector<T>) + this->size_*sizeof(unsigned long int);}
     /** @brief Copy data from CPU to a pre-allocated memory on GPU.
-     *  @details <b>Callable only on CPU.</b>
-     *
-     *  The data is copied to the memory region that comes right after the copied object.
+     *  @details The data is copied to the memory region that comes right after the copied object.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory. Note that this memory reagion must be big enough to store
      *  both the object and the its data.
      */
-    void copy_to_device_ptr(Vector<T> * gpu_ptr);
+    void copy_to_gpu(Vector<T> * gpu_ptr);
+    /** @brief Copy data from GPU to CPU.
+     *  @param gpu_ptr Pointer to object on GPU global memory.
+     */
+    void copy_from_device(Vector<T> * gpu_ptr);
     #ifdef __NVCC__
-    /** @brief Copy data to a shared memory inside a kernel.
-     *  @details <b> Callable only on GPU. </b>
+    /** @brief Copy data from GPU global memory to shared memory of a kernel.
+     *  @note This operation is single-threaded.
      *  @param share_ptr Dynamically allocated shared pointer on GPU.
      */
     __cudevice__ void copy_to_shared_mem(Vector<T> * share_ptr);
@@ -85,7 +85,7 @@ class Vector {
     /// @name Destructor
     /// @{
     /** @brief Destructor.*/
-    ~Vector(void);
+    __cuhostdev__ ~Vector(void);
     /// @}
 
   private:

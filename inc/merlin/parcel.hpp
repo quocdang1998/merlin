@@ -3,9 +3,11 @@
 #define MERLIN_PARCEL_HPP_
 
 #include <cstdint>  // uintptr_t
+#include <initializer_list>  // std::initializer_list
 
 #include "merlin/nddata.hpp"  // merlin::NdData
 #include "merlin/decorator.hpp"  // __cudevice__, __cuhostdev__
+#include "merlin/utils.hpp"
 
 namespace merlin {
 
@@ -43,16 +45,17 @@ class Parcel : public NdData {
     /** @brief Check if current device is the one holding Parcel data.
      *  @return ID of GPU holding value - ID of current GPU.
      */
-    __cuhostdev__ int check_device(void) const;
+    int check_device(void) const;
     /** @brief Get element at a given contiguous index.*/
-    __cudevice__ float & operator[](unsigned int index) {return this->data_[index];}
+    __cudevice__ float & operator[](unsigned long int index);
+    // __cudevice__ float & operator[](std::initializer_list<unsigned long int> index);
     #endif  // __NVCC__
 
     // GPU related features
     // --------------------
     unsigned long int malloc_size(void) {return sizeof(Parcel) + 2*this->ndim_*sizeof(unsigned long int);}
     void copy_to_device_ptr(Parcel * gpu_ptr);
-    __cudevice__ inline void copy_to_shared_ptr(Parcel * share_ptr);
+    __cudevice__ void copy_to_shared_ptr(Parcel * share_ptr);
 
 
     // Utils
@@ -73,26 +76,7 @@ class Parcel : public NdData {
 };
 
 #ifdef __NVCC__
-__cudevice__ inline void Parcel::copy_to_shared_ptr(Parcel * share_ptr) {
-    // copy meta data
-    share_ptr->data_ = this->data_;
-    share_ptr->ndim_ = this->ndim_;
-    // assign shape and strides pointer to data
-    share_ptr->shape_.data() = (unsigned long int *) &share_ptr[1];
-    share_ptr->shape_.size() = this->ndim_;
-    share_ptr->strides_.data() = share_ptr->shape_.data() + this->ndim_;
-    share_ptr->strides_.size() = this->ndim_;
-    // copy shape and strides
-    bool check_zeroth_thread = (blockIdx.x == 0) && (blockIdx.y == 0) && (blockIdx.z == 0)
-                            && (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
-    if (check_zeroth_thread) {
-        for (int i = 0; i < this->ndim_; i++) {
-            share_ptr->shape_[i] = this->shape_[i];
-            share_ptr->strides_[i] = this->strides_[i];
-        }
-    }
-    __syncthreads();
-}
+
 #endif
 
 }  // namespace merlin

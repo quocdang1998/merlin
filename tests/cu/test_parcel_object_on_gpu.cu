@@ -30,4 +30,5 @@ int main(void) {
     print_element<<<1,B.size()>>>(B_gpu);
     print_element_from_shared_memory<<<1,B.size(),B.malloc_size()>>>(B_gpu);
     cudaFree(B_gpu);
+    cudaDeviceReset();
 }

@@ -3,7 +3,6 @@
 #define MERLIN_VECTOR_TPP_
 
 #include <cstdint>  // uintptr_t
-#include <algorithm>  // std::copy, std::fill_n
 
 #include "merlin/logger.hpp"  // FAILURE
 
@@ -11,38 +10,44 @@ namespace merlin {
 
 // Constructor from initializer list
 template <typename T>
-Vector<T>::Vector(std::initializer_list<T> data) {
-    this->size_ = data.size();
+__cuhostdev__ Vector<T>::Vector(std::initializer_list<T> data) : size_(data.size()) {
     this->data_ = new T[data.size()];
-    std::copy(data.begin(), data.end(), this->data_);
+    for (int i = 0; i < data.size(); i++) {
+        this->data_[i] = data.begin()[i];
+    }
 }
 
 // Constructor from size and fill-in value
 template <typename T>
-Vector<T>::Vector(unsigned long int size, T value) : size_(size) {
+__cuhostdev__ Vector<T>::Vector(unsigned long int size, T value) : size_(size) {
     this->data_ = new T[size];
-    std::fill_n(this->data_, size, value);
+    for (int i = 0; i < size; i++) {
+        this->data_[i] = value;
+    }
 }
 
 // Constructor from a pointer to first and last element
 template <typename T>
-Vector<T>::Vector(T * ptr_first, T * ptr_last) {
+__cuhostdev__ Vector<T>::Vector(const T * ptr_first, const T * ptr_last) {
     this->size_ = ptr_last - ptr_first;
     this->data_ = new T[this->size_];
-    std::copy(ptr_first, ptr_last, this->data_);
+    for (int i = 0; i < this->size_; i++) {
+        this->data_[i] = ptr_first[i];
+    }
 }
 
 // Copy constructor
 template <typename T>
-Vector<T>::Vector(const Vector<T> & src) {
-    this->size_ = src.size_;
+__cuhostdev__ Vector<T>::Vector(const Vector<T> & src) : size_(src.size_) {
     this->data_ = new T[this->size_];
-    std::copy(src.data_, src.data_+this->size_, this->data_);
+    for (int i = 0; i < src.size_; i++) {
+        this->data_[i] = src.data_[i];
+    }
 }
 
 // Copy assignment
 template <typename T>
-Vector<T> & Vector<T>::operator=(const Vector<T> & src) {
+__cuhostdev__ Vector<T> & Vector<T>::operator=(const Vector<T> & src) {
     // free old data
     if (this->data_ != NULL) {
         delete[] this->data_;
@@ -50,21 +55,21 @@ Vector<T> & Vector<T>::operator=(const Vector<T> & src) {
     // copy new data
     this->size_ = src.size_;
     this->data_ = new T[this->size_];
-    std::copy(src.data_, src.data_+this->size_, this->data_);
+    for (int i = 0; i < src.size_; i++) {
+        this->data_[i] = src.data_[i];
+    }
     return *this;
 }
 
 // Move constructor
 template <typename T>
-Vector<T>::Vector(Vector<T> && src) {
-    this->size_ = src.size_;
-    this->data_ = src.data_;
+__cuhostdev__ Vector<T>::Vector(Vector<T> && src) : size_(src.size_), data_(src.data_) {
     src.data_ = NULL;
 }
 
 // Move assignment
 template <typename T>
-Vector<T> & Vector<T>::operator=(Vector<T> && src) {
+__cuhostdev__ Vector<T> & Vector<T>::operator=(Vector<T> && src) {
     if (this->data_ != NULL) {
         delete[] this->data_;
     }
@@ -75,14 +80,18 @@ Vector<T> & Vector<T>::operator=(Vector<T> && src) {
 }
 
 // Copy data to GPU
-#ifndef MERLIN_CUDA_
+#ifndef __MERLIN_CUDA__
 template <typename T>
-void Vector<T>::copy_to_device_ptr(Vector<T> * gpu_ptr) {
+void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr) {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access this feature.\n");
+}
+template <typename T>
+void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access this feature.\n");
 }
 #elif defined(__NVCC__)
 template <typename T>
-void Vector<T>::copy_to_device_ptr(Vector<T> * gpu_ptr) {
+void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr) {
     // initialize buffer to store data of the copy before cloning it to GPU
     Vector<T> copy_on_gpu;
     // copy data
@@ -96,7 +105,14 @@ void Vector<T>::copy_to_device_ptr(Vector<T> * gpu_ptr) {
     // nullify data on copy to avoid deallocate memory on CPU
     copy_on_gpu.data_ = NULL;
 }
-#endif  // MERLIN_CUDA_
+template <typename T>
+void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
+    // copy data
+    uintptr_t gpu_data = reinterpret_cast<uintptr_t>(gpu_ptr) + sizeof(Vector<T>);
+    cudaMemcpy(reinterpret_cast<T *>(gpu_data), this->data_,
+               this->size_*sizeof(T), cudaMemcpyDeviceToHost);
+}
+#endif  // __MERLIN_CUDA__
 
 // Copy to shared memory
 #ifdef __NVCC__
@@ -119,7 +135,7 @@ __cudevice__ void Vector<T>::copy_to_shared_mem(Vector<T> * share_ptr) {
 
 // Destructor
 template <typename T>
-Vector<T>::~Vector(void) {
+__cuhostdev__ Vector<T>::~Vector(void) {
     if (this->data_ != NULL) {
         delete[] this->data_;
     }

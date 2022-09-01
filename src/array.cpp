@@ -132,11 +132,11 @@ float & Array::operator[] (const intvec & idx) {
 }
 
 // Copy data from GPU array
-#ifndef MERLIN_CUDA_
+#ifndef __MERLIN_CUDA__
 void sync_from_gpu(const Parcel & gpu_array, uintptr_t stream) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
-#endif  // MERLIN_CUDA_
+#endif  // __MERLIN_CUDA__
 
 // Destructor
 Array::~Array(void) {

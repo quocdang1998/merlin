@@ -5,13 +5,13 @@
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------
 // Miscellaneous utils
-// --------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------
 
 // Inner product
+#ifndef __MERLIN_CUDA__
 unsigned long int inner_prod(const intvec & v1, const intvec & v2) {
-    // check size of 2 vectors
     if (v1.size() != v2.size()) {
         FAILURE(std::invalid_argument, "Size of v1 (%d) and size of v2 (%d) are not equal.\n", v1.size(), v2.size());
     }
@@ -22,10 +22,11 @@ unsigned long int inner_prod(const intvec & v1, const intvec & v2) {
     }
     return inner_product;
 }
+#endif  // __MERLIN_CUDA__
 
-// --------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------
 // NdData tools
-// --------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------
 
 // C-Contiguous strides from shape vector
 intvec contiguous_strides(const intvec & shape, unsigned long int element_size) {
@@ -35,6 +36,29 @@ intvec contiguous_strides(const intvec & shape, unsigned long int element_size) 
     }
     return c_strides;
 }
+
+#ifndef __MERLIN_CUDA__
+// Convert n-dimensional index to C-contiguous index
+unsigned long int ndim_to_contiguous_idx(const intvec & index, const intvec & shape) {
+    return inner_prod(index, shape);
+}
+
+// Convert C-contiguous index to n-dimensional index
+intvec contiguous_to_ndim_idx(unsigned long int index, const intvec & shape) {
+    // calculate index vector
+    intvec index_(shape.size());
+    unsigned long int cum_prod;
+    for (int i = shape.size()-1; i >= 0; i--) {
+        if (i == shape.size()-1) {
+            cum_prod = 1;
+        } else {
+            cum_prod = cum_prod * shape[i+1];
+        }
+        index_[i] = (index / cum_prod) % shape[i];
+    }
+    return index_;
+}
+#endif  // __MERLIN_CUDA__
 
 // Longest contiguous segment and break index
 std::tuple<unsigned long int, long int> lcseg_and_brindex(const intvec & shape, const intvec & strides) {
@@ -63,35 +87,12 @@ std::tuple<unsigned long int, long int> lcseg_and_brindex(const intvec & shape, 
 
     return std::tuple<unsigned long int, long int>(longest_contiguous_segment_, break_index_);
 }
-/*
-unsigned int ndim_to_contiguous_idx(const std::vector<unsigned int> & index, const std::vector<unsigned int> & dims) {
-    unsigned int contiguous_index = inner_prod<unsigned int>(index, dims);
-    return contiguous_index;
-}
 
 
-std::vector<std::vector<unsigned int>> contiguous_to_ndim_idx(const std::vector<unsigned int> & index,
-                                                              const std::vector<unsigned int> & dims) {
-    // create prod vector (cumulative product from the last element)
-    std::vector<unsigned int> prod_(dims.size(), 1);
-    for (int i = dims.size()-2; i >= 0; i--) {
-        prod_[i] = prod_[i+1]*dims[i+1];
-    }
-    // create n-dim index vector for each C-contiguous index value
-    std::vector<std::vector<unsigned int>> result;
-    for (int i = 0; i < index.size(); i++) {
-        std::vector<unsigned int> nd_idx(dims.size(), 0);
-        for (int j = 0; j < dims.size(); j++) {
-            nd_idx[j] = (index[i] / prod_[j]) % dims[j];
-        }
-        result.push_back(nd_idx);
-    }
-    return result;
-}
-*/
-// --------------------------------------------------------------------------------------------------------------------
+
+// -------------------------------------------------------------------------------------------------------------------------
 // job partition utils
-// --------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------
 
 
 

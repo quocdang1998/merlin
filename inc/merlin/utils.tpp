@@ -8,6 +8,10 @@
 
 namespace merlin {
 
+// -------------------------------------------------------------------------------------------------------------------------
+// NdData tools
+// -------------------------------------------------------------------------------------------------------------------------
+
 // Copy each segment from source to destination
 template <class CopyFunction>
 void array_copy(NdData * dest, const NdData * src, CopyFunction copy) {
@@ -45,8 +49,7 @@ void array_copy(NdData * dest, const NdData * src, CopyFunction copy) {
             unsigned int des_leap = inner_prod(index, dest->strides());
             uintptr_t des_ptr = reinterpret_cast<uintptr_t>(dest->data()) + des_leap;
             // copy the segment
-            copy(reinterpret_cast<float *>(des_ptr), reinterpret_cast<float *>(src_ptr),
-                 longest_contiguous_segment);
+            copy(reinterpret_cast<float *>(des_ptr), reinterpret_cast<float *>(src_ptr), longest_contiguous_segment);
             // increase index at break index by 1 and carry surplus if index value exceeded shape
             index[break_index] += 1;
             int update_dim = break_index;

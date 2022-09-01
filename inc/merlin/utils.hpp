@@ -18,7 +18,7 @@ namespace merlin {
  *  @param v1 First vector.
  *  @param v2 Second vector.
  */
-unsigned long int inner_prod(const intvec & v1, const intvec & v2);
+__cuhostdev__ unsigned long int inner_prod(const intvec & v1, const intvec & v2);
 
 // NdData tools
 // ------------
@@ -54,6 +54,14 @@ std::tuple<unsigned long int, long int> lcseg_and_brindex(const intvec & shape, 
 template <class CopyFunction>
 void array_copy(NdData * dest, const NdData * src, CopyFunction copy);
 
+/** @brief Convert n-dimensional index to C-contiguous index.
+ *  @param index Multi-dimensional index.
+ *  @param dims Size of each dimension.
+ */
+__cuhostdev__ unsigned long int ndim_to_contiguous_idx(const intvec & index, const intvec & shape);
+
+__cuhostdev__ intvec contiguous_to_ndim_idx(unsigned long int index, const intvec & shape);
+
 // Parcel tools
 // ------------
 
@@ -65,15 +73,13 @@ __cuhostdev__ inline int get_current_device(void) {
     return current_device;
 }
 
+// Convert C-contiguous index to n-dimensional index
+__cudevice__ void device_contiguous_to_ndim_idx(unsigned long int index, const intvec & shape, intvec & result);
+
 #endif  // __NVCC__
 
 #ifdef COMMENT
-/** @brief Convert n-dimensional index to C-contiguous index.
 
-    @param index Multi-dimensional index.
-    @param dims Size of each dimension.
-*/
-unsigned int ndim_to_contiguous_idx(const std::vector<unsigned int> & index, const std::vector<unsigned int> & dims);
 
 /** @brief Convert vector of C-contiguous index to vector of n-dimensional index.
 

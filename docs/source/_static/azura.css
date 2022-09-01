@@ -9,7 +9,7 @@
 /* custom colors */
 :root {
     --hue:                        207;  /* main hue color */
-    --hls:                        calc(var(--hue) -  5);  /* less hue */
+    --hls:                        calc(var(--hue) - 10);  /* less hue */
     --hmn:                        calc(var(--hue) + 10);  /* moderate hue*/
     --hpl:                        calc(var(--hue) + 15);  /* more hue*/
     --hrv:                        calc(var(--hue) + 180);  /* reverse hue */
@@ -41,7 +41,9 @@
     --itembox-text-color:         hsl(var(--hue),  10%, 25%);  /* item text color */
     --subitem-background:         hsl(var(--hue),  10%, 94%);  /* subitem box background */
 
-    --keyword:                    hsl(var(--hpl), 100%, 50%);  /* keyworks of code language */
+    --item-name:                  hsl(var(--hue), 100%, 40%);  /* item name */
+    --attribute:                  hsl(var(--hls),  85%, 55%);  /* attribute */
+    --keyword:                    hsl(var(--hpl), 100%, 40%);  /* keyworks of code language */
     --inherited:                  hsl(var(--hpl),  59%, 47%);  /* interrnal reference to other classes */
     --type:                       hsl(var(--hmn),  53%, 55%);  /* type */
 
@@ -69,13 +71,14 @@
     --literal-background:         hsl(var(--hue),  10%, 15%);  /* literal background */
     --codeblock-background:       hsl(var(--hue),  10%, 10%);  /* codeblock background */
 
-    --visited-link:               hsl(var(--hue),  81%, 76%);  /* visited link */
+    --link:                       hsl(var(--hue),  81%, 76%);  /* link */
+    --visited-link:               hsl(var(--hue), 100%, 42%);  /* visited link */
 
     --itembox-background:         hsl(var(--hue),  79%, 15%);  /* item box background */
     --itembox-text-color:         hsl(var(--hue),  10%, 95%);  /* item text color */
     --subitem-background:         hsl(var(--hue),  10%, 15%);  /* subitem box background */
 
-    --keyword:                    hsl(var(--hpl), 100%, 55%);  /* keyworks of code language */
+    --keyword:                    hsl(var(--hpl), 100%, 70%);  /* keyworks of code language */
     --type:                       hsl(var(--hmn),  53%, 70%);  /* type */
 
     --admonition-background:      hsl(var(--hue),  10%, 15%);  /* admonition content background */
@@ -159,7 +162,7 @@ body {
     border-color: var(--table-border);
 }
 
-/* Footer */
+/* footer */
 .btn, .btn-neutral {
     filter: var(--invert-color);
 }
@@ -284,8 +287,22 @@ html.writer-html4 .rst-content dl:not(.docutils) dl:not(.field-list) > dt .heade
 /* C++ DESCRIPTION */
 
 /* scope name + item name */
-.sig-prename.descclassname, .sig-name.descname {
-    font-family: 'Fira Code', monospace !important;
+html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) .descname, html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) .sig-name {
+    font-family: 'Fira Code', monospace;
+}
+
+.sig.sig-object.cpp > .sig-name.descname > .n > * {
+    color: var(--item-name);
+}
+
+/* C++/CUDA attributes */
+.sig.sig-object.cpp > .pre {
+    color: var(--attribute);
+}
+
+/* Internal link as type */
+.sig.sig-object.cpp > a.reference.internal, .sig.sig-object.cpp > a.reference.internal:visited {
+    color: var(--type);
 }
 
 /* C++ keyword (class, enum, const, inline, etc) */

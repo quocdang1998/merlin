@@ -1,5 +1,5 @@
 // add class name to a dd object with the value of corresponding dt given
-function append_class_to_correspondant_search_elenemt (searchText, className) {
+function append_class_to_corresponding_search_element (searchText, className) {
     var dts = document.getElementsByTagName("dt");
     var dds = document.getElementsByTagName("dd");
     for (var i = 0; i < dts.length; i++) {
@@ -12,8 +12,8 @@ function append_class_to_correspondant_search_elenemt (searchText, className) {
 
 // append class to "Return type" and "Type"
 function change_return_and_attribute () {
-    append_class_to_correspondant_search_elenemt ("Return type", "return");
-    append_class_to_correspondant_search_elenemt ("Type", "attributetype");
+    append_class_to_corresponding_search_element ("Return type", "return");
+    append_class_to_corresponding_search_element ("Type", "attributetype");
 }
 
 // set id for the last item in breadcrumbs
@@ -64,7 +64,7 @@ function set_color_scheme () {
         color_scheme = localStorage.getItem("color-scheme") || "light";
     }
     document.documentElement.setAttribute("color-scheme", color_scheme);
-    // localStorage.setItem("color-scheme", color_scheme);
+    localStorage.setItem("color-scheme", color_scheme);
     if (color_scheme === "dark") {
         lighten_pygment_colors();
     }
@@ -79,6 +79,7 @@ function add_darkmode_button () {
     header.appendChild(darkmode_button);
     // load svg image to content
     darkmode_button = document.getElementById("darkmode-button");
+    darkmode_button.style.userSelect = "none";
     var sun_img = document.createElement("img");
     sun_img.setAttribute("id", "sun-button");
     sun_img.setAttribute("class", "button-image");
@@ -112,6 +113,5 @@ function azura_main () {
     add_darkmode_button();
 }
 
-azura_main()
-
+azura_main();
 
