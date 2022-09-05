@@ -10,7 +10,7 @@ __global__ void print_element(merlin::Parcel * parcel_ptr) {
 
 __global__ void print_element_from_shared_memory(merlin::Parcel * parcel_ptr) {
     extern __shared__ merlin::Parcel share_ptr[];
-    parcel_ptr->copy_to_shared_ptr(share_ptr);
+    parcel_ptr->copy_to_shared_mem(share_ptr);
     CUDAOUT("Value from shared memory: %.1f\n", share_ptr[0][threadIdx.x]);
 }
 
@@ -26,9 +26,9 @@ int main(void) {
     merlin::Parcel B(A);
     merlin::Parcel * B_gpu;
     cudaMalloc(&B_gpu, B.malloc_size());
-    B.copy_to_device_ptr(B_gpu);
+    B.copy_to_gpu(B_gpu);
     print_element<<<1,B.size()>>>(B_gpu);
-    print_element_from_shared_memory<<<1,B.size(),B.malloc_size()>>>(B_gpu);
+    // print_element_from_shared_memory<<<1,B.size(),B.malloc_size()>>>(B_gpu);
     cudaFree(B_gpu);
     cudaDeviceReset();
 }

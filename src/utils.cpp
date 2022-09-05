@@ -6,25 +6,6 @@
 namespace merlin {
 
 // -------------------------------------------------------------------------------------------------------------------------
-// Miscellaneous utils
-// -------------------------------------------------------------------------------------------------------------------------
-
-// Inner product
-#ifndef __MERLIN_CUDA__
-unsigned long int inner_prod(const intvec & v1, const intvec & v2) {
-    if (v1.size() != v2.size()) {
-        FAILURE(std::invalid_argument, "Size of v1 (%d) and size of v2 (%d) are not equal.\n", v1.size(), v2.size());
-    }
-    // calculate inner product
-    unsigned long int inner_product = 0;
-    for (int i = 0; i < v1.size(); i++) {
-        inner_product += v1[i] * v2[i];
-    }
-    return inner_product;
-}
-#endif  // __MERLIN_CUDA__
-
-// -------------------------------------------------------------------------------------------------------------------------
 // NdData tools
 // -------------------------------------------------------------------------------------------------------------------------
 
@@ -36,29 +17,6 @@ intvec contiguous_strides(const intvec & shape, unsigned long int element_size) 
     }
     return c_strides;
 }
-
-#ifndef __MERLIN_CUDA__
-// Convert n-dimensional index to C-contiguous index
-unsigned long int ndim_to_contiguous_idx(const intvec & index, const intvec & shape) {
-    return inner_prod(index, shape);
-}
-
-// Convert C-contiguous index to n-dimensional index
-intvec contiguous_to_ndim_idx(unsigned long int index, const intvec & shape) {
-    // calculate index vector
-    intvec index_(shape.size());
-    unsigned long int cum_prod;
-    for (int i = shape.size()-1; i >= 0; i--) {
-        if (i == shape.size()-1) {
-            cum_prod = 1;
-        } else {
-            cum_prod = cum_prod * shape[i+1];
-        }
-        index_[i] = (index / cum_prod) % shape[i];
-    }
-    return index_;
-}
-#endif  // __MERLIN_CUDA__
 
 // Longest contiguous segment and break index
 std::tuple<unsigned long int, long int> lcseg_and_brindex(const intvec & shape, const intvec & strides) {
@@ -87,8 +45,6 @@ std::tuple<unsigned long int, long int> lcseg_and_brindex(const intvec & shape, 
 
     return std::tuple<unsigned long int, long int>(longest_contiguous_segment_, break_index_);
 }
-
-
 
 // -------------------------------------------------------------------------------------------------------------------------
 // job partition utils

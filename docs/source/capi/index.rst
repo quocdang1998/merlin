@@ -43,3 +43,13 @@ Exception classes reserved for errors related to CUDA:
 
    cuda_compile_error
    cuda_runtime_error
+
+Utils
+-----
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::ndim_to_contiguous_idx
+   merlin::contiguous_to_ndim_idx
+

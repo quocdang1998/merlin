@@ -1,59 +1,74 @@
 // Copyright 2022 quocdang1998
 #include "merlin/grid.hpp"
 
-#include <cstring>
+#include <cstring>  // std::memcpy
 #include <vector>
 #include <numeric>
 #include <utility>
 
-#include "merlin/logger.hpp"
-#include "merlin/utils.hpp"
+#include "merlin/logger.hpp"  // FAILURE
+#include "merlin/utils.hpp"  // merlin::array_copy
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------
 // Grid
-// --------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------
 
-// Constructors
-// ------------
-
-Grid::Grid(unsigned int ndim, unsigned int npoint) : npoint_(npoint) {
+// Construct an empty grid from a given number of n-dim points
+Grid::Grid(unsigned long int npoint, unsigned long int ndim) : npoint_(npoint) {
     // calculate capacity
-    unsigned int capacity_ = 1;
-    while (capacity_ < npoint) {
-        capacity_ <<= 1;
+    unsigned long int capacity = 1;
+    while (capacity < npoint) {
+        capacity <<= 1;
     }
     // allocate data
-    this->capacity_points_ = Tensor(std::vector<unsigned int>({capacity_, ndim}));
+    this->points_ = Array({capacity, ndim});
 }
 
-// Get members
-// -----------
-
-Tensor Grid::grid_points(void) {
-    return Tensor(this->capacity_points_.data(), this->capacity_points_.ndim(), &(this->capacity_points_.dims()[0]),
-                 &(this->capacity_points_.strides()[0]), false);
+// Construct a grid and copy data
+Grid::Grid(const Array & points) {
+    // check if original data is 2D
+    if (points.ndim() != 2) {
+        FAILURE(std::invalid_argument, "Expected an Array of dimension 2.\n");
+    }
+    // calculate capacity
+    this->npoint_ = points.shape()[0];
+    unsigned long int capacity = 1;
+    while (capacity < this->npoint_) {
+        capacity <<= 1;
+    }
+    // copy data from old array to new array
+    this->points_ = Array({capacity, points.ndim()});
+    array_copy(&(this->points_), &points, std::memcpy);
 }
 
-// Iterator
-// --------
+// Get reference to array of grid points
+Array Grid::grid_points (void) const {
+    const unsigned long int * shape_ptr = &(this->points_.shape()[0]);
+    const unsigned long int * strides_ptr = &(this->points_.strides()[0]);
+    return Array(this->points_.data(), this->points_.ndim(), shape_ptr, strides_ptr, false);
+}
 
+// Get reference Array to a point
+
+
+// Begin iterator
 Grid::iterator Grid::begin(void) {
-    this->begin_ = std::vector<unsigned int>(2, 0);
-    this->end_ = std::vector<unsigned int>(2, 0);
+    this->begin_ = intvec(2, 0);
+    this->end_ = intvec(2, 0);
     this->end_[0] = this->npoint_;
-    return Grid::iterator(this->begin_, this->capacity_points_.dims());
+    return Grid::iterator(this->begin_, this->points_.shape());
 }
 
-
+// End iterator
 Grid::iterator Grid::end(void) {
-    return Tensor::iterator(this->end_, this->capacity_points_.dims());
+    return Grid::iterator(this->end_, this->points_.shape());
 }
 
 // Append/Remove/Get point
 // -----------------------
-
+#ifdef __COMMENT__
 Tensor Grid::operator[] (unsigned int index) {
     std::vector<unsigned int> index_grid = {index, 0};
     float * target = &(this->capacity_points_[index_grid]);
@@ -201,5 +216,5 @@ Tensor CartesianGrid::operator[] (const std::vector<unsigned int> & index) {
     }
     return result;
 }
-
+#endif
 }  // namespace merlin

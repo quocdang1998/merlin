@@ -34,7 +34,7 @@ class NdData {
      *  @param shape Pointer to shape vector.
      *  @param strides Pointer to strides vector.
      */
-    NdData(float * data, unsigned long int ndim, unsigned long int * shape, unsigned long int * strides);
+    NdData(float * data, unsigned long int ndim, const unsigned long int * shape, const unsigned long int * strides);
     /// @}
 
     /// @name Copy and move

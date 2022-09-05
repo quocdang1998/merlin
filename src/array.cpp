@@ -43,7 +43,7 @@ Array::Array(std::initializer_list<unsigned long int> shape) {
 
 // Construct Array from Numpy array
 Array::Array(float * data, unsigned long int ndim,
-               unsigned long int * shape, unsigned long int * strides, bool copy) {
+             const unsigned long int * shape, const unsigned long int * strides, bool copy) {
     // copy meta data
     this->ndim_ = ndim;
     this->shape_ = intvec(shape, shape + ndim);
@@ -145,9 +145,9 @@ Array::~Array(void) {
     }
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------
 // Array::iterator
-// --------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------
 
 // Pre-increment operator
 Array::iterator & Array::iterator::operator++(void) {

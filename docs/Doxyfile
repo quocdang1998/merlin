@@ -1,5 +1,5 @@
 PROJECT_NAME           = "merlin"
-INLINE_INHERITED_MEMB  = YES
+INLINE_INHERITED_MEMB  = NO
 OUTPUT_DIRECTORY       = "source/"
 EXTRACT_ALL            = YES
 EXTRACT_PRIVATE        = YES

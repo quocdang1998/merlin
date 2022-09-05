@@ -13,8 +13,8 @@ namespace merlin {
 /** @brief Multi-dimensional array on CPU.*/
 class Array : public NdData {
   public:
-    // Constructors
-    // ------------
+    /// @name Constructors
+    /// @{
     /** @brief Default constructor (do nothing).*/
     Array(void) = default;
     /** @brief Construct 1D array holding a float value.
@@ -35,10 +35,11 @@ class Array : public NdData {
         copied tensor is automatically deallocated inside the destructor.
      */
     Array(float * data, unsigned long int ndim,
-           unsigned long int * shape, unsigned long int * strides, bool copy = false);
+          const unsigned long int * shape, const unsigned long int * strides, bool copy = false);
+    /// @}
 
-    // Copy and move
-    // -------------
+    /// @name Copy and move
+    /// @{
     /** @brief Deep copy constructor.*/
     Array(const Array & src);
     /** @brief Deep copy assignment.*/
@@ -47,9 +48,9 @@ class Array : public NdData {
     Array(Array && src);
     /** @brief Move assignment.*/
     Array & operator=(Array && src);
+    /// @}
 
-    // Iterator
-    // --------
+    /** @brief Iterator of a multi-dimensional array.*/
     class iterator {
       public:
         // Constructor
@@ -105,8 +106,8 @@ class Array : public NdData {
         intvec * shape_;
     };
 
-    // Atributes
-    // ---------
+    /// @name Atributes
+    /// @{
     /** @brief Begin iterator.
      *  @details Vector of index \f$(0, 0, ..., 0)\f$.
      */
@@ -121,16 +122,19 @@ class Array : public NdData {
      *  @return Reference to the element at the provided index.
      */
     float & operator[] (const intvec & idx);
+    /// @}
 
-    // Transfer data
-    // -------------
-    // Copy data from GPU array
+    /// @name Transfer data
+    /// @{
+    /** @brief Copy data from GPU array.*/
     void sync_from_gpu(const Parcel & gpu_array, uintptr_t stream = 0);
+    /// @}
 
-    // Destructor
-    // ----------
+    /// @name Destructor
+    /// @{
     /** @brief Destructor.*/
     ~Array(void);
+    /// @}
 
   protected:
     // Members

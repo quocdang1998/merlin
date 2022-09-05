@@ -7,9 +7,9 @@
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------
 // NdData
-// --------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------
 
 // Member initialization for C++ interface
 NdData::NdData(float * data, unsigned long int ndim, std::initializer_list<unsigned long int> shape,
@@ -23,7 +23,7 @@ NdData::NdData(float * data, unsigned long int ndim, std::initializer_list<unsig
 }
 
 // Constructor from Numpy np.array
-NdData::NdData(float * data, unsigned long int ndim, unsigned long int * shape, unsigned int long * strides) {
+NdData::NdData(float * data, unsigned long int ndim, const unsigned long int * shape, const unsigned long int * strides) {
     this->ndim_ = ndim;
     this->data_ = data;
     this->shape_ = intvec(shape, shape + ndim);
@@ -40,9 +40,9 @@ unsigned long int NdData::size(void) {
 }
 
 #ifdef FUTURE
-// --------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------
 // Slice
-// --------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------------------------------
 
 // Constructor from members
 Slice::Slice(unsigned int start, int stop, int step) : start_(start), stop_(stop), step_(step) {

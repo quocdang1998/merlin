@@ -4,35 +4,40 @@
 
 #include <vector>
 
-#include "merlin/tensor.hpp"
+#include "merlin/array.hpp"  // merlin::Array
+#include "merlin/vector.hpp"  // merlin::intvec
 
 namespace merlin {
 
 /** @brief A set of multi-dimensional points.*/
 class Grid {
   public:
+    /** @brief Default constructor.*/
     Grid(void) = default;
     /** @brief Construct an empty grid from a given number of n-dim points.
-
-    @param ndim Number of dimension of points in the grid.
-    @param npoint Number of points in the grid.*/
-    Grid(unsigned int ndim, unsigned int npoint);
+     *  @param npoint Number of points in the grid.
+     *  @param ndim Number of dimension of points in the grid.
+     */
+    Grid(unsigned long int npoint, unsigned long int ndim);
+    /** @brief Construct a grid and copy data.
+     *  @param points 2D merlin::Array of points, dimension ``(npoints, ndim)``.
+     */
+    Grid(const Array & points);
     /** @brief Default destructor.*/
     virtual ~Grid(void) = default;
 
-
-    /** @brief Reference to tensor of grid points.*/
-    virtual Tensor grid_points(void);
+    /** @brief Get reference to array of grid points.*/
+    virtual Array grid_points(void) const;
     /** @brief Number of dimension of each point in the grid.*/
-    virtual unsigned int ndim(void) {return this->capacity_points_.dims()[1];}
+    virtual unsigned int ndim(void) {return this->points_.shape()[1];}
     /** @brief Number of points in the grid.*/
     virtual unsigned int npoint(void) {return this->npoint_;}
     /** @brief Maximum number of point which the Grid can hold without reallocating memory.*/
-    virtual unsigned int capacity(void) {return this->capacity_points_.dims()[0];}
+    virtual unsigned int capacity(void) {return this->points_.shape()[0];}
 
 
     /** @brief Grid iterator.*/
-    using iterator = Tensor::iterator;
+    using iterator = Array::iterator;
     /** @brief Begin iterator.*/
     virtual Grid::iterator begin(void);
     /** @brief End iterator.*/
@@ -40,29 +45,31 @@ class Grid {
     /** @brief Slicing operator.
 
 
-    @param index Index of point to get in the grid.*/
-    virtual Tensor operator[] (unsigned int index);
+    /** @brief Get reference Array to a point.
+     *  @param index Index of point to get in the grid.
+     */
+    virtual Tensor operator[](unsigned int index);
     /** @brief Append a point at the end of the grid.*/
-    virtual void push_back(std::vector<float> && point);
+    // virtual void push_back(std::vector<float> && point);
     /** @brief Remove a point at the end of the grid.*/
-    virtual void pop_back(void);
+    // virtual void pop_back(void);
 
   protected:
     /** @brief Number of points in the grid.*/
-    unsigned int npoint_;
+    unsigned long int npoint_;
     /** @brief Tensor to a 2D C-contiguous tensor of size (capacity, ndim).
-
-    This 2D table store the value of each n-dimensional point as a row vector.
-
-    Capacity is the smallest \f$2^n\f$ so that \f$n_{point} \le 2^n\f$*/
-    Tensor capacity_points_;
+     *  @details This 2D table store the value of each n-dimensional point as a row vector.
+     *
+     *  Capacity is the smallest \f$2^n\f$ so that \f$n_{point} \le 2^n\f$
+     */
+    Array points_;
     /** @brief Begin iterator.*/
-    std::vector<unsigned int> begin_;
+    intvec begin_;
     /** @brief End iterator.*/
-    std::vector<unsigned int> end_;
+    intvec end_;
 };
 
-
+#ifdef __COMMENT__
 /** @brief Multi-dimensional cartesian grid.*/
 class CartesianGrid : public Grid {
   public:
@@ -103,6 +110,7 @@ class CartesianGrid : public Grid {
     /** @brief Vector of dimensions.*/
     std::vector<unsigned int> dims_;
 };
+#endif
 
 }  // namespace merlin
 

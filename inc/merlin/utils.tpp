@@ -21,8 +21,8 @@ void array_copy(NdData * dest, const NdData * src, CopyFunction copy) {
     }
     unsigned long int ndim = src->ndim();
     for (int i = 0; i < ndim; i++) {
-        if (dest->shape()[i] != src->shape()[i]) {
-            FAILURE(std::invalid_argument, "Shape at index %d of source (%d) and destination (%d) are different.\n",
+        if (dest->shape()[i] < src->shape()[i]) {
+            FAILURE(std::invalid_argument, "Expected shape at index %d of source (%d) smaller or equal destination (%d).\n",
                     i, src->shape()[i], dest->shape()[i]);
         }
     }

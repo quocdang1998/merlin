@@ -18,7 +18,20 @@ namespace merlin {
  *  @param v1 First vector.
  *  @param v2 Second vector.
  */
-__cuhostdev__ unsigned long int inner_prod(const intvec & v1, const intvec & v2);
+__cuhostdev__ inline unsigned long int inner_prod(const intvec & v1, const intvec & v2) {
+    // check size of 2 vectors
+    #ifndef __CUDA_ARCH__
+    if (v1.size() != v2.size()) {
+        FAILURE(std::invalid_argument, "Size of v1 (%d) and size of v2 (%d) are not equal.\n", v1.size(), v2.size());
+    }
+    #endif  // __CUDA_ARCH__
+    // calculate inner product
+    unsigned long int inner_product = 0;
+    for (int i = 0; i < v1.size(); i++) {
+        inner_product += v1[i] * v2[i];
+    }
+    return inner_product;
+}
 
 // NdData tools
 // ------------
@@ -56,11 +69,32 @@ void array_copy(NdData * dest, const NdData * src, CopyFunction copy);
 
 /** @brief Convert n-dimensional index to C-contiguous index.
  *  @param index Multi-dimensional index.
- *  @param dims Size of each dimension.
+ *  @param shape Shape vector.
+ *  @return C-contiguous index as an ``unsigned long integer``.
  */
-__cuhostdev__ unsigned long int ndim_to_contiguous_idx(const intvec & index, const intvec & shape);
+__cuhostdev__ inline unsigned long int ndim_to_contiguous_idx(const intvec & index, const intvec & shape) {
+    return inner_prod(index, shape);
+}
 
-__cuhostdev__ intvec contiguous_to_ndim_idx(unsigned long int index, const intvec & shape);
+/** @brief Convert C-contiguous index to n-dimensional index.
+ *  @param index C-contiguous index.
+ *  @param shape Shape vector.
+ *  @return merlin::intvec of n-dimensional index.
+ */
+__cuhostdev__ inline intvec contiguous_to_ndim_idx(unsigned long int index, const intvec & shape) {
+    // calculate index vector
+    intvec index_(shape.size());
+    unsigned long int cum_prod;
+    for (int i = shape.size()-1; i >= 0; i--) {
+        if (i == shape.size()-1) {
+            cum_prod = 1;
+        } else {
+            cum_prod = cum_prod * shape[i+1];
+        }
+        index_[i] = (index / cum_prod) % shape[i];
+    }
+    return index_;
+}
 
 // Parcel tools
 // ------------
@@ -72,9 +106,6 @@ __cuhostdev__ inline int get_current_device(void) {
     cudaGetDevice(&current_device);
     return current_device;
 }
-
-// Convert C-contiguous index to n-dimensional index
-__cudevice__ void device_contiguous_to_ndim_idx(unsigned long int index, const intvec & shape, intvec & result);
 
 #endif  // __NVCC__
 

@@ -12,8 +12,6 @@
 
 namespace merlin {
 
-#if !defined(__LIBMERLINCUDA_STATIC__) || defined(__MERLIN_FORCE_STATIC__)
-
 // Default constructor
 Parcel::Parcel(void) {}
 
@@ -99,7 +97,7 @@ Parcel & Parcel::operator=(Parcel && src) {
 }
 
 // Copy data to a pre-allocated memory
-void Parcel::copy_to_device_ptr(Parcel * gpu_ptr) {
+void Parcel::copy_to_gpu(Parcel * gpu_ptr) {
     // initialize buffer to store data of the copy before cloning it to GPU
     Parcel copy_on_gpu;
     // copy shape and strides data
@@ -143,56 +141,5 @@ void Parcel::free_current_data(void) {
 Parcel::~Parcel(void) {
     this->free_current_data();
 }
-
-#endif  // __LIBMERLINCUDA_STATIC__ || __MERLIN_FORCE_STATIC__
-
-#if defined(__LIBMERLINCUDA_STATIC__) || defined(__MERLIN_FORCE_STATIC__)
-
-// Get element at a given C-contiguous index
-__cudevice__ float & Parcel::operator[](unsigned long int index) {
-    // calculate index vector
-    intvec index_ = contiguous_to_ndim_idx(index, this->shape_);
-    // calculate strides
-    unsigned long int strides = inner_prod(index_, this->strides_);
-    float * element_ptr = reinterpret_cast<float *>(reinterpret_cast<uintptr_t>(this->data_) + strides);
-    return *element_ptr;
-}
-
-
-
-__cudevice__  void Parcel::copy_to_shared_ptr(Parcel * share_ptr) {
-    // copy meta data
-    share_ptr->data_ = this->data_;
-    share_ptr->ndim_ = this->ndim_;
-    // assign shape and strides pointer to data
-    share_ptr->shape_.data() = (unsigned long int *) &share_ptr[1];
-    share_ptr->shape_.size() = this->ndim_;
-    share_ptr->strides_.data() = share_ptr->shape_.data() + this->ndim_;
-    share_ptr->strides_.size() = this->ndim_;
-    // copy shape and strides
-    bool check_zeroth_thread = (blockIdx.x == 0) && (blockIdx.y == 0) && (blockIdx.z == 0)
-                            && (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
-    if (check_zeroth_thread) {
-        for (int i = 0; i < this->ndim_; i++) {
-            share_ptr->shape_[i] = this->shape_[i];
-            share_ptr->strides_[i] = this->strides_[i];
-        }
-    }
-    __syncthreads();
-}
-
-#endif  // __LIBMERLINCUDA_STATIC__ || __MERLIN_FORCE_STATIC__
-
-// Get element at a given multidimensional index
-/*
- __cudevice__ float & Parcel::operator[](std::initializer_list<unsigned long int> index) {
-    // initialize index vector
-    intvec index_(index);
-    // calculate strides
-    unsigned long int strides = inner_prod(index_, this->strides_);
-    float * element_ptr = reinterpret_cast<float *>(reinterpret_cast<uintptr_t>(this->data_) + strides);
-    return *element_ptr;
-}
-*/
 
 }  // namespace merlin

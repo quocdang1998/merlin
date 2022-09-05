@@ -18,14 +18,6 @@ Linux and static library on Windows to simplify the development effort. If
 the kind of the library is not the recommended mode, it is users'
 responsibility to fix the issue.
 
-The linking to dynamic library is specifically complicated, because **CUDA device
-code can only be linked statically**. Hence compilation of a dynamic library with
-CUDA option result in 2 files: a static library named libmerlincuda containing only
-device codes, and a dynamic library containing the rest. In order to avoid the
-duplicated definition of non-inline device functions, 2 macros has been defined:
-:envvar:`__LIBMERLIN_STATIC__` and :envvar:`__MERLIN_FORCE_STATIC__` to instruct
-the compiler to compile only device code and ignore host code.
-
 Macro rules
 ^^^^^^^^^^^
 
@@ -35,7 +27,7 @@ files must be included and which part must be ignored. Hence, the same file can
 be used and compiled without error regardless of the compilation configuration,
 thus avoiding having multiple similar copies of the source.
 
-Here are 4 macros defined by project Merlin to help redirecting the source
+Here are 3 macros utilized by project Merlin to help redirecting the source
 code:
 
 .. envvar:: __MERLIN_CUDA__
@@ -45,22 +37,6 @@ code:
       the CUDA option.
    :Usage: Inside a **host function calling other functions from CUDA Runtime
       Library**, or **class members needed only in CUDA configuration**.
-
-.. envvar:: __MERLIN_FORCE_STATIC__
-
-   :Definition: Defined when compiled library is static.
-   :Description: Used in function source code, along with
-      :envvar:`__LIBMERLIN_STATIC__`
-   :Usage: Around **non-inline host-device function and device function
-      definitions**.
-
-.. envvar:: __LIBMERLIN_STATIC__
-
-   :Definition: Defined when compiling the static library ``libmerlincuda``.
-   :Description: Used in function source code, to filter function definitions
-      included in the static library ``libmerlincuda``.
-   :Usage: Around **non-inline host-device function and device function
-      definitions**.
 
 .. envvar:: __NVCC__
 
