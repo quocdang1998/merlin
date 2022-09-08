@@ -1,19 +1,20 @@
 // Copyright 2022 quocdang1998NdData
-#ifndef MERLIN_TENSOR_HPP_
-#define MERLIN_TENSOR_HPP_
+#ifndef MERLIN_ARRAY_HPP_
+#define MERLIN_ARRAY_HPP_
 
 #include <cstdint>  // uintptr_t
 #include <initializer_list>  // std::initializer_list
 
-#include "merlin/nddata.hpp"  // merlin::NdData, merlin::Parcel
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/nddata.hpp"  // merlin::NdData, merlin::Parcel, merlin::Iterator
 #include "merlin/vector.hpp"  // merlin::intvec
 
 namespace merlin {
 
 /** @brief Multi-dimensional array on CPU.*/
-class Array : public NdData {
+class MERLIN_EXPORTS Array : public NdData {
   public:
-    /// @name Constructors
+    /// @name Constructor
     /// @{
     /** @brief Default constructor (do nothing).*/
     Array(void) = default;
@@ -50,64 +51,10 @@ class Array : public NdData {
     Array & operator=(Array && src);
     /// @}
 
-    /** @brief Iterator of a multi-dimensional array.*/
-    class iterator {
-      public:
-        // Constructor
-        // ^^^^^^^^^^^
-        /** @brief Constructor from a vector of index and a dimension vector.
-         *  @param it Vector of index.
-         *  @param shape Reference to l-value vector of dimension.
-         */
-        iterator(const intvec & it, intvec & shape) : index_(it), shape_(&shape) {}
-
-        // Get members
-        // ^^^^^^^^^^^
-        /** @brief Get index of current iterator.*/
-        intvec & index(void) {return this->index_;}
-        /** @brief Get index of constant iterator.*/
-        const intvec & index(void) const {return this->index_;}
-        /** @brief Get reference to the dimension vector of the iterator.*/
-        intvec & shape(void) {return *(this->shape_);}
-
-        // Attributes
-        // ^^^^^^^^^^
-        [[deprecated("This function should only be used when jumping a step bigger than 1.")]]
-        void update(void);
-
-        // Operators
-        // ^^^^^^^^^
-        /** @brief Pre-increment operator.
-         *  @details Increase the index of the last dimension by 1. If the maximum index is reached, set the index to
-         *  zero and increment the next dimension.
-         *
-         *  Example: \f$(0, 0) \rightarrow (0, 1) \rightarrow (0, 2) \rightarrow (1, 0) \rightarrow (1, 1) \rightarrow
-         *  (1, 2)\f$.
-         */
-        iterator& operator++(void);
-        /** @brief Post-increment operator.
-         *  @details Same role as pre-increment operator.
-         */
-        iterator operator++(int);
-        /** @brief Compare if the first iterator is different than the second one.
-         *  @details This operator is used to check if current iterator is the end iterator of Array.
-         *  @param left Left iterator.
-         *  @param right Right iterator.
-         *  @return True if 2 iterators have the same index.
-        */
-        friend bool operator!= (const Array::iterator& left, const Array::iterator& right);
-
-        private:
-        // Members
-        // ^^^^^^^
-        /** @brief Index vector.*/
-        intvec index_;
-        /** @brief Pointer to max diemension vector.*/
-        intvec * shape_;
-    };
-
-    /// @name Atributes
+    /// @name Iterator
     /// @{
+    /** @brief Iterator class.*/
+    using iterator = Iterator;
     /** @brief Begin iterator.
      *  @details Vector of index \f$(0, 0, ..., 0)\f$.
      */
@@ -121,7 +68,7 @@ class Array : public NdData {
      *  @param index Vector of indices along each dimension.
      *  @return Reference to the element at the provided index.
      */
-    float & operator[] (const intvec & idx);
+    float & operator[] (const intvec & index);
     /// @}
 
     /// @name Transfer data
@@ -149,4 +96,4 @@ class Array : public NdData {
 
 }  // namespace merlin
 
-#endif  // MERLIN_TENSOR_HPP_
+#endif  // MERLIN_ARRAY_HPP_

@@ -1,18 +1,19 @@
 // Copyright 2022 quocdang1998
-#ifndef MERLIN_ARRAY_HPP_
-#define MERLIN_ARRAY_HPP_
+#ifndef MERLIN_NDDATA_HPP_
+#define MERLIN_NDDATA_HPP_
 
 #include <cstddef>  // NULL
 #include <initializer_list>  // std::initializer_list
 #include <tuple>  // std::tie
 
 #include "merlin/decorator.hpp"  // __cuhost__, __cuhostdev__
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/vector.hpp"  // merlin::intvec
 
 namespace merlin {
 
 /** @brief Abstract class of N-dim array.*/
-class NdData {
+class MERLIN_EXPORTS NdData {
   public:
     /// @name Constructor
     /// @{
@@ -97,6 +98,70 @@ class NdData {
 class Array;  // CPU Array, defined in tensor.hpp
 class Parcel;  // GPU Array, defined in parcel.hpp
 
+/** @brief Iterator of multi-dimensional array.*/
+class MERLIN_EXPORTS Iterator {
+  public:
+    /// @name Constructor
+    /// @{
+    /** @brief Default constructor.*/
+    Iterator(void) = default;
+    /** @brief Constructor from multi-dimensional index and container.*/
+    Iterator(const intvec & index, NdData & container);
+    /** @brief Constructor from C-contiguous index.*/
+    Iterator(unsigned long int index, NdData & container);
+    /// @}
+
+    /// @name Copy and Move
+    /// @{
+    /** @brief Copy constructor.*/
+    Iterator(const Iterator & src) = default;
+    /** @brief Copy assignment.*/
+    Iterator & operator=(const Iterator & src) = default;
+    /** @brief Move constructor.*/
+    Iterator(Iterator && src) = default;
+    /** @brief Move assignment.*/
+    Iterator & operator=(Iterator && src) = default;
+    /// @}
+
+    /// @name Get members
+    /// @{
+    /** @brief Get multi-dimensional index of an iterator.*/
+    intvec & index(void) {return this->index_;}
+    /** @brief Get constant multi-dimensional index of an iterator.*/
+    const intvec & index(void) const {return this->index_;}
+    /// @}
+
+    /// @name Operators
+    /// @{
+    /** @brief Dereference operator of an iterator.*/
+    float & operator*(void) {return *(this->item_ptr_);}
+    /** @brief Comparison operator.*/
+    MERLIN_EXPORTS friend bool operator!=(const Iterator & left, const Iterator & right) {
+        return left.item_ptr_ != right.item_ptr_;
+    }
+    /** @brief Pre-increment operator.*/
+    Iterator & operator++(void);
+    /** @brief Post-increment operator.*/
+    Iterator operator++(int) {return ++(*this);}
+    /** @brief Update index vector to be consistent with the shape.*/
+    void MERLIN_DEPRECATED update(void);
+    /// @}
+
+    /// @name Destructor
+    /// @{
+    /** @brief Destructor.*/
+    ~Iterator(void) = default;
+    /// @}
+
+  protected:
+    /** @brief Pointer to item.*/
+    float * item_ptr_ = NULL;
+    /** @brief Index vector.*/
+    intvec index_;
+    /** @brief Pointer to NdData object possessing the item.*/
+    NdData * container_ = NULL;
+};
+
 
 #ifdef FUTURE
 /** @brief Slice of an Array.*/
@@ -161,4 +226,4 @@ class Slice {
 
 }  // namespace merlin
 
-#endif  // MERLIN_ARRAY_HPP_
+#endif  // MERLIN_NDDATA_HPP_

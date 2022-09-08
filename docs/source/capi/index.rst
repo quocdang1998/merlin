@@ -4,23 +4,32 @@ C++ API
 Array API
 ---------
 
-This API allow manipulation with multi-dimensional array CPU, out-of-core and
-GPU array:
-
-.. doxysummary::
-   :toctree: generated
-
-   merlin::NdData
-   merlin::Array
-   merlin::Parcel
-
-Some classes facilitates array abstraction:
+Basic utils for Multi-dimensional array manipulation:
 
 .. doxysummary::
    :toctree: generated
 
    merlin::Vector
    merlin::intvec
+   merlin::Iterator
+   merlin::NdData
+
+Classes represent multi-dimensional array on CPU, out-of-core array and GPU
+array:
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::Array
+   merlin::Parcel
+
+Grid API
+--------
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::Grid
 
 
 Log API
@@ -50,6 +59,8 @@ Utils
 .. doxysummary::
    :toctree: generated
 
+   merlin::inner_prod
    merlin::ndim_to_contiguous_idx
    merlin::contiguous_to_ndim_idx
+   merlin::array_copy
 

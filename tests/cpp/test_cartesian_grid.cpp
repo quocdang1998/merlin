@@ -1,15 +1,16 @@
-#include <cstdio>
-#include <vector>
+// Copyright 2022 quocdang1998
 
 #include "merlin/grid.hpp"
+#include "merlin/vector.hpp"
 #include "merlin/logger.hpp"
 
 int main(void) {
-    std::vector<float> v1 = {0.1, 0.2, 0.3};
-    std::vector<float> v2 = {1.0, 2.0, 3.0, 4.0};
-    std::vector<float> v3 = {0.0, 0.25};
-    merlin::CartesianGrid cart_gr(std::vector<std::vector<float>>({v1, v2, v3}));
+    merlin::floatvec v1 = {0.1, 0.2, 0.3};
+    merlin::floatvec v2 = {1.0, 2.0, 3.0, 4.0};
+    merlin::floatvec v3 = {0.0, 0.25};
+    merlin::CartesianGrid cart_gr = {v1, v2, v3};
 
+/*
     MESSAGE("Loop with begin/end iterator.");
     for (merlin::Grid::iterator it = cart_gr.begin(); it != cart_gr.end(); it++) {
         merlin::Tensor ar = cart_gr[it.index()];
@@ -23,5 +24,5 @@ int main(void) {
     }
 
     merlin::Tensor ar = cart_gr.grid_points();
-
+*/
 }

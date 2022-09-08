@@ -10,7 +10,7 @@ __global__ void print_element(merlin::intvec * vecptr) {
 
 __global__ void print_element_from_shared_memory(merlin::intvec * vecptr) {
     extern __shared__ merlin::intvec share_ptr[];
-    vecptr->copy_to_shared_mem(share_ptr);
+    vecptr->copy_to_shared_mem(share_ptr, reinterpret_cast<unsigned long int *>(share_ptr+1));
     CUDAOUT("Value from shared memory: %lu.\n", share_ptr[0][threadIdx.x]);
 }
 
@@ -28,7 +28,7 @@ int main(void) {
     // allocate and copy intvec to GPU
     merlin::intvec * ptr_x_gpu;
     cudaMalloc(&ptr_x_gpu, x.malloc_size());
-    x.copy_to_gpu(ptr_x_gpu);
+    x.copy_to_gpu(ptr_x_gpu, reinterpret_cast<unsigned long int *>(ptr_x_gpu+1));
     // print vector
     print_element<<<1,3>>>(ptr_x_gpu);
     print_element_from_shared_memory<<<1,3,x.malloc_size()>>>(ptr_x_gpu);

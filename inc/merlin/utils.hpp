@@ -6,6 +6,8 @@
 
 #include "merlin/nddata.hpp"  // merlin::NdData
 #include "merlin/decorator.hpp"  // __cuhost__, __cuhostdev__
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/logger.hpp"  // FAILURE
 #include "merlin/vector.hpp"  // merlin::intvec
 
 namespace merlin {
@@ -22,7 +24,7 @@ __cuhostdev__ inline unsigned long int inner_prod(const intvec & v1, const intve
     // check size of 2 vectors
     #ifndef __CUDA_ARCH__
     if (v1.size() != v2.size()) {
-        FAILURE(std::invalid_argument, "Size of v1 (%d) and size of v2 (%d) are not equal.\n", v1.size(), v2.size());
+        FAILURE(std::invalid_argument, "Size of v1 (%u) and size of v2 (%u) are not equal.\n", v1.size(), v2.size());
     }
     #endif  // __CUDA_ARCH__
     // calculate inner product
@@ -41,7 +43,7 @@ __cuhostdev__ inline unsigned long int inner_prod(const intvec & v1, const intve
  *  @param shape Shape vector.
  *  @param element_size Size on one element.
  */
-intvec contiguous_strides(const intvec & shape, unsigned long int element_size);
+MERLIN_EXPORTS intvec contiguous_strides(const intvec & shape, unsigned long int element_size);
 
 /** @brief Calculate the longest contiguous segment and break index of an tensor.
  *  @details Longest contiguous segment is the length (in bytes) of the longest sub-tensor that is C-contiguous in the
@@ -54,7 +56,7 @@ intvec contiguous_strides(const intvec & shape, unsigned long int element_size);
  *  @param shape Shape vector.
  *  @param strides Strides vector.
 */
-std::tuple<unsigned long int, long int> lcseg_and_brindex(const intvec & shape, const intvec & strides);
+MERLIN_EXPORTS std::tuple<unsigned long int, long int> lcseg_and_brindex(const intvec & shape, const intvec & strides);
 
 /** @brief Copy data from an NdData to another.
  *  @details This function allows user to choose the copy function (for example, std::memcpy, or cudaMemcpy).
@@ -110,15 +112,6 @@ __cuhostdev__ inline int get_current_device(void) {
 #endif  // __NVCC__
 
 #ifdef COMMENT
-
-
-/** @brief Convert vector of C-contiguous index to vector of n-dimensional index.
-
-    @param index C-contiguous index.
-    @param dims Size of each dimension.
-*/
-std::vector<std::vector<unsigned int>> contiguous_to_ndim_idx(const std::vector<unsigned int> & index,
-                                                              const std::vector<unsigned int> & dims);
 
 std::vector<std::vector<unsigned int>> partition_list(unsigned int length, unsigned int n_segment);
 #endif

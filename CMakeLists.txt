@@ -26,7 +26,7 @@ list(APPEND MERLIN_SRC_CU
 
 # options
 option(MERLIN_CUDA "Build library using CUDA" ON)  # -DMERLIN_CUDA=OFF
-set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
+set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"/"DYNAMIC"
        CACHE STRING "Type of the created library (static or shared/dynamic)")
 option(MERLIN_TEST "Build test executables" ON)  # -DMERLIN_TEST=ON
 
@@ -41,7 +41,6 @@ endif(MERLIN_CUDA)
 list(APPEND MERLIN_SRC ${MERLIN_SRC_CPP})
 if(MERLIN_CUDA)
     list(APPEND MERLIN_SRC ${MERLIN_SRC_CU})
-    add_compile_definitions(__MERLIN_CUDA__)
 endif()
 
 # =============================================================================
@@ -96,6 +95,7 @@ if(MERLIN_LIBKIND MATCHES "STATIC")
     # build static lib
     message(STATUS "Build static library")
     add_library(libmerlin STATIC ${MERLIN_SRC})
+    target_compile_definitions(libmerlin PUBLIC __MERLIN_BUILT_AS_STATIC__)
 elseif(MERLIN_LIBKIND MATCHES "SHARED" OR MERLIN_LIBKIND MATCHES "DYNAMIC")
     # build dynamic lib
     message(STATUS "Build dynamic library")
@@ -109,7 +109,9 @@ set_property(TARGET libmerlin PROPERTY OUTPUT_NAME merlin)
 set_property(TARGET libmerlin PROPERTY POSITION_INDEPENDENT_CODE 1)
 target_include_directories(libmerlin PUBLIC inc)
 target_link_libraries(libmerlin PUBLIC OpenMP::OpenMP_CXX)
-
+if(MERLIN_CUDA)
+    target_compile_definitions(libmerlin PUBLIC __MERLIN_CUDA__)
+endif()
 
 # =============================================================================
 # tests

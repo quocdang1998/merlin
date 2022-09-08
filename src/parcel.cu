@@ -62,7 +62,8 @@ Parcel::Parcel(const Parcel & src) : NdData(src) {
 Parcel & Parcel::operator=(const Parcel & src) {
     // free old data
     this->free_current_data();
-    // reform strides vector
+    // copy metadata and reform strides vector
+    this->NdData::operator=(src);
     this->strides_ = contiguous_strides(this->shape_, sizeof(float));
     // allocate data
     cudaError_t err_ = cudaMalloc(&(this->data_), sizeof(float) * this->size());
@@ -91,32 +92,26 @@ Parcel & Parcel::operator=(Parcel && src) {
     this->free_current_data();
     // move device id
     this->device_id_ = src.device_id_;
+    // copy metadata
+    this->NdData::operator=(src);
     // take over pointer to source
     src.data_ = NULL;
     return *this;
 }
 
 // Copy data to a pre-allocated memory
-void Parcel::copy_to_gpu(Parcel * gpu_ptr) {
+void Parcel::copy_to_gpu(Parcel * gpu_ptr, unsigned long int * shape_strides_ptr) {
     // initialize buffer to store data of the copy before cloning it to GPU
     Parcel copy_on_gpu;
-    // copy shape and strides data
-    uintptr_t shape_ptr = reinterpret_cast<uintptr_t>(gpu_ptr) + sizeof(Parcel);
-    cudaMemcpy(reinterpret_cast<unsigned long int *>(shape_ptr), this->shape_.data(),
-               this->ndim_*sizeof(unsigned long int), cudaMemcpyHostToDevice);
-    uintptr_t strides_ptr = shape_ptr + this->ndim_*sizeof(unsigned long int);
-    cudaMemcpy(reinterpret_cast<unsigned long int *>(strides_ptr), this->strides_.data(),
-               this->ndim_*sizeof(unsigned long int), cudaMemcpyHostToDevice);
     // shallow copy of the current object
     copy_on_gpu.data_ = this->data_;
     copy_on_gpu.ndim_ = this->ndim_;
     copy_on_gpu.device_id_ = this->device_id_;
-    copy_on_gpu.shape_.data() = reinterpret_cast<unsigned long int *>(shape_ptr);
-    copy_on_gpu.shape_.size() = this->ndim_;
-    copy_on_gpu.strides_.data() = reinterpret_cast<unsigned long int *>(strides_ptr);
-    copy_on_gpu.strides_.size() = this->ndim_;
     // copy temporary object to GPU
     cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(Parcel), cudaMemcpyHostToDevice);
+    // copy shape and strides data
+    this->shape_.copy_to_gpu(&(gpu_ptr->shape_), shape_strides_ptr);
+    this->strides_.copy_to_gpu(&(gpu_ptr->strides_), shape_strides_ptr+this->ndim_);
     // nullify data pointer to avoid free data
     copy_on_gpu.data_ = NULL;
     copy_on_gpu.shape_.data() = NULL;

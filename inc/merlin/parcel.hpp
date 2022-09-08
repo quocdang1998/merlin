@@ -6,13 +6,14 @@
 #include <initializer_list>  // std::initializer_list
 
 #include "merlin/nddata.hpp"  // merlin::NdData
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/decorator.hpp"  // __cudevice__, __cuhostdev__
 #include "merlin/utils.hpp"
 
 namespace merlin {
 
 /** @brief Multi-dimensional array on GPU.*/
-class Parcel : public NdData {
+class MERLIN_EXPORTS Parcel : public NdData {
   public:
     /// @name Constructors
     /// @{
@@ -66,18 +67,20 @@ class Parcel : public NdData {
     unsigned long int malloc_size(void) {return sizeof(Parcel) + 2*this->ndim_*sizeof(unsigned long int);}
     /** @brief Copy meta-data (shape and strides) from CPU to a pre-allocated memory on GPU.
      *  @details The meta-data is copied to the memory region that comes right after the copied object.
-     *  @param gpu_ptr Pointer to a pre-allocated GPU memory. Note that this memory reagion must be big enough to store both
-     *  the object and the its data.
+     *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
+     *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and stride
+     *  vector.
      */
-    void copy_to_gpu(Parcel * gpu_ptr);
+    void copy_to_gpu(Parcel * gpu_ptr, unsigned long int * shape_strides_ptr);
     #ifdef __NVCC__
     /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
      *  @note This operation is single-threaded.
      *  @param share_ptr Dynamically allocated shared pointer on GPU.
+     *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and stride
+     *  vector.
      */
-    __cudevice__ inline void copy_to_shared_mem(Parcel * share_ptr);
+    __cudevice__ inline void copy_to_shared_mem(Parcel * share_ptr, unsigned long int * shape_strides_ptr);
     #endif  // __NVCC__
-    
 
     /// @name Utils
     /// @{
@@ -120,25 +123,13 @@ __cudevice__ inline float & Parcel::operator[](std::initializer_list<unsigned lo
 }
 
 // Copy to shared memory
-__cudevice__ inline void Parcel::copy_to_shared_mem(Parcel * share_ptr) {
+__cudevice__ inline void Parcel::copy_to_shared_mem(Parcel * share_ptr, unsigned long int * shape_strides_ptr) {
     // copy meta data
     share_ptr->data_ = this->data_;
     share_ptr->ndim_ = this->ndim_;
-    // assign shape and strides pointer to data
-    share_ptr->shape_.data() = (unsigned long int *) &share_ptr[1];
-    share_ptr->shape_.size() = this->ndim_;
-    share_ptr->strides_.data() = share_ptr->shape_.data() + this->ndim_;
-    share_ptr->strides_.size() = this->ndim_;
     // copy shape and strides
-    bool check_zeroth_thread = (blockIdx.x == 0) && (blockIdx.y == 0) && (blockIdx.z == 0)
-                            && (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
-    if (check_zeroth_thread) {
-        for (int i = 0; i < this->ndim_; i++) {
-            share_ptr->shape_[i] = this->shape_[i];
-            share_ptr->strides_[i] = this->strides_[i];
-        }
-    }
-    __syncthreads();
+    this->shape_.copy_to_shared_mem(&(share_ptr->shape_), shape_strides_ptr);
+    this->strides_.copy_to_shared_mem(&(share_ptr->strides_), shape_strides_ptr+this->ndim_);
 }
 #endif  // __NVCC__
 

@@ -19,7 +19,7 @@ XML_PROGRAMLISTING     = YES
 ENABLE_PREPROCESSING   = YES
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
-PREDEFINED             = "__NVCC__" \
-                         "__cuhost__=__host__" \
+PREDEFINED             = "__cuhost__=__host__" \
                          "__cudevice__=__device__" \
-                         "__cuhostdev__=__host__ __device__"
+                         "__cuhostdev__=__host__ __device__" \
+                         __NVCC__=

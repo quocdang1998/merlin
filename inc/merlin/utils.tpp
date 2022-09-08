@@ -4,8 +4,6 @@
 
 #include <algorithm>  // std::min, std::max
 
-#include "merlin/logger.hpp"  // FAILURE
-
 namespace merlin {
 
 // -------------------------------------------------------------------------------------------------------------------------

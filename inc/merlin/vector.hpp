@@ -1,19 +1,21 @@
 // Copyright 2022 quocdang1998
-#ifndef MERLIN_INTVEC_HPP_
-#define MERLIN_INTVEC_HPP_
+#ifndef MERLIN_VECTOR_HPP_
+#define MERLIN_VECTOR_HPP_
 
 #include <cstddef>  // NULL
 #include <initializer_list>  // std::initializer_list
 
 #include "merlin/decorator.hpp"  // __cuhost__, __cuhostdev__
+#include "merlin/exports.hpp"  // MERLIN_TEMPLATE_EXPORTS
 
 namespace merlin {
 
-/** @brief 1D contiguous dynamic array (similar to ``std::vector``, with support for GPU array).
+/** @brief 1D un-resizable dynamic array.
+ *  @details Similar to ``std::vector``, but transportable to GPU global memory and shared memory.
  *  @tparam T Numeric type (``float``, ``int``, etc)
  */
 template <typename T>
-class Vector {
+class MERLIN_TEMPLATE_EXPORTS Vector {
   public:
     /// @name Constructors
     /// @{
@@ -64,11 +66,11 @@ class Vector {
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the object and its data.*/
     __cuhostdev__ unsigned long int malloc_size(void) {return sizeof(Vector<T>) + this->size_*sizeof(unsigned long int);}
     /** @brief Copy data from CPU to a pre-allocated memory on GPU.
-     *  @details The data is copied to the memory region that comes right after the copied object.
-     *  @param gpu_ptr Pointer to a pre-allocated GPU memory. Note that this memory reagion must be big enough to store
-     *  both the object and the its data.
+     *  @details The object and its data is copied to the global memory of the GPU.
+     *  @param gpu_ptr Pointer to a pre-allocated GPU memory storing the object.
+     *  @param data_ptr Pre-allocated pointer to memory region storing data of the vector.
      */
-    void copy_to_gpu(Vector<T> * gpu_ptr);
+    void copy_to_gpu(Vector<T> * gpu_ptr, T * data_ptr);
     /** @brief Copy data from GPU to CPU.
      *  @param gpu_ptr Pointer to object on GPU global memory.
      */
@@ -77,8 +79,9 @@ class Vector {
     /** @brief Copy data from GPU global memory to shared memory of a kernel.
      *  @note This operation is single-threaded.
      *  @param share_ptr Dynamically allocated shared pointer on GPU.
+     *  @param data_ptr Pre-allocated pointer to memory region storing data of the vector.
      */
-    __cudevice__ void copy_to_shared_mem(Vector<T> * share_ptr);
+    __cudevice__ void copy_to_shared_mem(Vector<T> * share_ptr, T * data_ptr);
     #endif  // __NVCC__
     /// @}
 
@@ -100,8 +103,11 @@ class Vector {
  */
 using intvec = Vector<unsigned long int>;
 
+/** @brief Vector of simple precision values.*/
+using floatvec = Vector<float>;
+
 }  // namespace merlin
 
 #include "merlin/vector.tpp"
 
-#endif  // MERLIN_INTVEC_HPP_
+#endif  // MERLIN_VECTOR_HPP_

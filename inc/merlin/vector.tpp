@@ -81,30 +81,36 @@ __cuhostdev__ Vector<T> & Vector<T>::operator=(Vector<T> && src) {
 
 // Copy data to GPU
 #ifndef __MERLIN_CUDA__
+// Copy data from CPU to a global memory on GPU
 template <typename T>
 void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access this feature.\n");
 }
+
+// Copy data from GPU to CPU
 template <typename T>
 void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access this feature.\n");
 }
+
 #elif defined(__NVCC__)
+// Copy data from CPU to a global memory on GPU
 template <typename T>
-void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr) {
+void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, T * data_ptr) {
     // initialize buffer to store data of the copy before cloning it to GPU
     Vector<T> copy_on_gpu;
     // copy data
-    uintptr_t gpu_data = reinterpret_cast<uintptr_t>(gpu_ptr) + sizeof(Vector<T>);
-    cudaMemcpy(reinterpret_cast<T *>(gpu_data), this->data_,
+    cudaMemcpy(data_ptr, this->data_,
                this->size_*sizeof(T), cudaMemcpyHostToDevice);
     // copy metadata
-    copy_on_gpu.data_ = reinterpret_cast<T *>(gpu_data);
+    copy_on_gpu.data_ = data_ptr;
     copy_on_gpu.size_ = this->size_;
     cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(Vector<T>), cudaMemcpyHostToDevice);
     // nullify data on copy to avoid deallocate memory on CPU
     copy_on_gpu.data_ = NULL;
 }
+
+// Copy data from GPU to CPU
 template <typename T>
 void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
     // copy data
@@ -114,16 +120,15 @@ void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
 }
 #endif  // __MERLIN_CUDA__
 
-// Copy to shared memory
 #ifdef __NVCC__
+// Copy to shared memory
 template <typename T>
-__cudevice__ void Vector<T>::copy_to_shared_mem(Vector<T> * share_ptr) {
+__cudevice__ void Vector<T>::copy_to_shared_mem(Vector<T> * share_ptr, T * data_ptr) {
     // copy size
     share_ptr->size_ = this->size_;
-    share_ptr->data_ = (T *) &share_ptr[1];
+    share_ptr->data_ = data_ptr;
     // copy data in parallel
-    bool check_zeroth_thread = (blockIdx.x == 0) && (blockIdx.y == 0) && (blockIdx.z == 0)
-                            && (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
+    bool check_zeroth_thread = (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
     if (check_zeroth_thread) {
         for (int i = 0; i < this->size_; i++) {
             share_ptr->data_[i] = this->data_[i];

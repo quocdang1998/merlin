@@ -61,7 +61,7 @@ pygments_style = 'rainbow_dash'
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
-html_favicon = '_static/merlin_favicon2.svg'
+html_favicon = '_static/merlin_favicon.svg'
 html_css_files = ['azura.css']
 html_js_files = [('azura.js', {'defer': 'defer'}), 'hsl_rgb.js']
 
