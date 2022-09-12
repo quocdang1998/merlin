@@ -2,8 +2,9 @@
 #ifndef MERLIN_GRID_HPP_
 #define MERLIN_GRID_HPP_
 
-#include <initializer_list>
+#include <initializer_list>  // std::initializer_list
 
+#include "merlin/decorator.hpp"  // __cuhost__, __cuhostdev__
 #include "merlin/nddata.hpp"  // merlin::NdData, merlin::Iterator
 #include "merlin/array.hpp"  // merlin::Array
 #include "merlin/vector.hpp"  // merlin::Vector, merlin::intvec, merlin::floatvec
@@ -14,9 +15,14 @@ namespace merlin {
 class Grid {
   public:
     /** @brief Default constructor.*/
-    Grid(void) = default;
+    __cuhostdev__ Grid(void) {}
     /** @brief Destructor.*/
-    ~Grid(void) = default;
+    __cuhostdev__ ~Grid(void) {}
+
+  protected:
+    /** @brief Array holding coordinates of points in the Grid.*/
+    Array points_;
+    // NdData * points_ = NULL;
 };
 
 /** @brief A set of multi-dimensional points.*/
@@ -25,7 +31,7 @@ class RegularGrid : Grid {
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
-    RegularGrid(void) = default;
+    __cuhostdev__ RegularGrid(void) {}
     /** @brief Construct an empty grid from a given number of n-dim points.
      *  @param npoint Number of points in the grid.
      *  @param ndim Number of dimension of points in the grid.
@@ -56,7 +62,7 @@ class RegularGrid : Grid {
     /** @brief Number of dimension of each point in the grid.*/
     unsigned int ndim(void) {return this->points_.shape()[1];}
     /** @brief Number of points in the grid.*/
-    unsigned int npoint(void) {return this->npoint_;}
+    unsigned int size(void) {return this->npoint_;}
     /** @brief Maximum number of point which the RegularGrid can hold without reallocating memory.*/
     unsigned int capacity(void) {return this->points_.shape()[0];}
     /// @}
@@ -86,12 +92,6 @@ class RegularGrid : Grid {
   protected:
     /** @brief Number of points in the grid.*/
     unsigned long int npoint_;
-    /** @brief Tensor to a 2D C-contiguous tensor of size (capacity, ndim).
-     *  @details This 2D table store the value of each n-dimensional point as a row vector.
-     *
-     *  Capacity is the smallest \f$2^n\f$ so that \f$n_{point} \le 2^n\f$
-     */
-    Array points_;
     /** @brief Begin iterator.*/
     intvec begin_;
     /** @brief End iterator.*/
@@ -100,7 +100,7 @@ class RegularGrid : Grid {
 
 
 /** @brief Multi-dimensional Cartesian grid.*/
-class CartesianGrid {
+class CartesianGrid : public Grid {
   public:
       /** @brief Constructor from a list of vector of values.*/
     CartesianGrid(std::initializer_list<floatvec> grid_vectors);
@@ -114,33 +114,32 @@ class CartesianGrid {
     /** @brief Number of dimension of the CartesianGrid.*/
     unsigned long int ndim(void) {return this->grid_vectors_.size();}
     /** @brief Number of points in the CartesianGrid.*/
-    unsigned long int npoint(void);
+    unsigned long int size(void);
     /** @brief Shape of the grid.*/
     intvec grid_shape(void);
 
-    // using iterator = Array::iterator;
+    using iterator = Iterator;
     /** @brief Begin iterator.*/
-    // CartesianGrid::iterator begin(void);
+    CartesianGrid::iterator begin(void);
     /** @brief End iterator.*/
-    // CartesianGrid::iterator end(void);
+    CartesianGrid::iterator end(void);
 
     /** @brief Get element at a given index.
-
-    @param index Index of point in the CartesianGrid::grid_points table.*/
-    // Tensor operator[] (unsigned int index);
+     *  @param index Index of point in the CartesianGrid::grid_points table.
+     */
+    floatvec operator[](unsigned long int index);
     /** @brief Get element at a given index vector.
-
-    @param index Vector of index on each dimension.*/
-    // Tensor operator[] (const std::vector<unsigned int> & index);
-
+     *  @param index Vector of index on each dimension.
+     */
+    floatvec operator[](const intvec & index);
 
   protected:
     /** @brief List of vector of values.*/
     Vector<floatvec> grid_vectors_;
     /** @brief Begin iterator.*/
-    // intvec begin_;
+    intvec begin_;
     /** @brief End iterator.*/
-    // intvec end_;
+    intvec end_;
 };
 
 }  // namespace merlin

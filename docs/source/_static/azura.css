@@ -318,12 +318,12 @@ html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(
 }
 
 /* C++ name and scope of other objects */
-.sig.sig-object.cpp > .p, .sig.sig-object.cpp > .o, .sig.sig-object.cpp > .n:not(.sig-param), .sig.sig-object.cpp > .headerlink {
+.sig.sig-object.cpp > .p, .sig.sig-object.cpp > .o, .sig.sig-object.cpp > .headerlink {
     color: var(--yinyang) !important;
 }
 
 /* C++ build-in type */
-.sig.sig-object.cpp .kt {
+.sig.sig-object.cpp .kt, .sig.sig-object.cpp > .n:not(.sig-param) {
     color: var(--type);
 }
 

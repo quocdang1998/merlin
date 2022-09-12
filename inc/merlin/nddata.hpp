@@ -3,7 +3,6 @@
 #define MERLIN_NDDATA_HPP_
 
 #include <cstddef>  // NULL
-#include <initializer_list>  // std::initializer_list
 #include <tuple>  // std::tie
 
 #include "merlin/decorator.hpp"  // __cuhost__, __cuhostdev__
@@ -26,8 +25,7 @@ class MERLIN_EXPORTS NdData {
      *  @param shape Shape vector.
      *  @param strides Strides vector.
      */
-    NdData(float * data, unsigned long int ndim, std::initializer_list<unsigned long int> shape,
-           std::initializer_list<unsigned long int> strides);
+    NdData(float * data, unsigned long int ndim, const intvec & shape, const intvec & strides);
     /** @brief Constructor from data pointer and meta-data pointers.
      *  @details This constructor is designed for initializing object from Numpy np.array.
      *  @param data Pointer to data.
@@ -162,67 +160,80 @@ class MERLIN_EXPORTS Iterator {
     NdData * container_ = NULL;
 };
 
-
-#ifdef FUTURE
 /** @brief Slice of an Array.*/
 class Slice {
   public:
-    // Constructors
-    // ------------
+    /// @name Constructors
+    /// @{
     /** @brief Default constructor.
      *  @details Construct a full slice (start at 0, end at last element, step 1).
      */
     Slice(void) = default;
     /** @brief Member constructor.
-     *  @details Construct Slice obejct from value of its members.
+     *  @details Construct Slice object from values of its members.
      *  @param start Start position (must be positive).
      *  @param stop Stop position (count from the last element, modulo if range exceeded).
      *  @param step Step (positive means step to right, negative means step to the left).
      */
-    Slice(unsigned int start, int stop, int step);
+    Slice(unsigned long int start, long int stop, long int step) : start_(start), stop_(stop), step_(step) {
+        if (step == 0) {
+            FAILURE(std::invalid_argument, "Step must not be 0.\n");
+        }
+    }
     /** @brief Constructor from an initializer list.
      *  @param list Initializer list of length 3.
      */
     Slice(std::initializer_list<int> list);
+    /// @}
+
+    /// @name Copy and Move
+    /// @{
+    /** @brief Copy constructor.*/
+    Slice(const Slice & src) = default;
+    /** @brief Copy assignment.*/
+    Slice & operator=(const Slice & src) = default;
+    /** @brief Move constructor.*/
+    Slice(Slice && src) = default;
+    /** @brief Move assignment.*/
+    Slice & operator=(Slice && src)= default;
+    /// @}
 
     // Get members
     // -----------
     /** @brief Get reference to start value.*/
-    unsigned int & start(void) {return this->start_;}
+    unsigned long int & start(void) {return this->start_;}
     /** @brief Get constant reference to start value.*/
-    const unsigned int & start(void) const {return this->start_;}
+    const unsigned long int & start(void) const {return this->start_;}
     /** @brief Get reference to stop value.*/
-    int & stop(void) {return this->stop_;}
+    long int & stop(void) {return this->stop_;}
     /** @brief Get constant reference to stop value.*/
-    const int & stop(void) const {return this->stop_;}
+    const long int & stop(void) const {return this->stop_;}
     /** @brief Get reference to step value.*/
-    int & step(void) {return this->step_;}
+    long int & step(void) {return this->step_;}
     /** @brief Get constant reference to step value.*/
-    const int & step(void) const {return this->step_;}
+    const long int & step(void) const {return this->step_;}
 
     // Convert to range
     // ----------------
     /** @brief Get indices corresponding to element represented by the slice.
      *  @param length Length of the array.
      */
-    std::vector<unsigned int> range(unsigned int length);
+    intvec range(unsigned long int length);
 
   protected:
     // Members
     // -------
     /** @brief Start index.*/
-    unsigned int start_ = 0;
+    unsigned long int start_ = 0;
     /** @brief Stop index, count from last element.
      *  @details Positive means count from zeroth element, negative means count from last element.
      */
-    int stop_ = 0;
+    long int stop_ = 0;
     /** @brief Step
      * @details Positive means stepping to the right, Negative means stepping to the left.
      */
-    int step_ = 1;
+    long int step_ = 1;
 };
-#endif
-
 
 }  // namespace merlin
 

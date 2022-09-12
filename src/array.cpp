@@ -3,6 +3,8 @@
 
 #include <cstdlib>  // div_t, div
 #include <cstring>  // std::memcpy
+#include <fstream>  // std::ofstream
+#include <mutex>  // std::mutex
 #include <utility>  // std::move
 
 #include "merlin/parcel.hpp"  // merlin::Parcel
@@ -29,10 +31,10 @@ Array::Array(float value) {
 }
 
 // Construct empty Array from shape vector
-Array::Array(std::initializer_list<unsigned long int> shape) {
+Array::Array(const intvec & shape) {
     // initilaize ndim and shape
     this->ndim_ = shape.size();
-    this->shape_ = intvec(shape);
+    this->shape_ = shape;
     // calculate strides
     this->strides_ = contiguous_strides(this->shape_, sizeof(float));
     // initialize data
@@ -140,6 +142,24 @@ void sync_from_gpu(const Parcel & gpu_array, uintptr_t stream) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 #endif  // __MERLIN_CUDA__
+
+// Export data to a file
+void Array::export_to_file(const std::string & filename) {
+    std::ofstream f(filename);
+    auto write_func = [&f] (float * dest, float * src, unsigned long int count) -> void {
+        f.write(reinterpret_cast<char *>(src), count);
+    };
+    std::mutex m;
+    m.lock();
+    // write meta-data
+    f.write(reinterpret_cast<char *>(&(this->ndim_)), sizeof(unsigned long int));
+    f.write(reinterpret_cast<char *>(this->shape_.data()), this->ndim_*sizeof(unsigned long int));
+    // write data
+    NdData placeholder_array(NULL, this->ndim_, this->shape_, contiguous_strides(this->shape_, sizeof(float)));
+    array_copy(&placeholder_array, this, write_func);
+    m.unlock();
+    f.close();
+}
 
 // Destructor
 Array::~Array(void) {

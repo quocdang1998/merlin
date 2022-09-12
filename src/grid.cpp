@@ -6,7 +6,7 @@
 #include <utility>  // std::move
 
 #include "merlin/logger.hpp"  // FAILURE
-#include "merlin/utils.hpp"  // merlin::array_copy, merlin::contiguous_to_ndim_idx
+#include "merlin/utils.hpp"  // merlin::contiguous_strides, merlin::array_copy, merlin::contiguous_to_ndim_idx
 
 namespace merlin {
 
@@ -116,7 +116,7 @@ CartesianGrid::CartesianGrid(std::initializer_list<floatvec> grid_vectors) : gri
 }
 
 // Get total number of points
-unsigned long int CartesianGrid::npoint(void) {
+unsigned long int CartesianGrid::size(void) {
     unsigned long int result = 1;
     for (int i = 0; i < this->grid_vectors_.size(); i++) {
         result *= this->grid_vectors_[i].size();
@@ -136,7 +136,7 @@ intvec CartesianGrid::grid_shape(void) {
 // Construct 2D table of points in a Cartesian Grid
 Array CartesianGrid::grid_points(void) {
     // initialize table of grid points
-    unsigned long int npoint_ = this->npoint();
+    unsigned long int npoint_ = this->size();
     Array result({npoint_, this->ndim()});
 
     // assign value to each point
@@ -152,51 +152,40 @@ Array CartesianGrid::grid_points(void) {
 
     return result;
 }
-#ifdef __COMMENT__
+
 // Begin iterator
-Grid::iterator CartesianGrid::begin(void) {
-    this->begin_ = std::vector<unsigned int>(this->ndim(), 0);
-    this->end_ = std::vector<unsigned int>(this->ndim(), 0);
+CartesianGrid::iterator CartesianGrid::begin(void) {
+    intvec shape = this->grid_shape();
+    intvec strides = contiguous_strides(shape, sizeof(float));
+    this->points_ = Array(NULL, this->ndim(), shape.data(), strides.data(), false);
+    this->begin_ = intvec(this->ndim(), 0);
+    this->end_ =intvec(this->ndim(), 0);
     this->end_[0] = this->grid_vectors_[0].size();
-    return Grid::iterator(this->begin_, this->dims_);
+    return CartesianGrid::iterator(this->begin_, this->points_);
 }
 
 // End iterator
-Grid::iterator CartesianGrid::end(void) {
-    return Tensor::iterator(this->end_, this->dims_);
+CartesianGrid::iterator CartesianGrid::end(void) {
+    return CartesianGrid::iterator(this->end_, this->points_);
 }
 
-// Append/Remove/Get point
-// -----------------------
-
-Tensor CartesianGrid::operator[] (unsigned int index) {
-    // convert C-contiguous index to ndim index
-    std::vector<unsigned int> index_ = contiguous_to_ndim_idx({index}, this->dims_)[0];
-    // get value
-    Tensor value_(std::vector<unsigned int>({this->ndim()}));
-    for (unsigned int j = 0; j < index_.size(); j++) {
-        value_[std::vector<unsigned int>({j})] = this->grid_vectors_[j][index_[j]];
-    }
-    return value_;
-}
-
-
-Tensor CartesianGrid::operator[] (const std::vector<unsigned int> & index) {
-    // check size of index
-    if (index.size() != this->ndim()) {
-        FAILURE("Size of index (%d) is different from ndim of CartesianGrid (%d).",
-                index.size(), this->ndim());
-    }
-    // assign to result tensor
-    Tensor result(std::vector<unsigned int>({this->ndim()}));
-    for (unsigned int i = 0; i < index.size(); i++) {
-        if (index[i] >= this->dims_[i]) {
-            FAILURE("Size of dimension %d of index (%d) must be less than %d.",
-                    i, index[i], this->dims_[i]);
-        }
-        result.data()[i] = this->grid_vectors_[i][index[i]];
+// Get element at a C-contiguous index
+floatvec CartesianGrid::operator[](unsigned long int index) {
+    intvec nd_index = contiguous_to_ndim_idx(index, this->grid_shape());
+    floatvec result(this->ndim(), 0);
+    for (int i = 0; i < result.size(); i++) {
+        result[i] = this->grid_vectors_[i][nd_index[i]];
     }
     return result;
 }
-#endif
+
+// Get element at a multi-dimensional index
+floatvec CartesianGrid::operator[](const intvec & index) {
+    floatvec result(this->ndim(), 0);
+    for (int i = 0; i < result.size(); i++) {
+        result[i] = this->grid_vectors_[i][index[i]];
+    }
+    return result;
+}
+
 }  // namespace merlin

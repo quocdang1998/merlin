@@ -1,6 +1,10 @@
 C++ API
 =======
 
+.. raw:: latex
+
+   \setcounter{codelanguage}{1}
+
 Array API
 ---------
 

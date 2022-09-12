@@ -17,6 +17,7 @@ list(APPEND MERLIN_SRC_CPP
      src/array.cpp
      src/utils.cpp
      src/parcel.cpp
+     src/stock.cpp
 )
 list(APPEND MERLIN_SRC_CU
      src/parcel.cu

@@ -2,33 +2,32 @@
 #ifndef MERLIN_INTERPOLANT_HPP_
 #define MERLIN_INTERPOLANT_HPP_
 
-#include <vector>
-
-#include "merlin/tensor.hpp"
-#include "merlin/grid.hpp"
+#include "merlin/vector.hpp"  // merlin::floatvec
+#include "merlin/nddata.hpp"  // merlin::NdData
+#include "merlin/grid.hpp"  // merlin::CartesianGrid
 
 namespace merlin {
 
 class CartesianInterpolant {
   public:
-    CartesianInterpolant(CartesianGrid & grid, Tensor & value);
+    CartesianInterpolant(CartesianGrid & grid, NdData & value);
     ~CartesianInterpolant(void) = default;
 
-    virtual float operator() (const std::vector<float> & x);
+    virtual float operator() (const floatvec & x);
 
   protected:
     CartesianGrid * grid_;
-    Tensor * value_;
+    NdData * value_;
 };
 
 class LagrangeInterpolant : public CartesianInterpolant {
   public:
-    LagrangeInterpolant(CartesianGrid & grid, Tensor & value);
+    LagrangeInterpolant(CartesianGrid & grid, NdData & value);
     ~LagrangeInterpolant(void) = default;
 
   protected:
     /** @brief Interpolation coefficient vector.*/
-    Tensor coef_;
+    NdData coef_;
 };
 
 }  // namespace merlin

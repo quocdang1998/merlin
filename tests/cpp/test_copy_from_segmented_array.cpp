@@ -5,7 +5,7 @@
 #include "merlin/array.hpp"  // merlin::Array
 
 int main(void) {
-    // initialize tensor
+    // initialize array
 
     // original:
     // [1.0, 3.0, 5.0, 7.0, 9.0 ]

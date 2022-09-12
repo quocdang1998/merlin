@@ -3,7 +3,6 @@
 #define MERLIN_ARRAY_HPP_
 
 #include <cstdint>  // uintptr_t
-#include <initializer_list>  // std::initializer_list
 
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/nddata.hpp"  // merlin::NdData, merlin::Parcel, merlin::Iterator
@@ -25,7 +24,7 @@ class MERLIN_EXPORTS Array : public NdData {
     /** @brief Construct C-contiguous empty array from dimension vector.
      *  @param shape Shape vector.
      */
-    Array(std::initializer_list<unsigned long int> shape);
+    Array(const intvec & shape);
     /** @brief Construct array from pointer, to data and meta-data.
      *  @param data Pointer to data.
      *  @param ndim Number of dimension of tensor.
@@ -75,6 +74,10 @@ class MERLIN_EXPORTS Array : public NdData {
     /// @{
     /** @brief Copy data from GPU array.*/
     void sync_from_gpu(const Parcel & gpu_array, uintptr_t stream = 0);
+    /** @brief Export data to a file.
+     *  @param filename Name of exported file.
+     */
+    void export_to_file(const std::string & filename);
     /// @}
 
     /// @name Destructor

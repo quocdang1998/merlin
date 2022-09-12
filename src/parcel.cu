@@ -1,13 +1,13 @@
 // Copyright 2022 quocdang1998
 #include "merlin/parcel.hpp"
 
-#include <cstdarg>  // std::va_list, va_start, va_arg, va_end
 #include <functional>  // std::bind, std::placeholders
 
 #include "merlin/array.hpp"  // merlin::Array
 #include "merlin/logger.hpp"  // FAILURE
 #include "merlin/utils.hpp"  // merlin::inner_prod, merlin::contiguous_strides,
                              // merlin::get_current_device, merlin::contiguous_to_ndim_idx
+                             // merlin::array_copy
 #include "merlin/vector.hpp"  // merlin::intvec
 
 namespace merlin {

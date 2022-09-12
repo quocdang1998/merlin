@@ -28,11 +28,22 @@ __cuhostdev__ Vector<T>::Vector(unsigned long int size, T value) : size_(size) {
 
 // Constructor from a pointer to first and last element
 template <typename T>
-__cuhostdev__ Vector<T>::Vector(const T * ptr_first, const T * ptr_last) {
+template <typename Convertable>
+__cuhostdev__ Vector<T>::Vector(const Convertable * ptr_first, const Convertable * ptr_last) {
     this->size_ = ptr_last - ptr_first;
     this->data_ = new T[this->size_];
     for (int i = 0; i < this->size_; i++) {
-        this->data_[i] = ptr_first[i];
+        this->data_[i] = T(ptr_first[i]);
+    }
+}
+
+// Convertable constructor
+template <typename T>
+template <typename Convertable>
+__cuhostdev__ Vector<T>::Vector(const Convertable * ptr_src, unsigned long int size) : size_(size) {
+    this->data_ = new T[this->size_];
+    for (int i = 0; i < this->size_; i++) {
+        this->data_[i] = T(ptr_src[i]);
     }
 }
 

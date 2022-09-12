@@ -10,19 +10,17 @@ int main(void) {
     merlin::floatvec v3 = {0.0, 0.25};
     merlin::CartesianGrid cart_gr = {v1, v2, v3};
 
-/*
-    MESSAGE("Loop with begin/end iterator.");
-    for (merlin::Grid::iterator it = cart_gr.begin(); it != cart_gr.end(); it++) {
-        merlin::Tensor ar = cart_gr[it.index()];
-        MESSAGE("%f %f %f", ar.data()[0], ar.data()[1], ar.data()[2]);
+    MESSAGE("Loop with begin/end iterator.\n");
+    for (merlin::CartesianGrid::iterator it = cart_gr.begin(); it != cart_gr.end(); it++) {
+        merlin::floatvec point = cart_gr[it.index()];
+        MESSAGE("%f %f %f\n", point.data()[0], point.data()[1], point.data()[2]);
     }
 
-    MESSAGE("Loop with C-contiguous index.");
-    for (unsigned int i = 0; i < cart_gr.npoint(); i++) {
-        merlin::Tensor ar = cart_gr[i];
-        MESSAGE("%f %f %f", ar.data()[0], ar.data()[1], ar.data()[2]);
+    MESSAGE("Loop with C-contiguous index.\n");
+    for (int i = 0; i < cart_gr.size(); i++) {
+        merlin::floatvec point = cart_gr[i];
+        MESSAGE("%f %f %f\n", point.data()[0], point.data()[1], point.data()[2]);
     }
 
-    merlin::Tensor ar = cart_gr.grid_points();
-*/
+    merlin::Array ar = cart_gr.grid_points();
 }
