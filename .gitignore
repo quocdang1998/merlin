@@ -1,9 +1,24 @@
-# C++ build dir
+# C++ and Cython build dir
 build
 
-# MSVC temporary dir
-.vs
-.vscode
+# Cython compiled library
+merlin/**/*.cpp
+*.so
+merlin/*.pyd
+
+# CMake generated cmake_config.py
+setup_cfg/config.py
+
+# Python __init__.py
+merlin/__init__.py
+
+# Ignore folder starts with .
+.*
+!/.gitignore
+!.gitattributes
+
+# Python cache
+__pycache__/
 
 # Doxygen generated files
 docs/source/html

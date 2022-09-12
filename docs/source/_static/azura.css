@@ -3,8 +3,50 @@
 ============================================================================ */
 
 /* import fonts */
-@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap');
+@font-face {
+    font-family: 'Nunito';
+    src: url("./Nunito-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: auto;
+}
+@font-face {
+    font-family: 'Nunito';
+    src: url("./Nunito-Italic.woff2") format("woff2");
+    font-weight: 400;
+    font-style: italic;
+    font-display: auto;
+}
+@font-face {
+    font-family: 'Nunito';
+    src: url("./Nunito-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: auto;
+}
+@font-face {
+    font-family: 'Nunito';
+    src: url("./Nunito-BoldItalic.woff2") format("woff2");
+    font-weight: 700;
+    font-style: italic;
+    font-display: auto;
+}
+@font-face {
+    font-family: 'FiraCode';
+    src: url("./FiraCode-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: auto;
+    font-variant-ligatures: none;
+}
+@font-face {
+    font-family: 'FiraCode';
+    src: url("./FiraCode-SemiBold.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: auto;
+    font-variant-ligatures: none;
+}
 
 /* custom colors */
 :root {
@@ -318,12 +360,12 @@ html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(
 }
 
 /* C++ name and scope of other objects */
-.sig.sig-object.cpp > .p, .sig.sig-object.cpp > .o, .sig.sig-object.cpp > .n:not(.sig-param), .sig.sig-object.cpp > .headerlink {
+.sig.sig-object.cpp > .p, .sig.sig-object.cpp > .o, .sig.sig-object.cpp > .headerlink {
     color: var(--yinyang) !important;
 }
 
 /* C++ build-in type */
-.sig.sig-object.cpp .kt {
+.sig.sig-object.cpp .kt, .sig.sig-object.cpp > .n:not(.sig-param) {
     color: var(--type);
 }
 
@@ -336,6 +378,11 @@ html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(
 }
 
 /* Python DESCRIPTION */
+
+/* item name in description box */
+.sig.sig-object.py > .sig-name.descname > .pre {
+    color: var(--item-name);
+}
 
 /* item argument in description box */
 .sig.sig-object.py .n {
@@ -351,6 +398,12 @@ html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(
 /* Python operator (':', '=', etc) */
 .sig.sig-object.py .p, .sig.sig-object.py .o {
     font-style: normal !important;
+    color: var(--yinyang) !important;
+}
+
+/* Python default value */
+.sig.sig-object.py .default_value {
+    font-style: normal !important;
 }
 
 /* type of each argument */
@@ -360,14 +413,6 @@ html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(
     font-size: 12px;
     font-weight: 600;
     color: var(--type);
-}
-
-/* return type */
-.return p {
-    color: var(--type);
-    font-family: 'Fira Code', monospace;
-    font-size: 12px !important;
-    font-weight: 600;
 }
 
 /* attribute type */

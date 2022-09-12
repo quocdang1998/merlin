@@ -6,7 +6,7 @@ EXTRACT_PRIVATE        = YES
 EXTRACT_PRIV_VIRTUAL   = YES
 EXTRACT_STATIC         = YES
 HIDE_FRIEND_COMPOUNDS  = NO
-INPUT                  = ../inc ../src
+INPUT                  = ../src
 FILE_PATTERNS          = *.hpp *.cpp
 RECURSIVE              = YES
 EXCLUDE                =
@@ -22,4 +22,6 @@ EXPAND_ONLY_PREDEF     = YES
 PREDEFINED             = "__cuhost__=__host__" \
                          "__cudevice__=__device__" \
                          "__cuhostdev__=__host__ __device__" \
-                         __NVCC__=
+                         "__NVCC__=1" \
+                         "MERLIN_EXPORTS=1" \
+                         "MERLIN_DEPRECATED=1"

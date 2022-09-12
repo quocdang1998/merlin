@@ -1,0 +1,21 @@
+digraph StaticCompilation {
+    node [fontname="Fira Code SemiBold", shape=record, style=filled, labelloc=c]
+    subgraph SourceFiles {
+        node [color=lightskyblue1, label="*.cpp"] cpp;
+        node [color=lightskyblue1, label="*.cu"] cu;
+        node [color=lightskyblue1, label="*.rdc"] rdc;
+    }
+
+    subgraph Object {
+        node [color=steelblue1, label="*.o or *.obj"] obj;
+    }
+
+    subgraph Lib {
+        node [color=dodgerblue, label="libmerlin.a (Linux)\nmerlin.lib (Windows)"] libmerlin;
+    }
+
+    cpp -> obj [color=dimgrey];
+    cu -> obj [color=dimgrey];
+    rdc -> obj [color=dimgrey];
+    obj -> libmerlin [color=royalblue4];
+}

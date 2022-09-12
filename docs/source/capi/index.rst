@@ -1,6 +1,10 @@
 C++ API
 =======
 
+.. raw:: latex
+
+   \setcounter{codelanguage}{1}
+
 Array API
 ---------
 
@@ -12,7 +16,13 @@ Basic utils for Multi-dimensional array manipulation:
    merlin::Vector
    merlin::intvec
    merlin::Iterator
-   merlin::NdData
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::array::NdData
+   merlin::array::Slice
+   merlin::array::array_copy
 
 Classes represent multi-dimensional array on CPU, out-of-core array and GPU
 array:
@@ -20,8 +30,9 @@ array:
 .. doxysummary::
    :toctree: generated
 
-   merlin::Array
-   merlin::Parcel
+   merlin::array::Array
+   merlin::array::Parcel
+   merlin::array::Stock
 
 Grid API
 --------
@@ -30,6 +41,8 @@ Grid API
    :toctree: generated
 
    merlin::Grid
+   merlin::RegularGrid
+   merlin::CartesianGrid
 
 
 Log API
@@ -62,5 +75,20 @@ Utils
    merlin::inner_prod
    merlin::ndim_to_contiguous_idx
    merlin::contiguous_to_ndim_idx
-   merlin::array_copy
+
+GPU with CUDA
+-------------
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::KernelLock
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::device::Device
+   merlin::device::print_all_gpu_specification
+   merlin::device::test_all_gpu
+
 

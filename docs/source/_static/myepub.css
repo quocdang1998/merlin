@@ -1,0 +1,234 @@
+/*
+ * epub.css_t
+ * ~~~~~~~~~~
+ *
+ * Sphinx stylesheet -- epub theme.
+ *
+ * :copyright: Copyright 2007-2022 by the Sphinx team, see AUTHORS.
+ * :license: BSD, see LICENSE for details.
+ *
+ */
+
+/* -- font------------------------------------------------------------------- */
+
+@font-face {
+    font-family: 'Nunito';
+    src: url("./Nunito-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: auto;
+}
+@font-face {
+    font-family: 'Nunito';
+    src: url("./Nunito-Italic.woff2") format("woff2");
+    font-weight: 400;
+    font-style: italic;
+    font-display: auto;
+}
+@font-face {
+    font-family: 'Nunito';
+    src: url("./Nunito-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: auto;
+}
+@font-face {
+    font-family: 'Nunito';
+    src: url("./Nunito-BoldItalic.woff2") format("woff2");
+    font-weight: 700;
+    font-style: italic;
+    font-display: auto;
+}
+@font-face {
+    font-family: 'FiraCode';
+    src: url("./FiraCode-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: auto;
+    font-variant-ligatures: none;
+}
+@font-face {
+    font-family: 'FiraCode';
+    src: url("./FiraCode-SemiBold.woff2") format("woff2");
+    font-weight: 600;
+    font-style: normal;
+    font-display: auto;
+    font-variant-ligatures: none;
+}
+@font-face {
+    font-family: 'Bitter';
+    src: url("./Bitter-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: auto;
+}
+@font-face {
+    font-family: 'Bitter';
+    src: url("./Bitter-Italic.woff2") format("woff2");
+    font-weight: 400;
+    font-style: italic;
+    font-display: auto;
+}
+@font-face {
+    font-family: 'Bitter';
+    src: url("./Bitter-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: auto;
+}
+@font-face {
+    font-family: 'Bitter';
+    src: url("./Bitter-BoldItalic.woff2") format("woff2");
+    font-weight: 700;
+    font-style: italic;
+    font-display: auto;
+}
+
+/* -- colors----------------------------------------------------------------- */
+
+:root {
+    --hue:                        207;  /* main hue color */
+    --hls:                        calc(var(--hue) - 10);  /* less hue */
+    --hmn:                        calc(var(--hue) + 10);  /* moderate hue*/
+    --hpl:                        calc(var(--hue) + 15);  /* more hue*/
+    --hrv:                        calc(var(--hue) + 180);  /* reverse hue */
+
+    --text-color:                 hsl(var(--hue),  10%, 25%);  /* text color */
+    --header-color:               hsl(var(--hue),  10%, 25%);  /* header color */
+    --content-background:         hsl(var(--hue),  10%, 99%);  /* background */
+    --background:                 hsl(var(--hue),  10%, 95%);  /* background */
+    --table-odd-row:              hsl(var(--hue),  14%, 96%);  /* table odd row */
+    --table-border:               hsl(var(--hue),  10%, 90%);  /* table border */
+
+    --link:                       hsl(var(--hue), 100%, 42%);  /* link */
+    --visited-link:               hsl(var(--hue),  81%, 24%);  /* visited link */
+    --highlighted:                hsl(var(--hue),  96%, 73%);  /* hightlighted text */
+    --literal:                    hsl(var(--hue),  59%, 47%);  /* literal text */
+    --literal-background:         hsl(var(--hue),  10%, 95%);  /* literal background */
+    --codeblock-background:       hsl(var(--hue),  10%, 97%);  /* codeblock background */
+
+    --itembox-background:         hsl(var(--hue),  79%, 95%);  /* item box background */
+    --itembox-topborder:          hsl(var(--hue), 100%, 42%);  /* item topborder */
+    --itembox-text-color:         hsl(var(--hue),  10%, 25%);  /* item text color */
+    --subitem-background:         hsl(var(--hue),  10%, 94%);  /* subitem box background */
+
+    --item-name:                  hsl(var(--hue), 100%, 40%);  /* item name */
+    --attribute:                  hsl(var(--hls),  85%, 55%);  /* attribute */
+    --keyword:                    hsl(var(--hpl), 100%, 40%);  /* keyworks of code language */
+    --inherited:                  hsl(var(--hpl),  59%, 47%);  /* interrnal reference to other classes */
+    --type:                       hsl(var(--hmn),  53%, 55%);  /* type */
+
+    --admonition-background:      hsl(var(--hue),  30%, 95%);  /* admonition content background */
+    --note:                       hsl(var(--hls),  80%, 60%);  /* note title */
+    --warning:                    hsl(var(--hrv), 100%, 50%);  /* warning title */
+
+    --rtd-version:                hsl(var(--hue),  88%, 58%);  /* readthedocs version */
+}
+
+/* -- main layout ----------------------------------------------------------- */
+
+div.document {
+    margin: 0;
+    padding: 0;
+}
+
+div.documentwrapper {
+    width: 900px;
+    padding: 20px 50px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+div.body{
+    font-family: 'Nunito', sans-serif;
+    color: var(--text-color);
+}
+
+a:link, a:visited {
+    color: var(--link);
+    text-decoration: none;
+}
+
+a:visited {
+    color: var(--link);
+}
+
+img {
+    border: 0;
+    max-width: 100%;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Bitter', serif;
+}
+
+h1 {
+    font-size: 2em;
+}
+
+/* -- code displays --------------------------------------------------------- */
+
+pre {
+    font-family: monospace;
+    overflow: auto;
+    overflow-y: hidden;
+}
+
+code {
+    font-family: "FiraCode";
+}
+
+h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
+    background-color: transparent;
+}
+
+div.highlight {
+    background: var(--codeblock-background);
+    color: var(--text-color);
+    font-size: 14px;
+    padding: 1px 10px;
+    border: 0.5px solid;
+}
+
+.literal {
+    background: var(--literal-background);
+    color: var(--literal);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.std.envvar .sig.sig-object.std span.sig-name.descname {
+    background: var(--itembox-background);
+    color: var(--itembox-text-color);
+    font-family: "FiraCode";
+    font-weight: 600;
+    padding: 4px;
+    border-top: 4px solid var(--itembox-topborder);
+}
+
+dt:target {
+    background: none;
+}
+
+.sig.sig-object.cpp {
+    font-family: "FiraCode";
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 26px;
+}
+
+dt.sig.sig-object.cpp > span {
+    background: var(--itembox-background);
+    color: var(--itembox-text-color);
+    border-top: 4px solid var(--itembox-topborder);
+    padding-bottom: 4px;
+}
+
+dt.sig.sig-object.cpp > span:first-of-type, dt.sig.sig-object.cpp > br + span, dt.sig.sig-object.cpp > span + br {
+    padding-left: 4px;
+}
+
+dd dt.sig.sig-object.cpp * {
+    background: var(--subitem-background);
+    border-top: none;
+}
