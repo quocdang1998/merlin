@@ -9,7 +9,7 @@
 
 namespace merlin {
 
-void Array::sync_from_gpu(const Parcel & gpu_array, uintptr_t stream) {
+void Array::sync_from_gpu(const Parcel & gpu_array, std::uintptr_t stream) {
     // check device
     int check_result = gpu_array.check_device();
     if (check_result != 0) {

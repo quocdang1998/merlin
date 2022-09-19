@@ -11,10 +11,8 @@
     #ifndef MERLIN_EXPORTS
         #if defined(libmerlin_EXPORTS)
             #define MERLIN_EXPORTS __declspec(dllexport)
-            #define MERLIN_TEMPLATE_EXPORTS __declspec(dllexport)
         #else
             #define MERLIN_EXPORTS __declspec(dllimport)
-            #define MERLIN_TEMPLATE_EXPORTS
         #endif  // libmerlin_EXPORTS
     #endif  // MERLIN_EXPORTS
     // define MERLIN_NO_EXPORT as regular "static" objects

@@ -16,7 +16,7 @@ namespace merlin {
 Parcel::Parcel(void) {}
 
 // Constructor from CPU array
-Parcel::Parcel(const Array & cpu_array, uintptr_t stream) : NdData(cpu_array) {
+Parcel::Parcel(const Array & cpu_array, std::uintptr_t stream) : NdData(cpu_array) {
     // get device id
     cudaGetDevice(&(this->device_id_));
     // allocate data
@@ -100,7 +100,7 @@ Parcel & Parcel::operator=(Parcel && src) {
 }
 
 // Copy data to a pre-allocated memory
-void Parcel::copy_to_gpu(Parcel * gpu_ptr, unsigned long int * shape_strides_ptr) {
+void Parcel::copy_to_gpu(Parcel * gpu_ptr, std::uint64_t * shape_strides_ptr) {
     // initialize buffer to store data of the copy before cloning it to GPU
     Parcel copy_on_gpu;
     // shallow copy of the current object

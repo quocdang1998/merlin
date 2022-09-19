@@ -6,5 +6,5 @@ int main(void) {
     merlin::intvec v(src, 3);
 
     MESSAGE("Original array    : %f %f %f.\n", src[0], src[1], src[2]);
-    MESSAGE("Constructed vector: %lu %lu %lu.\n", v[0], v[1], v[2]);
+    MESSAGE("Constructed vector: %I64u %I64u %I64u.\n", v[0], v[1], v[2]);
 }

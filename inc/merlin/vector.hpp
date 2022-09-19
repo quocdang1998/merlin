@@ -3,6 +3,7 @@
 #define MERLIN_VECTOR_HPP_
 
 #include <cstddef>  // NULL
+#include <cstdint>  // std::int64_t, std::uint64_t, std::uintptr_t
 #include <initializer_list>  // std::initializer_list
 
 #include "merlin/decorator.hpp"  // __cuhost__, __cuhostdev__
@@ -15,7 +16,7 @@ namespace merlin {
  *  @tparam T Numeric type (``float``, ``int``, etc)
  */
 template <typename T>
-class MERLIN_TEMPLATE_EXPORTS Vector {
+class Vector {
   public:
     /// @name Constructors
     /// @{
@@ -24,7 +25,7 @@ class MERLIN_TEMPLATE_EXPORTS Vector {
     /** @brief Constructor from initializer list.*/
     __cuhostdev__ Vector(std::initializer_list<T> data);
     /** @brief Constructor from size and fill-in value.*/
-    __cuhostdev__ Vector(unsigned long int size, T value = 0);
+    __cuhostdev__ Vector(std::uint64_t size, T value = 0);
     /** @brief Copy constructor from a pointer to first and last element.
      *  @tparam Convertable Type convertable to ``T`` (constructor of ``T`` from ``Convertable``, i.e ``T(Convertable)``
      *  must exists).
@@ -40,7 +41,7 @@ class MERLIN_TEMPLATE_EXPORTS Vector {
      *  @param size Size of resulted vector (can be smaller or equals the original array).
      */
     template <typename Convertable>
-    __cuhostdev__ Vector(const Convertable * ptr_src, unsigned long int size);
+    __cuhostdev__ Vector(const Convertable * ptr_src, std::uint64_t size);
     /// @}
 
     /// @name Copy and move
@@ -62,23 +63,23 @@ class MERLIN_TEMPLATE_EXPORTS Vector {
     /** @brief Get constant reference to pointer of data.*/
     __cuhostdev__ const T * data(void) const {return this->data_;}
     /** @brief Get reference to size.*/
-    __cuhostdev__ unsigned long int & size(void) {return this->size_;}
+    __cuhostdev__ std::uint64_t & size(void) {return this->size_;}
     /** @brief Get constant reference to size.*/
-    __cuhostdev__ const unsigned long int & size(void) const {return this->size_;}
+    __cuhostdev__ const std::uint64_t & size(void) const {return this->size_;}
     /// @}
 
     /// @name Slicing operator
     /// @{
     /** @brief Get reference to an element.*/
-    __cuhostdev__ T & operator[](unsigned long int index) {return this->data_[index];}
+    __cuhostdev__ T & operator[](std::uint64_t index) {return this->data_[index];}
     /** @brief Get constant reference to an element.*/
-    __cuhostdev__ const T & operator[](unsigned long int index) const {return this->data_[index];}
+    __cuhostdev__ const T & operator[](std::uint64_t index) const {return this->data_[index];}
     /// @}
 
     /// @name Transfer data from/to GPU
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the object and its data.*/
-    __cuhostdev__ unsigned long int malloc_size(void) {return sizeof(Vector<T>) + this->size_*sizeof(unsigned long int);}
+    __cuhostdev__ std::uint64_t malloc_size(void) {return sizeof(Vector<T>) + this->size_*sizeof(std::uint64_t);}
     /** @brief Copy data from CPU to a pre-allocated memory on GPU.
      *  @details The object and its data is copied to the global memory of the GPU.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory storing the object.
@@ -109,13 +110,13 @@ class MERLIN_TEMPLATE_EXPORTS Vector {
     /** @brief Pointer to data.*/
     T * data_ = NULL;
     /** @brief Size of data.*/
-    unsigned long int size_;
+    std::uint64_t size_;
 };
 
 /** @brief Vector of unsigned integer values.
  *  @details This class is reserved for array indices, array shape vector and array strides vector.
  */
-using intvec = Vector<unsigned long int>;
+using intvec = Vector<std::uint64_t>;
 
 /** @brief Vector of simple precision values.*/
 using floatvec = Vector<float>;

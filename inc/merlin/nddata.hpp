@@ -3,11 +3,13 @@
 #define MERLIN_NDDATA_HPP_
 
 #include <cstddef>  // NULL
+#include <cstdint>  // std::int64_t, std::uint64_t, std::uintptr_t
 #include <tuple>  // std::tie
 
 #include "merlin/decorator.hpp"  // __cuhost__, __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/vector.hpp"  // merlin::intvec
+#include "merlin/slice.hpp"  // merlin::Slice
 
 namespace merlin {
 
@@ -25,7 +27,7 @@ class MERLIN_EXPORTS NdData {
      *  @param shape Shape vector.
      *  @param strides Strides vector.
      */
-    NdData(float * data, unsigned long int ndim, const intvec & shape, const intvec & strides);
+    NdData(float * data, std::uint64_t ndim, const intvec & shape, const intvec & strides);
     /** @brief Constructor from data pointer and meta-data pointers.
      *  @details This constructor is designed for initializing object from Numpy np.array.
      *  @param data Pointer to data.
@@ -33,7 +35,7 @@ class MERLIN_EXPORTS NdData {
      *  @param shape Pointer to shape vector.
      *  @param strides Pointer to strides vector.
      */
-    NdData(float * data, unsigned long int ndim, const unsigned long int * shape, const unsigned long int * strides);
+    NdData(float * data, std::uint64_t ndim, const std::uint64_t * shape, const std::uint64_t * strides);
     /// @}
 
     /// @name Copy and move
@@ -53,7 +55,7 @@ class MERLIN_EXPORTS NdData {
     /** @brief Get pointer to data.*/
     __cuhostdev__ float * data(void) const {return this->data_;}
     /** @brief Get number of dimension.*/
-    __cuhostdev__ unsigned long int ndim(void) const {return this->ndim_;}
+    __cuhostdev__ std::uint64_t ndim(void) const {return this->ndim_;}
     /** @brief Get reference to shape vector.*/
     __cuhostdev__ intvec & shape(void) {return this->shape_;}
     /** @brief Get constant reference to shape vector.*/
@@ -67,7 +69,7 @@ class MERLIN_EXPORTS NdData {
     /// @name Atributes
     /// @{
     /** @brief Number of element.*/
-    __cuhostdev__ unsigned long int size(void);
+    __cuhostdev__ std::uint64_t size(void);
     /// @}
 
     /// @name Destructor
@@ -81,7 +83,7 @@ class MERLIN_EXPORTS NdData {
     /** @brief Pointer to data.*/
     float * data_ = NULL;
     /** @brief Number of dimension.*/
-    unsigned long int ndim_;
+    std::uint64_t ndim_;
     /** @brief Shape vector.
      *  @details Size of each dimension.
      */
@@ -106,7 +108,7 @@ class MERLIN_EXPORTS Iterator {
     /** @brief Constructor from multi-dimensional index and container.*/
     Iterator(const intvec & index, NdData & container);
     /** @brief Constructor from C-contiguous index.*/
-    Iterator(unsigned long int index, NdData & container);
+    Iterator(std::uint64_t index, NdData & container);
     /// @}
 
     /// @name Copy and Move
@@ -158,81 +160,6 @@ class MERLIN_EXPORTS Iterator {
     intvec index_;
     /** @brief Pointer to NdData object possessing the item.*/
     NdData * container_ = NULL;
-};
-
-/** @brief Slice of an Array.*/
-class Slice {
-  public:
-    /// @name Constructors
-    /// @{
-    /** @brief Default constructor.
-     *  @details Construct a full slice (start at 0, end at last element, step 1).
-     */
-    Slice(void) = default;
-    /** @brief Member constructor.
-     *  @details Construct Slice object from values of its members.
-     *  @param start Start position (must be positive).
-     *  @param stop Stop position (count from the last element, modulo if range exceeded).
-     *  @param step Step (positive means step to right, negative means step to the left).
-     */
-    Slice(unsigned long int start, long int stop, long int step) : start_(start), stop_(stop), step_(step) {
-        if (step == 0) {
-            FAILURE(std::invalid_argument, "Step must not be 0.\n");
-        }
-    }
-    /** @brief Constructor from an initializer list.
-     *  @param list Initializer list of length 3.
-     */
-    Slice(std::initializer_list<int> list);
-    /// @}
-
-    /// @name Copy and Move
-    /// @{
-    /** @brief Copy constructor.*/
-    Slice(const Slice & src) = default;
-    /** @brief Copy assignment.*/
-    Slice & operator=(const Slice & src) = default;
-    /** @brief Move constructor.*/
-    Slice(Slice && src) = default;
-    /** @brief Move assignment.*/
-    Slice & operator=(Slice && src)= default;
-    /// @}
-
-    // Get members
-    // -----------
-    /** @brief Get reference to start value.*/
-    unsigned long int & start(void) {return this->start_;}
-    /** @brief Get constant reference to start value.*/
-    const unsigned long int & start(void) const {return this->start_;}
-    /** @brief Get reference to stop value.*/
-    long int & stop(void) {return this->stop_;}
-    /** @brief Get constant reference to stop value.*/
-    const long int & stop(void) const {return this->stop_;}
-    /** @brief Get reference to step value.*/
-    long int & step(void) {return this->step_;}
-    /** @brief Get constant reference to step value.*/
-    const long int & step(void) const {return this->step_;}
-
-    // Convert to range
-    // ----------------
-    /** @brief Get indices corresponding to element represented by the slice.
-     *  @param length Length of the array.
-     */
-    intvec range(unsigned long int length);
-
-  protected:
-    // Members
-    // -------
-    /** @brief Start index.*/
-    unsigned long int start_ = 0;
-    /** @brief Stop index, count from last element.
-     *  @details Positive means count from zeroth element, negative means count from last element.
-     */
-    long int stop_ = 0;
-    /** @brief Step
-     * @details Positive means stepping to the right, Negative means stepping to the left.
-     */
-    long int step_ = 1;
 };
 
 }  // namespace merlin

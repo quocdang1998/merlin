@@ -19,7 +19,7 @@ int main (void) {
 
     MESSAGE("Expected 3 columns, col1 = range(0, 8), col2 = col1*2, col3 = col1*3.\n");
     for (merlin::RegularGrid::iterator it = gr.begin(); it != gr.end(); it++) {
-        MESSAGE("Point number %lu:", it.index()[0]);
+        MESSAGE("Point number %I64u:", it.index()[0]);
         for (int j = 0; j < 3; j++) {
             std::printf("%4.1f", gr.grid_points()[it.index()]);
             if (j != 2) {

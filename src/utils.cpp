@@ -10,7 +10,7 @@ namespace merlin {
 // -------------------------------------------------------------------------------------------------------------------------
 
 // C-Contiguous strides from shape vector
-intvec contiguous_strides(const intvec & shape, unsigned long int element_size) {
+intvec contiguous_strides(const intvec & shape, std::uint64_t element_size) {
     intvec c_strides = intvec(shape.size(), element_size);
     for (int i = c_strides.size()-2;  i >= 0; i--) {
         c_strides[i] = shape[i+1] * c_strides[i+1];
@@ -19,7 +19,7 @@ intvec contiguous_strides(const intvec & shape, unsigned long int element_size) 
 }
 
 // Longest contiguous segment and break index
-std::tuple<unsigned long int, long int> lcseg_and_brindex(const intvec & shape, const intvec & strides) {
+std::tuple<std::uint64_t, std::int64_t> lcseg_and_brindex(const intvec & shape, const intvec & strides) {
     // check size of 2 vectors
     if (shape.size() != strides.size()) {
         FAILURE(std::runtime_error, "Size of shape (%d) and size of strides (%d) are not equal.\n",
@@ -27,10 +27,10 @@ std::tuple<unsigned long int, long int> lcseg_and_brindex(const intvec & shape, 
     }
 
     // initialize elements
-    unsigned long int ndim_ = shape.size();
+    std::uint64_t ndim_ = shape.size();
     intvec contiguous_strides_ = contiguous_strides(shape, sizeof(float));
-    unsigned long int longest_contiguous_segment_ = sizeof(float);
-    long int break_index_ = ndim_ - 1;
+    std::uint64_t longest_contiguous_segment_ = sizeof(float);
+    std::int64_t break_index_ = ndim_ - 1;
 
     // check if i-th element of strides equals to i-th element of contiguous_strides,
     // break at the element of different index
@@ -43,7 +43,7 @@ std::tuple<unsigned long int, long int> lcseg_and_brindex(const intvec & shape, 
         }
     }
 
-    return std::tuple<unsigned long int, long int>(longest_contiguous_segment_, break_index_);
+    return std::tuple<std::uint64_t, std::int64_t>(longest_contiguous_segment_, break_index_);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------

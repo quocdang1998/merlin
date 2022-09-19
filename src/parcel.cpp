@@ -14,7 +14,7 @@ Parcel::Parcel(void) {
 }
 
 // Constructor from CPU array
-Parcel::Parcel(const Array & cpu_array, uintptr_t stream) {
+Parcel::Parcel(const Array & cpu_array, std::uintptr_t stream) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 

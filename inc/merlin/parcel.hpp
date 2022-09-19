@@ -2,7 +2,7 @@
 #ifndef MERLIN_PARCEL_HPP_
 #define MERLIN_PARCEL_HPP_
 
-#include <cstdint>  // uintptr_t
+#include <cstdint>  // std::uintptr_t
 #include <initializer_list>  // std::initializer_list
 
 #include "merlin/nddata.hpp"  // merlin::NdData
@@ -20,7 +20,7 @@ class MERLIN_EXPORTS Parcel : public NdData {
     /** @brief Default constructor (do nothing).*/
     Parcel(void);
     /** @brief Construct array from CPU array.*/
-    Parcel(const Array & cpu_array, uintptr_t stream = 0);
+    Parcel(const Array & cpu_array, std::uintptr_t stream = 0);
     /// @}
 
     /// @name Copy and Move
@@ -53,25 +53,25 @@ class MERLIN_EXPORTS Parcel : public NdData {
     /** @brief Get element at a given C-contiguous index.
      *  @param index A C-contiguous index.
      */
-    __cudevice__ inline float & operator[](unsigned long int index);
+    __cudevice__ inline float & operator[](std::uint64_t index);
     /** @brief Get element at a given multi-dimensional index.
      *  @param index A Nd index.
      */
-    __cudevice__ inline float & operator[](std::initializer_list<unsigned long int> index);
+    __cudevice__ inline float & operator[](std::initializer_list<std::uint64_t> index);
     #endif  // __NVCC__
     /// @}
 
     /// @name GPU related features
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the object and its data.*/
-    unsigned long int malloc_size(void) {return sizeof(Parcel) + 2*this->ndim_*sizeof(unsigned long int);}
+    std::uint64_t malloc_size(void) {return sizeof(Parcel) + 2*this->ndim_*sizeof(std::uint64_t);}
     /** @brief Copy meta-data (shape and strides) from CPU to a pre-allocated memory on GPU.
      *  @details The meta-data is copied to the memory region that comes right after the copied object.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
      *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and stride
      *  vector.
      */
-    void copy_to_gpu(Parcel * gpu_ptr, unsigned long int * shape_strides_ptr);
+    void copy_to_gpu(Parcel * gpu_ptr, std::uint64_t * shape_strides_ptr);
     #ifdef __NVCC__
     /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
      *  @note This operation is single-threaded.
@@ -79,7 +79,7 @@ class MERLIN_EXPORTS Parcel : public NdData {
      *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and stride
      *  vector.
      */
-    __cudevice__ inline void copy_to_shared_mem(Parcel * share_ptr, unsigned long int * shape_strides_ptr);
+    __cudevice__ inline void copy_to_shared_mem(Parcel * share_ptr, std::uint64_t * shape_strides_ptr);
     #endif  // __NVCC__
 
     /// @name Utils
@@ -103,27 +103,27 @@ class MERLIN_EXPORTS Parcel : public NdData {
 
 #ifdef __NVCC__
 // Get element at a given C-contiguous index
-__cudevice__ inline float & Parcel::operator[](unsigned long int index) {
+__cudevice__ inline float & Parcel::operator[](std::uint64_t index) {
     // calculate index vector
     intvec index_ = contiguous_to_ndim_idx(index, this->shape_);
     // calculate strides
-    unsigned long int strides = inner_prod(index_, this->strides_);
-    float * element_ptr = reinterpret_cast<float *>(reinterpret_cast<uintptr_t>(this->data_) + strides);
+    std::uint64_t strides = inner_prod(index_, this->strides_);
+    float * element_ptr = reinterpret_cast<float *>(reinterpret_cast<std::uintptr_t>(this->data_) + strides);
     return *element_ptr;
 }
 
 // Get element at a given Nd index
-__cudevice__ inline float & Parcel::operator[](std::initializer_list<unsigned long int> index) {
+__cudevice__ inline float & Parcel::operator[](std::initializer_list<std::uint64_t> index) {
     // initialize index vector
     intvec index_(index);
     // calculate strides
-    unsigned long int strides = inner_prod(index_, this->strides_);
-    float * element_ptr = reinterpret_cast<float *>(reinterpret_cast<uintptr_t>(this->data_) + strides);
+    std::uint64_t strides = inner_prod(index_, this->strides_);
+    float * element_ptr = reinterpret_cast<float *>(reinterpret_cast<std::uintptr_t>(this->data_) + strides);
     return *element_ptr;
 }
 
 // Copy to shared memory
-__cudevice__ inline void Parcel::copy_to_shared_mem(Parcel * share_ptr, unsigned long int * shape_strides_ptr) {
+__cudevice__ inline void Parcel::copy_to_shared_mem(Parcel * share_ptr, std::uint64_t * shape_strides_ptr) {
     // copy meta data
     share_ptr->data_ = this->data_;
     share_ptr->ndim_ = this->ndim_;

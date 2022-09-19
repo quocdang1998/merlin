@@ -2,9 +2,11 @@
 #ifndef MERLIN_GRID_HPP_
 #define MERLIN_GRID_HPP_
 
+#include <cstdint>  // std::uint64_t
 #include <initializer_list>  // std::initializer_list
 
 #include "merlin/decorator.hpp"  // __cuhost__, __cuhostdev__
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/nddata.hpp"  // merlin::NdData, merlin::Iterator
 #include "merlin/array.hpp"  // merlin::Array
 #include "merlin/vector.hpp"  // merlin::Vector, merlin::intvec, merlin::floatvec
@@ -12,7 +14,7 @@
 namespace merlin {
 
 /** @brief A base class for all kinds of Grid.*/
-class Grid {
+class MERLIN_EXPORTS Grid {
   public:
     /** @brief Default constructor.*/
     __cuhostdev__ Grid(void) {}
@@ -26,7 +28,7 @@ class Grid {
 };
 
 /** @brief A set of multi-dimensional points.*/
-class RegularGrid : Grid {
+class MERLIN_EXPORTS RegularGrid : Grid {
   public:
     /// @name Constructor
     /// @{
@@ -36,7 +38,7 @@ class RegularGrid : Grid {
      *  @param npoint Number of points in the grid.
      *  @param ndim Number of dimension of points in the grid.
      */
-    RegularGrid(unsigned long int npoint, unsigned long int ndim);
+    RegularGrid(std::uint64_t npoint, std::uint64_t ndim);
     /** @brief Construct a grid and copy data.
      *  @param points 2D merlin::Array of points, dimension ``(npoints, ndim)``.
      */
@@ -91,7 +93,7 @@ class RegularGrid : Grid {
 
   protected:
     /** @brief Number of points in the grid.*/
-    unsigned long int npoint_;
+    std::uint64_t npoint_;
     /** @brief Begin iterator.*/
     intvec begin_;
     /** @brief End iterator.*/
@@ -100,7 +102,7 @@ class RegularGrid : Grid {
 
 
 /** @brief Multi-dimensional Cartesian grid.*/
-class CartesianGrid : public Grid {
+class MERLIN_EXPORTS CartesianGrid : public Grid {
   public:
       /** @brief Constructor from a list of vector of values.*/
     CartesianGrid(std::initializer_list<floatvec> grid_vectors);
@@ -112,9 +114,9 @@ class CartesianGrid : public Grid {
     /** @brief Full tensor of each point in the CartesianGrid in form of 2D table.*/
     Array grid_points(void);
     /** @brief Number of dimension of the CartesianGrid.*/
-    unsigned long int ndim(void) {return this->grid_vectors_.size();}
+    std::uint64_t ndim(void) {return this->grid_vectors_.size();}
     /** @brief Number of points in the CartesianGrid.*/
-    unsigned long int size(void);
+    std::uint64_t size(void);
     /** @brief Shape of the grid.*/
     intvec grid_shape(void);
 
@@ -127,7 +129,7 @@ class CartesianGrid : public Grid {
     /** @brief Get element at a given index.
      *  @param index Index of point in the CartesianGrid::grid_points table.
      */
-    floatvec operator[](unsigned long int index);
+    floatvec operator[](std::uint64_t index);
     /** @brief Get element at a given index vector.
      *  @param index Vector of index on each dimension.
      */

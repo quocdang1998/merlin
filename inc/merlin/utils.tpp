@@ -2,6 +2,7 @@
 #ifndef MERLIN_UTILS_TPP_
 #define MERLIN_UTILS_TPP_
 
+#include <cstdint>  // std::uintptr_t
 #include <algorithm>  // std::min, std::max
 
 namespace merlin {
@@ -17,7 +18,7 @@ void array_copy(NdData * dest, const NdData * src, CopyFunction copy) {
     if (src->ndim() != dest->ndim()) {
         FAILURE(std::invalid_argument, "Cannot copy array of different ndim (%u to %u).\n", src->ndim(), dest->ndim());
     }
-    unsigned long int ndim = src->ndim();
+    std::uint64_t ndim = src->ndim();
     for (int i = 0; i < ndim; i++) {
         if (dest->shape()[i] < src->shape()[i]) {
             FAILURE(std::invalid_argument, "Expected shape at index %d of source (%d) smaller or equal destination (%d).\n",
@@ -27,12 +28,12 @@ void array_copy(NdData * dest, const NdData * src, CopyFunction copy) {
     intvec shape(src->shape());
 
     // longest contiguous segment and break index of the source
-    unsigned long int src_lcs, des_lcs;
-    long int src_bridx, des_bridx;
+    std::uint64_t src_lcs, des_lcs;
+    std::int64_t src_bridx, des_bridx;
     std::tie(src_lcs, src_bridx) = lcseg_and_brindex(shape, src->strides());
     std::tie(des_lcs, des_bridx) = lcseg_and_brindex(shape, dest->strides());
-    unsigned long int longest_contiguous_segment = std::min(src_lcs, des_lcs);
-    long int break_index = std::max(src_bridx, des_bridx);
+    std::uint64_t longest_contiguous_segment = std::min(src_lcs, des_lcs);
+    std::int64_t break_index = std::max(src_bridx, des_bridx);
 
     // copy each longest contiguous segment through the copy function
     if (break_index == -1) {  // original tensor is perfectly contiguous
@@ -43,9 +44,9 @@ void array_copy(NdData * dest, const NdData * src, CopyFunction copy) {
         while (true) {
             // calculate ptr to each segment
             unsigned int src_leap = inner_prod(index, src->strides());
-            uintptr_t src_ptr = reinterpret_cast<uintptr_t>(src->data()) + src_leap;
+            std::uintptr_t src_ptr = reinterpret_cast<std::uintptr_t>(src->data()) + src_leap;
             unsigned int des_leap = inner_prod(index, dest->strides());
-            uintptr_t des_ptr = reinterpret_cast<uintptr_t>(dest->data()) + des_leap;
+            std::uintptr_t des_ptr = reinterpret_cast<std::uintptr_t>(dest->data()) + des_leap;
             // copy the segment
             copy(reinterpret_cast<float *>(des_ptr), reinterpret_cast<float *>(src_ptr), longest_contiguous_segment);
             // increase index at break index by 1 and carry surplus if index value exceeded shape

@@ -44,8 +44,8 @@ Array::Array(const intvec & shape) {
 }
 
 // Construct Array from Numpy array
-Array::Array(float * data, unsigned long int ndim,
-             const unsigned long int * shape, const unsigned long int * strides, bool copy) {
+Array::Array(float * data, std::uint64_t ndim,
+             const std::uint64_t * shape, const std::uint64_t * strides, bool copy) {
     // copy meta data
     this->ndim_ = ndim;
     this->shape_ = intvec(shape, shape + ndim);
@@ -131,14 +131,14 @@ Array::iterator Array::end(void) {
 
 // Get value operator
 float & Array::operator[] (const intvec & index) {
-    unsigned long int leap = inner_prod(index, this->strides_);
-    uintptr_t data_ptr = reinterpret_cast<uintptr_t>(this->data_) + leap;
+    std::uint64_t leap = inner_prod(index, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<float *>(data_ptr));
 }
 
 // Copy data from GPU array
 #ifndef __MERLIN_CUDA__
-void sync_from_gpu(const Parcel & gpu_array, uintptr_t stream) {
+void sync_from_gpu(const Parcel & gpu_array, std::uintptr_t stream) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 #endif  // __MERLIN_CUDA__
@@ -146,14 +146,14 @@ void sync_from_gpu(const Parcel & gpu_array, uintptr_t stream) {
 // Export data to a file
 void Array::export_to_file(const std::string & filename) {
     std::ofstream f(filename);
-    auto write_func = [&f] (float * dest, float * src, unsigned long int count) -> void {
+    auto write_func = [&f] (float * dest, float * src, std::uint64_t count) -> void {
         f.write(reinterpret_cast<char *>(src), count);
     };
     std::mutex m;
     m.lock();
     // write meta-data
-    f.write(reinterpret_cast<char *>(&(this->ndim_)), sizeof(unsigned long int));
-    f.write(reinterpret_cast<char *>(this->shape_.data()), this->ndim_*sizeof(unsigned long int));
+    f.write(reinterpret_cast<char *>(&(this->ndim_)), sizeof(std::uint64_t));
+    f.write(reinterpret_cast<char *>(this->shape_.data()), this->ndim_*sizeof(std::uint64_t));
     // write data
     NdData placeholder_array(NULL, this->ndim_, this->shape_, contiguous_strides(this->shape_, sizeof(float)));
     array_copy(&placeholder_array, this, write_func);

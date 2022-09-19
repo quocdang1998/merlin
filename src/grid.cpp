@@ -15,9 +15,9 @@ namespace merlin {
 // -------------------------------------------------------------------------------------------------------------------------
 
 // Construct an empty grid from a given number of n-dim points
-RegularGrid::RegularGrid(unsigned long int npoint, unsigned long int ndim) : npoint_(npoint) {
+RegularGrid::RegularGrid(std::uint64_t npoint, std::uint64_t ndim) : npoint_(npoint) {
     // calculate capacity
-    unsigned long int capacity = 1;
+    std::uint64_t capacity = 1;
     while (capacity < npoint) {
         capacity <<= 1;
     }
@@ -33,7 +33,7 @@ RegularGrid::RegularGrid(const Array & points) {
     }
     // calculate capacity
     this->npoint_ = points.shape()[0];
-    unsigned long int capacity = 1;
+    std::uint64_t capacity = 1;
     while (capacity < this->npoint_) {
         capacity <<= 1;
     }
@@ -44,16 +44,16 @@ RegularGrid::RegularGrid(const Array & points) {
 
 // Get reference to array of grid points
 Array RegularGrid::grid_points(void) const {
-    const unsigned long int * shape_ptr = &(this->points_.shape()[0]);
-    const unsigned long int * strides_ptr = &(this->points_.strides()[0]);
+    const std::uint64_t * shape_ptr = &(this->points_.shape()[0]);
+    const std::uint64_t * strides_ptr = &(this->points_.strides()[0]);
     return Array(this->points_.data(), 2, shape_ptr, strides_ptr, false);
 }
 
 // Get reference Array to a point
 Array RegularGrid::operator[](unsigned int index) {
     float * target_ptr = &(this->points_[{index, 0}]);
-    unsigned long int shape = this->points_.ndim();
-    unsigned long int strides = sizeof(float);
+    std::uint64_t shape = this->points_.ndim();
+    std::uint64_t strides = sizeof(float);
     return Array(target_ptr, 1, &shape, &strides, false);
 }
 
@@ -116,8 +116,8 @@ CartesianGrid::CartesianGrid(std::initializer_list<floatvec> grid_vectors) : gri
 }
 
 // Get total number of points
-unsigned long int CartesianGrid::size(void) {
-    unsigned long int result = 1;
+std::uint64_t CartesianGrid::size(void) {
+    std::uint64_t result = 1;
     for (int i = 0; i < this->grid_vectors_.size(); i++) {
         result *= this->grid_vectors_[i].size();
     }
@@ -136,7 +136,7 @@ intvec CartesianGrid::grid_shape(void) {
 // Construct 2D table of points in a Cartesian Grid
 Array CartesianGrid::grid_points(void) {
     // initialize table of grid points
-    unsigned long int npoint_ = this->size();
+    std::uint64_t npoint_ = this->size();
     Array result({npoint_, this->ndim()});
 
     // assign value to each point
@@ -147,7 +147,7 @@ Array CartesianGrid::grid_points(void) {
         for (int j = 0; j < this->ndim(); j++) {
             value_[j] = this->grid_vectors_[j][index_[j]];
         }
-        std::memcpy(&(result[{static_cast<unsigned long int>(i), 0}]), value_.data(), sizeof(float)*this->ndim());
+        std::memcpy(&(result[{static_cast<std::uint64_t>(i), 0}]), value_.data(), sizeof(float)*this->ndim());
     }
 
     return result;
@@ -159,7 +159,7 @@ CartesianGrid::iterator CartesianGrid::begin(void) {
     intvec strides = contiguous_strides(shape, sizeof(float));
     this->points_ = Array(NULL, this->ndim(), shape.data(), strides.data(), false);
     this->begin_ = intvec(this->ndim(), 0);
-    this->end_ =intvec(this->ndim(), 0);
+    this->end_ = intvec(this->ndim(), 0);
     this->end_[0] = this->grid_vectors_[0].size();
     return CartesianGrid::iterator(this->begin_, this->points_);
 }
@@ -170,7 +170,7 @@ CartesianGrid::iterator CartesianGrid::end(void) {
 }
 
 // Get element at a C-contiguous index
-floatvec CartesianGrid::operator[](unsigned long int index) {
+floatvec CartesianGrid::operator[](std::uint64_t index) {
     intvec nd_index = contiguous_to_ndim_idx(index, this->grid_shape());
     floatvec result(this->ndim(), 0);
     for (int i = 0; i < result.size(); i++) {

@@ -1,5 +1,5 @@
+#include <cstdint>
 #include <cstdio>
-#include <vector>
 
 #include "merlin/logger.hpp"
 #include "merlin/array.hpp"  // merlin::Array
@@ -17,10 +17,9 @@ int main(void) {
 
     MESSAGE("Initialize Array A.\n");
     float A[10] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
-    unsigned long int ndim = 2;
-    unsigned long int dims[2] = {3, 2};
-    unsigned long int strides[2] = {(unsigned int) (2*(dims[1] * sizeof(float))),
-                                     sizeof(float)};
+    std::uint64_t ndim = 2;
+    std::uint64_t dims[2] = {3, 2};
+    std::uint64_t strides[2] = {2*(dims[1] * sizeof(float)), sizeof(float)};
 
     // copy array
     MESSAGE("Copy Array A to Ar_copy.\n");

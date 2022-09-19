@@ -17,6 +17,7 @@ Basic utils for Multi-dimensional array manipulation:
    merlin::intvec
    merlin::Iterator
    merlin::NdData
+   merlin::Slice
 
 Classes represent multi-dimensional array on CPU, out-of-core array and GPU
 array:

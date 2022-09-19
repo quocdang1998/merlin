@@ -2,7 +2,7 @@
 #ifndef MERLIN_ARRAY_HPP_
 #define MERLIN_ARRAY_HPP_
 
-#include <cstdint>  // uintptr_t
+#include <cstdint>  // std::uint64_t, std::uintptr_t
 
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/nddata.hpp"  // merlin::NdData, merlin::Parcel, merlin::Iterator
@@ -34,8 +34,8 @@ class MERLIN_EXPORTS Array : public NdData {
      *  @note The original memory tied to the pointer will not be freed at destruction. But if copy is true, the
         copied tensor is automatically deallocated inside the destructor.
      */
-    Array(float * data, unsigned long int ndim,
-          const unsigned long int * shape, const unsigned long int * strides, bool copy = false);
+    Array(float * data, std::uint64_t ndim,
+          const std::uint64_t * shape, const std::uint64_t * strides, bool copy = false);
     /// @}
 
     /// @name Copy and move
@@ -73,7 +73,7 @@ class MERLIN_EXPORTS Array : public NdData {
     /// @name Transfer data
     /// @{
     /** @brief Copy data from GPU array.*/
-    void sync_from_gpu(const Parcel & gpu_array, uintptr_t stream = 0);
+    void sync_from_gpu(const Parcel & gpu_array, std::uintptr_t stream = 0);
     /** @brief Export data to a file.
      *  @param filename Name of exported file.
      */

@@ -2,8 +2,6 @@
 #ifndef MERLIN_VECTOR_TPP_
 #define MERLIN_VECTOR_TPP_
 
-#include <cstdint>  // uintptr_t
-
 #include "merlin/logger.hpp"  // FAILURE
 
 namespace merlin {
@@ -19,7 +17,7 @@ __cuhostdev__ Vector<T>::Vector(std::initializer_list<T> data) : size_(data.size
 
 // Constructor from size and fill-in value
 template <typename T>
-__cuhostdev__ Vector<T>::Vector(unsigned long int size, T value) : size_(size) {
+__cuhostdev__ Vector<T>::Vector(std::uint64_t size, T value) : size_(size) {
     this->data_ = new T[size];
     for (int i = 0; i < size; i++) {
         this->data_[i] = value;
@@ -40,7 +38,7 @@ __cuhostdev__ Vector<T>::Vector(const Convertable * ptr_first, const Convertable
 // Convertable constructor
 template <typename T>
 template <typename Convertable>
-__cuhostdev__ Vector<T>::Vector(const Convertable * ptr_src, unsigned long int size) : size_(size) {
+__cuhostdev__ Vector<T>::Vector(const Convertable * ptr_src, std::uint64_t size) : size_(size) {
     this->data_ = new T[this->size_];
     for (int i = 0; i < this->size_; i++) {
         this->data_[i] = T(ptr_src[i]);
@@ -125,7 +123,7 @@ void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, T * data_ptr) {
 template <typename T>
 void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
     // copy data
-    uintptr_t gpu_data = reinterpret_cast<uintptr_t>(gpu_ptr) + sizeof(Vector<T>);
+    std::uintptr_t gpu_data = reinterpret_cast<std::uintptr_t>(gpu_ptr) + sizeof(Vector<T>);
     cudaMemcpy(reinterpret_cast<T *>(gpu_data), this->data_,
                this->size_*sizeof(T), cudaMemcpyDeviceToHost);
 }
