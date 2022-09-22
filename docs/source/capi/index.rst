@@ -27,6 +27,7 @@ array:
 
    merlin::Array
    merlin::Parcel
+   merlin::Stock
 
 Grid API
 --------

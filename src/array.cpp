@@ -8,6 +8,7 @@
 #include <utility>  // std::move
 
 #include "merlin/parcel.hpp"  // merlin::Parcel
+#include "merlin/stock.hpp"  // merlin::Stock
 #include "merlin/logger.hpp"  // FAILURE
 #include "merlin/utils.hpp"  // merlin::inner_prod, merlin::contiguous_strides, merlin::array_copy
 
@@ -145,20 +146,10 @@ void sync_from_gpu(const Parcel & gpu_array, std::uintptr_t stream) {
 
 // Export data to a file
 void Array::export_to_file(const std::string & filename) {
-    std::ofstream f(filename);
-    auto write_func = [&f] (float * dest, float * src, std::uint64_t count) -> void {
-        f.write(reinterpret_cast<char *>(src), count);
-    };
-    std::mutex m;
-    m.lock();
-    // write meta-data
-    f.write(reinterpret_cast<char *>(&(this->ndim_)), sizeof(std::uint64_t));
-    f.write(reinterpret_cast<char *>(this->shape_.data()), this->ndim_*sizeof(std::uint64_t));
-    // write data
-    NdData placeholder_array(NULL, this->ndim_, this->shape_, contiguous_strides(this->shape_, sizeof(float)));
-    array_copy(&placeholder_array, this, write_func);
-    m.unlock();
-    f.close();
+    merlin::Stock Stk(filename);
+    Stk.get_metadata(*this);
+    Stk.write_metadata();
+    Stk.write_data_to_file(*this);
 }
 
 // Destructor

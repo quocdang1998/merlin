@@ -92,7 +92,7 @@ __cuhostdev__ Vector<T> & Vector<T>::operator=(Vector<T> && src) {
 #ifndef __MERLIN_CUDA__
 // Copy data from CPU to a global memory on GPU
 template <typename T>
-void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr) {
+void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, T * data_ptr) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access this feature.\n");
 }
 

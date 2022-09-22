@@ -73,13 +73,14 @@ with Visual Studio application is strongly recommended. Inside the application:
    It is possible to compile the package from the terminal (cmd or Powershell),
    but users are responsible for assuring that enviroment variables are
    correctly set before the compilation, depending on location and version of
-   Visual Studio installed on their machine.
-   
+   Visual Studio installed on their machine (see `Building on the command line
+   <https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170#path_and_environment>`_).
+
    **Any failure due to wrong settings of enviroment variables while compiling
    the package in a Windows terminal is not our responsibility**.
 
    .. code-block:: powershell
-   
+
       cmake --preset=windows .
       cd build
       ninja

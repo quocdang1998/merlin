@@ -69,15 +69,30 @@ Array Stock::to_array(void) {
     return result;
 }
 
-void Stock::dumped(const Array & src) {
-    // construct write function
+// Get metadata from an array
+void Stock::get_metadata(Array & src) {
+    this->ndim_ = src.ndim();
+    this->shape_ = src.shape();
+    this->strides_ = contiguous_strides(this->shape_, sizeof(float));
+}
+
+// Write metadata to file
+void Stock::write_metadata(void) {
+    Stock::mutex_.lock();
+    this->file_stream_.seekg(0, std::ios_base::beg);
+    this->file_stream_.write(reinterpret_cast<char *>(&(this->ndim_)), sizeof(std::uint64_t));
+    this->file_stream_.write(reinterpret_cast<char *>(this->shape_.data()), this->ndim_*sizeof(std::uint64_t));
+    this->data_ = reinterpret_cast<float *>(std::uintptr_t(this->file_stream_.tellg()));
+    Stock::mutex_.unlock();
+}
+
+// Write data from an array to a file
+void Stock::write_data_to_file(Array & src) {
     auto write_func = std::bind(write_to_file, std::ref(this->file_stream_),
                                 std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-    // copy data in between a mutex lock to prevent data races
-    std::mutex m;
-    m.lock();
+    Stock::mutex_.lock();
     array_copy(this, &src, write_func);
-    m.unlock();
+    Stock::mutex_.unlock();
 }
 
 // Destructor

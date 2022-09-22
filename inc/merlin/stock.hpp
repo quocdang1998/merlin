@@ -39,12 +39,21 @@ class MERLIN_EXPORTS Stock : public NdData {
     /// @{
     /** @brief Read metadata from file.*/
     void read_metadata(void);
-    /** @brief Copy data from file to an array.*/
+    /** @brief Copy data from file to a merlin::Array.*/
     void copy_to_array(Array & arr);
+    /** @brief Convert to an merlin::Array.*/
     Array to_array(void);
     /// @}
 
-    void dumped(const Array & src);
+    /// @name Write to file
+    /// @{
+    /** @brief Get metadata from a merlin::Array.*/
+    void get_metadata(Array & src);
+    /** @brief Write metadata to file.*/
+    void write_metadata(void);
+    /** @brief Write data from a merlin::Array to a file.*/
+    void write_data_to_file(Array & src);
+    /// @}
 
     /** @brief Destructor.*/
     ~Stock(void);

@@ -83,9 +83,7 @@ class Slice {
 
     /// @name Convert to range
     /// @{
-    /** @brief Get indices corresponding to element represented by the slice.
-     *  @param length Length of the array.
-     */
+    /** @brief Get indices corresponding to element represented by the slice.*/
     __cuhostdev__ intvec range(void);
     /// @}
 
@@ -129,7 +127,7 @@ __cuhostdev__ inline Slice::Slice(std::initializer_list<std::uint64_t> list) {
     }
 }
 
-// Conver Slice to vector of corresponding indices
+// Convert Slice to vector of corresponding indices
 __cuhostdev__ inline intvec Slice::range(void) {
     std::uint64_t range_length = (this->start_-this->stop_) / this->step_;
     intvec range(range_length, INT64_MAX);

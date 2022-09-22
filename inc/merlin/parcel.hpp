@@ -45,11 +45,11 @@ class MERLIN_EXPORTS Parcel : public NdData {
 
     /// @name Atributes
     /// @{
-    #ifdef __NVCC__
     /** @brief Check if current device is the one holding Parcel data.
      *  @return ID of GPU holding value - ID of current GPU.
      */
     int check_device(void) const;
+    #ifdef __NVCC__
     /** @brief Get element at a given C-contiguous index.
      *  @param index A C-contiguous index.
      */
