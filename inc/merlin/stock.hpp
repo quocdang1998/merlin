@@ -11,6 +11,7 @@
 
 namespace merlin {
 
+/** @brief Multi-dimensional array exported to a file.*/
 class MERLIN_EXPORTS Stock : public NdData {
   public:
     /// @name Constructors

@@ -36,6 +36,8 @@ Grid API
    :toctree: generated
 
    merlin::Grid
+   merlin::RegularGrid
+   merlin::CartesianGrid
 
 
 Log API

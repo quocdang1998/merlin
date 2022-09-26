@@ -24,7 +24,7 @@ class Slice {
     /** @brief Member constructor.
      *  @details Construct Slice object from values of its members.
      *  @param start Start position (must be positive).
-     *  @param stop Stop position (count from the last element, modulo if range exceeded).
+     *  @param stop Stop position (must be positive).
      *  @param step Step (must be positive).
      */
     __cuhostdev__ Slice(std::uint64_t start, std::uint64_t stop,
@@ -90,13 +90,9 @@ class Slice {
   protected:
     /** @brief Start index.*/
     std::uint64_t start_ = 0;
-    /** @brief Stop index, count from last element.
-     *  @details Positive means count from zeroth element, negative means count from last element.
-     */
+    /** @brief Stop index, count from last element.*/
     std::uint64_t stop_ = 0;
-    /** @brief Step
-     * @details Positive means stepping to the right, Negative means stepping to the left.
-     */
+    /** @brief Step.*/
     std::uint64_t step_ = 1;
 };
 
@@ -119,7 +115,7 @@ __cuhostdev__ inline Slice::Slice(std::initializer_list<std::uint64_t> list) {
         break;
     default:
         #ifdef __CUDA_ARCH__
-        CUDAOUT("Expected intializer list with size at most 3, got %I64u.\n", list.size());
+        CUDAOUT("Expected intializer list with size at most 3, got %lu.\n", static_cast<unsigned long int>(list.size()));
         #else
         FAILURE(std::invalid_argument, "Expected intializer list with size at most 3, got %d.\n", list.size());
         #endif
