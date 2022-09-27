@@ -112,7 +112,7 @@ target_include_directories(libmerlin PUBLIC inc)
 target_link_libraries(libmerlin PUBLIC OpenMP::OpenMP_CXX)
 if(MERLIN_CUDA)
     target_compile_definitions(libmerlin PUBLIC __MERLIN_CUDA__)
-    target_compile_options(libmerlin PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-w>)
+    target_compile_options(libmerlin PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-Xcudafe \"--diag_suppress=field_without_dll_interface\">)
 endif()
 
 # =============================================================================

@@ -5,6 +5,9 @@
 #include <cstdio>  // std::printf, std::vsnprintf
 #include <cstdarg>  // std::va_list, va_start, va_end
 #include <stdexcept>  // std::runtime_error
+#include <type_traits>  // std::is_same
+#include <system_error> // std::error_code
+#include <filesystem>  // std::filesystem::filesystem_error
 
 // Log MESSAGE, WARNING and FAILURE for CPU
 // ----------------------------------------
@@ -42,7 +45,7 @@
  *  unable to display automatically the error message.
  *  @param exception Name of the exception class (like ``std::runtime_error``, ``std::invalid_argument``, etc).
  *  @param fmt Formatted string (same syntax as ``std::printf``).
-*/
+ */
 #define FAILURE(exception, fmt, ...) error_<exception>(__FUNCNAME__, fmt, ##__VA_ARGS__)
 
 // print log for FAILURE + throw exception
@@ -56,7 +59,11 @@ void error_(const char * func_name, const char * fmt, ...) {
     va_end(args);
     // print exception message and throw an exception object
     std::fprintf(stderr, "\033[1;31m[FAILURE]\033[0m [%s] %s", func_name, buffer);
-    throw Exception(const_cast<char *>(buffer));
+    if constexpr(std::is_same<Exception, std::filesystem::filesystem_error>::value) {
+        throw std::filesystem::filesystem_error(const_cast<char *>(buffer), std::error_code(1, std::iostream_category()));
+    } else {
+        throw Exception(const_cast<char *>(buffer));
+    }
 }
 
 /** @brief Exception class to be thrown when compiling without CUDA option.*/

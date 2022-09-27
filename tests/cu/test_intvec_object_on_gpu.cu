@@ -26,7 +26,7 @@ __global__ void initialize_intvec_on_gpu(void) {
 int main(void) {
     // create intvec instance
     merlin::intvec x({1, 2, 3});
-    MESSAGE("Initialize intvec with values: %I64u %I64u %I64u.\n", x[0], x[1], x[2]);
+    MESSAGE("Initialize intvec with values: %" PRIu64 " %" PRIu64 " %" PRIu64 ".\n", x[0], x[1], x[2]);
     // allocate and copy intvec to GPU
     merlin::intvec * ptr_x_gpu;
     cudaMalloc(&ptr_x_gpu, x.malloc_size());

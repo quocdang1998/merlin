@@ -22,7 +22,7 @@ RegularGrid::RegularGrid(std::uint64_t npoint, std::uint64_t ndim) : npoint_(npo
         capacity <<= 1;
     }
     // allocate data
-    this->points_ = Array({capacity, ndim});
+    this->points_ = new Array({capacity, ndim});
 }
 
 // Construct a grid and copy data
@@ -38,21 +38,45 @@ RegularGrid::RegularGrid(const Array & points) {
         capacity <<= 1;
     }
     // copy data from old array to new array
-    this->points_ = Array({capacity, points.ndim()});
-    array_copy(&(this->points_), &points, std::memcpy);
+    this->points_ = new Array({capacity, points.ndim()});
+    array_copy(this->points_, &points, std::memcpy);
 }
 
-// Get reference to array of grid points
-Array RegularGrid::grid_points(void) const {
-    const std::uint64_t * shape_ptr = &(this->points_.shape()[0]);
-    const std::uint64_t * strides_ptr = &(this->points_.strides()[0]);
-    return Array(this->points_.data(), 2, shape_ptr, strides_ptr, false);
+// Copy constructor
+RegularGrid::RegularGrid(const RegularGrid & src) : npoint_(src.npoint_) {
+    // copy data from old array to new array
+    this->points_ = new Array({src.capacity(), src.ndim()});
+    std::memcpy(this->points_->data(), src.points_->data(), sizeof(float)*src.capacity()*src.ndim());
+}
+
+// Copy assignment
+RegularGrid & RegularGrid::operator=(const RegularGrid & src) {
+    this->npoint_ = src.npoint_;
+    // copy data from old array to new array
+    this->points_ = new Array({src.capacity(), src.ndim()});
+    std::memcpy(this->points_->data(), src.points_->data(), sizeof(float)*src.capacity()*src.ndim());
+    return *this;
+}
+
+// Move constructor
+RegularGrid::RegularGrid(RegularGrid && src) : npoint_(src.npoint_) {
+    this->points_ = src.points_;
+    src.points_ = NULL;
+}
+
+// Move assignment
+RegularGrid & RegularGrid::operator=(RegularGrid && src) {
+    this->npoint_ = src.npoint_;
+    this->points_ = src.points_;
+    src.points_ = NULL;
+    return *this;
 }
 
 // Get reference Array to a point
 Array RegularGrid::operator[](unsigned int index) {
-    float * target_ptr = &(this->points_[{index, 0}]);
-    std::uint64_t shape = this->points_.ndim();
+    Array & points = *(dynamic_cast<Array *>(this->points_));
+    float * target_ptr = &(points[{index, 0}]);
+    std::uint64_t shape = this->points_->ndim();
     std::uint64_t strides = sizeof(float);
     return Array(target_ptr, 1, &shape, &strides, false);
 }
@@ -62,12 +86,12 @@ RegularGrid::iterator RegularGrid::begin(void) {
     this->begin_ = intvec(2, 0);
     this->end_ = intvec(2, 0);
     this->end_[0] = this->npoint_;
-    return RegularGrid::iterator(this->begin_, this->points_);
+    return RegularGrid::iterator(this->begin_, *(this->points_));
 }
 
 // End iterator
 RegularGrid::iterator RegularGrid::end(void) {
-    return RegularGrid::iterator(this->end_, this->points_);
+    return RegularGrid::iterator(this->end_, *(this->points_));
 }
 
 // Append a point at the end of the grid
@@ -81,13 +105,15 @@ void RegularGrid::push_back(Vector<float> && point) {
     this->npoint_ += 1;
     if (this->npoint_ > this->capacity()) {
         // reallocate data
-        Array new_location = Array({2*this->capacity(), this->ndim()});
+        Array * new_location = new Array({2*this->capacity(), this->ndim()});
         // copy data from old location to new location
-        std::memcpy(new_location.data(), this->points_.data(), sizeof(float)*this->npoint_*this->ndim());
-        this->points_ = std::move(new_location);
+        std::memcpy(new_location->data(), this->points_->data(), sizeof(float)*this->capacity()*this->ndim());
+        delete this->points_;
+        this->points_ = new_location;
     }
-    std::memcpy(&(this->points_[{this->npoint_-1, 0}]), &(point[0]),
-                sizeof(float)*this->ndim());
+    Array & points = *(dynamic_cast<Array *>(this->points_));
+    float * lastitem_ptr = &(points[{this->npoint_-1, 0}]);
+    std::memcpy(lastitem_ptr, point.data(), sizeof(float)*this->ndim());
 }
 
 // Remove a point at the end of the grid
@@ -95,13 +121,15 @@ void RegularGrid::pop_back(void) {
     this->npoint_ -= 1;
     if (this->npoint_ <= this->capacity()/2) {
         // reallocate data
-        Array new_location = Array({this->capacity()/2, this->ndim()});
+        Array * new_location = new Array({this->capacity()/2, this->ndim()});
         // copy data from old location to new location
-        std::memcpy(new_location.data(), this->points_.data(), sizeof(float)*this->npoint_*this->ndim());
-        this->points_ = std::move(new_location);
+        std::memcpy(new_location->data(), this->points_->data(), sizeof(float)*(this->capacity()/2)*this->ndim());
+        delete this->points_;
+        this->points_ = new_location;
     } else {
-        std::memset(&(this->points_[{this->npoint_, 0}]), 0,
-                    sizeof(float)*this->ndim());
+        Array & points = *(dynamic_cast<Array *>(this->points_));
+        float * lastitem_ptr = &(points[{this->npoint_, 0}]);
+        std::memset(lastitem_ptr, 0, sizeof(float)*this->ndim());
     }
 }
 
@@ -113,6 +141,9 @@ void RegularGrid::pop_back(void) {
 // Construct from a list of vector of values
 CartesianGrid::CartesianGrid(std::initializer_list<floatvec> grid_vectors) : grid_vectors_(grid_vectors) {
     this->grid_vectors_ = grid_vectors;
+    intvec shape = this->grid_shape();
+    intvec strides = contiguous_strides(shape, sizeof(float));
+    this->points_ = new NdData(NULL, this->ndim(), shape, strides);
 }
 
 // Get total number of points
@@ -136,12 +167,12 @@ intvec CartesianGrid::grid_shape(void) {
 // Construct 2D table of points in a Cartesian Grid
 Array CartesianGrid::grid_points(void) {
     // initialize table of grid points
-    std::uint64_t npoint_ = this->size();
-    Array result({npoint_, this->ndim()});
+    std::uint64_t npoint = this->size();
+    Array result({npoint, this->ndim()});
 
     // assign value to each point
     intvec shape_ = this->grid_shape();
-    for (int i = 0; i < npoint_; i++) {
+    for (int i = 0; i < npoint; i++) {
         intvec index_ = contiguous_to_ndim_idx(i, shape_);
         floatvec value_(this->ndim());
         for (int j = 0; j < this->ndim(); j++) {
@@ -155,18 +186,15 @@ Array CartesianGrid::grid_points(void) {
 
 // Begin iterator
 CartesianGrid::iterator CartesianGrid::begin(void) {
-    intvec shape = this->grid_shape();
-    intvec strides = contiguous_strides(shape, sizeof(float));
-    this->points_ = Array(NULL, this->ndim(), shape.data(), strides.data(), false);
     this->begin_ = intvec(this->ndim(), 0);
     this->end_ = intvec(this->ndim(), 0);
     this->end_[0] = this->grid_vectors_[0].size();
-    return CartesianGrid::iterator(this->begin_, this->points_);
+    return CartesianGrid::iterator(this->begin_, *(this->points_));
 }
 
 // End iterator
 CartesianGrid::iterator CartesianGrid::end(void) {
-    return CartesianGrid::iterator(this->end_, this->points_);
+    return CartesianGrid::iterator(this->end_, *(this->points_));
 }
 
 // Get element at a C-contiguous index

@@ -1,8 +1,11 @@
 #include "merlin/stock.hpp"
 #include "merlin/array.hpp"
 
+#include <chrono>
 #include <cstdint>
 #include <cinttypes>
+#include <thread>
+
 #include "omp.h"
 #include <mutex>
 
@@ -27,7 +30,7 @@ int main(void) {
     std::mutex m;
     #pragma omp parallel for
     for (int i = 0; i < 10; i++) {
-        merlin::Stock S("temp.txt");
+        merlin::Stock S("temp.txt", 'r');
         merlin::Array a = S.to_array();
         m.lock();
         MESSAGE("From thread %d\nNdim: %" PRIu64 ".\nDims: %" PRIu64 " %" PRIu64 ".\n", omp_get_thread_num(), a.ndim(), a.shape()[0], a.shape()[1]);

@@ -9,7 +9,6 @@
 #include "merlin/decorator.hpp"  // __cuhost__, __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/vector.hpp"  // merlin::intvec
-#include "merlin/slice.hpp"  // merlin::Slice
 
 namespace merlin {
 
@@ -69,7 +68,7 @@ class MERLIN_EXPORTS NdData {
     /// @name Atributes
     /// @{
     /** @brief Number of element.*/
-    __cuhostdev__ std::uint64_t size(void);
+    std::uint64_t size(void);
     /// @}
 
     /// @name Destructor

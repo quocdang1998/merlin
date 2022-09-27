@@ -23,8 +23,7 @@ class MERLIN_EXPORTS Grid {
 
   protected:
     /** @brief Array holding coordinates of points in the Grid.*/
-    Array points_;
-    // NdData * points_ = NULL;
+    NdData * points_ = NULL;
 };
 
 /** @brief A set of multi-dimensional points.*/
@@ -33,13 +32,13 @@ class MERLIN_EXPORTS RegularGrid : Grid {
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
-    __cuhostdev__ RegularGrid(void) {}
+    RegularGrid(void) {}
     /** @brief Construct an empty grid from a given number of n-dim points.
      *  @param npoint Number of points in the grid.
      *  @param ndim Number of dimension of points in the grid.
      */
     RegularGrid(std::uint64_t npoint, std::uint64_t ndim);
-    /** @brief Construct a grid and copy data.
+    /** @brief Construct a grid and copy data from an array.
      *  @param points 2D merlin::Array of points, dimension ``(npoints, ndim)``.
      */
     RegularGrid(const Array & points);
@@ -48,25 +47,25 @@ class MERLIN_EXPORTS RegularGrid : Grid {
     /// @name Copy and Move
     /// @{
     /** @brief Copy constructor.*/
-    RegularGrid(const RegularGrid & src) = default;
+    RegularGrid(const RegularGrid & src);
     /** @brief Copy assignment.*/
-    RegularGrid & operator=(const RegularGrid & src) = default;
+    RegularGrid & operator=(const RegularGrid & src);
     /** @brief Move constructor.*/
-    RegularGrid(RegularGrid && src) = default;
+    RegularGrid(RegularGrid && src);
     /** @brief Move assignment.*/
-    RegularGrid & operator=(RegularGrid && src) = default;
+    RegularGrid & operator=(RegularGrid && src);
     /// @}
 
     /// @name Get members and attributes
     /// @{
     /** @brief Get reference to array of grid points.*/
-    Array grid_points(void) const;
+    Array grid_points(void) const {return *(dynamic_cast<Array *>(this->points_));}
     /** @brief Number of dimension of each point in the grid.*/
-    unsigned int ndim(void) {return this->points_.shape()[1];}
+    std::uint64_t ndim(void) const {return this->points_->shape()[1];}
     /** @brief Number of points in the grid.*/
-    unsigned int size(void) {return this->npoint_;}
+    std::uint64_t size(void) const {return this->npoint_;}
     /** @brief Maximum number of point which the RegularGrid can hold without reallocating memory.*/
-    unsigned int capacity(void) {return this->points_.shape()[0];}
+    std::uint64_t capacity(void) const {return this->points_->shape()[0];}
     /// @}
 
     /// @name Iterator
@@ -79,6 +78,8 @@ class MERLIN_EXPORTS RegularGrid : Grid {
     RegularGrid::iterator end(void);
     /// @}
 
+    /// @name Modify points
+    /// @{
     /** @brief Get reference Array to a point.
      *  @param index Index of point to get in the grid.
      */
@@ -87,9 +88,17 @@ class MERLIN_EXPORTS RegularGrid : Grid {
     void push_back(Vector<float> && point);
     /** @brief Remove a point at the end of the grid.*/
     void pop_back(void);
+    /// @}
 
+    /// @name Destructor
+    /// @{
     /** @brief Default destructor.*/
-    ~RegularGrid(void) = default;
+    ~RegularGrid(void) {
+        if (this->points_ != NULL) {
+            delete this->points_;
+        }
+    }
+    /// @}
 
   protected:
     /** @brief Number of points in the grid.*/
@@ -99,7 +108,6 @@ class MERLIN_EXPORTS RegularGrid : Grid {
     /** @brief End iterator.*/
     intvec end_;
 };
-
 
 /** @brief Multi-dimensional Cartesian grid.*/
 class MERLIN_EXPORTS CartesianGrid : public Grid {

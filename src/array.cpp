@@ -137,6 +137,7 @@ float & Array::operator[] (const intvec & index) {
     return *(reinterpret_cast<float *>(data_ptr));
 }
 
+
 // Copy data from GPU array
 #ifndef __MERLIN_CUDA__
 void sync_from_gpu(const Parcel & gpu_array, std::uintptr_t stream) {
@@ -146,7 +147,7 @@ void sync_from_gpu(const Parcel & gpu_array, std::uintptr_t stream) {
 
 // Export data to a file
 void Array::export_to_file(const std::string & filename) {
-    merlin::Stock Stk(filename);
+    merlin::Stock Stk(filename, 'w');
     Stk.get_metadata(*this);
     Stk.write_metadata();
     Stk.write_data_to_file(*this);

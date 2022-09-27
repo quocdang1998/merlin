@@ -2,6 +2,7 @@
 #ifndef MERLIN_STOCK_HPP_
 #define MERLIN_STOCK_HPP_
 
+#include <cstdint>  // std::uint64_t
 #include <fstream>  // std::fstream
 #include <mutex>  // std::mutex
 #include <string>  // std::string
@@ -20,8 +21,12 @@ class MERLIN_EXPORTS Stock : public NdData {
     Stock(void) = default;
     /** @brief Constructor from a filename.
      *  @param filename Name of input file (or output file).
+     *  @param mode Open mode:
+     *    - r: Read only.
+     *    - w: Write only.
+     *    - a: Read and write.
      */
-    Stock(const std::string & filename);
+    Stock(const std::string & filename, char mode = 'a');
     /// @}
 
     /// @name Copy and Move
@@ -34,6 +39,12 @@ class MERLIN_EXPORTS Stock : public NdData {
     Stock(Stock && src) = default;
     /** @brief Move assignment.*/
     Stock & operator=(Stock && src) = default;
+    /// @}
+
+    /// @name Get members
+    /// @{
+    /** @brief Get reference to the file stream.*/
+    std::fstream & file_stream(void) const {return this->file_stream_;}
     /// @}
 
     /// @name Read from file
@@ -60,10 +71,17 @@ class MERLIN_EXPORTS Stock : public NdData {
     ~Stock(void);
 
   protected:
-    std::fstream file_stream_;
+    std::string filename_;
+    char mode_;
+    std::uint64_t stream_pos_;
+    std::ios_base::fmtflags format_flag_;
 
   private:
+    mutable std::fstream file_stream_;
+    void get_fstream_metadata(void);
+    void reopen_fstream(void);
     static std::mutex mutex_;
+    static std::ios_base::openmode char_to_openmode(char mode);
 };
 
 }  // namespace merlin

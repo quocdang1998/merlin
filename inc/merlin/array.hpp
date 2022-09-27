@@ -3,9 +3,11 @@
 #define MERLIN_ARRAY_HPP_
 
 #include <cstdint>  // std::uint64_t, std::uintptr_t
+#include <initializer_list>  // std::initializer_list
 
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/nddata.hpp"  // merlin::NdData, merlin::Parcel, merlin::Iterator
+#include "merlin/slice.hpp"  // merlin::Slice
 #include "merlin/vector.hpp"  // merlin::intvec
 
 namespace merlin {
@@ -68,6 +70,8 @@ class MERLIN_EXPORTS Array : public NdData {
      *  @return Reference to the element at the provided index.
      */
     float & operator[] (const intvec & index);
+    /** @brief Create new array by slicing.*/
+    // Array operator[] (std::initializer_list<Slice> slices);
     /// @}
 
     /// @name Transfer data
