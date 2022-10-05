@@ -100,7 +100,7 @@ Parcel & Parcel::operator=(Parcel && src) {
 }
 
 // Copy data to a pre-allocated memory
-void Parcel::copy_to_gpu(Parcel * gpu_ptr, std::uint64_t * shape_strides_ptr) {
+void Parcel::copy_to_gpu(Parcel * gpu_ptr, void * shape_strides_ptr) {
     // initialize buffer to store data of the copy before cloning it to GPU
     Parcel copy_on_gpu;
     // shallow copy of the current object
@@ -110,8 +110,8 @@ void Parcel::copy_to_gpu(Parcel * gpu_ptr, std::uint64_t * shape_strides_ptr) {
     // copy temporary object to GPU
     cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(Parcel), cudaMemcpyHostToDevice);
     // copy shape and strides data
-    this->shape_.copy_to_gpu(&(gpu_ptr->shape_), shape_strides_ptr);
-    this->strides_.copy_to_gpu(&(gpu_ptr->strides_), shape_strides_ptr+this->ndim_);
+    this->shape_.copy_to_gpu(&(gpu_ptr->shape_), reinterpret_cast<std::uint64_t *>(shape_strides_ptr));
+    this->strides_.copy_to_gpu(&(gpu_ptr->strides_), reinterpret_cast<std::uint64_t *>(shape_strides_ptr)+this->ndim_);
     // nullify data pointer to avoid free data
     copy_on_gpu.data_ = NULL;
     copy_on_gpu.shape_.data() = NULL;

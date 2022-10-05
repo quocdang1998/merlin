@@ -22,6 +22,7 @@ list(APPEND MERLIN_SRC_CPP
 list(APPEND MERLIN_SRC_CU
      src/parcel.cu
      src/array.cu
+     src/grid.cu
      src/utils.cu
 )
 

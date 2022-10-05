@@ -140,7 +140,15 @@ void RegularGrid::pop_back(void) {
 
 // Construct from a list of vector of values
 CartesianGrid::CartesianGrid(std::initializer_list<floatvec> grid_vectors) : grid_vectors_(grid_vectors) {
+    // check grid vector
     this->grid_vectors_ = grid_vectors;
+    for (int i = 0; i < this->ndim(); i++) {
+        for (int j = 1; j < this->grid_vectors_[i].size(); j++) {
+            if (this->grid_vectors_[i][j-1] >= this->grid_vectors_[i][j]) {
+                FAILURE(std::invalid_argument, "Expected vector entries in increasing order, got vector at index %d.\n", i);
+            }
+        }
+    }
     intvec shape = this->grid_shape();
     intvec strides = contiguous_strides(shape, sizeof(float));
     this->points_ = new NdData(NULL, this->ndim(), shape, strides);
@@ -214,6 +222,32 @@ floatvec CartesianGrid::operator[](const intvec & index) {
         result[i] = this->grid_vectors_[i][index[i]];
     }
     return result;
+}
+
+// Calculate minimum size to allocate to store the object
+std::uint64_t CartesianGrid::malloc_size(void) {
+    std::uint64_t size = sizeof(CartesianGrid) + this->ndim()*sizeof(floatvec);
+    for (int i = 0; i < this->ndim(); i++) {
+        size += this->grid_vectors_[i].size() * sizeof(float);
+    }
+    return size;
+}
+
+#ifndef __MERLIN_CUDA__
+
+// Copy data to a pre-allocated memory
+void copy_to_gpu(CartesianGrid * gpu_ptr, void * grid_vector_data_ptr) {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
+}
+
+#endif  // __MERLIN_CUDA__
+
+// Destructor
+CartesianGrid::~CartesianGrid(void) {
+    if (this->points_ != NULL) {
+        delete this->points_;
+        this->points_ = NULL;
+    }
 }
 
 }  // namespace merlin

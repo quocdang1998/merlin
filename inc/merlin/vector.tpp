@@ -92,7 +92,7 @@ __cuhostdev__ Vector<T> & Vector<T>::operator=(Vector<T> && src) {
 #ifndef __MERLIN_CUDA__
 // Copy data from CPU to a global memory on GPU
 template <typename T>
-void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, T * data_ptr) {
+void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access this feature.\n");
 }
 
@@ -105,14 +105,13 @@ void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
 #elif defined(__NVCC__)
 // Copy data from CPU to a global memory on GPU
 template <typename T>
-void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, T * data_ptr) {
+void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr) {
     // initialize buffer to store data of the copy before cloning it to GPU
     Vector<T> copy_on_gpu;
     // copy data
-    cudaMemcpy(data_ptr, this->data_,
-               this->size_*sizeof(T), cudaMemcpyHostToDevice);
+    cudaMemcpy(data_ptr, this->data_, this->size_*sizeof(T), cudaMemcpyHostToDevice);
     // copy metadata
-    copy_on_gpu.data_ = data_ptr;
+    copy_on_gpu.data_ = reinterpret_cast<T *>(data_ptr);
     copy_on_gpu.size_ = this->size_;
     cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(Vector<T>), cudaMemcpyHostToDevice);
     // nullify data on copy to avoid deallocate memory on CPU
@@ -132,13 +131,13 @@ void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
 #ifdef __NVCC__
 // Copy to shared memory
 template <typename T>
-__cudevice__ void Vector<T>::copy_to_shared_mem(Vector<T> * share_ptr, T * data_ptr) {
-    // copy size
-    share_ptr->size_ = this->size_;
-    share_ptr->data_ = data_ptr;
-    // copy data in parallel
+__cudevice__ void Vector<T>::copy_to_shared_mem(Vector<T> * share_ptr, void * data_ptr) {
     bool check_zeroth_thread = (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
     if (check_zeroth_thread) {
+        // copy size
+        share_ptr->size_ = this->size_;
+        share_ptr->data_ = reinterpret_cast<T *>(data_ptr);
+        // copy data in parallel
         for (int i = 0; i < this->size_; i++) {
             share_ptr->data_[i] = this->data_[i];
         }

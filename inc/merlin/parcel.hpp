@@ -2,7 +2,7 @@
 #ifndef MERLIN_PARCEL_HPP_
 #define MERLIN_PARCEL_HPP_
 
-#include <cstdint>  // std::uintptr_t
+#include <cstdint>  // std::uint64_t, std::uintptr_t
 #include <initializer_list>  // std::initializer_list
 
 #include "merlin/nddata.hpp"  // merlin::NdData
@@ -66,12 +66,12 @@ class MERLIN_EXPORTS Parcel : public NdData {
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the object and its data.*/
     std::uint64_t malloc_size(void) {return sizeof(Parcel) + 2*this->ndim_*sizeof(std::uint64_t);}
     /** @brief Copy meta-data (shape and strides) from CPU to a pre-allocated memory on GPU.
-     *  @details The meta-data is copied to the memory region that comes right after the copied object.
+     *  @details The meta-data should be to the memory region that comes right after the copied object.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
      *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and stride
      *  vector.
      */
-    void copy_to_gpu(Parcel * gpu_ptr, std::uint64_t * shape_strides_ptr);
+    void copy_to_gpu(Parcel * gpu_ptr, void * shape_strides_ptr);
     #ifdef __NVCC__
     /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
      *  @note This operation is single-threaded.
@@ -79,7 +79,7 @@ class MERLIN_EXPORTS Parcel : public NdData {
      *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and stride
      *  vector.
      */
-    __cudevice__ inline void copy_to_shared_mem(Parcel * share_ptr, std::uint64_t * shape_strides_ptr);
+    __cudevice__ inline void copy_to_shared_mem(Parcel * share_ptr, void * shape_strides_ptr);
     #endif  // __NVCC__
 
     /// @name Utils
@@ -123,13 +123,18 @@ __cudevice__ inline float & Parcel::operator[](std::initializer_list<std::uint64
 }
 
 // Copy to shared memory
-__cudevice__ inline void Parcel::copy_to_shared_mem(Parcel * share_ptr, std::uint64_t * shape_strides_ptr) {
+__cudevice__ inline void Parcel::copy_to_shared_mem(Parcel * share_ptr, void * shape_strides_ptr) {
     // copy meta data
-    share_ptr->data_ = this->data_;
-    share_ptr->ndim_ = this->ndim_;
+    bool check_zeroth_thread = (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
+    if (check_zeroth_thread) {
+        share_ptr->data_ = this->data_;
+        share_ptr->ndim_ = this->ndim_;
+    }
+    __syncthreads();
     // copy shape and strides
-    this->shape_.copy_to_shared_mem(&(share_ptr->shape_), shape_strides_ptr);
-    this->strides_.copy_to_shared_mem(&(share_ptr->strides_), shape_strides_ptr+this->ndim_);
+    this->shape_.copy_to_shared_mem(&(share_ptr->shape_), reinterpret_cast<std::uint64_t *>(shape_strides_ptr));
+    this->strides_.copy_to_shared_mem(&(share_ptr->strides_),
+                                      reinterpret_cast<std::uint64_t *>(shape_strides_ptr)+this->ndim_);
 }
 #endif  // __NVCC__
 

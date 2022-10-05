@@ -46,7 +46,7 @@ int Parcel::check_device(void) const {
 }
 
 // Copy data to a pre-allocated memory
-void Parcel::copy_to_gpu(Parcel * gpu_ptr, std::uint64_t * shape_strides_ptr) {
+void Parcel::copy_to_gpu(Parcel * gpu_ptr, void * shape_strides_ptr) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 

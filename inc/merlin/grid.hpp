@@ -5,7 +5,7 @@
 #include <cstdint>  // std::uint64_t
 #include <initializer_list>  // std::initializer_list
 
-#include "merlin/decorator.hpp"  // __cuhost__, __cuhostdev__
+#include "merlin/decorator.hpp"  // __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/nddata.hpp"  // merlin::NdData, merlin::Iterator
 #include "merlin/array.hpp"  // merlin::Array
@@ -112,28 +112,39 @@ class MERLIN_EXPORTS RegularGrid : Grid {
 /** @brief Multi-dimensional Cartesian grid.*/
 class MERLIN_EXPORTS CartesianGrid : public Grid {
   public:
-      /** @brief Constructor from a list of vector of values.*/
+    /// @name Constructor
+    /// @{
+    /** @brief Default constructor.*/
+    CartesianGrid(void) {}
+    /** @brief Constructor from a list of vector of values.*/
     CartesianGrid(std::initializer_list<floatvec> grid_vectors);
-    /** @brief Default destructor.*/
-    ~CartesianGrid(void) = default;
+    /// @}
 
+    /// @name Get members and attributes
+    /// @{
     /** @brief Get grid vectors.*/
-    Vector<floatvec> & grid_vectors(void) {return this->grid_vectors_;}
+    __cuhostdev__ Vector<floatvec> & grid_vectors(void) {return this->grid_vectors_;}
     /** @brief Full tensor of each point in the CartesianGrid in form of 2D table.*/
     Array grid_points(void);
     /** @brief Number of dimension of the CartesianGrid.*/
-    std::uint64_t ndim(void) {return this->grid_vectors_.size();}
+    __cuhostdev__ std::uint64_t ndim(void) {return this->grid_vectors_.size();}
     /** @brief Number of points in the CartesianGrid.*/
     std::uint64_t size(void);
     /** @brief Shape of the grid.*/
     intvec grid_shape(void);
+    /// @}
 
+    /// @name Iterator
+    /// @{
     using iterator = Iterator;
     /** @brief Begin iterator.*/
     CartesianGrid::iterator begin(void);
     /** @brief End iterator.*/
     CartesianGrid::iterator end(void);
+    /// @}
 
+    /// @name Slicing operator
+    /// @{
     /** @brief Get element at a given index.
      *  @param index Index of point in the CartesianGrid::grid_points table.
      */
@@ -142,6 +153,34 @@ class MERLIN_EXPORTS CartesianGrid : public Grid {
      *  @param index Vector of index on each dimension.
      */
     floatvec operator[](const intvec & index);
+    /// @}
+
+    /// @name GPU related features
+    /// @{
+    /** @brief Calculate the minimum number of bytes to allocate in the memory to store the grid and its data.*/
+    std::uint64_t malloc_size(void);
+    /** @brief Copy the grid from CPU to a pre-allocated memory on GPU.
+     *  @details Values of vectors should be copied to the memory region that comes right after the copied object.
+     *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
+     *  @param grid_vector_data_ptr Pointer to a pre-allocated GPU memory storing data of grid vectors.
+     */
+    void copy_to_gpu(CartesianGrid * gpu_ptr, void * grid_vector_data_ptr);
+    #ifdef __NVCC__
+    /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
+     *  @note This operation is single-threaded.
+     *  @param share_ptr Dynamically allocated shared pointer on GPU.
+     *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and stride
+     *  vector.
+     */
+    __cudevice__ inline void copy_to_shared_mem(CartesianGrid * share_ptr, void * grid_vector_data_ptr);
+    #endif  // __NVCC__
+    /// @}
+
+    /// @name Destructor
+    /// @{
+    /** @brief Default destructor.*/
+    ~CartesianGrid(void);
+    /// @}
 
   protected:
     /** @brief List of vector of values.*/
@@ -151,6 +190,24 @@ class MERLIN_EXPORTS CartesianGrid : public Grid {
     /** @brief End iterator.*/
     intvec end_;
 };
+
+#ifdef __NVCC__
+__cudevice__ inline void CartesianGrid::copy_to_shared_mem(CartesianGrid * share_ptr, void * grid_vector_data_ptr) {
+    // shallow copy of grid vector
+    bool check_zeroth_thread = (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
+    if (check_zeroth_thread) {
+        share_ptr->grid_vectors_.data() = reinterpret_cast<floatvec *>(grid_vector_data_ptr);
+        share_ptr->grid_vectors_.size() = this->ndim();
+    }
+    __syncthreads();
+    // copy data of each grid vector
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(grid_vector_data_ptr) + this->ndim()*sizeof(floatvec);
+    for (int i = 0; i < this->ndim(); i++) {
+        this->grid_vectors_[i].copy_to_shared_mem(&(share_ptr->grid_vectors_[i]), reinterpret_cast<float *>(data_ptr));
+        data_ptr += this->grid_vectors_[i].size() * sizeof(float);
+    }
+}
+#endif  // __NVCC__
 
 }  // namespace merlin
 
