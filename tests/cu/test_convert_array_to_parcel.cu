@@ -2,8 +2,8 @@
 #include <cstdio>
 
 #include "merlin/logger.hpp"  // MESSAGE
-#include "merlin/array.hpp"  // merlin::Array
-#include "merlin/parcel.hpp"  // merlin::Parcel
+#include "merlin/array/array.hpp"  // merlin::Array
+#include "merlin/array/parcel.hpp"  // merlin::Parcel
 
 // function printing elements of a CUDA tensor
 __global__ void print_gpu_tensor(float * gpu_data) {

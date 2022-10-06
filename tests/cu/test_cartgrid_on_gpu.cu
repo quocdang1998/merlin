@@ -1,4 +1,4 @@
-#include "merlin/grid.hpp"
+#include "merlin/interpolant/grid.hpp"
 
 #include "cstdio"
 

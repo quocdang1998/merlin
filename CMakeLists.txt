@@ -10,20 +10,22 @@ set(CMAKE_CXX_STANDARD 17)
 
 # source list
 list(APPEND MERLIN_SRC_CPP
-     src/nddata.cpp
+     src/merlin/array/nddata.cpp
+     src/merlin/array/array.cpp
+     src/merlin/array/utils.cpp
+     src/merlin/array/parcel.cpp
+     src/merlin/array/stock.cpp
      # src/autodiff.cpp
-     src/grid.cpp
-     # src/interpolant.cpp
-     src/array.cpp
-     src/utils.cpp
-     src/parcel.cpp
-     src/stock.cpp
+     src/merlin/device/gpu_query.cpp
+     src/merlin/interpolant/grid.cpp
+     src/merlin/interpolant/interpolant.cpp
 )
 list(APPEND MERLIN_SRC_CU
-     src/parcel.cu
-     src/array.cu
-     src/grid.cu
-     src/utils.cu
+     src/merlin/array/parcel.cu
+     src/merlin/array/array.cu
+     src/merlin/array/utils.cu
+     src/merlin/device/gpu_query.cu
+     src/merlin/interpolant/grid.cu
 )
 
 # options
@@ -109,7 +111,7 @@ endif()
 # set property for main library
 set_property(TARGET libmerlin PROPERTY OUTPUT_NAME merlin)
 set_property(TARGET libmerlin PROPERTY POSITION_INDEPENDENT_CODE 1)
-target_include_directories(libmerlin PUBLIC inc)
+target_include_directories(libmerlin PUBLIC src)
 target_link_libraries(libmerlin PUBLIC OpenMP::OpenMP_CXX)
 if(MERLIN_CUDA)
     target_compile_definitions(libmerlin PUBLIC __MERLIN_CUDA__)

@@ -59,8 +59,7 @@ The code style of C++ code is Google's style guide, checked by ``cpplint``.
 
 .. code-block:: sh
 
-   cpplint --root=inc inc/merlin/*.hpp
-   cpplint src/*.hpp
+   cpplint --recursive src
 
 General rule for source files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

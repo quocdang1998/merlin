@@ -72,3 +72,19 @@ Utils
    merlin::contiguous_to_ndim_idx
    merlin::array_copy
 
+GPU with CUDA
+-------------
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::KernelLock
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::get_device_count
+   merlin::print_device_limit
+   merlin::test_gpu
+
+

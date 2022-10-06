@@ -1,8 +1,8 @@
-#include "merlin/parcel.hpp"
+#include "merlin/array/parcel.hpp"
 
 #include <cstdint>
 
-#include "merlin/array.hpp"
+#include "merlin/array/array.hpp"
 #include "merlin/logger.hpp"
 
 __global__ void print_element(merlin::Parcel * parcel_ptr) {

@@ -1,5 +1,5 @@
 #include <cstdio>
-#include "merlin/lock.hpp"
+#include "merlin/device/lock.hpp"
 
 #define NUMBLOCKS  32
 #define NUMTHREADS 8

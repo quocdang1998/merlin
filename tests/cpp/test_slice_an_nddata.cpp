@@ -1,11 +1,11 @@
 // Copyright 2022 quocdang1998
-#include "merlin/nddata.hpp"
+#include "merlin/array/nddata.hpp"
 
 #include <cstring>  // std::memcpy
 #include <numeric>  // std::iota
 
 #include "merlin/logger.hpp"
-#include "merlin/utils.hpp"
+#include "merlin/array/utils.hpp"
 
 int main(void) {
     MESSAGE("Test NdData class.\n");

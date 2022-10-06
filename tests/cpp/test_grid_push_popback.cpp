@@ -2,7 +2,7 @@
 #include <cstdio>
 #include <cinttypes>
 
-#include "merlin/grid.hpp"
+#include "merlin/interpolant/grid.hpp"
 
 int main (void) {
     merlin::RegularGrid gr(8,3);

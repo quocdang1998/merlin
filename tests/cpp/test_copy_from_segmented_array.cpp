@@ -2,7 +2,7 @@
 #include <cstdio>
 
 #include "merlin/logger.hpp"
-#include "merlin/array.hpp"  // merlin::Array
+#include "merlin/array/array.hpp"  // merlin::Array
 
 int main(void) {
     // initialize array

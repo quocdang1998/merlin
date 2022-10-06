@@ -1,6 +1,6 @@
 // Copyright 2022 quocdang1998
 
-#include "merlin/grid.hpp"
+#include "merlin/interpolant/grid.hpp"
 #include "merlin/vector.hpp"
 #include "merlin/logger.hpp"
 

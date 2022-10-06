@@ -1,5 +1,5 @@
-#include "merlin/stock.hpp"
-#include "merlin/array.hpp"
+#include "merlin/array/stock.hpp"
+#include "merlin/array/array.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -40,4 +40,6 @@ int main(void) {
         std::printf("\n");
         m.unlock();
     }
+
+
 }
