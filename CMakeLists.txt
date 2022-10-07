@@ -31,7 +31,7 @@ list(APPEND MERLIN_SRC_CU
 # options
 option(MERLIN_CUDA "Build library using CUDA" ON)  # -DMERLIN_CUDA=OFF
 set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"/"DYNAMIC"
-       CACHE STRING "Type of the created library (static or shared/dynamic)")
+    CACHE STRING "Type of the created library (static or shared/dynamic)")
 option(MERLIN_TEST "Build test executables" ON)  # -DMERLIN_TEST=ON
 
 # project name
@@ -73,6 +73,7 @@ endif()
 if(MERLIN_CUDA)
     set(CMAKE_CUDA_STANDARD 17)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
 endif(MERLIN_CUDA)
 
 # OpenMP
@@ -104,9 +105,21 @@ elseif(MERLIN_LIBKIND MATCHES "SHARED" OR MERLIN_LIBKIND MATCHES "DYNAMIC")
     # build dynamic lib
     message(STATUS "Build dynamic library")
     add_library(libmerlin SHARED ${MERLIN_SRC})
+    ##add_library(libmerlincuda STATIC ${MERLIN_SRC_CU})
+    add_library(libmerlincuda STATIC src/merlin/array/parcel.cu)
+    set(MERLIN_CUDA_STATIC_LIB TRUE)
 else()
     message(FATAL_ERROR "Library build mode not found")
 endif()
+
+# set property for device static library
+if (MERLIN_CUDA_STATIC_LIB)
+    set_property(TARGET libmerlincuda PROPERTY OUTPUT_NAME merlincuda)
+    set_property(TARGET libmerlincuda PROPERTY POSITION_INDEPENDENT_CODE 1)
+    target_include_directories(libmerlincuda PUBLIC src)
+    target_compile_definitions(libmerlincuda PRIVATE LIBMERLIN_STATIC)
+    target_link_libraries(libmerlincuda PUBLIC OpenMP::OpenMP_CXX)
+endif(MERLIN_CUDA_STATIC_LIB)
 
 # set property for main library
 set_property(TARGET libmerlin PROPERTY OUTPUT_NAME merlin)
@@ -116,7 +129,10 @@ target_link_libraries(libmerlin PUBLIC OpenMP::OpenMP_CXX)
 if(MERLIN_CUDA)
     target_compile_definitions(libmerlin PUBLIC __MERLIN_CUDA__)
     target_compile_options(libmerlin PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-Xcudafe \"--diag_suppress=field_without_dll_interface\">)
-endif()
+    if (MERLIN_CUDA_STATIC_LIB)
+        target_link_libraries(libmerlin PUBLIC libmerlincuda)
+    endif(MERLIN_CUDA_STATIC_LIB)
+endif(MERLIN_CUDA)
 
 # =============================================================================
 # tests
@@ -129,10 +145,13 @@ function(CONFIGURE_TESTFILES LANGUAGE)
         string(REPLACE ".${LANGUAGE}" "" TESTNAME ${TESTFILENAME})
         add_executable(${TESTNAME} ${TESTFILE})
         target_link_libraries(${TESTNAME} libmerlin)
+        if (MERLIN_CUDA_STATIC_LIB)
+            target_link_libraries(${TESTNAME} libmerlincuda)
+        endif(MERLIN_CUDA_STATIC_LIB)
         set_target_properties(${TESTNAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
                               ${CMAKE_CURRENT_BINARY_DIR}/tests)
     endforeach(TESTFILE ${MERLIN_TESTFILES})
-endfunction()
+endfunction(CONFIGURE_TESTFILES)
 
 if(MERLIN_TEST)
     # C++ test files

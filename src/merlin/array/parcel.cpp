@@ -9,54 +9,54 @@ namespace merlin {
 #ifndef __MERLIN_CUDA__
 
 // Default constructor
-Parcel::Parcel(void) {
+array::Parcel::Parcel(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 
 // Constructor from CPU array
-Parcel::Parcel(const Array & cpu_array, std::uintptr_t stream) {
+array::Parcel::Parcel(const array::Array & cpu_array, std::uintptr_t stream) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 
 // Copy constructor
-Parcel::Parcel(const Parcel & src) {
+array::Parcel::Parcel(const array::Parcel & src) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 
 // Copy assignment
-Parcel & Parcel::operator=(const Parcel & src) {
+array::Parcel & array::Parcel::operator=(const array::Parcel & src) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
     return *this;
 }
 
 // Move constructor
-Parcel::Parcel(Parcel && src) {
+array::Parcel::Parcel(array::Parcel && src) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 
 // Move assignment
-Parcel & Parcel::operator=(Parcel && src) {
+array::Parcel & Parcel::operator=(array::Parcel && src) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
     return *this;
 }
 
 // Check if current device holds data pointed by object
-int Parcel::check_device(void) const {
+int array::Parcel::check_device(void) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 
 // Copy data to a pre-allocated memory
-void Parcel::copy_to_gpu(Parcel * gpu_ptr, void * shape_strides_ptr) {
+void array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 
 // Free old data
-void Parcel::free_current_data(void) {
+void array::Parcel::free_current_data(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 
 // Destructor (do nothing)
-Parcel::~Parcel(void) {}
+array::Parcel::~Parcel(void) {}
 
 #endif  // __MERLIN_CUDA__
 

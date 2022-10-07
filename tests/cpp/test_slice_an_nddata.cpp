@@ -11,12 +11,12 @@ int main(void) {
     MESSAGE("Test NdData class.\n");
     float A_ptr[6];
     std::iota<float *, float>(A_ptr, A_ptr + 6, 0.0);  // A = {0, ..., 5}
-    merlin::NdData A_array(A_ptr, 2, {2, 3}, {3*sizeof(float), sizeof(float)});
+    merlin::array::NdData A_array(A_ptr, 2, {2, 3}, {3*sizeof(float), sizeof(float)});
     MESSAGE("NdData A = [[%.1f %.1f %.1f], [%.1f %.1f %.1f]]\n", A_array.data()[0], A_array.data()[1],
             A_array.data()[2], A_array.data()[3], A_array.data()[4], A_array.data()[5]);
 
     float B_ptr[6];
-    merlin::NdData B_array(B_ptr, 2, {2, 3}, {3*sizeof(float), sizeof(float)});
+    merlin::array::NdData B_array(B_ptr, 2, {2, 3}, {3*sizeof(float), sizeof(float)});
     MESSAGE("Initialize NdData B.\n");
     MESSAGE("NdData B = [[%.1f %.1f %.1f], [%.1f %.1f %.1f]]\n", B_array.data()[0], B_array.data()[1],
             B_array.data()[2], B_array.data()[3], B_array.data()[4], B_array.data()[5]);

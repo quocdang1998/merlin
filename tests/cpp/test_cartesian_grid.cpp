@@ -22,5 +22,5 @@ int main(void) {
         MESSAGE("%f %f %f\n", point.data()[0], point.data()[1], point.data()[2]);
     }
 
-    merlin::Array ar = cart_gr.grid_points();
+    merlin::array::Array ar = cart_gr.grid_points();
 }

@@ -10,24 +10,24 @@ namespace merlin {
 
 class CartesianInterpolant {
   public:
-    CartesianInterpolant(CartesianGrid & grid, NdData & value);
+    CartesianInterpolant(CartesianGrid & grid, array::NdData & value);
     ~CartesianInterpolant(void) = default;
 
     virtual float operator()(const floatvec & x) {return 0.0;}
 
   protected:
     CartesianGrid * grid_ = NULL;
-    NdData * value_ = NULL;
+    array::NdData * value_ = NULL;
 };
 
 class LagrangeInterpolant : public CartesianInterpolant {
   public:
-    LagrangeInterpolant(CartesianGrid & grid, NdData & value);
+    LagrangeInterpolant(CartesianGrid & grid, array::NdData & value);
     ~LagrangeInterpolant(void) = default;
 
   protected:
     /** @brief Interpolation coefficient vector.*/
-    NdData coef_;
+    array::NdData coef_;
 };
 
 }  // namespace merlin

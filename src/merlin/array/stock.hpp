@@ -12,6 +12,8 @@
 
 namespace merlin {
 
+namespace array {
+
 /** @brief Multi-dimensional array exported to a file.*/
 class MERLIN_EXPORTS Stock : public NdData {
   public:
@@ -83,6 +85,8 @@ class MERLIN_EXPORTS Stock : public NdData {
     static std::mutex mutex_;
     static std::ios_base::openmode char_to_openmode(char mode);
 };
+
+}  // namespace array
 
 }  // namespace merlin
 

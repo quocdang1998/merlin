@@ -1,4 +1,4 @@
-// Copyright 2022 quocdang1998NdData
+// Copyright 2022 quocdang1998
 #ifndef MERLIN_ARRAY_ARRAY_HPP_
 #define MERLIN_ARRAY_ARRAY_HPP_
 
@@ -6,11 +6,13 @@
 #include <initializer_list>  // std::initializer_list
 
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/array/nddata.hpp"  // merlin::NdData, merlin::Parcel, merlin::Iterator
+#include "merlin/array/nddata.hpp"  // merlin::array::NdData, merlin::array::Parcel, merlin::Iterator
 #include "merlin/array/slice.hpp"  // merlin::Slice
 #include "merlin/vector.hpp"  // merlin::intvec
 
 namespace merlin {
+
+namespace array {
 
 /** @brief Multi-dimensional array on CPU.*/
 class MERLIN_EXPORTS Array : public NdData {
@@ -100,6 +102,8 @@ class MERLIN_EXPORTS Array : public NdData {
     /** @brief Index vector of last element.*/
     intvec end_;
 };
+
+}  // namespace array
 
 }  // namespace merlin
 

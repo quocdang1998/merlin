@@ -2,7 +2,7 @@
 #ifndef MERLIN_EXPORTS_HPP_
 #define MERLIN_EXPORTS_HPP_
 
-#if defined(__MERLIN_BUILT_AS_STATIC__) || defined(__GNUG__)
+#if defined(__MERLIN_BUILT_AS_STATIC__) || defined(LIBMERLIN_STATIC) || defined(__GNUG__)
     #define MERLIN_EXPORTS
     #define MERLIN_NO_EXPORT
     #define MERLIN_TEMPLATE_EXPORTS

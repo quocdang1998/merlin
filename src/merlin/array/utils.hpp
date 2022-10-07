@@ -40,7 +40,7 @@ __cuhostdev__ inline std::uint64_t inner_prod(const intvec & v1, const intvec & 
 // ------------
 
 /** @brief Calculate C-contiguous stride vector.
- *  @details Get stride vector from dims vector and size of one element as if the NdData is C-contiguous.
+ *  @details Get stride vector from dims vector and size of one element as if the merlin::array::NdData is C-contiguous.
  *  @param shape Shape vector.
  *  @param element_size Size on one element.
  */
@@ -59,16 +59,16 @@ MERLIN_EXPORTS intvec contiguous_strides(const intvec & shape, std::uint64_t ele
 */
 MERLIN_EXPORTS std::tuple<std::uint64_t, std::int64_t> lcseg_and_brindex(const intvec & shape, const intvec & strides);
 
-/** @brief Copy data from an NdData to another.
+/** @brief Copy data from an merlin::array::NdData to another.
  *  @details This function allows user to choose the copy function (for example, std::memcpy, or cudaMemcpy).
  *  @tparam CopyFunction Function copy an array to another. This function must take exactly 3 arguments:
  *  destination pointer, source pointer and length of copied memory in bytes.
- *  @param dest Pointer to destination NdData.
- *  @param src Pointer to source NdData.
+ *  @param dest Pointer to destination merlin::array::NdData.
+ *  @param src Pointer to source merlin::array::NdData.
  *  @param copy Name of the copy function.
  */
 template <class CopyFunction>
-void array_copy(NdData * dest, const NdData * src, CopyFunction copy);
+void array_copy(array::NdData * dest, const array::NdData * src, CopyFunction copy);
 
 /** @brief Convert n-dimensional index to C-contiguous index.
  *  @param index Multi-dimensional index.

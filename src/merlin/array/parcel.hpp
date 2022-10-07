@@ -12,6 +12,8 @@
 
 namespace merlin {
 
+namespace array {
+
 /** @brief Multi-dimensional array on GPU.*/
 class MERLIN_EXPORTS Parcel : public NdData {
   public:
@@ -53,11 +55,11 @@ class MERLIN_EXPORTS Parcel : public NdData {
     /** @brief Get element at a given C-contiguous index.
      *  @param index A C-contiguous index.
      */
-    __cudevice__ inline float & operator[](std::uint64_t index);
+    __cudevice__ float & operator[](std::uint64_t index);
     /** @brief Get element at a given multi-dimensional index.
      *  @param index A Nd index.
      */
-    __cudevice__ inline float & operator[](std::initializer_list<std::uint64_t> index);
+    __cudevice__ float & operator[](std::initializer_list<std::uint64_t> index);
     #endif  // __NVCC__
     /// @}
 
@@ -79,7 +81,7 @@ class MERLIN_EXPORTS Parcel : public NdData {
      *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and stride
      *  vector.
      */
-    __cudevice__ inline void copy_to_shared_mem(Parcel * share_ptr, void * shape_strides_ptr);
+    __cudevice__ void copy_to_shared_mem(Parcel * share_ptr, void * shape_strides_ptr);
     #endif  // __NVCC__
 
     /// @name Utils
@@ -101,42 +103,7 @@ class MERLIN_EXPORTS Parcel : public NdData {
     int device_id_;
 };
 
-#ifdef __NVCC__
-// Get element at a given C-contiguous index
-__cudevice__ inline float & Parcel::operator[](std::uint64_t index) {
-    // calculate index vector
-    intvec index_ = contiguous_to_ndim_idx(index, this->shape_);
-    // calculate strides
-    std::uint64_t strides = inner_prod(index_, this->strides_);
-    float * element_ptr = reinterpret_cast<float *>(reinterpret_cast<std::uintptr_t>(this->data_) + strides);
-    return *element_ptr;
-}
-
-// Get element at a given Nd index
-__cudevice__ inline float & Parcel::operator[](std::initializer_list<std::uint64_t> index) {
-    // initialize index vector
-    intvec index_(index);
-    // calculate strides
-    std::uint64_t strides = inner_prod(index_, this->strides_);
-    float * element_ptr = reinterpret_cast<float *>(reinterpret_cast<std::uintptr_t>(this->data_) + strides);
-    return *element_ptr;
-}
-
-// Copy to shared memory
-__cudevice__ inline void Parcel::copy_to_shared_mem(Parcel * share_ptr, void * shape_strides_ptr) {
-    // copy meta data
-    bool check_zeroth_thread = (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
-    if (check_zeroth_thread) {
-        share_ptr->data_ = this->data_;
-        share_ptr->ndim_ = this->ndim_;
-    }
-    __syncthreads();
-    // copy shape and strides
-    this->shape_.copy_to_shared_mem(&(share_ptr->shape_), reinterpret_cast<std::uint64_t *>(shape_strides_ptr));
-    this->strides_.copy_to_shared_mem(&(share_ptr->strides_),
-                                      reinterpret_cast<std::uint64_t *>(shape_strides_ptr)+this->ndim_);
-}
-#endif  // __NVCC__
+}  // namespace array
 
 }  // namespace merlin
 

@@ -3,13 +3,14 @@
 
 #include <functional>  // std::bind, std::placeholders
 
-#include "merlin/array/parcel.hpp"  // merlin::Parcel
+#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/logger.hpp"  // FAILURE
 #include "merlin/array/utils.hpp"  // merlin::array_copy
 
 namespace merlin {
 
-void Array::sync_from_gpu(const Parcel & gpu_array, std::uintptr_t stream) {
+// Copy data from GPU array
+void array::Array::sync_from_gpu(const array::Parcel & gpu_array, std::uintptr_t stream) {
     // check device
     int check_result = gpu_array.check_device();
     if (check_result != 0) {
@@ -22,7 +23,7 @@ void Array::sync_from_gpu(const Parcel & gpu_array, std::uintptr_t stream) {
     auto copy_func = std::bind(cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                                cudaMemcpyDeviceToHost, copy_stream);
     // copy data to GPU
-    array_copy(dynamic_cast<NdData *>(this), dynamic_cast<const NdData *>(&gpu_array), copy_func);
+    array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&gpu_array), copy_func);
 }
 
 }  // namespace merlin

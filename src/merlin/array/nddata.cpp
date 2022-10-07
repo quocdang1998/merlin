@@ -13,7 +13,7 @@ namespace merlin {
 // -------------------------------------------------------------------------------------------------------------------------
 
 // Member initialization for C++ interface
-NdData::NdData(float * data, std::uint64_t ndim,
+array::NdData::NdData(float * data, std::uint64_t ndim,
                const intvec & shape, const intvec & strides) : ndim_(ndim), shape_(shape), strides_(strides) {
     this->data_ = data;
     if (shape.size() != ndim) {
@@ -24,7 +24,7 @@ NdData::NdData(float * data, std::uint64_t ndim,
 }
 
 // Constructor from Numpy np.array
-NdData::NdData(float * data, std::uint64_t ndim, const std::uint64_t * shape, const std::uint64_t * strides) {
+array::NdData::NdData(float * data, std::uint64_t ndim, const std::uint64_t * shape, const std::uint64_t * strides) {
     this->ndim_ = ndim;
     this->data_ = data;
     this->shape_ = intvec(shape, shape + ndim);
@@ -32,7 +32,7 @@ NdData::NdData(float * data, std::uint64_t ndim, const std::uint64_t * shape, co
 }
 
 // Number of elements
-std::uint64_t NdData::size(void) {
+std::uint64_t array::NdData::size(void) {
     std::uint64_t size = 1;
     for (int i = 0; i < this->ndim_; i++) {
         size *= this->shape_[i];
@@ -45,13 +45,13 @@ std::uint64_t NdData::size(void) {
 // -------------------------------------------------------------------------------------------------------------------------
 
 // Constructor from multi-dimensional index and container
-Iterator::Iterator(const intvec & index, NdData & container)  : index_(index), container_(&container) {
+Iterator::Iterator(const intvec & index, array::NdData & container)  : index_(index), container_(&container) {
     std::uint64_t leap = inner_prod(index, container.strides());
     this->item_ptr_ = reinterpret_cast<float *>(reinterpret_cast<std::uintptr_t>(container.data()) + leap);
 }
 
 // Constructor from C-contiguous index
-Iterator::Iterator(std::uint64_t index, NdData & container) : container_(&container) {
+Iterator::Iterator(std::uint64_t index, array::NdData & container) : container_(&container) {
     this->index_ = contiguous_to_ndim_idx(index, this->container_->shape());
     std::uint64_t leap = inner_prod(this->index_, container.strides());
     this->item_ptr_ = reinterpret_cast<float *>(reinterpret_cast<std::uintptr_t>(container.data()) + leap);

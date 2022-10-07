@@ -24,13 +24,13 @@ int main(void) {
     // copy array
     MESSAGE("Copy Array A to Ar_copy.\n");
     // merlin::Array Ar_copy(A, ndim, dims, strides); // copy using pointer constructor
-    merlin::Array Ar(A, ndim, dims, strides);  // copy using copy constructor
-    merlin::Array Ar_copy = std::move(Ar);
+    merlin::array::Array Ar(A, ndim, dims, strides);  // copy using copy constructor
+    merlin::array::Array Ar_copy = std::move(Ar);
 
     // print array
     MESSAGE("Expected values : 1.0 2.0 5.0 6.0 9.0 10.0\n");
     MESSAGE("Result          : ");
-    for (merlin::Array::iterator it = Ar_copy.begin(); it != Ar_copy.end(); ++it) {
+    for (merlin::array::Array::iterator it = Ar_copy.begin(); it != Ar_copy.end(); ++it) {
         std::printf("%.1f ", Ar_copy[it.index()]);
     }
     std::printf("\n");

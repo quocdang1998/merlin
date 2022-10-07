@@ -70,9 +70,9 @@ static void print_limit_of_one_device(int device) {
     // Total global memory
     std::printf("    Total amount of global memory: %f GB.\n", static_cast<float>(prop.totalGlobalMem)/1073741824.0f);
     // Max shared memory per block
-    std::printf("    Maximum amount of shared memory available to a thread block: %d bytes.\n", prop.sharedMemPerBlock);
+    std::printf("    Maximum amount of shared memory available to a thread block: %zu bytes.\n", prop.sharedMemPerBlock);
     // Max constant memory
-    std::printf("    Memory available on device for __constant__ variables in a CUDA C kernel: %d bytes.\n",
+    std::printf("    Memory available on device for __constant__ variables in a CUDA C kernel: %zu bytes.\n",
                 prop.totalConstMem);
 }
 
@@ -160,7 +160,7 @@ bool test_gpu(int device) {
         std::printf("Checking device: %d...", device);
         result = result && test_gpu_on_a_device(device);
         if (!result) {
-            WARNING("\rCheck on device %d has failed.\n");
+            WARNING("\rCheck on device %d has failed.\n", device);
         } else {
             std::printf("\r");
         }
@@ -171,7 +171,7 @@ bool test_gpu(int device) {
         std::printf("Checking device: %d...", i);
         result = result && test_gpu_on_a_device(i);
         if (!result) {
-            WARNING("\rCheck on device %d has failed.\n");
+            WARNING("\rCheck on device %d has failed.\n", i);
         } else {
             std::printf("\r");
         }

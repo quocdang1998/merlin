@@ -12,6 +12,8 @@
 
 namespace merlin {
 
+namespace array {
+
 /** @brief Abstract class of N-dim array.*/
 class MERLIN_EXPORTS NdData {
   public:
@@ -97,6 +99,8 @@ class MERLIN_EXPORTS NdData {
 class Array;  // CPU Array, defined in tensor.hpp
 class Parcel;  // GPU Array, defined in parcel.hpp
 
+}  // namespace array
+
 /** @brief Iterator of multi-dimensional array.*/
 class MERLIN_EXPORTS Iterator {
   public:
@@ -105,9 +109,9 @@ class MERLIN_EXPORTS Iterator {
     /** @brief Default constructor.*/
     Iterator(void) = default;
     /** @brief Constructor from multi-dimensional index and container.*/
-    Iterator(const intvec & index, NdData & container);
+    Iterator(const intvec & index, array::NdData & container);
     /** @brief Constructor from C-contiguous index.*/
-    Iterator(std::uint64_t index, NdData & container);
+    Iterator(std::uint64_t index, array::NdData & container);
     /// @}
 
     /// @name Copy and Move
@@ -158,7 +162,7 @@ class MERLIN_EXPORTS Iterator {
     /** @brief Index vector.*/
     intvec index_;
     /** @brief Pointer to NdData object possessing the item.*/
-    NdData * container_ = NULL;
+    array::NdData * container_ = NULL;
 };
 
 }  // namespace merlin

@@ -16,7 +16,7 @@ Basic utils for Multi-dimensional array manipulation:
    merlin::Vector
    merlin::intvec
    merlin::Iterator
-   merlin::NdData
+   merlin::array::NdData
    merlin::Slice
 
 Classes represent multi-dimensional array on CPU, out-of-core array and GPU
@@ -25,9 +25,9 @@ array:
 .. doxysummary::
    :toctree: generated
 
-   merlin::Array
-   merlin::Parcel
-   merlin::Stock
+   merlin::array::Array
+   merlin::array::Parcel
+   merlin::array::Stock
 
 Grid API
 --------

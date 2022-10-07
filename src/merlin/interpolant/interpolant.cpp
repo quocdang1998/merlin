@@ -12,7 +12,7 @@ namespace merlin {
 // CartesianInterpolant
 // -------------------------------------------------------------------------------------------------------------------------
 
-CartesianInterpolant::CartesianInterpolant(CartesianGrid & grid, NdData & value) : grid_(&grid), value_(&value) {
+CartesianInterpolant::CartesianInterpolant(CartesianGrid & grid, array::NdData & value) : grid_(&grid), value_(&value) {
     // check number of points of grid and value vector
     if (grid.ndim() != value.ndim()) {
         FAILURE(std::invalid_argument, "Ndim of Grid (%d) and value tensor (%d) are inconsistent.\n",
@@ -33,7 +33,7 @@ CartesianInterpolant::CartesianInterpolant(CartesianGrid & grid, NdData & value)
 // LagrangeInterpolant
 // -------------------------------------------------------------------------------------------------------------------------
 
-LagrangeInterpolant::LagrangeInterpolant(CartesianGrid & grid, NdData & value) : CartesianInterpolant(grid, value) {
+LagrangeInterpolant::LagrangeInterpolant(CartesianGrid & grid, array::NdData & value) : CartesianInterpolant(grid, value) {
     // copy value to coef_ tensor
     this->coef_ = value;
     /*

@@ -23,7 +23,7 @@ class MERLIN_EXPORTS Grid {
 
   protected:
     /** @brief Array holding coordinates of points in the Grid.*/
-    NdData * points_ = NULL;
+    array::NdData * points_ = NULL;
 };
 
 /** @brief A set of multi-dimensional points.*/
@@ -41,7 +41,7 @@ class MERLIN_EXPORTS RegularGrid : Grid {
     /** @brief Construct a grid and copy data from an array.
      *  @param points 2D merlin::Array of points, dimension ``(npoints, ndim)``.
      */
-    RegularGrid(const Array & points);
+    RegularGrid(const array::Array & points);
     /// @}
 
     /// @name Copy and Move
@@ -59,7 +59,7 @@ class MERLIN_EXPORTS RegularGrid : Grid {
     /// @name Get members and attributes
     /// @{
     /** @brief Get reference to array of grid points.*/
-    Array grid_points(void) const {return *(dynamic_cast<Array *>(this->points_));}
+    array::Array grid_points(void) const {return *(dynamic_cast<array::Array *>(this->points_));}
     /** @brief Number of dimension of each point in the grid.*/
     std::uint64_t ndim(void) const {return this->points_->shape()[1];}
     /** @brief Number of points in the grid.*/
@@ -83,7 +83,7 @@ class MERLIN_EXPORTS RegularGrid : Grid {
     /** @brief Get reference Array to a point.
      *  @param index Index of point to get in the grid.
      */
-    Array operator[](unsigned int index);
+    array::Array operator[](unsigned int index);
     /** @brief Append a point at the end of the grid.*/
     void push_back(Vector<float> && point);
     /** @brief Remove a point at the end of the grid.*/
@@ -121,7 +121,7 @@ class MERLIN_EXPORTS CartesianGrid : public Grid {
     /** @brief Get grid vectors.*/
     __cuhostdev__ Vector<floatvec> & grid_vectors(void) {return this->grid_vectors_;}
     /** @brief Full tensor of each point in the CartesianGrid in form of 2D table.*/
-    Array grid_points(void);
+    array::Array grid_points(void);
     /** @brief Number of dimension of the CartesianGrid.*/
     __cuhostdev__ std::uint64_t ndim(void) {return this->grid_vectors_.size();}
     /** @brief Number of points in the CartesianGrid.*/
