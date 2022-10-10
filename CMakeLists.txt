@@ -27,12 +27,15 @@ list(APPEND MERLIN_SRC_CU
      src/merlin/device/gpu_query.cu
      src/merlin/interpolant/grid.cu
 )
+list(APPEND MERLIN_SRC_CUPP
+     src/merlin/array/parcel_hd.cu
+)
 
 # options
-option(MERLIN_CUDA "Build library using CUDA" ON)  # -DMERLIN_CUDA=OFF
-set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"/"DYNAMIC"
-    CACHE STRING "Type of the created library (static or shared/dynamic)")
-option(MERLIN_TEST "Build test executables" ON)  # -DMERLIN_TEST=ON
+set(MERLIN_CUDA ON CACHE BOOL "Build library using CUDA" FORCE)  # -DMERLIN_CUDA=OFF
+set(MERLIN_LIBKIND "SHARED"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"/"DYNAMIC"
+    CACHE STRING "Type of the created library (static or shared/dynamic)" FORCE)
+set(MERLIN_TEST ON CACHE BOOL "Build test executables" FORCE)  # -DMERLIN_TEST=ON
 
 # project name
 if(MERLIN_CUDA)
@@ -74,6 +77,9 @@ if(MERLIN_CUDA)
     set(CMAKE_CUDA_STANDARD 17)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
     set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
+    set_source_files_properties(${MERLIN_SRC_CUPP} PROPERTIES LANGUAGE CUDA)
+else()
+    set_source_files_properties(${MERLIN_SRC_CUPP} PROPERTIES LANGUAGE CXX)
 endif(MERLIN_CUDA)
 
 # OpenMP
@@ -99,15 +105,17 @@ endif()
 if(MERLIN_LIBKIND MATCHES "STATIC")
     # build static lib
     message(STATUS "Build static library")
+    list(APPEND MERLIN_SRC ${MERLIN_SRC_CUPP})
     add_library(libmerlin STATIC ${MERLIN_SRC})
     target_compile_definitions(libmerlin PUBLIC __MERLIN_BUILT_AS_STATIC__)
 elseif(MERLIN_LIBKIND MATCHES "SHARED" OR MERLIN_LIBKIND MATCHES "DYNAMIC")
     # build dynamic lib
     message(STATUS "Build dynamic library")
     add_library(libmerlin SHARED ${MERLIN_SRC})
-    ##add_library(libmerlincuda STATIC ${MERLIN_SRC_CU})
-    add_library(libmerlincuda STATIC src/merlin/array/parcel.cu)
+    add_library(libmerlincuda STATIC ${MERLIN_SRC_CUPP})
     set(MERLIN_CUDA_STATIC_LIB TRUE)
+    set(MERLIN_CUDA_STATIC_LIB ON CACHE BOOL
+        "Build host-device and device static linking library" FORCE)
 else()
     message(FATAL_ERROR "Library build mode not found")
 endif()
