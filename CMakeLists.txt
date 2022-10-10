@@ -33,7 +33,7 @@ list(APPEND MERLIN_SRC_CUPP
 
 # options
 set(MERLIN_CUDA ON CACHE BOOL "Build library using CUDA" FORCE)  # -DMERLIN_CUDA=OFF
-set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"/"DYNAMIC"
+set(MERLIN_LIBKIND "SHARED"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
     CACHE STRING "Type of the created library (static or shared/dynamic)" FORCE)
 set(MERLIN_TEST ON CACHE BOOL "Build test executables" FORCE)  # -DMERLIN_TEST=ON
 
@@ -111,7 +111,7 @@ if(MERLIN_LIBKIND MATCHES "STATIC")
     list(APPEND MERLIN_SRC ${MERLIN_SRC_CUPP})
     add_library(libmerlin STATIC ${MERLIN_SRC})
     target_compile_definitions(libmerlin PUBLIC __MERLIN_BUILT_AS_STATIC__)
-elseif(MERLIN_LIBKIND MATCHES "SHARED" OR MERLIN_LIBKIND MATCHES "DYNAMIC")
+elseif(MERLIN_LIBKIND MATCHES "SHARED")
     # build dynamic lib
     message(STATUS "Build dynamic library")
     add_library(libmerlin SHARED ${MERLIN_SRC})
@@ -176,7 +176,7 @@ endif(MERLIN_TEST)
 # write config variable to file
 # =============================================================================
 
-# set(MERLIN_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/config.yaml)
-# file(WRITE ${MERLIN_CONFIG} "")
-# file(APPEND ${MERLIN_CONFIG} "MERLIN_CUDA:${MERLIN_CUDA}\n")
-# file(APPEND ${MERLIN_CONFIG} "MERLIN_LIBKIND:${MERLIN_LIBKIND}\n")
+set(MERLIN_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/config.py)
+file(WRITE ${MERLIN_CONFIG} "")
+file(APPEND ${MERLIN_CONFIG} "MERLIN_CUDA = \"${MERLIN_CUDA}\"\n")
+file(APPEND ${MERLIN_CONFIG} "MERLIN_LIBKIND = \"${MERLIN_LIBKIND}\"\n")

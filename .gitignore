@@ -4,10 +4,17 @@ build
 # Cython compiled library
 merlin/*.cpp
 *.so
+merlin/*.pyd
 
-# MSVC temporary dir
-.vs
-.vscode
+# CMake generated cmake_config.py
+config.py
+
+# Ignore folder starts with .
+.*
+!/.gitignore
+
+# Python cache
+__pycache__/
 
 # Doxygen generated files
 docs/source/html
