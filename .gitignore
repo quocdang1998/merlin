@@ -1,5 +1,9 @@
-# C++ build dir
+# C++ and Cython build dir
 build
+
+# Cython compiled library
+merlin/*.cpp
+*.so
 
 # MSVC temporary dir
 .vs

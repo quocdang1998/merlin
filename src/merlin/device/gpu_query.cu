@@ -82,7 +82,7 @@ void print_device_limit(int device) {
     if (device != -1) {
         // Check valid argument
         if ((device < 0) || (device >= tot_device)) {
-            FAILURE(std::invalid_argument, "Invalid number of device (expected value >= 0 and < %d, got %d.\n",
+            FAILURE(std::invalid_argument, "Invalid number of device (expected value >= 0 and < %d, got %d).\n",
                     tot_device, device);
         }
         // Print only one device
@@ -93,11 +93,12 @@ void print_device_limit(int device) {
     // if no device is selected, query for all devices
     for (int i = 0; i < tot_device; i++) {
         std::printf("GPU Id: %d.\n", i);
+        cudaSetDevice(i);
         print_limit_of_one_device(i);
     }
 }
 
-// Add 2 integer on GPU
+// Add 2 integers on GPU
 __global__ static void add_2_int_on_gpu(int * p_a, int * p_b, int * p_result) {
     *p_result = *p_a + *p_b;
 }
@@ -169,6 +170,7 @@ bool test_gpu(int device) {
     // if no device is selected, test for all devices
     for (int i = 0; i < tot_device; i++) {
         std::printf("Checking device: %d...", i);
+        cudaSetDevice(i);
         result = result && test_gpu_on_a_device(i);
         if (!result) {
             WARNING("\rCheck on device %d has failed.\n", i);

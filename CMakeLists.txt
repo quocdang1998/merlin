@@ -33,7 +33,7 @@ list(APPEND MERLIN_SRC_CUPP
 
 # options
 set(MERLIN_CUDA ON CACHE BOOL "Build library using CUDA" FORCE)  # -DMERLIN_CUDA=OFF
-set(MERLIN_LIBKIND "SHARED"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"/"DYNAMIC"
+set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"/"DYNAMIC"
     CACHE STRING "Type of the created library (static or shared/dynamic)" FORCE)
 set(MERLIN_TEST ON CACHE BOOL "Build test executables" FORCE)  # -DMERLIN_TEST=ON
 
@@ -78,6 +78,8 @@ if(MERLIN_CUDA)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
     set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
     set_source_files_properties(${MERLIN_SRC_CUPP} PROPERTIES LANGUAGE CUDA)
+    set(MERLIN_CUDA_STATIC_LIB OFF CACHE BOOL
+        "Build host-device and device static linking library" FORCE)
 else()
     set_source_files_properties(${MERLIN_SRC_CUPP} PROPERTIES LANGUAGE CXX)
 endif(MERLIN_CUDA)
@@ -102,6 +104,7 @@ if(MERLIN_LIBKIND MATCHES "AUTO")
         set(MERLIN_LIBKIND "STATIC")
     endif (MSVC)
 endif()
+
 if(MERLIN_LIBKIND MATCHES "STATIC")
     # build static lib
     message(STATUS "Build static library")
@@ -113,9 +116,7 @@ elseif(MERLIN_LIBKIND MATCHES "SHARED" OR MERLIN_LIBKIND MATCHES "DYNAMIC")
     message(STATUS "Build dynamic library")
     add_library(libmerlin SHARED ${MERLIN_SRC})
     add_library(libmerlincuda STATIC ${MERLIN_SRC_CUPP})
-    set(MERLIN_CUDA_STATIC_LIB TRUE)
-    set(MERLIN_CUDA_STATIC_LIB ON CACHE BOOL
-        "Build host-device and device static linking library" FORCE)
+    set(MERLIN_CUDA_STATIC_LIB ON)
 else()
     message(FATAL_ERROR "Library build mode not found")
 endif()
@@ -125,7 +126,7 @@ if (MERLIN_CUDA_STATIC_LIB)
     set_property(TARGET libmerlincuda PROPERTY OUTPUT_NAME merlincuda)
     set_property(TARGET libmerlincuda PROPERTY POSITION_INDEPENDENT_CODE 1)
     target_include_directories(libmerlincuda PUBLIC src)
-    target_compile_definitions(libmerlincuda PRIVATE LIBMERLIN_STATIC)
+    ##target_compile_definitions(libmerlincuda PRIVATE LIBMERLIN_STATIC)
     target_link_libraries(libmerlincuda PUBLIC OpenMP::OpenMP_CXX)
 endif(MERLIN_CUDA_STATIC_LIB)
 
@@ -136,7 +137,8 @@ target_include_directories(libmerlin PUBLIC src)
 target_link_libraries(libmerlin PUBLIC OpenMP::OpenMP_CXX)
 if(MERLIN_CUDA)
     target_compile_definitions(libmerlin PUBLIC __MERLIN_CUDA__)
-    target_compile_options(libmerlin PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-Xcudafe \"--diag_suppress=field_without_dll_interface\">)
+    target_compile_options(libmerlin PUBLIC $<$<COMPILE_LANGUAGE:CUDA>:-Xcudafe
+                           \"--diag_suppress=field_without_dll_interface\">)
     if (MERLIN_CUDA_STATIC_LIB)
         target_link_libraries(libmerlin PUBLIC libmerlincuda)
     endif(MERLIN_CUDA_STATIC_LIB)
