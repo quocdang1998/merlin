@@ -3,20 +3,20 @@
 
 #include <functional>  // std::bind, std::placeholders
 
-#include "merlin/array/array.hpp"  // merlin::Array
+#include "merlin/array/array.hpp"  // merlin::array::Array
+#include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides, merlin::array::array_copy
+#include "merlin/device/gpu_query.hpp"  // merlin::device::get_current_device
 #include "merlin/logger.hpp"  // FAILURE
-#include "merlin/array/utils.hpp"  // merlin::inner_prod, merlin::contiguous_strides,
-                             // merlin::get_current_device, merlin::contiguous_to_ndim_idx
-                             // merlin::array_copy
+#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::inner_prod
 #include "merlin/vector.hpp"  // merlin::intvec
 
-namespace merlin {
+namespace merlin::array {
 
 // Default constructor
-array::Parcel::Parcel(void) {}
+Parcel::Parcel(void) {}
 
 // Constructor from CPU array
-array::Parcel::Parcel(const array::Array & cpu_array, std::uintptr_t stream) : array::NdData(cpu_array) {
+Parcel::Parcel(const Array & cpu_array, std::uintptr_t stream) : NdData(cpu_array) {
     // get device id
     cudaGetDevice(&(this->device_id_));
     // allocate data
@@ -32,16 +32,16 @@ array::Parcel::Parcel(const array::Array & cpu_array, std::uintptr_t stream) : a
     auto copy_func = std::bind(cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                                cudaMemcpyHostToDevice, copy_stream);
     // copy data to GPU
-    array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&cpu_array), copy_func);
+    array_copy(dynamic_cast<NdData *>(this), dynamic_cast<const NdData *>(&cpu_array), copy_func);
 }
 
 // Check if current device holds data pointed by object
-int array::Parcel::check_device(void) const {
-    return (this->device_id_ - get_current_device());
+int Parcel::check_device(void) const {
+    return (this->device_id_ - device::get_current_device());
 }
 
 // Copy constructor
-array::Parcel::Parcel(const array::Parcel & src) : array::NdData(src) {
+Parcel::Parcel(const Parcel & src) : NdData(src) {
     // get device id
     cudaGetDevice(&(this->device_id_));
     // reform strides vector
@@ -55,15 +55,15 @@ array::Parcel::Parcel(const array::Parcel & src) : array::NdData(src) {
     auto copy_func = std::bind(cudaMemcpyPeer, std::placeholders::_1, this->device_id_,
                                std::placeholders::_2, src.device_id_, std::placeholders::_3);
     // copy data to GPU
-    array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), copy_func);
+    array_copy(dynamic_cast<NdData *>(this), dynamic_cast<const NdData *>(&src), copy_func);
 }
 
 // Copy assignement
-array::Parcel & array::Parcel::operator=(const array::Parcel & src) {
+Parcel & Parcel::operator=(const Parcel & src) {
     // free old data
     this->free_current_data();
     // copy metadata and reform strides vector
-    this->array::NdData::operator=(src);
+    this->NdData::operator=(src);
     this->strides_ = contiguous_strides(this->shape_, sizeof(float));
     // allocate data
     cudaError_t err_ = cudaMalloc(&(this->data_), sizeof(float) * this->size());
@@ -74,12 +74,12 @@ array::Parcel & array::Parcel::operator=(const array::Parcel & src) {
     auto copy_func = std::bind(cudaMemcpyPeer, std::placeholders::_1, this->device_id_,
                                std::placeholders::_2, src.device_id_, std::placeholders::_3);
     // copy data to GPU
-    array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), copy_func);
+    array_copy(dynamic_cast<NdData *>(this), dynamic_cast<const NdData *>(&src), copy_func);
     return *this;
 }
 
 // Move constructor
-array::Parcel::Parcel(array::Parcel && src) : array::NdData(src) {
+Parcel::Parcel(Parcel && src) : NdData(src) {
     // move device id
     this->device_id_ = src.device_id_;
     // take over pointer to source
@@ -87,28 +87,28 @@ array::Parcel::Parcel(array::Parcel && src) : array::NdData(src) {
 }
 
 // Move assignment
-array::Parcel & array::Parcel::operator=(array::Parcel && src) {
+Parcel & Parcel::operator=(Parcel && src) {
     // free old data
     this->free_current_data();
     // move device id
     this->device_id_ = src.device_id_;
     // copy metadata
-    this->array::NdData::operator=(src);
+    this->NdData::operator=(src);
     // take over pointer to source
     src.data_ = NULL;
     return *this;
 }
 
 // Copy data to a pre-allocated memory
-void array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr) {
+void Parcel::copy_to_gpu(Parcel * gpu_ptr, void * shape_strides_ptr) {
     // initialize buffer to store data of the copy before cloning it to GPU
-    array::Parcel copy_on_gpu;
+    Parcel copy_on_gpu;
     // shallow copy of the current object
     copy_on_gpu.data_ = this->data_;
     copy_on_gpu.ndim_ = this->ndim_;
     copy_on_gpu.device_id_ = this->device_id_;
     // copy temporary object to GPU
-    cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(array::Parcel), cudaMemcpyHostToDevice);
+    cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(Parcel), cudaMemcpyHostToDevice);
     // copy shape and strides data
     this->shape_.copy_to_gpu(&(gpu_ptr->shape_), reinterpret_cast<std::uint64_t *>(shape_strides_ptr));
     this->strides_.copy_to_gpu(&(gpu_ptr->strides_), reinterpret_cast<std::uint64_t *>(shape_strides_ptr)+this->ndim_);
@@ -119,9 +119,9 @@ void array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_pt
 }
 
 // Free old data
-void array::Parcel::free_current_data(void) {
+void Parcel::free_current_data(void) {
     // save current device and set device to the corresponding GPU
-    int current_device = get_current_device();
+    int current_device = device::get_current_device();
     cudaSetDevice(this->device_id_);
     // free data
     if (this->data_ != NULL) {
@@ -133,8 +133,8 @@ void array::Parcel::free_current_data(void) {
 }
 
 // Destructor
-array::Parcel::~Parcel(void) {
+Parcel::~Parcel(void) {
     this->free_current_data();
 }
 
-}  // namespace merlin
+}  // namespace merlin::array

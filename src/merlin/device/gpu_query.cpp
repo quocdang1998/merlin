@@ -2,7 +2,7 @@
 #include "merlin/device/gpu_query.hpp"
 
 
-namespace merlin {
+namespace merlin::device {
 
 #ifndef __MERLIN_CUDA__
 
@@ -20,4 +20,4 @@ bool test_gpu(int device) {
 
 #endif  // __MERLIN_CUDA__
 
-}  // namespace merlin
+}  // namespace merlin::device

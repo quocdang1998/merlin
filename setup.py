@@ -23,7 +23,8 @@ if (MERLIN_CUDA == "ON") and (MERLIN_LIBKIND == "SHARED"):
     ext_options["libraries"] = ["merlin", "merlincuda"]
 else:
     ext_options["libraries"] = ["merlin"]
-if (sys.platform == "Linux"):
+if (sys.platform == "linux"):
+    print("Sys platfor is Linux")
     ext_options["runtime_library_dirs"] = [os.path.join(module_dir, "build")]
 
 extensions = [

@@ -6,7 +6,7 @@
 
 #include "merlin/logger.hpp"  // FAILURE, cuda_runtime_error
 
-namespace merlin {
+namespace merlin::device {
 
 // Get total number of GPU
 int get_device_count(void) {
@@ -181,4 +181,4 @@ bool test_gpu(int device) {
     return result;
 }
 
-}  // namespace merlin
+}  // namespace merlin::device

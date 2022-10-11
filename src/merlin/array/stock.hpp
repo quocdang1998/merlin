@@ -8,11 +8,9 @@
 #include <string>  // std::string
 
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/array/nddata.hpp"  // merlin::NdData
+#include "merlin/array/nddata.hpp"  // merlin::array::NdData
 
-namespace merlin {
-
-namespace array {
+namespace merlin::array {
 
 /** @brief Multi-dimensional array exported to a file.*/
 class MERLIN_EXPORTS Stock : public NdData {
@@ -86,8 +84,6 @@ class MERLIN_EXPORTS Stock : public NdData {
     static std::ios_base::openmode char_to_openmode(char mode);
 };
 
-}  // namespace array
-
-}  // namespace merlin
+}  // namespace merlin::array
 
 #endif  // MERLIN_ARRAY_STOCK_HPP_

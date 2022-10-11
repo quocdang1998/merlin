@@ -2,10 +2,12 @@
 #ifndef MERLIN_UTILS_TPP_
 #define MERLIN_UTILS_TPP_
 
-#include <cstdint>  // std::uintptr_t
 #include <algorithm>  // std::min, std::max
 
-namespace merlin {
+#include "merlin/logger.hpp"  // FAILURE
+#include "merlin/utils.hpp"  // merlin::inner_prod
+
+namespace merlin::array {
 
 // -------------------------------------------------------------------------------------------------------------------------
 // NdData tools
@@ -13,7 +15,7 @@ namespace merlin {
 
 // Copy each segment from source to destination
 template <class CopyFunction>
-void array_copy(array::NdData * dest, const array::NdData * src, CopyFunction copy) {
+void array_copy(NdData * dest, const NdData * src, CopyFunction copy) {
     // check if shape vector are the same
     if (src->ndim() != dest->ndim()) {
         FAILURE(std::invalid_argument, "Cannot copy array of different ndim (%u to %u).\n", src->ndim(), dest->ndim());
@@ -64,6 +66,6 @@ void array_copy(array::NdData * dest, const array::NdData * src, CopyFunction co
     }
 }
 
-}  // namespace merlin
+}  // namespace merlin::array
 
 #endif  // MERLIN_UTILS_TPP_

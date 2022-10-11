@@ -2,12 +2,22 @@
 #ifndef MERLIN_DEVICE_GPU_QUERY_HPP_
 #define MERLIN_DEVICE_GPU_QUERY_HPP_
 
+#include "merlin/device/decorator.hpp"  // __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 
-namespace merlin {
+namespace merlin::device {
 
 /** @brief Get total number of GPU.*/
 MERLIN_EXPORTS int get_device_count(void);
+
+#ifdef __NVCC__
+/** @brief Get ID of current active device.*/
+__cuhostdev__ inline int get_current_device(void) {
+    int current_device;
+    cudaGetDevice(&current_device);
+    return current_device;
+}
+#endif  // __NVCC__
 
 /** @brief Print GPU specifications.
  *  @details Print GPU specifications (number of threads, total global memory, max shared memory) and API limitation (max
@@ -23,6 +33,6 @@ MERLIN_EXPORTS void print_device_limit(int device = -1);
  */
 MERLIN_EXPORTS bool test_gpu(int device = -1);
 
-}  // namespace merlin
+}  // namespace merlin::device
 
 #endif  // MERLIN_DEVICE_GPU_QUERY_HPP_

@@ -1,9 +1,9 @@
 // Copyright 2022 quocdang1998
-#include "merlin/array/utils.hpp"
+#include "merlin/array/copy.hpp"
 
 #include "merlin/logger.hpp"  // FAILURE
 
-namespace merlin {
+namespace merlin::array {
 
 // -------------------------------------------------------------------------------------------------------------------------
 // NdData tools
@@ -52,4 +52,4 @@ std::tuple<std::uint64_t, std::int64_t> lcseg_and_brindex(const intvec & shape, 
 
 
 
-}  // namespace merlin
+}  // namespace merlin::array

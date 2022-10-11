@@ -5,7 +5,7 @@
 #include <numeric>  // std::iota
 
 #include "merlin/logger.hpp"
-#include "merlin/array/utils.hpp"
+#include "merlin/array/copy.hpp"
 
 int main(void) {
     MESSAGE("Test NdData class.\n");
@@ -22,7 +22,7 @@ int main(void) {
             B_array.data()[2], B_array.data()[3], B_array.data()[4], B_array.data()[5]);
 
     MESSAGE("Cloning array B from array A with std::memcpy.\n");
-    merlin::array_copy(&B_array, &A_array, std::memcpy);
+    merlin::array::array_copy(&B_array, &A_array, std::memcpy);
     MESSAGE("NdData B = [[%.1f %.1f %.1f], [%.1f %.1f %.1f]]\n", B_array.data()[0], B_array.data()[1],
             B_array.data()[2], B_array.data()[3], B_array.data()[4], B_array.data()[5]);
 }

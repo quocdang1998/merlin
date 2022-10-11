@@ -9,17 +9,18 @@
 
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/array/stock.hpp"  // merlin::array::Stock
+#include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides, merlin::array::array_copy
 #include "merlin/logger.hpp"  // FAILURE
-#include "merlin/array/utils.hpp"  // merlin::inner_prod, merlin::contiguous_strides, merlin::array_copy
+#include "merlin/utils.hpp"  // merlin::inner_prod
 
-namespace merlin {
+namespace merlin::array {
 
 // --------------------------------------------------------------------------------------------------------------------
 // Array
 // --------------------------------------------------------------------------------------------------------------------
 
 // Constructor Array of one element
-array::Array::Array(float value) {
+Array::Array(float value) {
     // allocate data
     this->data_ = new float[1];
     this->data_[0] = value;
@@ -32,7 +33,7 @@ array::Array::Array(float value) {
 }
 
 // Construct empty Array from shape vector
-array::Array::Array(const intvec & shape) {
+Array::Array(const intvec & shape) {
     // initilaize ndim and shape
     this->ndim_ = shape.size();
     this->shape_ = shape;
@@ -45,7 +46,7 @@ array::Array::Array(const intvec & shape) {
 }
 
 // Construct Array from Numpy array
-array::Array::Array(float * data, std::uint64_t ndim,
+Array::Array(float * data, std::uint64_t ndim,
              const std::uint64_t * shape, const std::uint64_t * strides, bool copy) {
     // copy meta data
     this->ndim_ = ndim;
@@ -60,27 +61,27 @@ array::Array::Array(float * data, std::uint64_t ndim,
         // reform the stride tensor (force into C shape)
         this->strides_ = contiguous_strides(this->shape_, sizeof(float));
         // copy data from old tensor to new tensor (optimized with memcpy)
-        array::NdData src(data, ndim, shape, strides);
-        array_copy(dynamic_cast<array::NdData *>(this), &src, std::memcpy);
+        NdData src(data, ndim, shape, strides);
+        array_copy(dynamic_cast<NdData *>(this), &src, std::memcpy);
     } else {
         this->data_ = data;
     }
 }
 
 // Copy constructor
-array::Array::Array(const array::Array & src) : array::NdData(src) {
+Array::Array(const Array & src) : NdData(src) {
     // copy / initialize meta data
     this->strides_ = contiguous_strides(this->shape_, sizeof(float));
     this->force_free = true;
     // copy data
     this->data_ = new float[this->size()];
-    array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), std::memcpy);
+    array_copy(dynamic_cast<NdData *>(this), dynamic_cast<const NdData *>(&src), std::memcpy);
 }
 
 // Copy assignment
-array::Array & array::Array::operator=(const array::Array & src) {
+Array & Array::operator=(const Array & src) {
     // copy / initialize meta data
-    this->array::NdData::operator=(src);
+    this->NdData::operator=(src);
     this->strides_ = contiguous_strides(this->shape_, sizeof(float));
     // free current data
     if (this->force_free) {
@@ -89,12 +90,12 @@ array::Array & array::Array::operator=(const array::Array & src) {
     this->force_free = true;
     // copy data
     this->data_ = new float[this->size()];
-    array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), std::memcpy);
+    array_copy(dynamic_cast<NdData *>(this), dynamic_cast<const NdData *>(&src), std::memcpy);
     return *this;
 }
 
 // Move constructor
-array::Array::Array(array::Array && src) : array::NdData(src) {
+Array::Array(Array && src) : NdData(src) {
     // disable force_free of the source
     this->force_free = src.force_free;
     src.force_free = false;
@@ -103,13 +104,13 @@ array::Array::Array(array::Array && src) : array::NdData(src) {
 }
 
 // Move assignment
-array::Array & array::Array::operator=(array::Array && src) {
+Array & Array::operator=(Array && src) {
     // disable force_free of the source and free current data
     if (this->force_free) {
         delete[] this->data_;
     }
     // copy meta data
-    this->array::NdData::operator=(src);
+    this->NdData::operator=(src);
     this->force_free = src.force_free;
     src.force_free = false;
     // move data
@@ -118,20 +119,20 @@ array::Array & array::Array::operator=(array::Array && src) {
 }
 
 // Begin iterator
-array::Array::iterator array::Array::begin(void) {
+Array::iterator Array::begin(void) {
     this->begin_ = intvec(this->ndim_, 0);
     this->end_ = intvec(this->ndim_, 0);
     this->end_[0] = this->shape_[0];
-    return array::Array::iterator(this->begin_, *this);
+    return Array::iterator(this->begin_, *this);
 }
 
 // End iterator
-array::Array::iterator array::Array::end(void) {
-    return array::Array::iterator(this->end_, *this);
+Array::iterator Array::end(void) {
+    return Array::iterator(this->end_, *this);
 }
 
 // Get value operator
-float & array::Array::operator[] (const intvec & index) {
+float & Array::operator[] (const intvec & index) {
     std::uint64_t leap = inner_prod(index, this->strides_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<float *>(data_ptr));
@@ -140,24 +141,24 @@ float & array::Array::operator[] (const intvec & index) {
 
 // Copy data from GPU array
 #ifndef __MERLIN_CUDA__
-void array::sync_from_gpu(const array::Parcel & gpu_array, std::uintptr_t stream) {
+void sync_from_gpu(const Parcel & gpu_array, std::uintptr_t stream) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 #endif  // __MERLIN_CUDA__
 
 // Export data to a file
-void array::Array::export_to_file(const std::string & filename) {
-    array::Stock Stk(filename, 'w');
+void Array::export_to_file(const std::string & filename) {
+    Stock Stk(filename, 'w');
     Stk.get_metadata(*this);
     Stk.write_metadata();
     Stk.write_data_to_file(*this);
 }
 
 // Destructor
-array::Array::~Array(void) {
+Array::~Array(void) {
     if (this->force_free) {
         delete[] this->data_;
     }
 }
 
-}  // namespace merlin
+}  // namespace merlin::array

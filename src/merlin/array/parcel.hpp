@@ -5,14 +5,11 @@
 #include <cstdint>  // std::uint64_t, std::uintptr_t
 #include <initializer_list>  // std::initializer_list
 
-#include "merlin/array/nddata.hpp"  // merlin::NdData
+#include "merlin/array/nddata.hpp"  // merlin::array::NdData
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/device/decorator.hpp"  // __cudevice__, __cuhostdev__
-#include "merlin/array/utils.hpp"
 
-namespace merlin {
-
-namespace array {
+namespace merlin::array {
 
 /** @brief Multi-dimensional array on GPU.*/
 class MERLIN_EXPORTS Parcel : public NdData {
@@ -103,8 +100,6 @@ class MERLIN_EXPORTS Parcel : public NdData {
     int device_id_;
 };
 
-}  // namespace array
-
-}  // namespace merlin
+}  // namespace merlin::array
 
 #endif  // MERLIN_ARRAY_PARCEL_HPP_

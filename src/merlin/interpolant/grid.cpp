@@ -5,8 +5,9 @@
 #include <numeric>  // std::iota
 #include <utility>  // std::move
 
+#include "merlin/array/copy.hpp"  // merlin::array::array_copy, merlin::array::contiguous_strides
 #include "merlin/logger.hpp"  // FAILURE
-#include "merlin/array/utils.hpp"  // merlin::contiguous_strides, merlin::array_copy, merlin::contiguous_to_ndim_idx
+#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx
 
 namespace merlin {
 
@@ -157,7 +158,7 @@ CartesianGrid::CartesianGrid(std::initializer_list<floatvec> grid_vectors) : gri
         }
     }
     intvec shape = this->grid_shape();
-    intvec strides = contiguous_strides(shape, sizeof(float));
+    intvec strides = array::contiguous_strides(shape, sizeof(float));
     this->points_ = new array::NdData(NULL, this->ndim(), shape, strides);
 }
 

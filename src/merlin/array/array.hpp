@@ -5,14 +5,13 @@
 #include <cstdint>  // std::uint64_t, std::uintptr_t
 #include <initializer_list>  // std::initializer_list
 
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/array/nddata.hpp"  // merlin::array::NdData, merlin::array::Parcel, merlin::Iterator
 #include "merlin/array/slice.hpp"  // merlin::Slice
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/iterator.hpp"  // merlin::Iterator
 #include "merlin/vector.hpp"  // merlin::intvec
 
-namespace merlin {
-
-namespace array {
+namespace merlin::array {
 
 /** @brief Multi-dimensional array on CPU.*/
 class MERLIN_EXPORTS Array : public NdData {
@@ -103,8 +102,6 @@ class MERLIN_EXPORTS Array : public NdData {
     intvec end_;
 };
 
-}  // namespace array
-
-}  // namespace merlin
+}  // namespace merlin::array
 
 #endif  // MERLIN_ARRAY_ARRAY_HPP_
