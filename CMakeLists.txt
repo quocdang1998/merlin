@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 # options
 set(MERLIN_CUDA ON CACHE BOOL "Build library using CUDA" FORCE)  # -DMERLIN_CUDA=OFF
-set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
+set(MERLIN_LIBKIND "SHARED"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
     CACHE STRING "Type of the created library (static or shared/dynamic)" FORCE)
 set(MERLIN_TEST ON CACHE BOOL "Build test executables" FORCE)  # -DMERLIN_TEST=ON
 
@@ -35,6 +35,7 @@ list(APPEND MERLIN_SRC_CU
 )
 list(APPEND MERLIN_SRC_RDC
      array/parcel.rdc
+     device/gpu_query.rdc
      utils.rdc
 )
 

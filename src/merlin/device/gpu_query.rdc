@@ -1,0 +1,35 @@
+// Copyright 2022 quocdang1998
+#include "merlin/device/gpu_query.hpp"
+
+#include "merlin/logger.hpp"
+
+namespace merlin::device {
+
+// Get ID of current active device
+__cuhostdev__ int get_current_gpu(void) {
+    int current_device = -1;
+    cudaGetDevice(&current_device);
+    return current_device;
+}
+
+// Construct a device from its ID
+__cuhostdev__ Device::Device(int id) {
+    #ifdef __NVCC__
+    if (id == -1) {
+        this->id_ = get_current_gpu();
+    } else {
+        this->id_ = id;
+    }
+    #else
+    this->id_ = id;
+    #endif  // __NVCC__
+}
+
+// Get total number of GPU
+__cuhostdev__ int Device::get_num_gpu(void) {
+    int count;
+    cudaGetDeviceCount(&count);
+    return count;
+}
+
+}  // namespace merlin::device

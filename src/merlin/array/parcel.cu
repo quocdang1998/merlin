@@ -37,7 +37,7 @@ Parcel::Parcel(const Array & cpu_array, std::uintptr_t stream) : NdData(cpu_arra
 
 // Check if current device holds data pointed by object
 int Parcel::check_device(void) const {
-    return (this->device_id_ - device::get_current_device());
+    return (this->device_id_ - device::get_current_gpu());
 }
 
 // Copy constructor
@@ -121,7 +121,7 @@ void Parcel::copy_to_gpu(Parcel * gpu_ptr, void * shape_strides_ptr) {
 // Free old data
 void Parcel::free_current_data(void) {
     // save current device and set device to the corresponding GPU
-    int current_device = device::get_current_device();
+    int current_device = device::get_current_gpu();
     cudaSetDevice(this->device_id_);
     // free data
     if (this->data_ != NULL) {

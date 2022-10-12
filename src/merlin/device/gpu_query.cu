@@ -4,16 +4,9 @@
 #include <cstdio>  // std::printf
 #include <map>  // std::map
 
-#include "merlin/logger.hpp"  // FAILURE, cuda_runtime_error
+#include "merlin/logger.hpp"  // WARNING, FAILURE, cuda_runtime_error
 
 namespace merlin::device {
-
-// Get total number of GPU
-int get_device_count(void) {
-    int count;
-    cudaGetDeviceCount(&count);
-    return count;
-}
 
 // Convert GPU major.minor version to number of CUDA core
 // Adapted from function _ConvertSMVer2Cores, see https://github.com/NVIDIA/cuda-samples/blob/master/Common/helper_cuda.h
@@ -43,10 +36,13 @@ static int convert_SM_version_to_core(int major, int minor) {
     return num_gpu_arch_cores_per_SM[SM];
 }
 
-// Get limit of a given device
-static void print_limit_of_one_device(int device) {
+// Print limit of device
+void Device::print_specification(void) {
+    if (this->id_ == -1) {
+        WARNING("Device initialized without a valid id (id = %d).\n", this->id_);
+    }
     cudaDeviceProp prop;
-    cudaGetDeviceProperties(&prop, device);
+    cudaGetDeviceProperties(&prop, this->id_);
     // Device name
     std::printf("    Name : %s.\n", prop.name);
     // Max multi-processor
@@ -76,45 +72,23 @@ static void print_limit_of_one_device(int device) {
                 prop.totalConstMem);
 }
 
-// Print limit of a device
-void print_device_limit(int device) {
-    int tot_device = get_device_count();
-    if (device != -1) {
-        // Check valid argument
-        if ((device < 0) || (device >= tot_device)) {
-            FAILURE(std::invalid_argument, "Invalid number of device (expected value >= 0 and < %d, got %d).\n",
-                    tot_device, device);
-        }
-        // Print only one device
-        std::printf("Chosen device: %d.\n", device);
-        print_limit_of_one_device(device);
-        return;
-    }
-    // if no device is selected, query for all devices
-    for (int i = 0; i < tot_device; i++) {
-        std::printf("GPU Id: %d.\n", i);
-        cudaSetDevice(i);
-        print_limit_of_one_device(i);
-    }
-}
-
 // Add 2 integers on GPU
 __global__ static void add_2_int_on_gpu(int * p_a, int * p_b, int * p_result) {
     *p_result = *p_a + *p_b;
 }
 
-// Test functionality of one GPU
-static bool test_gpu_on_a_device(int device) {
+// Test functionality of a GPU
+bool Device::test_gpu(void) {
     // initialize
     int cpu_int[3] = {2, 4, 0};
     int * gpu_int;
     cudaError_t err_;
     int reference = cpu_int[0] + cpu_int[1];
     // set device
-    err_ = cudaSetDevice(device);
+    err_ = cudaSetDevice(this->id_);
     if (err_ != cudaSuccess) {
         FAILURE(cuda_runtime_error, "cudaSetDevice for id = %d failed with message \"%s\".\n",
-                device, cudaGetErrorName(err_));
+                this->id_, cudaGetErrorName(err_));
     }
     // malloc
     err_ = cudaMalloc(&gpu_int, 3*sizeof(int));
@@ -141,37 +115,37 @@ static bool test_gpu_on_a_device(int device) {
     // check result
     if (cpu_int[2] != reference) {
         WARNING("Expected result of adding %d and %d on GPU ID %d is %d, got %d.\n",
-                cpu_int[0], cpu_int[1], device, reference, cpu_int[2]);
+                cpu_int[0], cpu_int[1], this->id_, reference, cpu_int[2]);
         return false;
     }
     return true;
 }
 
-// Test functionality of GPU
-bool test_gpu(int device) {
-    int tot_device = get_device_count();
-    bool result = true;
-    if (device != -1) {
-        // Check valid argument
-        if ((device < 0) || (device >= tot_device)) {
-            FAILURE(std::invalid_argument, "Invalid number of device (expected value >= 0 and < %d, got %d.\n",
-                    tot_device, device);
-        }
-        // Test for only one device
-        std::printf("Checking device: %d...", device);
-        result = result && test_gpu_on_a_device(device);
-        if (!result) {
-            WARNING("\rCheck on device %d has failed.\n", device);
-        } else {
-            std::printf("\r");
-        }
-        return result;
+// Reset all GPU
+void Device::reset_all(void) {
+    cudaDeviceReset();
+}
+
+// Print limit of all GPU
+void print_all_gpu_specification(void) {
+    int tot_device = Device::get_num_gpu();
+    for (int i = 0; i < tot_device; i++) {
+        std::printf("GPU Id: %d.\n", i);
+        cudaSetDevice(i);
+        Device current_device(i);
+        current_device.print_specification();
     }
-    // if no device is selected, test for all devices
+}
+
+// Test functionality of all GPU
+bool test_all_gpu(void) {
+    int tot_device = Device::get_num_gpu();
+    bool result = true;
     for (int i = 0; i < tot_device; i++) {
         std::printf("Checking device: %d...", i);
         cudaSetDevice(i);
-        result = result && test_gpu_on_a_device(i);
+        Device current_device(i);
+        result = result && current_device.test_gpu();
         if (!result) {
             WARNING("\rCheck on device %d has failed.\n", i);
         } else {
@@ -180,5 +154,8 @@ bool test_gpu(int device) {
     }
     return result;
 }
+
+// Map from GPU ID to is details
+std::map<int, Device> gpu_map;
 
 }  // namespace merlin::device
