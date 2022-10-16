@@ -1,0 +1,4 @@
+{% if (platform=="win32") and (libkind=="SHARED") -%}
+import os
+os.add_dll_directory("{{ binary_dir }}")
+{% endif %}

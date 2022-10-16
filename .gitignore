@@ -7,7 +7,10 @@ merlin/**/*.cpp
 merlin/*.pyd
 
 # CMake generated cmake_config.py
-config.py
+setup_cfg/config.py
+
+# Python __init__.py
+merlin/__init__.py
 
 # Ignore folder starts with .
 .*

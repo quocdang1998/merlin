@@ -29,7 +29,7 @@ void print_all_gpu_specification(void) {
 }
 
 // Test functionality of all GPU
-bool test_all_gpu() {
+bool test_all_gpu(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
     return false;
 }

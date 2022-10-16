@@ -2,7 +2,8 @@
 #ifndef MERLIN_UTILS_HPP_
 #define MERLIN_UTILS_HPP_
 
-#include "merlin/vector.hpp"
+#include "merlin/device/decorator.hpp"  // __cuhostdev__
+#include "merlin/vector.hpp"  // merlin::Vector
 
 namespace merlin {
 

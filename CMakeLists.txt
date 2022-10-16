@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 # options
 set(MERLIN_CUDA ON CACHE BOOL "Build library using CUDA" FORCE)  # -DMERLIN_CUDA=OFF
-set(MERLIN_LIBKIND "SHARED"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
+set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
     CACHE STRING "Type of the created library (static or shared/dynamic)" FORCE)
 set(MERLIN_TEST ON CACHE BOOL "Build test executables" FORCE)  # -DMERLIN_TEST=ON
 
@@ -81,12 +81,11 @@ endif()
 
 # CUDA
 if(MERLIN_CUDA)
+    find_package(CUDA QUIET REQUIRED)
     set(CMAKE_CUDA_STANDARD 17)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
     set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
     set_source_files_properties(${MERLIN_SRC_RDC} PROPERTIES LANGUAGE CUDA)
-    set(MERLIN_CUDA_STATIC_LIB OFF CACHE BOOL
-        "Build host-device and device static linking library" FORCE)
 else()
     set_source_files_properties(${MERLIN_SRC_RDC} PROPERTIES LANGUAGE CXX)
 endif(MERLIN_CUDA)
@@ -128,22 +127,28 @@ else()
     message(FATAL_ERROR "Library build mode not found")
 endif()
 
-# set property for device static library
+# set property for host-device static library
 if (MERLIN_CUDA_STATIC_LIB)
     set_property(TARGET libmerlincuda PROPERTY OUTPUT_NAME merlincuda)
     set_property(TARGET libmerlincuda PROPERTY POSITION_INDEPENDENT_CODE 1)
     set_property(TARGET libmerlincuda PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS ON
                  CUDA_SEPARABLE_COMPILATION OFF)
-    target_include_directories(libmerlincuda PUBLIC src)
+    target_include_directories(libmerlincuda PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
     target_compile_definitions(libmerlincuda PRIVATE LIBMERLIN_STATIC)
+    if(MERLIN_CUDA)
+        target_compile_definitions(libmerlincuda PUBLIC __MERLIN_CUDA__)
+    endif(MERLIN_CUDA)
     target_link_libraries(libmerlincuda PUBLIC OpenMP::OpenMP_CXX)
 endif(MERLIN_CUDA_STATIC_LIB)
 
 # set property for main library
 set_property(TARGET libmerlin PROPERTY OUTPUT_NAME merlin)
 set_property(TARGET libmerlin PROPERTY POSITION_INDEPENDENT_CODE 1)
-target_include_directories(libmerlin PUBLIC src)
+target_include_directories(libmerlin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(libmerlin PUBLIC OpenMP::OpenMP_CXX)
+if (MERLIN_CUDA_STATIC_LIB)
+    target_link_libraries(libmerlin PUBLIC libmerlincuda)
+endif(MERLIN_CUDA_STATIC_LIB)
 if(MERLIN_CUDA)
     target_compile_definitions(libmerlin PUBLIC __MERLIN_CUDA__)
     set(DIAG_SUPPRESS -Xcudafe "--diag_suppress=field_without_dll_interface")
@@ -151,7 +156,6 @@ if(MERLIN_CUDA)
                            $<$<COMPILE_LANGUAGE:CUDA>: ${DIAG_SUPPRESS} >)
     if (MERLIN_CUDA_STATIC_LIB)
         set_property(TARGET libmerlin PROPERTY CUDA_SEPARABLE_COMPILATION OFF)
-        target_link_libraries(libmerlin PUBLIC libmerlincuda)
     endif(MERLIN_CUDA_STATIC_LIB)
 endif(MERLIN_CUDA)
 
@@ -159,6 +163,7 @@ endif(MERLIN_CUDA)
 # tests
 # =============================================================================
 
+# build execuatble for each tests/{LANGUAGE}/test_* files
 function(CONFIGURE_TESTFILES LANGUAGE)
     file(GLOB MERLIN_TESTFILES "tests/${LANGUAGE}/test_*")
     foreach (TESTFILE ${MERLIN_TESTFILES})
@@ -174,6 +179,7 @@ function(CONFIGURE_TESTFILES LANGUAGE)
     endforeach(TESTFILE ${MERLIN_TESTFILES})
 endfunction(CONFIGURE_TESTFILES)
 
+# add test executable
 if(MERLIN_TEST)
     # C++ test files
     configure_testfiles(cpp)
@@ -187,7 +193,22 @@ endif(MERLIN_TEST)
 # write config variable to file
 # =============================================================================
 
-set(MERLIN_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/config.py)
+# initialize Python script embedding CMake config variables
+set(MERLIN_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/setup_cfg/config.py)
 file(WRITE ${MERLIN_CONFIG} "")
-file(APPEND ${MERLIN_CONFIG} "MERLIN_CUDA = \"${MERLIN_CUDA}\"\n")
+
+# CMake_bin_dir
+file(APPEND ${MERLIN_CONFIG} "MERLIN_BIN_DIR = \"${CMAKE_BINARY_DIR}\"\n")
+
+# CUDA option
+if(MERLIN_CUDA)
+    file(APPEND ${MERLIN_CONFIG} "MERLIN_CUDA = True\n")
+    file(APPEND ${MERLIN_CONFIG} "NVCC = \"${CUDA_NVCC_EXECUTABLE}\"\n")
+    file(APPEND ${MERLIN_CONFIG} "CUDARTSTATIC = \"${CUDA_cudart_static_LIBRARY}\"\n")
+    file(APPEND ${MERLIN_CONFIG} "CUDADEVRT = \"${CUDA_cudadevrt_LIBRARY}\"\n")
+else()
+    file(APPEND ${MERLIN_CONFIG} "MERLIN_CUDA = False\n")
+endif(MERLIN_CUDA)
+
+# Lib kind
 file(APPEND ${MERLIN_CONFIG} "MERLIN_LIBKIND = \"${MERLIN_LIBKIND}\"\n")

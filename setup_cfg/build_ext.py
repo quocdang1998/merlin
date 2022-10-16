@@ -1,0 +1,144 @@
+"""Extend setuptools built_ext command to compile CUDA device code in case of
+separate compilation."""
+
+import os
+import sys
+
+from setuptools.command.build_ext import build_ext as _sut_build_ext
+from setuptools.extension import Library
+from setuptools import Extension as _sut_Extension
+
+from distutils.command.build_ext import build_ext as _du_build_ext
+from distutils.dep_util import newer_group
+from distutils.spawn import spawn
+from distutils import log
+
+from .config import *
+
+
+# overwrite method build_extension of setuptools.build_ext
+class build_ext(_sut_build_ext):
+    def build_extension(self, ext):
+        ext._convert_pyx_sources_to_lang()
+        _compiler = self.compiler
+        try:
+            if isinstance(ext, Library):
+                self.compiler = self.shlib_compiler
+
+            # call custom_du_build_ext
+            # instead of calling build_ext from distutils
+            custom_du_build_ext.build_extension(self, ext)
+
+            if ext._needs_stub:
+                build_lib = self.get_finalized_command('build_py').build_lib
+                self.write_stub(build_lib, ext)
+        finally:
+            self.compiler = _compiler
+
+
+# overwrite build_ext from distutils
+class custom_du_build_ext(_du_build_ext):
+    def build_extension(self, ext):
+        # code copied from distutils/command/build_ext.py
+        sources = ext.sources
+        if sources is None or not isinstance(sources, (list, tuple)):
+            raise DistutilsSetupError(
+                "in 'ext_modules' option (extension '%s'), "
+                "'sources' must be present and must be "
+                "a list of source filenames" % ext.name
+            )
+        sources = sorted(sources)
+        ext_path = self.get_ext_fullpath(ext.name)
+        depends = sources + ext.depends
+        if not (self.force or newer_group(depends, ext_path, 'newer')):
+            log.debug("skipping '%s' extension (up-to-date)", ext.name)
+            return
+        else:
+            log.info("building '%s' extension", ext.name)
+        sources = self.swig_sources(sources, ext)
+        extra_args = ext.extra_compile_args or []
+        macros = ext.define_macros[:]
+        for undef in ext.undef_macros:
+            macros.append((undef,))
+        # compile step
+        objects = self.compiler.compile(
+            sources,
+            output_dir=self.build_temp,
+            macros=macros,
+            include_dirs=ext.include_dirs,
+            debug=self.debug,
+            extra_postargs=extra_args,
+            depends=ext.depends,
+        )
+
+        # cuda device linker
+        if MERLIN_CUDA:
+            print("Device static linking")
+            device_linker = os.path.join(os.path.dirname(objects[0]),
+                                         "cuda_device_linker.obj")
+            dlink_option = ["-forward-unknown-to-host-compiler",
+                            "-Wno-deprecated-gpu-targets",
+                            "-shared", "-dlink"]
+            lib_dlink = []
+            if sys.platform == "win32":
+                from distutils.ccompiler import gen_lib_options
+                # dlink option
+                dlink_option += ["-Xcompiler=\"/EHsc\"", "-Xcompiler=\"/MD\"",
+                                 "-Xcompiler=\"/Ob2\"", "-Xcompiler=\"/O2\"",
+                                 "-D_WINDOWS", "-DNDEBUG"]
+                dlink_option += [
+                    f"-LIBPATH:\"{os.path.dirname(CUDARTSTATIC)}\"",
+                    f"-LIBPATH:\"{os.path.dirname(CUDADEVRT)}\"",
+                    f"-LIBPATH:\"{MERLIN_BIN_DIR}\""
+                ]
+                # system paths
+                temp = [self.get_libraries(ext), ext.library_dirs,
+                        ext.runtime_library_dirs]
+                fixed_args = self.compiler._fix_lib_args(*temp)
+                libraries, library_dirs, runtime_library_dirs = fixed_args
+                sys_libpath = gen_lib_options(self.compiler, library_dirs,
+                                              runtime_library_dirs, libraries)
+                dlink_option += [p.replace("/LIBPATH:", "-LIBPATH:\"") + "\""
+                                 for p in sys_libpath
+                                 if p.startswith("/LIBPATH:")]
+                # linked library to dlink
+                if MERLIN_LIBKIND == "SHARED":
+                    lib_dlink = ["merlin.lib", "merlincuda.lib"]
+                else:
+                    lib_dlink = ["merlin.lib"]
+                lib_dlink += [os.path.split(CUDARTSTATIC)[-1],
+                              os.path.split(CUDADEVRT)[-1]]
+            elif sys.platform == "linux":
+                # dlink option
+                dlink_option += ["-O3", "-DNDEBUG", "-Xcompiler=-fPIC"]
+                dlink_option += [f"-L\"{os.path.dirname(CUDARTSTATIC)}\"",
+                                 f"-L\"{os.path.dirname(CUDADEVRT)}\""]
+                # linked library to dlink
+                dlink_option += [f"-L\"{MERLIN_BIN_DIR}\""]
+                if MERLIN_LIBKIND == "SHARED":
+                    lib_dlink = ["-lmerlincuda"]
+                else:
+                    lib_dlink = ["-lmerlin"]
+                lib_dlink += ["-lcudart_static", "-lcudadevrt"]
+            self.spawn([NVCC] + dlink_option + objects
+                       + ["-o", device_linker] + lib_dlink)
+            objects += [device_linker]
+
+        # link step
+        self._built_objects = objects[:]
+        if ext.extra_objects:
+            objects.extend(ext.extra_objects)
+        extra_args = ext.extra_link_args or []
+        language = ext.language or self.compiler.detect_language(sources)
+        self.compiler.link_shared_object(
+            objects,
+            ext_path,
+            libraries=self.get_libraries(ext),
+            library_dirs=ext.library_dirs,
+            runtime_library_dirs=ext.runtime_library_dirs,
+            extra_postargs=extra_args,
+            export_symbols=self.get_export_symbols(ext),
+            debug=self.debug,
+            build_temp=self.build_temp,
+            target_lang=language,
+        )
