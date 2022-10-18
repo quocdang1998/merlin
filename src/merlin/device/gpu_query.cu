@@ -3,6 +3,7 @@
 
 #include <cstdio>  // std::printf
 #include <map>  // std::map
+#include <sstream>  // std::ostringstream
 
 #include "merlin/logger.hpp"  // WARNING, FAILURE, cuda_runtime_error
 
@@ -124,6 +125,12 @@ bool Device::test_gpu(void) {
 // Reset all GPU
 void Device::reset_all(void) {
     cudaDeviceReset();
+}
+
+std::string Device::repr(void) {
+    std::ostringstream os;
+    os << "Device ID: " << this->id_;
+    return os.str();
 }
 
 // Print limit of all GPU

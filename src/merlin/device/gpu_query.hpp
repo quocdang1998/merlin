@@ -4,6 +4,7 @@
 
 #include <cstdint>  // std::uint64_t
 #include <map>  // std::map
+#include <string>  // std::string
 
 #include "merlin/device/decorator.hpp"  // __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
@@ -55,6 +56,12 @@ class MERLIN_EXPORTS Device {
     static void reset_all(void);
     /// @}
 
+    /// @name Representation
+    /// @{
+    /** @brief String representation.*/
+    std::string repr(void);
+    /// @}
+
   private:
     /** @brief ID of device.*/
     int id_;
@@ -63,8 +70,6 @@ class MERLIN_EXPORTS Device {
 /** @brief Print GPU specifications.
  *  @details Print GPU specifications (number of threads, total global memory, max shared memory) and API limitation (max
  *  thread per block, max block per grid).
- *  @param device ID of device (an integer ranging from 0 to the number of device). A value of `-1` will print details of
- *  all GPU.
  */
 MERLIN_EXPORTS void print_all_gpu_specification(void);
 

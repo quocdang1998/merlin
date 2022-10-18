@@ -337,6 +337,11 @@ html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(
 
 /* Python DESCRIPTION */
 
+/* item name in description box */
+.sig.sig-object.py > .sig-name.descname > .pre {
+    color: var(--item-name);
+}
+
 /* item argument in description box */
 .sig.sig-object.py .n {
     font-style: normal !important;
@@ -351,6 +356,12 @@ html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(
 /* Python operator (':', '=', etc) */
 .sig.sig-object.py .p, .sig.sig-object.py .o {
     font-style: normal !important;
+    color: var(--yinyang) !important;
+}
+
+/* Python default value */
+.sig.sig-object.py .default_value {
+    font-style: normal !important;
 }
 
 /* type of each argument */
@@ -360,14 +371,6 @@ html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(
     font-size: 12px;
     font-weight: 600;
     color: var(--type);
-}
-
-/* return type */
-.return p {
-    color: var(--type);
-    font-family: 'Fira Code', monospace;
-    font-size: 12px !important;
-    font-weight: 600;
 }
 
 /* attribute type */

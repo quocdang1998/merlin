@@ -42,17 +42,18 @@ def get_extension_options():
     if MERLIN_LIBKIND == "SHARED":
         ext_options["libraries"] += ["merlincuda"]
     if MERLIN_CUDA:
-        ext_options["libraries"] += ["cudadevrt", "cudart_static"]
+        ext_options["libraries"] += ["cuda", "cudadevrt", "cudart_static"]
 
     # library directory
     ext_options["library_dirs"] = [os.path.join(module_dir, "build")]
     if MERLIN_CUDA:
-        ext_options["library_dirs"] += [os.path.dirname(CUDARTSTATIC),
-                                        os.path.dirname(CUDADEVRT)]
+        ext_options["library_dirs"] += [CUDALIB]
 
     # runtime library
     if (sys.platform == "linux") and (MERLIN_LIBKIND == "SHARED"):
         rt_dir = os.path.join(module_dir, "build")
         ext_options["runtime_library_dirs"] = [rt_dir]
+        if MERLIN_CUDA:
+            ext_options["runtime_library_dirs"] += [CUDALIB]
 
     return ext_options

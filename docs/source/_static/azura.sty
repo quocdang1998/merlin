@@ -3,24 +3,14 @@
 % =============================================================================
 
 \usepackage{etoolbox}
+\usepackage{calc}
 
 % Supress list of table and list of figure
 \usepackage[notlot,nottoc,notlof]{}
 
 % Overload sphinx table style
 \newcolumntype{L}[1]{>{\raggedright \arraybackslash}m{#1}}
-\makeatletter
-\newcounter{summarycol}
-\expandafter\let\csname NC@find@X\endcsname\relax
-%\newcolumntype{\X}[2]{l}
-\newcommand{\X}[2]{%
-    \ifnum \value{summarycol} < 1 {%
-        L{0.2\textwidth}%
-    } \else {%
-        L{0.6\textwidth}%
-    } \fi%
-}
-\makeatother
+\newcolumntype{M}[1]{>{\centering   \arraybackslash}m{#1}}
 
 % Font
 \usepackage{lmodern}
@@ -199,6 +189,30 @@
                    \let\makelabel=\py@itemnewline}%
 }{\end{list}\addtocounter{siglevel}{-1}}
 \makeatother
+
+% Guide box
+\newenvironment{sphinxclassrow}{%
+    \vspace{\baselineskip}%
+}{%
+    \vspace{\baselineskip}%
+}
+
+\newenvironment{sphinxclasscol-lg-4}{%
+    \begin{minipage}{0.333\textwidth-2\fboxsep}%
+}{%
+    \end{minipage}%
+}
+
+\newenvironment{sphinxclasscard-header}{%
+    \begingroup\bfseries%
+}{%
+    \endgroup\vspace{\baselineskip}%
+}
+
+\newenvironment{sphinxclasstext-center}{%
+    \begin{center}}{%
+    \end{center}%
+}
 
 % =============================================================================
 % CODE DOCUMENTATION

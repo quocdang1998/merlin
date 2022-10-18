@@ -1,0 +1,32 @@
+digraph StaticCompilation {
+    node [fontname="Fira Code SemiBold", shape=record, style=filled, labelloc=c]
+    
+    subgraph SourceFiles {
+        node [color=lightskyblue1, label="*.cpp"] cpp;
+        node [color=lightskyblue1, label="*.cu"] cu;
+        node [color=lightskyblue1, label="*.rdc"] rdc;
+        {rank = same; cpp; cu; rdc;}
+    }
+
+    node [color=steelblue1, label="*.o or *.obj"] rdc_obj;
+
+    subgraph Object {
+        node [color=steelblue1, label="*.o or *.obj"] obj;
+        node [color=dodgerblue, label="libmerlincuda.a (Linux)\nmerlincuda.lib (Windows)"] libmerlincuda;
+        node [color=cornflowerblue	, label="device_code.o (Linux)\ndevice_code.obj (Windows)"] device_code;
+    }
+
+    subgraph Lib {
+        node [color=dodgerblue, label="libmerlin.so (Linux)\n merlin.dll & merlin.lib (Windows)"] libmerlin;
+    }
+
+    rdc -> rdc_obj [color=dimgrey];
+    rdc_obj -> libmerlincuda [color=royalblue4];
+    cpp -> obj [color=dimgrey];
+    cu -> obj [color=dimgrey];
+    obj -> device_code [color=darkblue];
+    libmerlincuda -> device_code [color=darkblue];
+    obj -> libmerlin [color=royalblue4];
+    libmerlincuda -> libmerlin [color=royalblue4];
+    device_code -> libmerlin [color=royalblue4];
+}

@@ -9,8 +9,8 @@ if (sys.platform != "linux") and (sys.platform != "win32"):
 import Cython
 from packaging.version import Version, parse
 v_cython = parse(Cython.__version__)
-v_require = Version("3.0a1")
-if (v_cython < v_require):
+v_require = Version("3.0a10")
+if v_cython < v_require:
     raise ImportError("Package must be compiled with Cython 3.0")
 
 # import setuptools

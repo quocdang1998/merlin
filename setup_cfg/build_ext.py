@@ -73,7 +73,6 @@ class custom_du_build_ext(_du_build_ext):
 
         # cuda device linker
         if MERLIN_CUDA:
-            print("Device static linking")
             device_linker = os.path.join(os.path.dirname(objects[0]),
                                          "cuda_device_linker.obj")
             dlink_option = ["-forward-unknown-to-host-compiler",
@@ -87,8 +86,7 @@ class custom_du_build_ext(_du_build_ext):
                                  "-Xcompiler=\"/Ob2\"", "-Xcompiler=\"/O2\"",
                                  "-D_WINDOWS", "-DNDEBUG"]
                 dlink_option += [
-                    f"-LIBPATH:\"{os.path.dirname(CUDARTSTATIC)}\"",
-                    f"-LIBPATH:\"{os.path.dirname(CUDADEVRT)}\"",
+                    f"-LIBPATH:\"{os.path.dirname(CUDALIB)}\"",
                     f"-LIBPATH:\"{MERLIN_BIN_DIR}\""
                 ]
                 # system paths
@@ -106,20 +104,18 @@ class custom_du_build_ext(_du_build_ext):
                     lib_dlink = ["merlin.lib", "merlincuda.lib"]
                 else:
                     lib_dlink = ["merlin.lib"]
-                lib_dlink += [os.path.split(CUDARTSTATIC)[-1],
-                              os.path.split(CUDADEVRT)[-1]]
+                lib_dlink += ["cuda.lib", CUDART, CUDADEVRT]
             elif sys.platform == "linux":
                 # dlink option
                 dlink_option += ["-O3", "-DNDEBUG", "-Xcompiler=-fPIC"]
-                dlink_option += [f"-L\"{os.path.dirname(CUDARTSTATIC)}\"",
-                                 f"-L\"{os.path.dirname(CUDADEVRT)}\""]
+                dlink_option += [f"-L\"{os.path.dirname(CUDALIB)}\""]
                 # linked library to dlink
                 dlink_option += [f"-L\"{MERLIN_BIN_DIR}\""]
                 if MERLIN_LIBKIND == "SHARED":
                     lib_dlink = ["-lmerlincuda"]
                 else:
                     lib_dlink = ["-lmerlin"]
-                lib_dlink += ["-lcudart_static", "-lcudadevrt"]
+                lib_dlink += ["-lcuda", "-lcudart_static", "-lcudadevrt"]
             self.spawn([NVCC] + dlink_option + objects
                        + ["-o", device_linker] + lib_dlink)
             objects += [device_linker]

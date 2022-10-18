@@ -23,6 +23,11 @@ void Device::reset_all(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
 }
 
+// String representation
+std::string Device::repr(void) {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
+}
+
 // Print limit of all GPU
 void print_all_gpu_specification(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");

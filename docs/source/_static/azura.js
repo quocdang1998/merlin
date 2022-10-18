@@ -11,8 +11,7 @@ function append_class_to_corresponding_search_element (searchText, className) {
 }
 
 // append class to "Return type" and "Type"
-function change_return_and_attribute () {
-    append_class_to_corresponding_search_element ("Return type", "return");
+function change_attribute () {
     append_class_to_corresponding_search_element ("Type", "attributetype");
 }
 
@@ -108,7 +107,7 @@ function add_darkmode_button () {
 
 function azura_main () {
     set_color_scheme();
-    change_return_and_attribute();
+    change_attribute();
     set_id_lastchild_in_breadcrumbs();
     add_darkmode_button();
 }
