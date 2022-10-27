@@ -1,7 +1,7 @@
 // Copyright 2022 quocdang1998
 #include "merlin/device/gpu_query.hpp"
 
-#include "merlin/logger.hpp"  // FAILURE
+#include "merlin/logger.hpp"  // CUHDERR
 
 namespace merlin::device {
 
@@ -20,15 +20,15 @@ __cuhostdev__ int get_current_gpu(void) {
 // Construct a device from its ID
 __cuhostdev__ Device::Device(int id) {
     #ifdef __MERLIN_CUDA__
-        #ifdef __NVCC__
-        if (id == -1) {
-            this->id_ = get_current_gpu();
-        } else {
-            this->id_ = id;
+    if (id == -1) {
+        this->id_ = get_current_gpu();
+    } else {
+        int limit = Device::get_num_gpu();
+        if ((id < 0) || (id >= limit)) {
+            CUHDERR(cuda_runtime_error, "Invalid ID of GPU (expected value between 0 and %d).\n", limit);
         }
-        #else
         this->id_ = id;
-        #endif  // __NVCC__
+    }
     #else
     FAILURE(cuda_compile_error, "Enable option MERLIN_CUDA at compilation to use this feature.\n");
     #endif  // __MERLIN_CUDA__

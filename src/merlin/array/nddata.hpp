@@ -4,8 +4,10 @@
 
 #include <cstddef>  // NULL
 #include <cstdint>  // std::int64_t, std::uint64_t, std::uintptr_t
+#include <initializer_list>  // std::initializer_list
 #include <tuple>  // std::tie
 
+#include "merlin/array/slice.hpp"  // merlin::array::Slice
 #include "merlin/device/decorator.hpp"  // __cuhost__, __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/vector.hpp"  // merlin::intvec
@@ -69,6 +71,12 @@ class MERLIN_EXPORTS NdData {
     /// @{
     /** @brief Number of element.*/
     std::uint64_t size(void);
+    /// @}
+
+    /// @name Slicing
+    /// @{
+    /** @brief Slice a sub-array.*/
+    __cuhostdev__ NdData operator[](std::initializer_list<Slice> slices);
     /// @}
 
     /// @name Destructor

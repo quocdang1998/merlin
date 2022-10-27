@@ -78,7 +78,6 @@ html_use_index = False
 
 # -- Options for Latex output ------------------------------------------------
 
-# latex_theme = 'howto'
 latex_engine = 'xelatex'
 latex_additional_files = ['_static/azura.sty',  # '_static/logo.pdf',
                           '_static/azura.pdf', '_static/LeagueSpartan.otf',
@@ -98,6 +97,14 @@ latex_elements = {
     'makeindex': '',
 }
 
+
+# -- Options for Epub output ------------------------------------------------
+
+epub_theme = 'epub'
+epub_exclude_files = [f.replace('/', '\\') if 'win32' in sys.platform else f
+                      for f in latex_additional_files]
+epub_css_files = ['myepub.css']
+epub_show_urls = 'no'
 
 # -- Options for the C++ domain ----------------------------------------------
 

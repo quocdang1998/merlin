@@ -1,5 +1,7 @@
+# Copyright 2022 quocdang1998
+
 # =============================================================================
-# main project
+# project
 # =============================================================================
 
 # cmake minimum version
@@ -9,8 +11,8 @@ cmake_minimum_required(VERSION 3.21)
 set(CMAKE_CXX_STANDARD 17)
 
 # options
-set(MERLIN_CUDA OFF CACHE BOOL "Build library using CUDA")  # -DMERLIN_CUDA=OFF
-set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
+set(MERLIN_CUDA ON CACHE BOOL "Build library using CUDA")  # -DMERLIN_CUDA=OFF
+set(MERLIN_LIBKIND "SHARED"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
     CACHE INTERNAL "Type of the created library (static or shared/dynamic)")
 set(MERLIN_TEST ON CACHE BOOL "Build test executables")  # -DMERLIN_TEST=ON
 
@@ -34,7 +36,9 @@ list(APPEND MERLIN_SRC_CU
      interpolant/grid.cu
 )
 list(APPEND MERLIN_SRC_RDC
+     array/nddata.rdc
      array/parcel.rdc
+     array/slice.rdc
      device/gpu_query.rdc
      utils.rdc
 )
@@ -94,7 +98,7 @@ endif(MERLIN_CUDA)
 find_package(OpenMP)
 
 # =============================================================================
-# library and executable
+# library
 # =============================================================================
 
 # library kind
@@ -137,6 +141,9 @@ if(MERLIN_CUDA_STATIC_LIB)
     target_compile_definitions(libmerlincuda PRIVATE LIBMERLIN_STATIC)
     if(MERLIN_CUDA)
         target_compile_definitions(libmerlincuda PUBLIC __MERLIN_CUDA__)
+        set(MERLIN_CUDA_OPTION --expt-relaxed-constexpr)
+        target_compile_options(libmerlincuda PUBLIC
+                               $<$<COMPILE_LANGUAGE:CUDA>: ${MERLIN_CUDA_OPTION} >)
     endif(MERLIN_CUDA)
     target_link_libraries(libmerlincuda PUBLIC OpenMP::OpenMP_CXX)
 endif(MERLIN_CUDA_STATIC_LIB)
@@ -152,8 +159,10 @@ endif(MERLIN_CUDA_STATIC_LIB)
 if(MERLIN_CUDA)
     target_compile_definitions(libmerlin PUBLIC __MERLIN_CUDA__)
     set(DIAG_SUPPRESS -Xcudafe "--diag_suppress=field_without_dll_interface")
+    set(RELAXED_CONSTEXPR --expt-relaxed-constexpr)
+    set(MERLIN_CUDA_OPTION ${DIAG_SUPPRESS} ${RELAXED_CONSTEXPR})
     target_compile_options(libmerlin PUBLIC
-                           $<$<COMPILE_LANGUAGE:CUDA>: ${DIAG_SUPPRESS} >)
+                           $<$<COMPILE_LANGUAGE:CUDA>: ${MERLIN_CUDA_OPTION} >)
     set_property(TARGET libmerlin PROPERTY CUDA_RUNTIME_LIBRARY Static)
     if(MERLIN_CUDA_STATIC_LIB)
         set_property(TARGET libmerlin PROPERTY CUDA_SEPARABLE_COMPILATION OFF)

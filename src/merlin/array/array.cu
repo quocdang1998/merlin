@@ -3,8 +3,8 @@
 
 #include <functional>  // std::bind, std::placeholders
 
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/array/copy.hpp"  // merlin::array::array_copy
+#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/logger.hpp"  // FAILURE
 
 namespace merlin::array {

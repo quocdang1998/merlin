@@ -5,8 +5,8 @@
 #include <cstdint>  // std::uint64_t
 #include <initializer_list>  // std::initializer_list
 
-#include "merlin/array/nddata.hpp"  // merlin::NdData, merlin::Iterator
 #include "merlin/array/array.hpp"  // merlin::Array
+#include "merlin/array/nddata.hpp"  // merlin::NdData, merlin::Iterator
 #include "merlin/device/decorator.hpp"  // __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/iterator.hpp"  // merlin::Iterator

@@ -3,6 +3,7 @@
 #define MERLIN_ARRAY_ARRAY_HPP_
 
 #include <cstdint>  // std::uint64_t, std::uintptr_t
+#include <string>  // std::string
 #include <initializer_list>  // std::initializer_list
 
 #include "merlin/array/nddata.hpp"  // merlin::array::NdData, merlin::array::Parcel, merlin::Iterator

@@ -21,7 +21,7 @@ Basic utils for Multi-dimensional array manipulation:
    :toctree: generated
 
    merlin::array::NdData
-   merlin::Slice
+   merlin::array::Slice
    merlin::array::array_copy
 
 Classes represent multi-dimensional array on CPU, out-of-core array and GPU

@@ -6,8 +6,8 @@
 #include <initializer_list>  // std::initializer_list
 
 #include "merlin/array/nddata.hpp"  // merlin::array::NdData
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/device/decorator.hpp"  // __cudevice__, __cuhostdev__
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS
 
 namespace merlin::array {
 

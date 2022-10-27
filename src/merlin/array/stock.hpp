@@ -7,8 +7,8 @@
 #include <mutex>  // std::mutex
 #include <string>  // std::string
 
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/array/nddata.hpp"  // merlin::array::NdData
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS
 
 namespace merlin::array {
 

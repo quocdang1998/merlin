@@ -2,12 +2,12 @@
 #ifndef MERLIN_LOGGER_HPP_
 #define MERLIN_LOGGER_HPP_
 
-#include <cstdio>  // std::printf, std::vsnprintf
 #include <cstdarg>  // std::va_list, va_start, va_end
-#include <stdexcept>  // std::runtime_error
-#include <type_traits>  // std::is_same
-#include <system_error>  // std::error_code
+#include <cstdio>  // std::printf, std::vsnprintf
 #include <filesystem>  // std::filesystem::filesystem_error
+#include <stdexcept>  // std::runtime_error
+#include <system_error>  // std::error_code
+#include <type_traits>  // std::is_same
 
 // Log MESSAGE, WARNING and FAILURE for CPU
 // ----------------------------------------
@@ -95,6 +95,38 @@ class cuda_runtime_error : public std::runtime_error {
  *  @param fmt Formatted string (same syntax as ``std::printf``).
  */
 #define CUDAOUT(fmt, ...) std::printf("\033[1;36m[CUDAOUT]\033[0m [%s] " fmt, __FUNCNAME__, ##__VA_ARGS__)
+
+/** @brief Print error message (for usage inside a GPU function) and terminate GPU kernel.
+ *  @details Example:
+ *  @code {.cu}
+ *  __global__ void errorred_gpu_function {
+ *      CUDAERR("Error from thread %d block %d.\n", threadIdx.x, blockIdx.x);
+ *  }
+ *  @endcode
+ *  @note This macro is only available when option ``MERLIN_CUDA`` is ``ON``.
+ *  @param fmt Formatted string (same syntax as ``std::printf``).
+ */
+#define CUDAERR(fmt, ...) std::printf("\033[1;35m[CUDAERR]\033[0m [%s] " fmt, __FUNCNAME__, ##__VA_ARGS__); asm("trap;")
 #endif  // __NVCC__
+
+// Log CUHDERR for host-device error
+// ---------------------------------
+
+#ifdef __CUDA_ARCH__
+#define CUHDERR(exception, fmt, ...) CUDAERR(fmt, ##__VA_ARGS__)
+#else
+/** @brief Print error message and terminate CUDA host-device function.
+ *  @details Example:
+ *  @code {.cu}
+ *  __host__ __device__ void errorred_function {
+ *      CUDAERR("Error.\n");
+ *  }
+ *  @endcode
+ *  @param exception Name of the exception class (like ``std::runtime_error``, ``std::invalid_argument``, etc) to be thrown
+ *  in case of ``__host__`` function.
+ *  @param fmt Formatted string (same syntax as ``std::printf``).
+ */
+#define CUHDERR(exception, fmt, ...) FAILURE(exception, fmt, ##__VA_ARGS__)
+#endif  // __CUDA_ARCH__
 
 #endif  // MERLIN_LOGGER_HPP_

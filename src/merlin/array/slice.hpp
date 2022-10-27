@@ -1,46 +1,35 @@
 // Copyright 2022 quocdang1998
-// Todo: implement strides < 0 and slice < 0
 #ifndef MERLIN_ARRAY_SLICE_HPP_
 #define MERLIN_ARRAY_SLICE_HPP_
 
-#include <cmath>  // std::abs
-#include <cstdint>  // std::int64_t, std::uint64_t
+#include <cstdint>  // std::int64_t, std::uint64_t, INT64_MAX
+#include <initializer_list>  // std::initializer_list
+#include <tuple>  // std::tuple
 
-#include "merlin/device/decorator.hpp"  // __cuhost__, __cuhostdev__
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/vector.hpp"  // merlin::intvec
+#include "merlin/device/decorator.hpp"  // __cuhostdev__
 
-namespace merlin {
+namespace merlin::array {
 
 /** @brief Slice of an Array.*/
 class Slice {
   public:
     /// @name Constructors
     /// @{
-    /** @brief Default constructor.
-     *  @details Construct a full slice (start at 0, end at last element, step 1).
-     */
-    Slice(void) = default;
     /** @brief Member constructor.
      *  @details Construct Slice object from values of its members.
      *  @param start Start position (must be positive).
      *  @param stop Stop position (must be positive).
      *  @param step Step (must be positive).
      */
-    __cuhostdev__ Slice(std::uint64_t start, std::uint64_t stop,
-                        std::uint64_t step) : start_(start), stop_(stop), step_(step) {
-        if (step <= 0) {
-            #ifdef __CUDA_ARCH__
-            CUDAOUT("Step must be strictly positive.\n");
-            #else
-            FAILURE(std::invalid_argument, "Step must be strictly positive.\n");
-            #endif
-        }
-    }
-    /** @brief Constructor from an initializer list.
-     *  @param list Initializer list of length 3.
+    __cuhostdev__ Slice(std::uint64_t start = 0, std::int64_t stop = INT64_MAX, std::int64_t step = 1);
+    /** @brief Constructor from initializer list.
+     *  @param list An initializer list:
+     *     - If empty, all elements of the dimension are taken.
+     *     - If only 1 element presents, the dimension is collaped.
+     *     - If 2 elements, slicing from the first one to the last one.
+     *     - If 3 elements, similar to member constructor.
      */
-    __cuhostdev__ inline Slice(std::initializer_list<std::uint64_t> list);
+    __cuhostdev__ Slice(std::initializer_list<std::int64_t> list);
     /// @}
 
     /// @name Copy and Move
@@ -72,67 +61,40 @@ class Slice {
     /** @brief Get constant reference to start value.*/
     __cuhostdev__ const std::uint64_t & start(void) const {return this->start_;}
     /** @brief Get reference to stop value.*/
-    __cuhostdev__ std::uint64_t & stop(void) {return this->stop_;}
+    __cuhostdev__ std::int64_t & stop(void) {return this->stop_;}
     /** @brief Get constant reference to stop value.*/
-    __cuhostdev__ const std::uint64_t & stop(void) const {return this->stop_;}
+    __cuhostdev__ const std::int64_t & stop(void) const {return this->stop_;}
     /** @brief Get reference to step value.*/
-    __cuhostdev__ std::uint64_t & step(void) {return this->step_;}
+    __cuhostdev__ std::int64_t & step(void) {return this->step_;}
     /** @brief Get constant reference to step value.*/
-    __cuhostdev__ const std::uint64_t & step(void) const {return this->step_;}
+    __cuhostdev__ const std::int64_t & step(void) const {return this->step_;}
     /// @}
 
-    /// @name Convert to range
+    /// @name Utilities
     /// @{
-    /** @brief Get indices corresponding to element represented by the slice.*/
-    __cuhostdev__ intvec range(void);
+    /** @brief Check validity of values inputted in the Slice.*/
+    __cuhostdev__ void check_validity(void) const;
+    /** @brief Check if Slice indices are in a given range.*/
+    __cuhostdev__ bool in_range(std::int64_t lower, std::int64_t upper) const;
+    /** @brief Calculate offset, new shape and stride of a dimension.
+     *  @param shp Shape of sliced dimension.
+     *  @param strd Stride of sliced dimension.
+     *  @return A tuple of 3 ``std::uint64_t``, respectively the offset, new shape and new stride of dimension of sliced
+     *  array. If the slice has only one element, new shape is 1.
+     */
+    __cuhostdev__ std::tuple<std::uint64_t, std::uint64_t, std::uint64_t> slice_on(std::uint64_t shp,
+                                                                                   std::uint64_t strd) const;
     /// @}
 
   protected:
     /** @brief Start index.*/
     std::uint64_t start_ = 0;
     /** @brief Stop index, count from last element.*/
-    std::uint64_t stop_ = 0;
+    std::int64_t stop_ = INT64_MAX;
     /** @brief Step.*/
-    std::uint64_t step_ = 1;
+    std::int64_t step_ = 1;
 };
 
-// Constructor from an initializer list
-__cuhostdev__ inline Slice::Slice(std::initializer_list<std::uint64_t> list) {
-    const std::uint64_t * list_data = list.begin();
-    switch (list.size()) {
-    case 1:  // 1 element = get 1 element
-        this->start_ = list_data[0];
-        this->stop_ = list_data[0] + 1;
-        break;
-    case 2:  // 2 element = {start, stop}
-        this->start_ = list_data[0];
-        this->stop_ = list_data[1];
-        break;
-    case 3:
-        this->start_ = list_data[0];
-        this->stop_ = list_data[1];
-        this->step_ = list_data[2];
-        break;
-    default:
-        #ifdef __CUDA_ARCH__
-        CUDAOUT("Expected intializer list with size at most 3, got %d.\n", static_cast<int>(list.size()));
-        #else
-        FAILURE(std::invalid_argument, "Expected intializer list with size at most 3, got %d.\n", list.size());
-        #endif
-        break;
-    }
-}
-
-// Convert Slice to vector of corresponding indices
-__cuhostdev__ inline intvec Slice::range(void) {
-    std::uint64_t range_length = (this->start_-this->stop_) / this->step_;
-    intvec range(range_length, INT64_MAX);
-    for (unsigned int i = 0; i < range_length; i += 1) {
-        range[i] = this->start_ + i*this->step_;
-    }
-    return range;
-}
-
-}  // namespace merlin
+}  // namespace merlin::array
 
 #endif  // MERLIN_ARRAY_SLICE_HPP_

@@ -7,9 +7,9 @@
 #include <mutex>  // std::mutex
 #include <utility>  // std::move
 
+#include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides, merlin::array::array_copy
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/array/stock.hpp"  // merlin::array::Stock
-#include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides, merlin::array::array_copy
 #include "merlin/logger.hpp"  // FAILURE
 #include "merlin/utils.hpp"  // merlin::inner_prod
 
@@ -137,7 +137,6 @@ float & Array::operator[] (const intvec & index) {
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<float *>(data_ptr));
 }
-
 
 // Copy data from GPU array
 #ifndef __MERLIN_CUDA__
