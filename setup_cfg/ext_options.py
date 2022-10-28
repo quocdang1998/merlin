@@ -25,6 +25,8 @@ def get_extension_options():
         ext_options["extra_compile_args"] = ["-std=c++17"]
     elif (sys.platform == "win32"):
         ext_options["extra_compile_args"] = ["-std:c++17"]
+        if MERLIN_LIBKIND == "SHARED":
+            ext_options["extra_compile_args"] += ["/wd4251", "/wd4551"]
 
     # dependancies
     if (sys.platform == "linux"):
@@ -34,8 +36,9 @@ def get_extension_options():
     ext_options["depends"] = depends
 
     # extra link options
-    if (sys.platform == "win32") and (MERLIN_LIBKIND == "SHARED"):
-        ext_options["extra_link_args"] = ["/IGNORE:4286"]
+    if (sys.platform == "win32"):
+        ext_options["extra_link_args"] = ["/NODEFAULTLIB:LIBCMT.lib",
+                                          "/IGNORE:4286"]
 
     # link librairies
     ext_options["libraries"] = ["merlin"]

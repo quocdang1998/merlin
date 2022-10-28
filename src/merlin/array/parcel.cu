@@ -5,12 +5,13 @@
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides, merlin::array::array_copy
-#include "merlin/device/gpu_query.hpp"  // merlin::device::get_current_device
 #include "merlin/logger.hpp"  // FAILURE
-#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::inner_prod
-#include "merlin/vector.hpp"  // merlin::intvec
 
 namespace merlin::array {
+
+// -------------------------------------------------------------------------------------------------------------------------
+// Parcel
+// -------------------------------------------------------------------------------------------------------------------------
 
 // Default constructor
 Parcel::Parcel(void) {}
@@ -18,7 +19,7 @@ Parcel::Parcel(void) {}
 // Constructor from CPU array
 Parcel::Parcel(const Array & cpu_array, std::uintptr_t stream) : NdData(cpu_array) {
     // get device id
-    cudaGetDevice(&(this->device_id_));
+    this->device_ = device::Device();
     // allocate data
     cudaError_t err_ = cudaMalloc(&(this->data_), sizeof(float) * this->size());
     if (err_ != cudaSuccess) {
@@ -35,15 +36,15 @@ Parcel::Parcel(const Array & cpu_array, std::uintptr_t stream) : NdData(cpu_arra
     array_copy(dynamic_cast<NdData *>(this), dynamic_cast<const NdData *>(&cpu_array), copy_func);
 }
 
-// Check if current device holds data pointed by object
-int Parcel::check_device(void) const {
-    return (this->device_id_ - device::get_current_gpu());
+// Constructor from a slice
+Parcel::Parcel(const Parcel & whole, std::initializer_list<Slice> slices)  : NdData(whole, slices) {
+    this->force_free = false;
 }
 
 // Copy constructor
 Parcel::Parcel(const Parcel & src) : NdData(src) {
     // get device id
-    cudaGetDevice(&(this->device_id_));
+    this->device_ = device::Device();
     // reform strides vector
     this->strides_ = contiguous_strides(this->shape_, sizeof(float));
     // allocate data
@@ -52,8 +53,8 @@ Parcel::Parcel(const Parcel & src) : NdData(src) {
         FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", cudaGetErrorString(err_));
     }
     // create copy function
-    auto copy_func = std::bind(cudaMemcpyPeer, std::placeholders::_1, this->device_id_,
-                               std::placeholders::_2, src.device_id_, std::placeholders::_3);
+    auto copy_func = std::bind(cudaMemcpyPeer, std::placeholders::_1, this->device_.id(),
+                               std::placeholders::_2, src.device_.id(), std::placeholders::_3);
     // copy data to GPU
     array_copy(dynamic_cast<NdData *>(this), dynamic_cast<const NdData *>(&src), copy_func);
 }
@@ -71,8 +72,8 @@ Parcel & Parcel::operator=(const Parcel & src) {
         FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", cudaGetErrorString(err_));
     }
     // create copy function
-    auto copy_func = std::bind(cudaMemcpyPeer, std::placeholders::_1, this->device_id_,
-                               std::placeholders::_2, src.device_id_, std::placeholders::_3);
+    auto copy_func = std::bind(cudaMemcpyPeer, std::placeholders::_1, this->device_.id(),
+                               std::placeholders::_2, src.device_.id(), std::placeholders::_3);
     // copy data to GPU
     array_copy(dynamic_cast<NdData *>(this), dynamic_cast<const NdData *>(&src), copy_func);
     return *this;
@@ -81,7 +82,7 @@ Parcel & Parcel::operator=(const Parcel & src) {
 // Move constructor
 Parcel::Parcel(Parcel && src) : NdData(src) {
     // move device id
-    this->device_id_ = src.device_id_;
+    this->device_ = src.device_;
     // take over pointer to source
     src.data_ = NULL;
 }
@@ -91,7 +92,7 @@ Parcel & Parcel::operator=(Parcel && src) {
     // free old data
     this->free_current_data();
     // move device id
-    this->device_id_ = src.device_id_;
+    this->device_ = src.device_;
     // copy metadata
     this->NdData::operator=(src);
     // take over pointer to source
@@ -106,7 +107,7 @@ void Parcel::copy_to_gpu(Parcel * gpu_ptr, void * shape_strides_ptr) {
     // shallow copy of the current object
     copy_on_gpu.data_ = this->data_;
     copy_on_gpu.ndim_ = this->ndim_;
-    copy_on_gpu.device_id_ = this->device_id_;
+    copy_on_gpu.device_ = this->device_;
     // copy temporary object to GPU
     cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(Parcel), cudaMemcpyHostToDevice);
     // copy shape and strides data
@@ -120,16 +121,19 @@ void Parcel::copy_to_gpu(Parcel * gpu_ptr, void * shape_strides_ptr) {
 
 // Free old data
 void Parcel::free_current_data(void) {
+    // lock mutex
+    Parcel::m_.lock();
     // save current device and set device to the corresponding GPU
-    int current_device = device::get_current_gpu();
-    cudaSetDevice(this->device_id_);
+    device::Device current_device = device::Device::get_current_gpu();
+    this->device_.set_as_current();
     // free data
-    if (this->data_ != NULL) {
+    if ((this->data_ != NULL) && this->force_free) {
         cudaFree(this->data_);
         this->data_ = NULL;
     }
     // finalize: set back the original GPU and unlock the mutex
-    cudaSetDevice(current_device);
+    current_device.set_as_current();
+    Parcel::m_.unlock();
 }
 
 // Destructor

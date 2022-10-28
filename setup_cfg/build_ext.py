@@ -104,7 +104,7 @@ class custom_du_build_ext(_du_build_ext):
                     lib_dlink = ["merlin.lib", "merlincuda.lib"]
                 else:
                     lib_dlink = ["merlin.lib"]
-                lib_dlink += ["cuda.lib", CUDART, CUDADEVRT]
+                lib_dlink += [CUDADRIVER, CUDART, CUDADEVRT]
             elif sys.platform == "linux":
                 # dlink option
                 dlink_option += ["-O3", "-DNDEBUG", "-Xcompiler=-fPIC"]

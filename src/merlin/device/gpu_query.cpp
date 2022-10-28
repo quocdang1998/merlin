@@ -5,6 +5,10 @@
 
 namespace merlin::device {
 
+// -------------------------------------------------------------------------------------------------------------------------
+// Device
+// -------------------------------------------------------------------------------------------------------------------------
+
 #ifndef __MERLIN_CUDA__
 
 // Print limit of device
@@ -18,6 +22,17 @@ bool Device::test_gpu(void) {
     return false;
 }
 
+// Set as current GPU
+void Device::set_as_current(void) const {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
+}
+
+// Get and set limit
+std::uint64_t Device::limit(Device::Limit limit, std::uint64_t size) {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
+    return 0;
+}
+
 // Reset all GPU
 void Device::reset_all(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
@@ -26,6 +41,7 @@ void Device::reset_all(void) {
 // String representation
 std::string Device::repr(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
+    return "";
 }
 
 // Print limit of all GPU

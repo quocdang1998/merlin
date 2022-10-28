@@ -51,6 +51,9 @@ breathe_projects = { "merlin": os.path.abspath("./xml") }
 breathe_default_project = "merlin"
 doxygen_xml = [breathe_projects[breathe_default_project]]
 
+# Sphinx-panel settings
+panels_add_fontawesome_latex = True
+
 
 # -- Pygments style ----------------------------------------------------------
 
@@ -63,6 +66,7 @@ pygments_style = 'rainbow_dash'
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
+html_theme_options = {'navigation_depth': 3}
 html_favicon = '_static/merlin_favicon.svg'
 html_css_files = ['azura.css']
 html_js_files = [('azura.js', {'defer': 'defer'}), 'hsl_rgb.js']
@@ -85,14 +89,14 @@ latex_additional_files = ['_static/azura.sty',  # '_static/logo.pdf',
                           '_static/ChunkFive.ttf', '_static/CocoGoose.ttf']
 latex_elements = {
     'papersize': 'a4paper',
-    'passoptionstopackages': r'\PassOptionsToPackage{explicit}{titlesec}',
+    'passoptionstopackages': '\\PassOptionsToPackage{explicit}{titlesec}',
     'fontpkg': '',
     'fncychap': '',
     'figure_align': 'htbp',
     'pointsize': '10pt',
     'tableofcontents': ('\\renewcommand{\\contentsname}{Contents}\n'
-                        r'\tableofcontents\clearpage\pagenumbering{arabic}'),
-    'preamble': r'\usepackage{azura}',
+                        '\\tableofcontents\\clearpage\\pagenumbering{arabic}'),
+    'preamble': '\\usepackage{azura}',
     # 'makeindex': r'\usepackage[columns=1]{idxlayout}\makeindex',
     'makeindex': '',
 }

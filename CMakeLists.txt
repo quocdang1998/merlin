@@ -14,7 +14,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(MERLIN_CUDA ON CACHE BOOL "Build library using CUDA")  # -DMERLIN_CUDA=OFF
 set(MERLIN_LIBKIND "SHARED"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
     CACHE INTERNAL "Type of the created library (static or shared/dynamic)")
-set(MERLIN_TEST ON CACHE BOOL "Build test executables")  # -DMERLIN_TEST=ON
+set(MERLIN_TEST OFF CACHE BOOL "Build test executables")  # -DMERLIN_TEST=ON
 
 # source list
 list(APPEND MERLIN_SRC_CPP
@@ -25,6 +25,8 @@ list(APPEND MERLIN_SRC_CPP
      array/stock.cpp
      # src/autodiff.cpp
      device/gpu_query.cpp
+     device/context.cpp
+     filelock.cpp
      iterator.cpp
      interpolant/grid.cpp
      interpolant/interpolant.cpp
@@ -33,6 +35,7 @@ list(APPEND MERLIN_SRC_CU
      array/parcel.cu
      array/array.cu
      device/gpu_query.cu
+     device/context.cu
      interpolant/grid.cu
 )
 list(APPEND MERLIN_SRC_RDC
@@ -94,6 +97,21 @@ else()
     set_source_files_properties(${MERLIN_SRC_RDC} PROPERTIES LANGUAGE CXX)
 endif(MERLIN_CUDA)
 
+# CUDA Driver library (Adapted from CMake/FindCUDAToolkit.cmake#L550-L585)
+find_library(CUDA_DRIVER_LIBRARY
+             NAMES cuda_driver cuda
+             HINTS ${CUDA_TOOLKIT_ROOT_DIR}
+             ENV CUDA_PATH
+             PATH_SUFFIXES nvidia/current lib64 lib/x64 lib)
+if(NOT CUDA_DRIVER_LIBRARY)
+    find_library(CUDA_DRIVER_LIBRARY
+                 NAMES cuda_driver cuda
+                 HINTS ${CUDA_TOOLKIT_ROOT_DIR}
+                 ENV CUDA_PATH
+                 PATH_SUFFIXES lib64/stubs lib/x64/stubs lib/stubs stubs)
+endif()
+mark_as_advanced(CUDA_DRIVER_LIBRARY)
+
 # OpenMP
 find_package(OpenMP)
 
@@ -144,6 +162,7 @@ if(MERLIN_CUDA_STATIC_LIB)
         set(MERLIN_CUDA_OPTION --expt-relaxed-constexpr)
         target_compile_options(libmerlincuda PUBLIC
                                $<$<COMPILE_LANGUAGE:CUDA>: ${MERLIN_CUDA_OPTION} >)
+        target_link_libraries(libmerlincuda PUBLIC ${CUDA_DRIVER_LIBRARY})
     endif(MERLIN_CUDA)
     target_link_libraries(libmerlincuda PUBLIC OpenMP::OpenMP_CXX)
 endif(MERLIN_CUDA_STATIC_LIB)
@@ -163,11 +182,27 @@ if(MERLIN_CUDA)
     set(MERLIN_CUDA_OPTION ${DIAG_SUPPRESS} ${RELAXED_CONSTEXPR})
     target_compile_options(libmerlin PUBLIC
                            $<$<COMPILE_LANGUAGE:CUDA>: ${MERLIN_CUDA_OPTION} >)
+    target_link_libraries(libmerlin PUBLIC ${CUDA_DRIVER_LIBRARY})
     set_property(TARGET libmerlin PROPERTY CUDA_RUNTIME_LIBRARY Static)
     if(MERLIN_CUDA_STATIC_LIB)
         set_property(TARGET libmerlin PROPERTY CUDA_SEPARABLE_COMPILATION OFF)
     endif(MERLIN_CUDA_STATIC_LIB)
 endif(MERLIN_CUDA)
+
+# =============================================================================
+# external executable
+# =============================================================================
+
+# Apollo3 MPO reader
+find_package(HDF5 COMPONENTS CXX)
+list(APPEND AP3_MPO_SRC_CPP
+     ext/apollo3/ap3_mpo.cpp
+     ext/apollo3/hdf5_utils.cpp
+     ext/apollo3/main.cpp
+)
+add_executable(ap3_mpo ${AP3_MPO_SRC_CPP})
+target_include_directories(ap3_mpo PUBLIC ext/apollo3)
+target_link_libraries(ap3_mpo libmerlin ${HDF5_CXX_LIBRARIES} ${HDF5_C_LIBRARIES})
 
 # =============================================================================
 # tests
@@ -220,6 +255,8 @@ if(MERLIN_CUDA)
     file(APPEND ${MERLIN_CONFIG} "CUDART = \"${CUDART_STATIC}\"\n")
     cmake_path(GET CUDA_cudadevrt_LIBRARY FILENAME CUDADEVRT)
     file(APPEND ${MERLIN_CONFIG} "CUDADEVRT = \"${CUDADEVRT}\"\n")
+    cmake_path(GET CUDA_DRIVER_LIBRARY FILENAME CUDADRIVER)
+    file(APPEND ${MERLIN_CONFIG} "CUDADRIVER = \"${CUDADRIVER}\"\n")
 else()
     file(APPEND ${MERLIN_CONFIG} "MERLIN_CUDA = False\n")
 endif(MERLIN_CUDA)

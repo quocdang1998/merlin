@@ -66,6 +66,14 @@ class Vector {
     __cuhostdev__ std::uint64_t & size(void) {return this->size_;}
     /** @brief Get constant reference to size.*/
     __cuhostdev__ const std::uint64_t & size(void) const {return this->size_;}
+    /** @brief Begin iterator.*/
+    T * begin(void) {return this->data_;}
+    /** @brief Constant begin iterator.*/
+    const T * cbegin(void) const {return this->data_;}
+    /** @brief End iterator.*/
+    T * end(void) {return this->data_ + this->size_;}
+    /** @brief Constant begin iterator.*/
+    const T * cend(void) const {return this->data_ + this->size_;}
     /// @}
 
     /// @name Slicing operator

@@ -3,6 +3,7 @@
 #define MERLIN_ARRAY_STOCK_HPP_
 
 #include <cstdint>  // std::uint64_t
+#include <cstdio>  // std::FILE
 #include <fstream>  // std::fstream
 #include <mutex>  // std::mutex
 #include <string>  // std::string
@@ -11,6 +12,19 @@
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 
 namespace merlin::array {
+
+class MERLIN_EXPORTS FileLock {
+  public:
+    FileLock(void) = default;
+    FileLock(const char * fname);
+
+    void lock(void);
+
+    ~FileLock(void);
+
+  private:
+    void * file_handle = NULL;
+};
 
 /** @brief Multi-dimensional array exported to a file.*/
 class MERLIN_EXPORTS Stock : public NdData {
@@ -24,16 +38,20 @@ class MERLIN_EXPORTS Stock : public NdData {
      *  @param mode Open mode:
      *    - r: Read only.
      *    - w: Write only.
-     *    - a: Read and write.
+     *    - a: Read and write (equivalent to ``r+``).
+     *    - p: Parallel write (multiple processes can write at the same time).
+     *    - s: Shared (multiple processes can read and write at the same time).
+     *  @note In mode ``p`` and mode ``s``, user is responsible to prevent data race (each process reads/writes a different
+     *  subset of the data file).
      */
-    Stock(const std::string & filename, char mode = 'a');
+    Stock(const std::string & filename, char mode = 'a', std::uint64_t offset = 0);
     /// @}
 
     /// @name Copy and Move
     /// @{
-    /** @brief Copy constructor.*/
+    /** @brief Copy constructor (deleted).*/
     Stock(const Stock & src) = delete;
-    /** @brief Copy assignment.*/
+    /** @brief Copy assignment (deleted).*/
     Stock & operator=(const Stock & src) = delete;
     /** @brief Move constructor.*/
     Stock(Stock && src) = default;
@@ -43,45 +61,52 @@ class MERLIN_EXPORTS Stock : public NdData {
 
     /// @name Get members
     /// @{
-    /** @brief Get reference to the file stream.*/
-    std::fstream & file_stream(void) const {return this->file_stream_;}
+    /** @brief Get filename.*/
+    std::string filename(void) const {return this->filename_;}
+    /** @brief Get pointer to file.*/
+    std::FILE * file_ptr(void) const {return this->file_ptr_;}
+    /// @}
+
+    /// @name Temporary open/close
+    /// @{
+    /** @brief Temporary close the file.*/
+    void temporary_close(void);
     /// @}
 
     /// @name Read from file
     /// @{
     /** @brief Read metadata from file.*/
-    void read_metadata(void);
+    // void read_metadata(void);
     /** @brief Copy data from file to a merlin::Array.*/
-    void copy_to_array(Array & arr);
+    // void copy_to_array(Array & arr);
     /** @brief Convert to an merlin::Array.*/
-    Array to_array(void);
+    // Array to_array(void);
     /// @}
 
     /// @name Write to file
     /// @{
     /** @brief Get metadata from a merlin::Array.*/
-    void get_metadata(Array & src);
+    // void get_metadata(Array & src);
     /** @brief Write metadata to file.*/
-    void write_metadata(void);
+    // void write_metadata(void);
     /** @brief Write data from a merlin::Array to a file.*/
-    void write_data_to_file(Array & src);
+    // void write_data_to_file(Array & src);
     /// @}
 
     /** @brief Destructor.*/
     ~Stock(void);
 
   protected:
+    std::FILE * file_ptr_;
     std::string filename_;
     char mode_;
+    std::uint64_t offset_;
     std::uint64_t stream_pos_;
-    std::ios_base::fmtflags format_flag_;
+    bool force_close = true;
 
   private:
-    mutable std::fstream file_stream_;
-    void get_fstream_metadata(void);
-    void reopen_fstream(void);
-    static std::mutex mutex_;
-    static std::ios_base::openmode char_to_openmode(char mode);
+    // void get_fstream_metadata(void);
+    // void reopen_fstream(void);
 };
 
 }  // namespace merlin::array

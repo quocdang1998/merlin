@@ -1,39 +1,19 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/nddata.hpp"
 
-#include "merlin/logger.hpp"  // CUDAOUT, FAILURE
-#include "merlin/utils.hpp"  // merlin::inner_prod
-
 namespace merlin::array {
 
-__cuhostdev__ NdData NdData::operator[](std::initializer_list<Slice> slices) {
-    // check size
-    if (slices.size() != this->ndim_) {
-        CUHDERR(std::invalid_argument, "Dimension of Slices and NdData not compatible (expected %u, got %u).\n",
-                static_cast<unsigned int>(this->ndim_), static_cast<unsigned int>(slices.size()));
-    }
-    // create result
-    const Slice * slice_data = slices.begin();
-    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_);
-    std::uintptr_t result_ndim = 0;
-    intvec new_shape(this->ndim_, 0);
-    intvec new_strides(this->ndim_, 0);
+// -------------------------------------------------------------------------------------------------------------------------
+// NdData
+// -------------------------------------------------------------------------------------------------------------------------
+
+// Number of elements
+__cuhostdev__ std::uint64_t NdData::size(void) {
+    std::uint64_t size = 1;
     for (int i = 0; i < this->ndim_; i++) {
-        auto [offset, shape, stride] = slice_data[i].slice_on(this->shape_[i], this->strides_[i]);
-        data_ptr += offset;
-        if (shape != 1) {
-            new_shape[result_ndim] = shape;
-            new_strides[result_ndim] = stride;
-            result_ndim++;
-        }
+        size *= this->shape_[i];
     }
-    // finalize
-    NdData result;
-    result.data_ = reinterpret_cast<float *>(data_ptr);
-    result.ndim_ = (result_ndim == 0) ? 1 : result_ndim;
-    result.shape_ = (result_ndim == 0) ? intvec({1}) : intvec(new_shape.data(), result_ndim);
-    result.strides_ = (result_ndim == 0) ? intvec({sizeof(float)}) : intvec(new_strides.data(), result_ndim);
-    return result;
+    return size;
 }
 
 }  // namespace merlin::array
