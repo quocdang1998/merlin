@@ -5,6 +5,8 @@
 #include <map>  // std::map
 #include <sstream>  // std::ostringstream
 
+#include "cuda.h"  // cuDeviceGetName
+
 #include "merlin/logger.hpp"  // WARNING, FAILURE, cuda_runtime_error
 
 namespace merlin::device {
@@ -122,14 +124,34 @@ bool Device::test_gpu(void) {
     return true;
 }
 
+// Get and set GPU limit
+std::uint64_t Device::limit(Device::Limit limit, std::uint64_t size) {
+    std::uint64_t result;
+    if (size == UINT64_MAX) {
+        size_t limit_value;
+        cudaDeviceGetLimit(&limit_value, static_cast<cudaLimit>(limit));
+        result = static_cast<std::uint64_t>(limit_value);
+    } else {
+        size_t limit_value = static_cast<size_t>(size);
+        cudaError_t err_ = cudaDeviceSetLimit(static_cast<cudaLimit>(limit), limit_value);
+        if (err_ != cudaSuccess) {
+            FAILURE(cuda_runtime_error, "cudaDeviceSetLimit failed with message \"%s\".\n", cudaGetErrorName(err_));
+        }
+        result = size;
+    }
+    return result;
+}
+
 // Reset all GPU
 void Device::reset_all(void) {
     cudaDeviceReset();
 }
 
 std::string Device::repr(void) {
+    char name[256];
+    cuDeviceGetName(name, sizeof(name), this->id_);
     std::ostringstream os;
-    os << "Device ID: " << this->id_;
+    os << "<GPU " << name << ", ID " << this->id_ << ">";
     return os.str();
 }
 

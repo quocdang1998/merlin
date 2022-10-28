@@ -1,8 +1,31 @@
 # Copyright 2022 quocdang1998
 from cpython.unicode cimport PyUnicode_FromString
+from libc.stdint cimport uint64_t, UINT64_MAX
 from libcpp.string cimport string
 
-from gpu_query cimport *
+cdef extern from "merlin/device/gpu_query.hpp":
+    int Cpp_device_get_current_gpu "merlin::device::get_current_gpu" ()
+
+    cpdef enum class DeviceLimit "merlin::device::Device::Limit":
+        StackSize,
+        PrintfSize,
+        HeapSize,
+        SyncDepth,
+        LaunchPendingCount
+
+    cdef cppclass Cpp_device_Device "merlin::device::Device":
+        Cpp_device_Device(int id)
+        Cpp_device_Device(const Cpp_device_Device & src)
+        Cpp_device_Device & operator=(const Cpp_device_Device & src)
+        void print_specification()
+        bint test_gpu()
+        string repr()
+    int cpp_device_Device_get_num_gpu "merlin::device::Device::get_num_gpu" ()
+    void cpp_device_Device_reset_all "merlin::device::Device::reset_all" ()
+    uint64_t cpp_device_Device_limit "merlin::device::Device::limit" (DeviceLimit limit, uint64_t size)
+
+    void cpp_device_print_all_gpu_specification "merlin::device::print_all_gpu_specification" ()
+    bint cpp_device_test_all_gpu "merlin::device::test_all_gpu" ()
 
 def get_current_gpu():
     return Cpp_device_get_current_gpu()
@@ -56,6 +79,10 @@ cdef class Device:
             ``False`` if the test has failed.
         """
         return self.core.test_gpu()
+
+    @classmethod
+    def limit(self, DeviceLimit limit, uint64_t size = UINT64_MAX):
+        return cpp_device_Device_limit(limit, size)
 
     @classmethod
     def reset_all(self):

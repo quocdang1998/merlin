@@ -4,9 +4,11 @@
 
 #include <cstdint>  // std::uint64_t, std::uintptr_t
 #include <initializer_list>  // std::initializer_list
+#include <mutex>  // std::mutex
 
 #include "merlin/array/nddata.hpp"  // merlin::array::NdData
 #include "merlin/device/decorator.hpp"  // __cudevice__, __cuhostdev__
+#include "merlin/device/gpu_query.hpp"  // merlin::device::Device
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 
 namespace merlin::array {
@@ -37,9 +39,9 @@ class MERLIN_EXPORTS Parcel : public NdData {
     /// @name Get members
     /// @{
     /** @brief Get reference to ID of device containing data.*/
-    int & device_id(void) {return this->device_id_;}
+    int & device_id(void) {return this->device_.id();}
     /** @brief Get constant reference to ID of device containing data of a constant instance.*/
-    const int & device_id(void) const {return this->device_id_;}
+    const int & device_id(void) const {return this->device_.id();}
     /// @}
 
     /// @name Atributes
@@ -97,7 +99,9 @@ class MERLIN_EXPORTS Parcel : public NdData {
     // Members
     // -------
     /** @brief Device containing data of Parcel.*/
-    int device_id_;
+    device::Device device_;
+    /** @brief Mutex lock at destruction time.*/
+    static std::mutex m_;
 };
 
 }  // namespace merlin::array

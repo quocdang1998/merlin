@@ -2,7 +2,7 @@
 #ifndef MERLIN_DEVICE_GPU_QUERY_HPP_
 #define MERLIN_DEVICE_GPU_QUERY_HPP_
 
-#include <cstdint>  // std::uint64_t
+#include <cstdint>  // std::uint64_t, UINT64_MAX
 #include <map>  // std::map
 #include <string>  // std::string
 
@@ -50,10 +50,24 @@ class MERLIN_EXPORTS Device {
 
     /// @name GPU action
     /// @{
+    /** @brief Limit to get.*/
+    enum class Limit {StackSize = 0x00, PrintfSize = 0x01, HeapSize = 0x02, SyncDepth = 0x03, LaunchPendingCount = 0x04};
+    /** @brief Get and set limit.
+     *  @return Value of current limit if argument ``size`` is not given, and the value of size otherwise.
+     */
+    static std::uint64_t limit(Limit limit, std::uint64_t size = UINT64_MAX);
     /** @brief Reset GPU.
      *  @details Destroy all allocations and reset all state on the current device in the current process.
      */
     static void reset_all(void);
+    /// @}
+
+    /// @name Get members
+    /// @{
+    /** @brief Get reference to GPU ID.*/
+    __cuhostdev__ int & id(void) {return this->id_;}
+    /** @brief Get constant reference to GPU ID.*/
+    __cuhostdev__ const int & id(void) const {return this->id_;}
     /// @}
 
     /// @name Representation

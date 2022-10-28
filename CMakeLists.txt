@@ -94,6 +94,21 @@ else()
     set_source_files_properties(${MERLIN_SRC_RDC} PROPERTIES LANGUAGE CXX)
 endif(MERLIN_CUDA)
 
+# CUDA Driver library (Adapted from CMake/FindCUDAToolkit.cmake#L550-L585)
+find_library(CUDA_DRIVER_LIBRARY
+             NAMES cuda_driver cuda
+             HINTS ${CUDA_TOOLKIT_ROOT_DIR}
+             ENV CUDA_PATH
+             PATH_SUFFIXES nvidia/current lib64 lib/x64 lib)
+if(NOT CUDA_DRIVER_LIBRARY)
+    find_library(CUDA_DRIVER_LIBRARY
+                 NAMES cuda_driver cuda
+                 HINTS ${CUDA_TOOLKIT_ROOT_DIR}
+                 ENV CUDA_PATH
+                 PATH_SUFFIXES lib64/stubs lib/x64/stubs lib/stubs stubs)
+endif()
+mark_as_advanced(CUDA_DRIVER_LIBRARY)
+
 # OpenMP
 find_package(OpenMP)
 
@@ -144,6 +159,7 @@ if(MERLIN_CUDA_STATIC_LIB)
         set(MERLIN_CUDA_OPTION --expt-relaxed-constexpr)
         target_compile_options(libmerlincuda PUBLIC
                                $<$<COMPILE_LANGUAGE:CUDA>: ${MERLIN_CUDA_OPTION} >)
+        target_link_libraries(libmerlincuda PUBLIC ${CUDA_DRIVER_LIBRARY})
     endif(MERLIN_CUDA)
     target_link_libraries(libmerlincuda PUBLIC OpenMP::OpenMP_CXX)
 endif(MERLIN_CUDA_STATIC_LIB)
@@ -163,6 +179,7 @@ if(MERLIN_CUDA)
     set(MERLIN_CUDA_OPTION ${DIAG_SUPPRESS} ${RELAXED_CONSTEXPR})
     target_compile_options(libmerlin PUBLIC
                            $<$<COMPILE_LANGUAGE:CUDA>: ${MERLIN_CUDA_OPTION} >)
+    target_link_libraries(libmerlin PUBLIC ${CUDA_DRIVER_LIBRARY})
     set_property(TARGET libmerlin PROPERTY CUDA_RUNTIME_LIBRARY Static)
     if(MERLIN_CUDA_STATIC_LIB)
         set_property(TARGET libmerlin PROPERTY CUDA_SEPARABLE_COMPILATION OFF)
@@ -220,6 +237,8 @@ if(MERLIN_CUDA)
     file(APPEND ${MERLIN_CONFIG} "CUDART = \"${CUDART_STATIC}\"\n")
     cmake_path(GET CUDA_cudadevrt_LIBRARY FILENAME CUDADEVRT)
     file(APPEND ${MERLIN_CONFIG} "CUDADEVRT = \"${CUDADEVRT}\"\n")
+    cmake_path(GET CUDA_DRIVER_LIBRARY FILENAME CUDADRIVER)
+    file(APPEND ${MERLIN_CONFIG} "CUDADRIVER = \"${CUDADRIVER}\"\n")
 else()
     file(APPEND ${MERLIN_CONFIG} "MERLIN_CUDA = False\n")
 endif(MERLIN_CUDA)
