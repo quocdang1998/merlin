@@ -9,6 +9,10 @@
 #include <system_error>  // std::error_code
 #include <type_traits>  // std::is_same
 
+#ifdef __NVCC__
+#include "cuda.h"  // CUresult, cuGetErrorName
+#endif  // __NVCC__
+
 // Log MESSAGE, WARNING and FAILURE for CPU
 // ----------------------------------------
 
@@ -107,6 +111,12 @@ class cuda_runtime_error : public std::runtime_error {
  *  @param fmt Formatted string (same syntax as ``std::printf``).
  */
 #define CUDAERR(fmt, ...) std::printf("\033[1;35m[CUDAERR]\033[0m [%s] " fmt, __FUNCNAME__, ##__VA_ARGS__); asm("trap;")
+
+inline const char * cuda_get_error_name(CUresult err_) {
+    const char * buffer;
+    cuGetErrorName(err_, &buffer);
+    return buffer;
+}
 #endif  // __NVCC__
 
 // Log CUHDERR for host-device error

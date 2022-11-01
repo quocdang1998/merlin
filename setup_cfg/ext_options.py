@@ -34,8 +34,9 @@ def get_extension_options():
     ext_options["depends"] = depends
 
     # extra link options
-    if (sys.platform == "win32") and (MERLIN_LIBKIND == "SHARED"):
-        ext_options["extra_link_args"] = ["/IGNORE:4286"]
+    if (sys.platform == "win32"):
+        ext_options["extra_link_args"] = ["/NODEFAULTLIB:LIBCMT.lib",
+                                          "/IGNORE:4286"]
 
     # link librairies
     ext_options["libraries"] = ["merlin"]

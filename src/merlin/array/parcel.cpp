@@ -6,6 +6,9 @@
 
 namespace merlin::array {
 
+// Initialize mutex
+std::mutex Parcel::m_;
+
 #ifndef __MERLIN_CUDA__
 
 // Default constructor

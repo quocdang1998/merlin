@@ -17,6 +17,20 @@ __cuhostdev__ int get_current_gpu(void);
 /** @brief Class representing CPU device.*/
 class MERLIN_EXPORTS Device {
   public:
+    /** @brief Limit to get.*/
+    enum class Limit {
+        /** @brief Size of the stack of each CUDA thread.*/
+        StackSize = 0x00,
+        /** @brief Size of the ``std::printf`` function buffer.*/
+        PrintfSize = 0x01,
+        /** @brief Size of the heap of each CUDA thread.*/
+        HeapSize = 0x02,
+        /** @brief Maximum nesting depth of a grid at which a thread can safely call ``cudaDeviceSynchronize``.*/
+        SyncDepth = 0x03,
+        /** @brief Maximum number of outstanding device runtime launches.*/
+        LaunchPendingCount = 0x04
+    };
+
     /// @name Constructor
     /// @{
     /** @brief Constructor from GPU ID.*/
@@ -50,8 +64,6 @@ class MERLIN_EXPORTS Device {
 
     /// @name GPU action
     /// @{
-    /** @brief Limit to get.*/
-    enum class Limit {StackSize = 0x00, PrintfSize = 0x01, HeapSize = 0x02, SyncDepth = 0x03, LaunchPendingCount = 0x04};
     /** @brief Get and set limit.
      *  @return Value of current limit if argument ``size`` is not given, and the value of size otherwise.
      */
@@ -92,9 +104,6 @@ MERLIN_EXPORTS void print_all_gpu_specification(void);
  *  @return ``true`` if all tests on all GPU pass.
  */
 MERLIN_EXPORTS bool test_all_gpu(void);
-
-/** @brief Map from GPU ID to is details.*/
-MERLIN_EXPORTS extern std::map<int, Device> gpu_map;
 
 }  // namespace merlin::device
 

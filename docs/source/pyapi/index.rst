@@ -17,3 +17,5 @@ GPU with CUDA
    merlin.device.Device
    merlin.device.print_all_gpu_specification
    merlin.device.test_all_gpu
+   merlin.device.DeviceLimit
+

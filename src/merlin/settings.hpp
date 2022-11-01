@@ -2,20 +2,12 @@
 #ifndef MERLIN_SETTINGS_HPP_
 #define MERLIN_SETTINGS_HPP_
 
-#include <cstdint>  // std::uint64_t
 #include <map>  // std::map
 
-namespace merlin {
+namespace merlin::settings {
 
-namespace settings {
-
-/** @brief Max size (in bytes) of merlin::Parcel data on each GPU.*/
-extern std::map<int, std::uint64_t> max_gpu_memsize;
-
-/** @brief Max size of merlin::Array.*/
-extern std::uint16_t max_memsize;
-
-}  // namespace settings
+/** @brief Map from GPU ID to is details.*/
+MERLIN_EXPORTS extern std::map<int, Device *> gpu_map;
 
 }  // namespace merlin
 

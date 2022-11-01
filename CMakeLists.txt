@@ -33,6 +33,7 @@ list(APPEND MERLIN_SRC_CU
      array/parcel.cu
      array/array.cu
      device/gpu_query.cu
+     device/context.cu
      interpolant/grid.cu
 )
 list(APPEND MERLIN_SRC_RDC

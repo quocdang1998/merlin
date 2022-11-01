@@ -1,7 +1,10 @@
 #include "merlin/device/gpu_query.hpp"
+#include "merlin/device/context.hpp"
 #include "merlin/logger.hpp"
 
 #include <cinttypes>
+
+#include "omp.h"
 
 int main(void) {
     merlin::device::print_all_gpu_specification();
