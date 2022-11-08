@@ -14,7 +14,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(MERLIN_CUDA ON CACHE BOOL "Build library using CUDA")  # -DMERLIN_CUDA=OFF
 set(MERLIN_LIBKIND "SHARED"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
     CACHE INTERNAL "Type of the created library (static or shared/dynamic)")
-set(MERLIN_TEST ON CACHE BOOL "Build test executables")  # -DMERLIN_TEST=ON
+set(MERLIN_TEST OFF CACHE BOOL "Build test executables")  # -DMERLIN_TEST=ON
 
 # source list
 list(APPEND MERLIN_SRC_CPP
@@ -186,6 +186,21 @@ if(MERLIN_CUDA)
         set_property(TARGET libmerlin PROPERTY CUDA_SEPARABLE_COMPILATION OFF)
     endif(MERLIN_CUDA_STATIC_LIB)
 endif(MERLIN_CUDA)
+
+# =============================================================================
+# external executable
+# =============================================================================
+
+# Apollo3 MPO reader
+find_package(HDF5 COMPONENTS CXX)
+list(APPEND AP3_MPO_SRC_CPP
+     ext/apollo3/ap3_mpo.cpp
+     ext/apollo3/hdf5_utils.cpp
+     ext/apollo3/main.cpp
+)
+add_executable(ap3_mpo ${AP3_MPO_SRC_CPP})
+target_include_directories(ap3_mpo PUBLIC ext/apollo3)
+target_link_libraries(ap3_mpo libmerlin ${HDF5_CXX_LIBRARIES} ${HDF5_C_LIBRARIES})
 
 # =============================================================================
 # tests

@@ -184,7 +184,7 @@ body {
     white-space: normal;
     font-family: 'Fira Code', monospace;
     font-weight: 600;
-    font-size: 14.4px;
+    font-size: 12px;
 }
 
 /* literal background */
@@ -307,14 +307,14 @@ html.writer-html4 .rst-content dl:not(.docutils)>dt, html.writer-html5 .rst-cont
 /* item description content */
 .sig.sig-object {
     font-family: 'Fira Code', monospace;
-    font-size: 14.4px !important;
+    font-size: 12px !important;
     font-variant-ligatures: none;
     color: var(--itembox-text-color) !important;
 }
 
 html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) .descclassname {
     font-family: 'Fira Code', monospace;
-    font-size: 14.4px !important;
+    font-size: 12px !important;
     font-variant-ligatures: none;
 }
 
@@ -375,7 +375,7 @@ html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(
     color: var(--literal);
     font-family: 'Fira Code', monospace;
     font-weight: 600;
-    font-size: 14.4px;
+    font-size: 12px;
 }
 
 /* Python DESCRIPTION */
@@ -412,7 +412,7 @@ html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(
     font-style: normal !important;
     font-family: 'Fira Code', monospace;
     font-weight: 600;
-    font-size: 14.4px;
+    font-size: 12px;
     color: var(--type);
 }
 
@@ -421,7 +421,7 @@ html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(
     color: var(--type);
     font-family: 'Fira Code', monospace;
     font-weight: 600;
-    font-size: 14.4px !important;
+    font-size: 12px !important;
 }
 
 /* ============================================================================

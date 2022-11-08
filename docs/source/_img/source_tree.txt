@@ -1,9 +1,9 @@
-   merlin
-   ├── src  # C++ files
-   │   └── merlin
-   │       ├── foo.hpp  # declarations and inline function definitions
-   │       ├── foo.tpp  # template definitions (should be included in header files)
-   │       ├── foo.cpp  # C++ source
-   │       ├── foo.cu   # CUDA source
-   │       ├── foo.rdc  # relocatable device code
-   │
+merlin
+├── src  # C++ files
+│   └── merlin
+│       ├── foo.hpp  # declarations and inline function definitions
+│       ├── foo.tpp  # template definitions (should be included in header files)
+│       ├── foo.cpp  # C++ source
+│       ├── foo.cu   # CUDA source
+│       ├── foo.rdc  # relocatable device code
+│
