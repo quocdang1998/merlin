@@ -2,8 +2,6 @@
 #ifndef HDF5_UTILS_TPP_
 #define HDF5_UTILS_TPP_
 
-#include <cstdint>  // std::uint64_t
-
 template <typename T>
 std::pair<std::vector<T>, merlin::intvec> get_dset(H5::Group * group, char const * dset_address) {
     // open dataset
@@ -23,18 +21,18 @@ std::pair<std::vector<T>, merlin::intvec> get_dset(H5::Group * group, char const
     }
     // read data to a buffer
     std::uint64_t npoint = dspace.getSimpleExtentNpoints();
-    std::vector<char> buffer(element_size*npoint);
-    dset.read(buffer.data(), dset.getDataType());
     std::vector<T> data(npoint);
     if constexpr (std::is_same_v<T, std::string>) {
+        // read data to buffer
+        std::vector<char> buffer(element_size*npoint);
+        dset.read(buffer.data(), dset.getDataType());
         // convert to vector of std::string
         for (int i = 0; i < npoint; i++) {
             data[i].assign(buffer.data() + i*element_size, element_size);
         }
     } else {
-        // move buffer to data
-        data.data() = reinterpret_cast<T *>(buffer.data());
-        buffer.data() = NULL;
+        // read data directly
+        dset.read(data.data(), dset.getDataType());
     }
     // close dataset
     dset.close();

@@ -11,10 +11,17 @@
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/vector.hpp"  // merlin::floatvec
 
-class Ap3HomogCrossSection {
+class Ap3HomogXS {
   public:
-    Ap3HomogCrossSection(const std::string & filename, const std::string & isotope, const std::string & reaction,
+    Ap3HomogXS(const std::string & filename, const std::string & isotope, const std::string & reaction,
                          unsigned int energy_group);
+    // merge constructor
+    // Ap3HomogXS(std::vector<Ap3HomogXS &> & others);
+
+
+    // merlin::array::Array read_mpo(void);
+
+    ~Ap3HomogXS(void) = default;
 
   private:
     /** @brief Isotope.*/

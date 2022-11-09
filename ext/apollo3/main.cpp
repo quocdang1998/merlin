@@ -21,5 +21,5 @@ int main(int argc, char * argv[]) {
         }
     }
     // build Ap3HomogCrossSection object
-    Ap3HomogCrossSection homog_xs(filename, isotope, reaction, energy_group);
+    Ap3HomogXS homog_xs(filename, isotope, reaction, energy_group);
 }

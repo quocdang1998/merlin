@@ -2,7 +2,8 @@
 #ifndef HDF5_UTILS_HPP_
 #define HDF5_UTILS_HPP_
 
-#include <algorithm>  // std::transform
+#include <algorithm>  // std::transform, std::remove_if
+#include <cstdint>  // std::uint64_t
 #include <string>  // std::string
 #include <utility>  // std::pair
 #include <vector>  // std::vector
@@ -17,9 +18,9 @@ inline std::string lowercase(const std::string & s) {
     return result;
 }
 
-bool check_string_in_array(std::string element, merlin::Vector<std::string> array);
+std::uint64_t check_string_in_array(std::string element, std::vector<std::string> array);
 
-std::vector<std::string> ls_groups(H5::Group * group);
+std::vector<std::string> ls_groups(H5::Group * group, const char * substring = "");
 
 template <typename T>
 std::pair<std::vector<T>, merlin::intvec> get_dset(H5::Group * group, char const * dset_address);
