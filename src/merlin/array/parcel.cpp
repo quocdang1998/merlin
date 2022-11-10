@@ -43,12 +43,6 @@ Parcel & Parcel::operator=(Parcel && src) {
     return *this;
 }
 
-// Check if current device holds data pointed by object
-int Parcel::check_device(void) const {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
-    return 0;
-}
-
 // Copy data to a pre-allocated memory
 void Parcel::copy_to_gpu(Parcel * gpu_ptr, void * shape_strides_ptr) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");

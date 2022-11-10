@@ -5,6 +5,7 @@
 
 #include "merlin/array/copy.hpp"  // merlin::array::array_copy
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
+#include "merlin/device/gpu_query.hpp"  // merlin::device::Device
 #include "merlin/logger.hpp"  // FAILURE
 
 namespace merlin::array {
@@ -12,10 +13,10 @@ namespace merlin::array {
 // Copy data from GPU array
 void Array::sync_from_gpu(const Parcel & gpu_array, std::uintptr_t stream) {
     // check device
-    int check_result = gpu_array.check_device();
-    if (check_result != 0) {
+    device::Device current_gpu = device::Device::get_current_gpu();
+    if (current_gpu != gpu_array.device()) {
         FAILURE(cuda_runtime_error, "Current GPU is not corresponding (expected ID %d, got ID %d).\n",
-                gpu_array.device_id(), gpu_array.device_id() - check_result);
+                gpu_array.device().id(), current_gpu.id());
     }
     // cast stream
     cudaStream_t copy_stream = reinterpret_cast<cudaStream_t>(stream);

@@ -86,14 +86,14 @@ latex_additional_files = ['_static/azura.sty',  # '_static/logo.pdf',
                           '_static/ChunkFive.ttf', '_static/CocoGoose.ttf']
 latex_elements = {
     'papersize': 'a4paper',
-    'passoptionstopackages': r'\PassOptionsToPackage{explicit}{titlesec}',
+    'passoptionstopackages': '\\PassOptionsToPackage{explicit}{titlesec}',
     'fontpkg': '',
     'fncychap': '',
     'figure_align': 'htbp',
     'pointsize': '10pt',
     'tableofcontents': ('\\renewcommand{\\contentsname}{Contents}\n'
-                        r'\tableofcontents\clearpage\pagenumbering{arabic}'),
-    'preamble': r'\usepackage{azura}',
+                        '\\tableofcontents\\clearpage\\pagenumbering{arabic}'),
+    'preamble': '\\usepackage{azura}',
     # 'makeindex': r'\usepackage[columns=1]{idxlayout}\makeindex',
     'makeindex': '',
 }

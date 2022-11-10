@@ -124,6 +124,11 @@ bool Device::test_gpu(void) {
     return true;
 }
 
+// Set as current GPU
+void Device::set_as_current(void) const {
+    cudaSetDevice(this->id_);
+}
+
 // Get and set GPU limit
 std::uint64_t Device::limit(Device::Limit limit, std::uint64_t size) {
     std::uint64_t result;

@@ -13,8 +13,9 @@
 
 class Ap3HomogXS {
   public:
+    Ap3HomogXS(void) = default;
     Ap3HomogXS(const std::string & filename, const std::string & isotope, const std::string & reaction,
-                         unsigned int energy_group);
+               unsigned int energy_group);
     // merge constructor
     // Ap3HomogXS(std::vector<Ap3HomogXS &> & others);
 

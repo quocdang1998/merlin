@@ -39,17 +39,13 @@ class MERLIN_EXPORTS Parcel : public NdData {
     /// @name Get members
     /// @{
     /** @brief Get reference to ID of device containing data.*/
-    int & device_id(void) {return this->device_.id();}
+    device::Device & device(void) {return this->device_;}
     /** @brief Get constant reference to ID of device containing data of a constant instance.*/
-    const int & device_id(void) const {return this->device_.id();}
+    const device::Device & device(void) const {return this->device_;}
     /// @}
 
     /// @name Atributes
     /// @{
-    /** @brief Check if current device is the one holding Parcel data.
-     *  @return ID of GPU holding value - ID of current GPU.
-     */
-    int check_device(void) const;
     #ifdef __NVCC__
     /** @brief Get element at a given C-contiguous index.
      *  @param index A C-contiguous index.

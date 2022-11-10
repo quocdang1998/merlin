@@ -34,11 +34,6 @@ Parcel::Parcel(const Array & cpu_array, std::uintptr_t stream) : NdData(cpu_arra
     array_copy(dynamic_cast<NdData *>(this), dynamic_cast<const NdData *>(&cpu_array), copy_func);
 }
 
-// Check if current device holds data pointed by object
-int Parcel::check_device(void) const {
-    return (this->device_.id() - device::get_current_gpu());
-}
-
 // Copy constructor
 Parcel::Parcel(const Parcel & src) : NdData(src) {
     // get device id
@@ -122,15 +117,15 @@ void Parcel::free_current_data(void) {
     // lock mutex
     Parcel::m_.lock();
     // save current device and set device to the corresponding GPU
-    int current_device = device::get_current_gpu();
-    cudaSetDevice(this->device_.id());
+    device::Device current_device = device::Device::get_current_gpu();
+    this->device_.set_as_current();
     // free data
     if (this->data_ != NULL) {
         cudaFree(this->data_);
         this->data_ = NULL;
     }
     // finalize: set back the original GPU and unlock the mutex
-    cudaSetDevice(current_device);
+    current_device.set_as_current();
     Parcel::m_.unlock();
 }
 

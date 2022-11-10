@@ -25,6 +25,7 @@ list(APPEND MERLIN_SRC_CPP
      array/stock.cpp
      # src/autodiff.cpp
      device/gpu_query.cpp
+     device/context.cpp
      iterator.cpp
      interpolant/grid.cpp
      interpolant/interpolant.cpp

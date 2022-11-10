@@ -88,8 +88,7 @@ Ap3HomogXS::Ap3HomogXS(const std::string & filename,
             // open statept
             H5::Group statept = output.openGroup(statept_name.c_str());
             // loop over each zone
-            std::vector<std::string> zones = ls_groups(&output, "zone_");
-            MESSAGE("Output %s Statept %s Zone_num %d.\n", output_name.c_str(), statept_name.c_str(), zones.size());
+            std::vector<std::string> zones = ls_groups(&statept, "zone_");
             for (const std::string & zone_id : zones) {
                 // open zone
                 H5::Group zone = statept.openGroup(zone_id.c_str());
@@ -98,7 +97,6 @@ Ap3HomogXS::Ap3HomogXS(const std::string & filename,
                 std::tie(addrzx_array, _) = get_dset<int>(&zone, "ADDRZX");
                 std::uint64_t addrzx = addrzx_array[0];
                 std::uint64_t addrxs = addrxs_arr[merlin::ndim_to_contiguous_idx({i_reac, i_iso, addrzx}, addrxs_shape)];
-                MESSAGE("Output %s Statept %s Zone %s Addrxs: %u.\n", output_name.c_str(), statept_name.c_str(), zone_id.c_str(), addrxs);
                 // close zone
                 zone.close();
             }

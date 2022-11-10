@@ -2,7 +2,7 @@
 
 from cython.operator cimport dereference
 from cpython.unicode cimport PyUnicode_FromString
-from libc.stdint cimport uint64_t, UINT64_MAX
+from libc.stdint cimport uint64_t, uintptr_t, UINT64_MAX
 from libcpp.string cimport string
 
 include "gpu_query.pxd"
