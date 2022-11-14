@@ -67,9 +67,7 @@ class MERLIN_EXPORTS Context {
     /// @{
     /** @brief Get GPU bounded to the context.*/
     Device get_gpu(void) const {return this->device_;}
-    /** @brief Check if the context is attached to any CPU process.
-     *  @note If the current object is a reference and
-     */
+    /** @brief Check if the context is attached to any CPU process.*/
     bool is_attached(void) const {return this->attached_;}
     /// @}
 
@@ -95,7 +93,9 @@ class MERLIN_EXPORTS Context {
     static Context create_primary_context(const Device & gpu);
     /** @brief Get primary context instance corresponding to a GPU.*/
     static Context & get_primary_context(const Device & gpu) {return Context::primary_contexts[gpu.id()];}
-    /** @brief Get state of the primary context.*/
+    /** @brief Get state of the primary context.
+     *  @returns Active state (``false`` means inactive) and setting flag of the primary context associated with the GPU.
+     */
     static std::pair<bool, Flags> get_primary_ctx_state(const Device & gpu);
     /** @brief Set flag for primary context.*/
     static void set_flag_primary_context(const Device & gpu, Flags flag);

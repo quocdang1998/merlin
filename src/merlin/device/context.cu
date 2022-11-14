@@ -5,6 +5,10 @@
 
 namespace merlin::device {
 
+// -------------------------------------------------------------------------------------------------------------------------
+// Context
+// -------------------------------------------------------------------------------------------------------------------------
+
 // Member constructor
 Context::Context(const Device & gpu, Context::Flags flag) {
     CUcontext ctx;
@@ -64,9 +68,6 @@ void Context::set_current(void) {
         FAILURE(cuda_runtime_error, "Set current context failed with message \"%s\".\n", cuda_get_error_name(err_));
     }
 }
-
-// List of primary contexts
-std::vector<Context> Context::primary_contexts;
 
 // Create list of primary contexts
 void Context::create_primary_context_list(void) {

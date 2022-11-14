@@ -5,6 +5,10 @@
 
 namespace merlin::device {
 
+// -------------------------------------------------------------------------------------------------------------------------
+// Device
+// -------------------------------------------------------------------------------------------------------------------------
+
 // Construct a device from its ID
 __cuhostdev__ Device::Device(int id) {
     #ifdef __MERLIN_CUDA__
@@ -41,5 +45,8 @@ __cuhostdev__ Device Device::get_current_gpu(void) {
     return 0;
     #endif  // __MERLIN_CUDA__
 }
+
+// Destructor
+__cuhostdev__ Device::~Device(void) {}
 
 }  // namespace merlin::device

@@ -19,21 +19,27 @@ cdef extern from "merlin/device/gpu_query.hpp":
         SyncDepth,
         LaunchPendingCount
 
-    cdef cppclass Cpp_Device "merlin::device::Device":
-        Cpp_Device()
-        Cpp_Device(int id)
-        Cpp_Device(const Cpp_Device & src)
-        void print_specification()
-        bint test_gpu()
-        void set_as_current()
-        string repr()
-        int & id()
-    Cpp_Device cpp_Device_get_current_gpu "merlin::device::Device::get_current_gpu" ()
-    int cpp_Device_get_num_gpu "merlin::device::Device::get_num_gpu" ()
-    void cpp_Device_reset_all "merlin::device::Device::reset_all" ()
-    uint64_t cpp_Device_limit "merlin::device::Device::limit" (DeviceLimit limit, uint64_t size)
-    bint operator==(const Cpp_Device & left, const Cpp_Device & right)
-    bint operator!=(const Cpp_Device & left, const Cpp_Device & right)
+    cdef cppclass CppDevice "merlin::device::Device":
+        CppDevice() except +
+        CppDevice(int id) except +
+        CppDevice(const CppDevice & src) except +
+        void print_specification() except +
+        bint test_gpu() except +
+        void set_as_current() except +
+        string repr() except +
+        int & id() except +
 
-    void cpp_print_all_gpu_specification "merlin::device::print_all_gpu_specification" ()
-    bint cpp_test_all_gpu "merlin::device::test_all_gpu" ()
+        @staticmethod
+        CppDevice get_current_gpu() except +
+        @staticmethod
+        int get_num_gpu() except +
+        @staticmethod
+        uint64_t limit(DeviceLimit limit, uint64_t size) except +
+        @staticmethod
+        void reset_all() except+
+
+    bint operator==(const CppDevice & left, const CppDevice & right) except +
+    bint operator!=(const CppDevice & left, const CppDevice & right) except +
+
+    void cpp_print_all_gpu_specification "merlin::device::print_all_gpu_specification" () except +
+    bint cpp_test_all_gpu "merlin::device::test_all_gpu" () except +

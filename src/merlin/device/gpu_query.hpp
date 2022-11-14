@@ -98,7 +98,7 @@ class MERLIN_EXPORTS Device {
     /// @name Destructor
     /// @{
     /** @brief Default destructor.*/
-    __cuhostdev__ ~Device(void) {}
+    __cuhostdev__ ~Device(void);
     /// @}
 
   private:

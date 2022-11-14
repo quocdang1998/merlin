@@ -22,6 +22,11 @@ class MERLIN_EXPORTS Parcel : public NdData {
     Parcel(void);
     /** @brief Construct array from CPU array.*/
     Parcel(const Array & cpu_array, std::uintptr_t stream = 0);
+    /** @brief Constructor from a slice.
+     *  @param whole merlin::array::NdData of the original array.
+     *  @param slices List of merlin::array::Slice on each dimension.
+     */
+    Parcel(const Parcel & whole, std::initializer_list<Slice> slices);
     /// @}
 
     /// @name Copy and Move
@@ -92,8 +97,8 @@ class MERLIN_EXPORTS Parcel : public NdData {
     /// @}
 
   protected:
-    // Members
-    // -------
+    /** @brief Decision to delete Array::data_ at destruction or not.*/
+    bool force_free = true;
     /** @brief Device containing data of Parcel.*/
     device::Device device_;
     /** @brief Mutex lock at destruction time.*/

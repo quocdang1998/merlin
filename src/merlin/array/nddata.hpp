@@ -20,7 +20,7 @@ class MERLIN_EXPORTS NdData {
     /// @name Constructor
     /// @{
     /** @brief Default constructor (do nothing).*/
-    NdData(void) = default;
+    NdData(void) {}
     /** @brief Constructor from data pointer and meta-data.
      *  @details This constructor is used to construct explicitly an NdData in C++ interface.
      *  @param data Pointer to data.
@@ -37,6 +37,11 @@ class MERLIN_EXPORTS NdData {
      *  @param strides Pointer to strides vector.
      */
     NdData(float * data, std::uint64_t ndim, const std::uint64_t * shape, const std::uint64_t * strides);
+    /** @brief Constructor from a slice.
+     *  @param whole merlin::array::NdData of the original array.
+     *  @param slices List of merlin::array::Slice on each dimension.
+     */
+    NdData(const NdData & whole, std::initializer_list<Slice> slices);
     /// @}
 
     /// @name Copy and move
@@ -70,13 +75,7 @@ class MERLIN_EXPORTS NdData {
     /// @name Atributes
     /// @{
     /** @brief Number of element.*/
-    std::uint64_t size(void);
-    /// @}
-
-    /// @name Slicing
-    /// @{
-    /** @brief Slice a sub-array.*/
-    __cuhostdev__ NdData operator[](std::initializer_list<Slice> slices);
+    __cuhostdev__ std::uint64_t size(void);
     /// @}
 
     /// @name Destructor
@@ -84,7 +83,6 @@ class MERLIN_EXPORTS NdData {
     /** @brief Default destructor.*/
     virtual ~NdData(void) = default;
     /// @}
-
 
   protected:
     /** @brief Pointer to data.*/
@@ -102,8 +100,9 @@ class MERLIN_EXPORTS NdData {
 };
 
 // Forward declaration of subclasses
-class Array;  // CPU Array, defined in tensor.hpp
+class Array;  // CPU Array, defined in array.hpp
 class Parcel;  // GPU Array, defined in parcel.hpp
+class Stock;  // Out of core array, defined in stock.hpp
 
 }  // namespace merlin::array
 

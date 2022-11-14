@@ -40,6 +40,11 @@ class MERLIN_EXPORTS Array : public NdData {
      */
     Array(float * data, std::uint64_t ndim,
           const std::uint64_t * shape, const std::uint64_t * strides, bool copy = false);
+    /** @brief Constructor from a slice.
+     *  @param whole merlin::array::NdData of the original array.
+     *  @param slices List of merlin::array::Slice on each dimension.
+     */
+    Array(const Array & whole, std::initializer_list<Slice> slices);
     /// @}
 
     /// @name Copy and move
@@ -71,9 +76,7 @@ class MERLIN_EXPORTS Array : public NdData {
      *  @param index Vector of indices along each dimension.
      *  @return Reference to the element at the provided index.
      */
-    float & operator[] (const intvec & index);
-    /** @brief Create new array by slicing.*/
-    // Array operator[] (std::initializer_list<Slice> slices);
+    float & operator[](const intvec & index);
     /// @}
 
     /// @name Transfer data
@@ -83,7 +86,7 @@ class MERLIN_EXPORTS Array : public NdData {
     /** @brief Export data to a file.
      *  @param filename Name of exported file.
      */
-    void export_to_file(const std::string & filename);
+    // void export_to_file(const std::string & filename);
     /// @}
 
     /// @name Destructor
@@ -93,9 +96,7 @@ class MERLIN_EXPORTS Array : public NdData {
     /// @}
 
   protected:
-    // Members
-    // -------
-    /** @brief Decision to delete Array::data_ at destruction or not.*/
+    /** @brief Decision to delete merlin::array::Array::data_ at destruction or not.*/
     bool force_free;
     /** @brief Index vector of begin element.*/
     intvec begin_;

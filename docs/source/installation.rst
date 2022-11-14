@@ -46,8 +46,8 @@ To compile the documentation, install the following packages:
 
    .. code-block:: sh
 
-      pip install Sphinx sphinx_rtd_theme sphinx_tabs sphinx_panels breathe
-      pip install git+https://github.com/quocdang1998/doxysummary.git
+      pip install --no-deps Sphinx sphinx_rtd_theme sphinx_tabs sphinx_panels breathe
+      pip install --no-deps git+https://github.com/quocdang1998/doxysummary.git
 
 .. |Doxygen| replace:: ``Doxygen>=1.8.5``
 .. _Doxygen: https://doxygen.nl/download.html

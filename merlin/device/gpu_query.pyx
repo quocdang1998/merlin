@@ -3,7 +3,7 @@
 cdef class Device:
     """Represent a GPU."""
 
-    cdef Cpp_Device * core
+    cdef CppDevice * core
 
     def __init__(self, **kwargs):
         """__init__(self, **kwargs)
@@ -17,10 +17,10 @@ cdef class Device:
         cdef int id
 
         if not kwargs:
-            self.core = new Cpp_Device()
+            self.core = new CppDevice()
         elif kwargs.get("id") is not None:
             id = kwargs.pop("id")
-            self.core = new Cpp_Device(id)
+            self.core = new CppDevice(id)
 
         if kwargs:
             raise ValueError("Invalid keywords: " + ", ".join(k for k in kwargs.keys()))
@@ -31,17 +31,27 @@ cdef class Device:
     def assign(self, uintptr_t ptr):
         """assign(self, ptr)
         Assign pointer to a C++ object to the Python class wrapper.
+
+        Parameters
+        ----------
+        ptr: int
+            Pointer to C++ object to assign to current object in form of an unsigned integer.
         """
         del self.core
-        self.core = <Cpp_Device *>(ptr)
+        self.core = <CppDevice *>(ptr)
 
-    cdef c_assign(self, Cpp_Device * new_core):
+    cdef c_assign(self, CppDevice * new_core):
         del self.core
         self.core = new_core
 
     cpdef uintptr_t pointer(self):
         """pointer(self)
         Return pointer to C++ object wrapped by the class instance.
+
+        Returns
+        -------
+        ``int``
+            Pointer to C++ object wrapped by the object instance in form of an unsigned integer.
         """
         return <uintptr_t>(self.core)
 
@@ -55,7 +65,7 @@ cdef class Device:
         ``int``
             Number of GPU detected.
         """
-        return cpp_Device_get_num_gpu()
+        return CppDevice.get_num_gpu()
 
     @classmethod
     def get_current_gpu(self):
@@ -68,7 +78,7 @@ cdef class Device:
             Current GPU.
         """
         result = Device()
-        cdef Cpp_Device * c_result = new Cpp_Device(cpp_Device_get_current_gpu())
+        cdef CppDevice * c_result = new CppDevice(CppDevice.get_current_gpu())
         result.c_assign(c_result)
         return result
 
@@ -80,8 +90,8 @@ cdef class Device:
 
     def test_gpu(self):
         """test_gpu(self)
-        Perform a simple addition of 2 integers on GPU and compare with the
-        result on CPU to ensure the proper functionality of GPU and CUDA.
+        Perform a simple addition of 2 integers on GPU and compare with the result on CPU to ensure the proper functionality
+        of GPU and CUDA.
 
         Returns
         -------
@@ -108,14 +118,14 @@ cdef class Device:
         size: int
             If provided, set the limit of the GPU to be the value of the argument.
         """
-        return cpp_Device_limit(limit, size)
+        return CppDevice.limit(limit, size)
 
     @classmethod
     def reset_all(self):
         """reset_all(self)
         Reset all GPU (halt kernels launched and free allocated memory).
         """
-        cpp_Device_reset_all()
+        CppDevice.reset_all()
 
     def __eq__(Device left, Device right):
         dereference(left.core) == dereference(right.core)

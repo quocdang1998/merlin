@@ -26,6 +26,7 @@ list(APPEND MERLIN_SRC_CPP
      # src/autodiff.cpp
      device/gpu_query.cpp
      device/context.cpp
+     filelock.cpp
      iterator.cpp
      interpolant/grid.cpp
      interpolant/interpolant.cpp

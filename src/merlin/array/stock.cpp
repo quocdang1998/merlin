@@ -2,10 +2,17 @@
 #include "merlin/array/stock.hpp"
 
 #include <chrono>  // std::chrono::milliseconds
-#include <cstdint>  // std::uint64_t, std::uintptr_t
+#include <cinttypes>  // PRIu64
+#include <ios>  // std::ios_base::failure
 #include <filesystem>  // std::filesystem::exists
 #include <functional>  // std::bind, std::placeholders, std::ref
 #include <thread>  // std::this_thread::sleep_for
+
+#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif  // WIN32 || _WIN32 || WIN64 || _WIN64
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/array/copy.hpp"  // merlin::array::array_copy, merlin::array::contiguous_strides
@@ -13,6 +20,27 @@
 #include "merlin/vector.hpp"  // merlin::intvec
 
 namespace merlin::array {
+
+// -------------------------------------------------------------------------------------------------------------------------
+// FileLock
+// -------------------------------------------------------------------------------------------------------------------------
+
+// Constructor from filename
+FileLock::FileLock(const char * fname) {
+    this->file_handle = CreateFileA(fname, GENERIC_READ | GENERIC_WRITE,
+                                    FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+                                    FILE_ATTRIBUTE_NORMAL, NULL);
+}
+
+// Lock file handle
+void FileLock::lock(void) {
+    bool blocked = LockFile(this->file_handle, 0, 0, 1024, 0);
+}
+
+// Destructor
+FileLock::~FileLock(void) {
+    bool err_ = CloseHandle(this->file_handle);
+}
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Data read/write
@@ -32,59 +60,44 @@ static inline void write_to_file(std::fstream & file, float * dest, float * src,
 // Stock
 // -------------------------------------------------------------------------------------------------------------------------
 
-// Stock mutex
-std::mutex Stock::mutex_;
-
-// Convert char to openmode
-std::ios_base::openmode Stock::char_to_openmode(char mode) {
-    switch (mode) {
-      case 'r':
-        return std::ios_base::in;
-      case 'w':
-        return std::ios_base::out;
-      case 'a':
-        return std::ios_base::in | std::ios_base::out;
-      default:
-        FAILURE(std::invalid_argument, "Unknown openmode \"%c\".\n", mode);
-    }
-    return std::ios_base::binary;
-}
-
-// Get metadata from std::fstream
-void Stock::get_fstream_metadata(void) {
-    if (!(this->file_stream_.is_open())) {
-        FAILURE(std::runtime_error, "File must be opened to get its metadata.\n");
-    }
-    this->stream_pos_ = this->file_stream_.tellg();
-    this->format_flag_ = this->file_stream_.flags();
-}
-
-// Reopen a closed fstream
-void Stock::reopen_fstream(void) {
-    if (this->file_stream_.is_open()) {
-        return;
-    }
-    this->file_stream_.open(this->filename_, Stock::char_to_openmode(this->mode_));
-    this->file_stream_.seekg(this->stream_pos_);
-    this->file_stream_.flags(this->format_flag_);
-}
-
 // Constructor from filename
-Stock::Stock(const std::string & filename, char mode) : filename_(filename), mode_(mode) {
-    this->file_stream_.open(filename, Stock::char_to_openmode(mode));
-    if (!(this->file_stream_.is_open())) {
-        if ((mode == 'r') || (mode == 'a') && !(std::filesystem::exists(filename))) {
-            FAILURE(std::filesystem::filesystem_error, "Failed to open file %s (file doesn't exist).\n", filename.c_str());
-        } else {
-            do {
-                WARNING("Cannot open file to write for now, refreshing in 1 minute.\n");
-                std::this_thread::sleep_for(std::chrono::minutes(1));
-            } while (!(this->file_stream_.is_open()));
-        }
+Stock::Stock(const std::string & filename, char mode, std::uint64_t offset) : filename_(filename), mode_(mode),
+                                                                              offset_(offset) {
+    std::string c_mode;
+    switch (mode) {
+        case 'r':
+            c_mode = std::string("rb");
+            break;
+        case 'w', 'p':
+            c_mode = std::string("wb");
+            break;
+        case 'a', 's':
+            c_mode = std::string("rb+");
+            break;
     }
-    this->get_fstream_metadata();
+    this->file_ptr_ = std::fopen(filename.c_str(), c_mode.c_str());
+    if (this->file_ptr_ == NULL) {
+        FAILURE(std::ios_base::failure, "Cannot open file \"%s\".\n", filename.c_str());
+    }
+    int err_ = std::fseek(this->file_ptr_, offset, SEEK_SET);
+    if (err_ != 0) {
+        FAILURE(std::ios_base::failure, "Cannot move cursor to position %" PRIu64 " to file \"%s\".\n",
+                offset, filename.c_str());
+    }
 }
 
+// Temporary close the file
+void Stock::temporary_close(void) {
+    if (this->file_ptr_ != NULL) {
+        int err_ = std::fclose(this->file_ptr_);
+        if (err_ != 0) {
+            FAILURE(std::ios_base::failure, "Cannot close file \"%s\".\n", this->filename_.c_str());
+        }
+        this->file_ptr_ = NULL;
+    }
+}
+
+/*
 // Read metadata from file (this function is single threaded to avoid data race)
 void Stock::read_metadata(void) {
     Stock::mutex_.lock();
@@ -150,11 +163,14 @@ void Stock::write_data_to_file(Array & src) {
     // this->file_stream_.close();
     Stock::mutex_.unlock();
 }
-
+*/
 // Destructor
 Stock::~Stock(void) {
-    if (this->file_stream_.is_open()) {
-        this->file_stream_.close();
+    if ((this->file_ptr_ != NULL) && this->force_close) {
+        int err_ = std::fclose(this->file_ptr_);
+        if (err_ != 0) {
+            FAILURE(std::ios_base::failure, "Cannot close file \"%s\".\n", this->filename_.c_str());
+        }
     }
 }
 

@@ -6,10 +6,12 @@
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides, merlin::array::array_copy
 #include "merlin/logger.hpp"  // FAILURE
-#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::inner_prod
-#include "merlin/vector.hpp"  // merlin::intvec
 
 namespace merlin::array {
+
+// -------------------------------------------------------------------------------------------------------------------------
+// Parcel
+// -------------------------------------------------------------------------------------------------------------------------
 
 // Default constructor
 Parcel::Parcel(void) {}
@@ -32,6 +34,11 @@ Parcel::Parcel(const Array & cpu_array, std::uintptr_t stream) : NdData(cpu_arra
                                cudaMemcpyHostToDevice, copy_stream);
     // copy data to GPU
     array_copy(dynamic_cast<NdData *>(this), dynamic_cast<const NdData *>(&cpu_array), copy_func);
+}
+
+// Constructor from a slice
+Parcel::Parcel(const Parcel & whole, std::initializer_list<Slice> slices)  : NdData(whole, slices) {
+    this->force_free = false;
 }
 
 // Copy constructor
@@ -120,7 +127,7 @@ void Parcel::free_current_data(void) {
     device::Device current_device = device::Device::get_current_gpu();
     this->device_.set_as_current();
     // free data
-    if (this->data_ != NULL) {
+    if ((this->data_ != NULL) && this->force_free) {
         cudaFree(this->data_);
         this->data_ = NULL;
     }

@@ -68,6 +68,11 @@ Array::Array(float * data, std::uint64_t ndim,
     }
 }
 
+// Constructor from a slice
+Array::Array(const Array & whole, std::initializer_list<Slice> slices) : NdData(whole, slices) {
+    this->force_free = false;
+}
+
 // Copy constructor
 Array::Array(const Array & src) : NdData(src) {
     // copy / initialize meta data
@@ -146,12 +151,14 @@ void sync_from_gpu(const Parcel & gpu_array, std::uintptr_t stream) {
 #endif  // __MERLIN_CUDA__
 
 // Export data to a file
+/*
 void Array::export_to_file(const std::string & filename) {
     Stock Stk(filename, 'w');
     Stk.get_metadata(*this);
     Stk.write_metadata();
     Stk.write_data_to_file(*this);
 }
+*/
 
 // Destructor
 Array::~Array(void) {

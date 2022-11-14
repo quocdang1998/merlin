@@ -11,6 +11,10 @@
 
 namespace merlin::device {
 
+// -------------------------------------------------------------------------------------------------------------------------
+// Get GPU core
+// -------------------------------------------------------------------------------------------------------------------------
+
 // Convert GPU major.minor version to number of CUDA core
 // Adapted from function _ConvertSMVer2Cores, see https://github.com/NVIDIA/cuda-samples/blob/master/Common/helper_cuda.h
 static int convert_SM_version_to_core(int major, int minor) {
@@ -38,6 +42,10 @@ static int convert_SM_version_to_core(int major, int minor) {
     }
     return num_gpu_arch_cores_per_SM[SM];
 }
+
+// -------------------------------------------------------------------------------------------------------------------------
+// Device
+// -------------------------------------------------------------------------------------------------------------------------
 
 // Print limit of device
 void Device::print_specification(void) {

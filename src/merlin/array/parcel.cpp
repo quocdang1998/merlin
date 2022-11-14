@@ -6,6 +6,10 @@
 
 namespace merlin::array {
 
+// -------------------------------------------------------------------------------------------------------------------------
+// Parcel
+// -------------------------------------------------------------------------------------------------------------------------
+
 // Initialize mutex
 std::mutex Parcel::m_;
 
@@ -18,6 +22,11 @@ Parcel::Parcel(void) {
 
 // Constructor from CPU array
 Parcel::Parcel(const Array & cpu_array, std::uintptr_t stream) {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
+}
+
+// Constructor from a slice
+Parcel::Parcel(const Parcel & whole, std::initializer_list<Slice> slices) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 

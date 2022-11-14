@@ -19,3 +19,10 @@ GPU with CUDA
    merlin.device.test_all_gpu
    merlin.device.DeviceLimit
 
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.device.Context
+   merlin.device.ContextFlags

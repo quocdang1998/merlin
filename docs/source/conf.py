@@ -51,6 +51,9 @@ breathe_projects = { "merlin": os.path.abspath("./xml") }
 breathe_default_project = "merlin"
 doxygen_xml = [breathe_projects[breathe_default_project]]
 
+# Sphinx-panel settings
+panels_add_fontawesome_latex = True
+
 
 # -- Pygments style ----------------------------------------------------------
 
