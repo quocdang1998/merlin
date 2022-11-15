@@ -1,13 +1,13 @@
 // Copyright 2022 quocdang1998
-#include "merlin/device/gpu_query.hpp"
+#include "merlin/cuda/gpu_query.hpp"
 
 #include "merlin/logger.hpp"  // FAILURE, cuda_compile_error
 
-namespace merlin::device {
+namespace merlin::cuda {
 
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // Device
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 #ifndef __MERLIN_CUDA__
 
@@ -60,4 +60,4 @@ std::map<int, Device> gpu_map;
 
 #endif  // __MERLIN_CUDA__
 
-}  // namespace merlin::device
+}  // namespace merlin::cuda

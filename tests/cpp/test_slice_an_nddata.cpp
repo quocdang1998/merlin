@@ -28,7 +28,7 @@ int main(void) {
             B_array.data()[2], B_array.data()[3], B_array.data()[4], B_array.data()[5]);
 
     MESSAGE("Create NdData C from slicing A.\n");
-    merlin::array::NdData C_array = A_array[{merlin::array::Slice(), merlin::array::Slice(0, 3, 2)}];
+    merlin::array::NdData C_array(A_array, {merlin::array::Slice(), merlin::array::Slice(0, 3, 2)});
     MESSAGE("Shape of C: [%" PRIu64 ", %" PRIu64 "].\n", C_array.shape()[0], C_array.shape()[1]);
     MESSAGE("NdData C = [[%.1f %.1f], [%.1f %.1f]].\n", C_array.data()[0], C_array.data()[2],
             C_array.data()[3], C_array.data()[5]);

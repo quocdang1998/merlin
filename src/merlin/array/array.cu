@@ -5,19 +5,19 @@
 
 #include "merlin/array/copy.hpp"  // merlin::array::array_copy
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/device/gpu_query.hpp"  // merlin::device::Device
+#include "merlin/cuda/gpu_query.hpp"  // merlin::cuda::Device
 #include "merlin/logger.hpp"  // FAILURE
 
-namespace merlin::array {
+namespace merlin {
 
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // Array
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 // Copy data from GPU array
-void Array::sync_from_gpu(const Parcel & gpu_array, std::uintptr_t stream) {
+void array::Array::sync_from_gpu(const array::Parcel & gpu_array, std::uintptr_t stream) {
     // check device
-    device::Device current_gpu = device::Device::get_current_gpu();
+    cuda::Device current_gpu = cuda::Device::get_current_gpu();
     if (current_gpu != gpu_array.device()) {
         FAILURE(cuda_runtime_error, "Current GPU is not corresponding (expected ID %d, got ID %d).\n",
                 gpu_array.device().id(), current_gpu.id());
@@ -28,7 +28,7 @@ void Array::sync_from_gpu(const Parcel & gpu_array, std::uintptr_t stream) {
     auto copy_func = std::bind(cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                                cudaMemcpyDeviceToHost, copy_stream);
     // copy data to GPU
-    array_copy(dynamic_cast<NdData *>(this), dynamic_cast<const NdData *>(&gpu_array), copy_func);
+    array::array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&gpu_array), copy_func);
 }
 
-}  // namespace merlin::array
+}  // namespace merlin

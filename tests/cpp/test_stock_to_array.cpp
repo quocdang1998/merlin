@@ -25,8 +25,8 @@ int main(void) {
     std::uint64_t dims[2] = {3, 2};
     std::uint64_t strides[2] = {2*(dims[1] * sizeof(float)), sizeof(float)};
     merlin::array::Array Ar(A, ndim, dims, strides);
-    Ar.export_to_file("temp.txt");
-
+    // Ar.export_to_file("temp.txt");
+/*
     std::mutex m;
     #pragma omp parallel for
     for (int i = 0; i < 10; i++) {
@@ -40,6 +40,5 @@ int main(void) {
         std::printf("\n");
         m.unlock();
     }
-
-
+*/
 }

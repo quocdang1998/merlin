@@ -11,9 +11,9 @@
 
 namespace merlin {
 
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // RegularGrid
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 // Construct an empty grid from a given number of n-dim points
 RegularGrid::RegularGrid(std::uint64_t npoint, std::uint64_t ndim) : npoint_(npoint) {
@@ -142,9 +142,9 @@ RegularGrid::~RegularGrid(void) {
 }
 
 
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // CartesianGrid
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 // Construct from a list of vector of values
 CartesianGrid::CartesianGrid(std::initializer_list<floatvec> grid_vectors) : grid_vectors_(grid_vectors) {
@@ -153,7 +153,7 @@ CartesianGrid::CartesianGrid(std::initializer_list<floatvec> grid_vectors) : gri
     for (int i = 0; i < this->ndim(); i++) {
         for (int j = 1; j < this->grid_vectors_[i].size(); j++) {
             if (this->grid_vectors_[i][j-1] >= this->grid_vectors_[i][j]) {
-                FAILURE(std::invalid_argument, "Expected vector entries in increasing order, got vector at index %d.\n", i);
+                FAILURE(std::invalid_argument, "Expected vector entries in increasing order, fail at index %d.\n", i);
             }
         }
     }

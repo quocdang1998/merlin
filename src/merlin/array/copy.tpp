@@ -7,15 +7,15 @@
 #include "merlin/logger.hpp"  // FAILURE
 #include "merlin/utils.hpp"  // merlin::inner_prod
 
-namespace merlin::array {
+namespace merlin {
 
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // NdData tools
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 // Copy each segment from source to destination
 template <class CopyFunction>
-void array_copy(NdData * dest, const NdData * src, CopyFunction copy) {
+void array::array_copy(array::NdData * dest, const array::NdData * src, CopyFunction copy) {
     // check if shape vector are the same
     if (src->ndim() != dest->ndim()) {
         FAILURE(std::invalid_argument, "Cannot copy array of different ndim (%u to %u).\n", src->ndim(), dest->ndim());
@@ -23,8 +23,8 @@ void array_copy(NdData * dest, const NdData * src, CopyFunction copy) {
     std::uint64_t ndim = src->ndim();
     for (int i = 0; i < ndim; i++) {
         if (dest->shape()[i] < src->shape()[i]) {
-            FAILURE(std::invalid_argument, "Expected shape at index %d of source (%d) smaller or equal destination (%d).\n",
-                    i, src->shape()[i], dest->shape()[i]);
+            FAILURE(std::invalid_argument, "Expected shape of source %d less or equal destination %d (index %d).\n",
+                    src->shape()[i], dest->shape()[i], i);
         }
     }
     intvec shape(src->shape());
@@ -32,8 +32,8 @@ void array_copy(NdData * dest, const NdData * src, CopyFunction copy) {
     // longest contiguous segment and break index of the source
     std::uint64_t src_lcs, des_lcs;
     std::int64_t src_bridx, des_bridx;
-    std::tie(src_lcs, src_bridx) = lcseg_and_brindex(shape, src->strides());
-    std::tie(des_lcs, des_bridx) = lcseg_and_brindex(shape, dest->strides());
+    std::tie(src_lcs, src_bridx) = array::lcseg_and_brindex(shape, src->strides());
+    std::tie(des_lcs, des_bridx) = array::lcseg_and_brindex(shape, dest->strides());
     std::uint64_t longest_contiguous_segment = std::min(src_lcs, des_lcs);
     std::int64_t break_index = std::max(src_bridx, des_bridx);
 
@@ -66,6 +66,6 @@ void array_copy(NdData * dest, const NdData * src, CopyFunction copy) {
     }
 }
 
-}  // namespace merlin::array
+}  // namespace merlin
 
 #endif  // MERLIN_UTILS_TPP_

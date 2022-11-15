@@ -1,6 +1,6 @@
 // Copyright 2022 quocdang1998
-#ifndef MERLIN_DEVICE_LOCK_HPP_
-#define MERLIN_DEVICE_LOCK_HPP_
+#ifndef MERLIN_CUDA_LOCK_HPP_
+#define MERLIN_CUDA_LOCK_HPP_
 
 namespace merlin {
 
@@ -76,4 +76,4 @@ class KernelLock {
 
 }  // namespace merlin
 
-#endif  // MERLIN_DEVICE_LOCK_HPP_
+#endif  // MERLIN_CUDA_LOCK_HPP_

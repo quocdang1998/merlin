@@ -1,5 +1,5 @@
-#include "merlin/device/gpu_query.hpp"
-#include "merlin/device/context.hpp"
+#include "merlin/cuda/gpu_query.hpp"
+#include "merlin/cuda/context.hpp"
 #include "merlin/logger.hpp"
 
 #include <cinttypes>
@@ -7,8 +7,8 @@
 #include "omp.h"
 
 int main(void) {
-    merlin::device::print_all_gpu_specification();
-    merlin::device::test_all_gpu();
-    std::uint64_t stack_size = merlin::device::Device::limit(merlin::device::Device::Limit::StackSize);
+    merlin::cuda::print_all_gpu_specification();
+    merlin::cuda::test_all_gpu();
+    std::uint64_t stack_size = merlin::cuda::Device::limit(merlin::cuda::Device::Limit::StackSize);
     MESSAGE("Stack size: %" PRIu64 ".\n", stack_size);
 }

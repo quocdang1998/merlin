@@ -2,10 +2,11 @@
 #ifndef MERLIN_EXPORTS_HPP_
 #define MERLIN_EXPORTS_HPP_
 
-#if defined(__MERLIN_BUILT_AS_STATIC__) || defined(LIBMERLIN_STATIC) || defined(__GNUG__)
+#include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
+
+#if defined(__MERLIN_BUILT_AS_STATIC__) || defined(LIBMERLIN_STATIC) || defined(__MERLIN_LINUX__)
     #define MERLIN_EXPORTS
     #define MERLIN_NO_EXPORT
-    #define MERLIN_TEMPLATE_EXPORTS
 #else
     // define MERLIN_EXPORTS to export extern variables, classes and functions to WIndows DLL library
     #ifndef MERLIN_EXPORTS
@@ -19,14 +20,14 @@
     #ifndef MERLIN_NO_EXPORT
         #define MERLIN_NO_EXPORT
     #endif  // MERLIN_NO_EXPORT
-#endif  // __MERLIN_BUILT_AS_STATIC__ || __GNUG__
+#endif  // __MERLIN_BUILT_AS_STATIC__ || LIBMERLIN_STATIC || __MERLIN_LINUX__
 
 #ifndef MERLIN_DEPRECATED
-    #if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
-    #define MERLIN_DEPRECATED __declspec(deprecated)
+    #if defined(__MERLIN_WINDOWS__)
+        #define MERLIN_DEPRECATED __declspec(deprecated)
     #else
-    #define MERLIN_DEPRECATED
-    #endif  // WIN32 || _WIN32 || WIN64 || _WIN64
+        #define MERLIN_DEPRECATED
+    #endif  // __MERLIN_WINDOWS__
 #endif
 
 #ifndef MERLIN_DEPRECATED_EXPORT

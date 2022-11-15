@@ -13,13 +13,15 @@
 #include "cuda.h"  // CUresult, cuGetErrorName
 #endif  // __NVCC__
 
+#include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
+
 // Log MESSAGE, WARNING and FAILURE for CPU
 // ----------------------------------------
 
 // Macro expands to function name
-#if defined(__GNUG__)
+#if defined(__MERLIN_LINUX__)
     #define __FUNCNAME__ __PRETTY_FUNCTION__
-#elif defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
+#elif defined(__MERLIN_WINDOWS__)
     #define __FUNCNAME__ __FUNCSIG__
 #endif
 
@@ -64,7 +66,8 @@ void error_(const char * func_name, const char * fmt, ...) {
     // print exception message and throw an exception object
     std::fprintf(stderr, "\033[1;31m[FAILURE]\033[0m [%s] %s", func_name, buffer);
     if constexpr(std::is_same<Exception, std::filesystem::filesystem_error>::value) {
-        throw std::filesystem::filesystem_error(const_cast<char *>(buffer), std::error_code(1, std::iostream_category()));
+        throw std::filesystem::filesystem_error(const_cast<char *>(buffer),
+                                                std::error_code(1, std::iostream_category()));
     } else {
         throw Exception(const_cast<char *>(buffer));
     }
@@ -110,7 +113,9 @@ class cuda_runtime_error : public std::runtime_error {
  *  @note This macro is only available when option ``MERLIN_CUDA`` is ``ON``.
  *  @param fmt Formatted string (same syntax as ``std::printf``).
  */
-#define CUDAERR(fmt, ...) std::printf("\033[1;35m[CUDAERR]\033[0m [%s] " fmt, __FUNCNAME__, ##__VA_ARGS__); asm("trap;")
+#define CUDAERR(fmt, ...) \
+    std::printf("\033[1;35m[CUDAERR]\033[0m [%s] " fmt, __FUNCNAME__, ##__VA_ARGS__);\
+    asm("trap;")
 
 inline const char * cuda_get_error_name(CUresult err_) {
     const char * buffer;
@@ -132,11 +137,17 @@ inline const char * cuda_get_error_name(CUresult err_) {
  *      CUDAERR("Error.\n");
  *  }
  *  @endcode
- *  @param exception Name of the exception class (like ``std::runtime_error``, ``std::invalid_argument``, etc) to be thrown
- *  in case of ``__host__`` function.
+ *  @param exception Name of the exception class (like ``std::runtime_error``, ``std::invalid_argument``, etc) to be
+ *  thrown in case of ``__host__`` function.
  *  @param fmt Formatted string (same syntax as ``std::printf``).
  */
 #define CUHDERR(exception, fmt, ...) FAILURE(exception, fmt, ##__VA_ARGS__)
 #endif  // __CUDA_ARCH__
+
+// Stack tracing
+// -------------
+
+/** @brief Print the stacktrace at the crash moment.*/
+// void print_stacktrace(void);
 
 #endif  // MERLIN_LOGGER_HPP_

@@ -1,15 +1,15 @@
 // Copyright 2022 quocdang1998
-#ifndef MERLIN_DEVICE_GPU_QUERY_HPP_
-#define MERLIN_DEVICE_GPU_QUERY_HPP_
+#ifndef MERLIN_CUDA_GPU_QUERY_HPP_
+#define MERLIN_CUDA_GPU_QUERY_HPP_
 
 #include <cstdint>  // std::uint64_t, UINT64_MAX
 #include <map>  // std::map
 #include <string>  // std::string
 
-#include "merlin/device/decorator.hpp"  // __cuhostdev__
+#include "merlin/cuda_decorator.hpp"  // __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 
-namespace merlin::device {
+namespace merlin::cuda {
 
 /** @brief Class representing CPU device.*/
 class MERLIN_EXPORTS Device {
@@ -57,8 +57,8 @@ class MERLIN_EXPORTS Device {
     /** @brief Print GPU specifications.*/
     void print_specification(void);
     /** @brief Test functionality of GPU.
-     *  @details This function tests if the installed CUDA is compatible with the GPU driver by perform an addition of two
-     *  integers on GPU.
+     *  @details This function tests if the installed CUDA is compatible with the GPU driver by perform an addition of
+     *  two integers on GPU.
      */
     bool test_gpu(void);
     /// @}
@@ -107,8 +107,8 @@ class MERLIN_EXPORTS Device {
 };
 
 /** @brief Print GPU specifications.
- *  @details Print GPU specifications (number of threads, total global memory, max shared memory) and API limitation (max
- *  thread per block, max block per grid).
+ *  @details Print GPU specifications (number of threads, total global memory, max shared memory) and API limitation
+ *  (max thread per block, max block per grid).
  */
 MERLIN_EXPORTS void print_all_gpu_specification(void);
 
@@ -118,6 +118,6 @@ MERLIN_EXPORTS void print_all_gpu_specification(void);
  */
 MERLIN_EXPORTS bool test_all_gpu(void);
 
-}  // namespace merlin::device
+}  // namespace merlin::cuda
 
-#endif  // MERLIN_DEVICE_GPU_QUERY_HPP_
+#endif  // MERLIN_CUDA_GPU_QUERY_HPP_

@@ -1,20 +1,21 @@
 // Copyright 2022 quocdang1998
-#ifndef MERLIN_DEVICE_STREAM_HPP_
-#define MERLIN_DEVICE_STREAM_HPP_
+#ifndef MERLIN_CUDA_CONTEXT_HPP_
+#define MERLIN_CUDA_CONTEXT_HPP_
 
 #include <cstdint>  // std::uintptr_t
+#include <map>  // std::map
 #include <utility>  // std::exchange, std::pair
 #include <vector>  // std::vector
 
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/device/gpu_query.hpp"  // merlin::device::Device
+#include "merlin/cuda/gpu_query.hpp"  // merlin::device::Device
 #include "merlin/logger.hpp"  // cuda_runtime_error, FAILURE
 
-namespace merlin::device {
+namespace merlin::cuda {
 
 /** @brief Abstract class representing a CUDA context.
- *  @details CUDA associated to each CPU process a stack of context, each of which is bounded to a GPU. All CUDA operations
- *  are performed inside the context at the top of the stack.
+ *  @details CUDA associated to each CPU process a stack of context, each of which is bounded to a GPU. All CUDA
+ *  operations are performed inside the context at the top of the stack.
  */
 class MERLIN_EXPORTS Context {
   public:
@@ -33,7 +34,7 @@ class MERLIN_EXPORTS Context {
     /// @name Constructor
     /// @{
     /** @brief Construct a context referencing to the current context.*/
-    Context(void) {};
+    Context(void) = default;
     /** @brief Construct a context assigned to a GPU and attached to the current CPU process.*/
     Context(const Device & gpu, Flags flag = Flags::AutoSchedule);
     /// @}
@@ -68,7 +69,7 @@ class MERLIN_EXPORTS Context {
     /** @brief Get GPU bounded to the context.*/
     Device get_gpu(void) const {return this->device_;}
     /** @brief Check if the context is attached to any CPU process.*/
-    bool is_attached(void) const {return this->attached_;}
+    bool is_attached(void) const {return Context::attached_[this->context_];}
     /// @}
 
     /// @name Manipulation of the context stack
@@ -77,6 +78,8 @@ class MERLIN_EXPORTS Context {
     void push_current(void);
     /** @brief Pop the context out of the stack of the current CPU process.*/
     Context & pop_current(void);
+    /** @brief Get current context.*/
+    static Context get_current(void);
     /** @brief Check if the context is the top of context stack.*/
     bool is_current(void);
     /** @brief Set current context at the top of the stack.*/
@@ -94,7 +97,8 @@ class MERLIN_EXPORTS Context {
     /** @brief Get primary context instance corresponding to a GPU.*/
     static Context & get_primary_context(const Device & gpu) {return Context::primary_contexts[gpu.id()];}
     /** @brief Get state of the primary context.
-     *  @returns Active state (``false`` means inactive) and setting flag of the primary context associated with the GPU.
+     *  @returns Active state (``false`` means inactive) and setting flag of the primary context associated with the
+     *  GPU.
      */
     static std::pair<bool, Flags> get_primary_ctx_state(const Device & gpu);
     /** @brief Set flag for primary context.*/
@@ -112,10 +116,14 @@ class MERLIN_EXPORTS Context {
     std::uintptr_t context_ = 0;
     /** @brief GPU associated to the CUDA context.*/
     Device device_;
-    /** @brief Context attached to CPU process.*/
-    bool attached_ = true;
+
+  private:
+    /** @brief Number of times a context pointer is referenced.*/
+    static std::map<std::uintptr_t, unsigned int> reference_count_;
+    /** @brief The current context is attached to the CPU process.*/
+    static std::map<std::uintptr_t, bool> attached_;
 };
 
-}  // namespace merlin::device
+}  // namespace merlin::cuda
 
-#endif  // MERLIN_DEVICE_STREAM_HPP_
+#endif  // MERLIN_CUDA_CONTEXT_HPP_

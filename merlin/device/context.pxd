@@ -1,8 +1,8 @@
 # Copyright 2022 quocdang1998
 
-cdef extern from "merlin/device/context.hpp":
+cdef extern from "merlin/cuda/context.hpp":
 
-    cpdef enum class ContextFlags "merlin::device::Context::Flags":
+    cpdef enum class ContextFlags "merlin::cuda::Context::Flags":
         """
         CUDA Context setting flags.
 
@@ -18,7 +18,7 @@ cdef extern from "merlin/device/context.hpp":
         YieldSchedule,
         BlockSyncSchedule
 
-    cdef cppclass CppContext "merlin::device::Context":
+    cdef cppclass CppContext "merlin::cuda::Context":
         CppContext()
         CppContext(const CppDevice & gpu, ContextFlags flag)
         CppContext(const CppContext & src)

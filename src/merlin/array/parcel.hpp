@@ -7,8 +7,8 @@
 #include <mutex>  // std::mutex
 
 #include "merlin/array/nddata.hpp"  // merlin::array::NdData
-#include "merlin/device/decorator.hpp"  // __cudevice__, __cuhostdev__
-#include "merlin/device/gpu_query.hpp"  // merlin::device::Device
+#include "merlin/cuda_decorator.hpp"  // __cudevice__, __cuhostdev__
+#include "merlin/cuda/gpu_query.hpp"  // merlin::cuda::Device
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 
 namespace merlin::array {
@@ -44,9 +44,9 @@ class MERLIN_EXPORTS Parcel : public NdData {
     /// @name Get members
     /// @{
     /** @brief Get reference to ID of device containing data.*/
-    device::Device & device(void) {return this->device_;}
+    merlin::cuda::Device & device(void) {return this->device_;}
     /** @brief Get constant reference to ID of device containing data of a constant instance.*/
-    const device::Device & device(void) const {return this->device_;}
+    const merlin::cuda::Device & device(void) const {return this->device_;}
     /// @}
 
     /// @name Atributes
@@ -70,16 +70,16 @@ class MERLIN_EXPORTS Parcel : public NdData {
     /** @brief Copy meta-data (shape and strides) from CPU to a pre-allocated memory on GPU.
      *  @details The meta-data should be to the memory region that comes right after the copied object.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
-     *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and stride
-     *  vector.
+     *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and
+     *  stride vector.
      */
     void copy_to_gpu(Parcel * gpu_ptr, void * shape_strides_ptr);
     #ifdef __NVCC__
     /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
      *  @note This operation is single-threaded.
      *  @param share_ptr Dynamically allocated shared pointer on GPU.
-     *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and stride
-     *  vector.
+     *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and
+     *  stride vector.
      */
     __cudevice__ void copy_to_shared_mem(Parcel * share_ptr, void * shape_strides_ptr);
     #endif  // __NVCC__
@@ -100,7 +100,7 @@ class MERLIN_EXPORTS Parcel : public NdData {
     /** @brief Decision to delete Array::data_ at destruction or not.*/
     bool force_free = true;
     /** @brief Device containing data of Parcel.*/
-    device::Device device_;
+    merlin::cuda::Device device_;
     /** @brief Mutex lock at destruction time.*/
     static std::mutex m_;
 };

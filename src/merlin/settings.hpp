@@ -9,6 +9,6 @@ namespace merlin::settings {
 /** @brief Map from GPU ID to is details.*/
 MERLIN_EXPORTS extern std::map<int, Device *> gpu_map;
 
-}  // namespace merlin
+}  // namespace merlin::settings
 
 #endif  // MERLIN_SETTINGS_HPP_

@@ -8,7 +8,7 @@
 #include <tuple>  // std::tie
 
 #include "merlin/array/slice.hpp"  // merlin::array::Slice
-#include "merlin/device/decorator.hpp"  // __cuhost__, __cuhostdev__
+#include "merlin/cuda_decorator.hpp"  // __cuhost__, __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/vector.hpp"  // merlin::intvec
 
