@@ -99,7 +99,7 @@ std::pair<bool, Context::Flags> Context::get_primary_ctx_state(const Device & gp
         FAILURE(cuda_runtime_error, "Get state of primary context of GPU %d failed with message \"%s\".\n",
                 gpu.id(), cuda_get_error_name(err_));
     }
-    return std::pair<bool, Context::Flags>(bool(active), Context::Flags(flags));
+    return std::pair<bool, Context::Flags>(static_cast<bool>(active), Context::Flags(flags));
 }
 
 // Set flag for primary context

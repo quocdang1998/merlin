@@ -8,44 +8,71 @@
 #include <functional>  // std::bind, std::placeholders, std::ref
 #include <thread>  // std::this_thread::sleep_for
 
-#if defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
-#include <windows.h>
-#else
-#include <unistd.h>
-#endif  // WIN32 || _WIN32 || WIN64 || _WIN64
-
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/array/copy.hpp"  // merlin::array::array_copy, merlin::array::contiguous_strides
 #include "merlin/logger.hpp"  // WARNING, FAILURE
+#include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
 #include "merlin/vector.hpp"  // merlin::intvec
+
+#if defined(__MERLIN_WINDOWS__)
+#include <share.h>  // _SH_DENYNO, _SH_DENYRW, _SH_DENYWR
+#endif  // __MERLIN_WINDOWS__
 
 namespace merlin::array {
 
 // -------------------------------------------------------------------------------------------------------------------------
-// FileLock
+// Open file pointer (Windows)
 // -------------------------------------------------------------------------------------------------------------------------
 
-// Constructor from filename
-FileLock::FileLock(const char * fname) {
-    this->file_handle = CreateFileA(fname, GENERIC_READ | GENERIC_WRITE,
-                                    FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
-                                    FILE_ATTRIBUTE_NORMAL, NULL);
+#if defined(__MERLIN_WINDOWS__)
+
+// Open file for read (write access denied)
+static inline std::FILE * read_file(const char * fname) {
+    return ::_fsopen(fname, "rb", _SH_DENYWR);
 }
 
-// Lock file handle
-void FileLock::lock(void) {
-    bool blocked = LockFile(this->file_handle, 0, 0, 1024, 0);
+// Open file for write (read and write access denied)
+static inline std::FILE * write_file(const char * fname, bool thread_safe = true) {
+    int sh_flag = thread_safe ? _SH_DENYRW : _SH_DENYNO;
+    return ::_fsopen(fname, "wb", sh_flag);
 }
 
-// Destructor
-FileLock::~FileLock(void) {
-    bool err_ = CloseHandle(this->file_handle);
+// Open file for read and write (read and write access denied)
+static inline std::FILE * update_file(const char * fname, bool thread_safe = true) {
+    int sh_flag = thread_safe ? _SH_DENYRW : _SH_DENYNO;
+    return ::_fsopen(fname, "rb+", sh_flag);
 }
+
+#endif  // __MERLIN_WINDOWS__
+
+// -------------------------------------------------------------------------------------------------------------------------
+// Open file pointer (Linux)
+// -------------------------------------------------------------------------------------------------------------------------
+
+#if defined(__MERLIN_LINUX__)
+
+// Open file for read (write access denied)
+static inline std::FILE * read_file(const char * fname) {
+    return std::fopen(fname, "rb");
+}
+
+// Open file for write (read and write access denied)
+static inline std::FILE * write_file(const char * fname, bool thread_safe = true) {
+    return std::fopen(fname, "wb");
+}
+
+// Open file for read and write (read and write access denied)
+static inline std::FILE * update_file(const char * fname, bool thread_safe = true) {
+    return std::fopen(fname, "rb+");
+}
+
+#endif  // __MERLIN_LINUX__
 
 // -------------------------------------------------------------------------------------------------------------------------
 // Data read/write
 // -------------------------------------------------------------------------------------------------------------------------
 
+// Read an array from file
 static inline void read_from_file(float * dest, std::fstream & file, float * src, std::uint64_t count) {
     file.seekg(reinterpret_cast<std::uintptr_t>(src));
     file.read(reinterpret_cast<char *>(dest), count);
@@ -61,21 +88,26 @@ static inline void write_to_file(std::fstream & file, float * dest, float * src,
 // -------------------------------------------------------------------------------------------------------------------------
 
 // Constructor from filename
-Stock::Stock(const std::string & filename, char mode, std::uint64_t offset) : filename_(filename), mode_(mode),
-                                                                              offset_(offset) {
+Stock::Stock(const std::string & filename, char mode, std::uint64_t offset) : filename_(filename),
+                                                                              mode_(mode), offset_(offset) {
     std::string c_mode;
     switch (mode) {
         case 'r':
-            c_mode = std::string("rb");
+            this->file_ptr_ = read_file(filename.c_str());
             break;
-        case 'w', 'p':
-            c_mode = std::string("wb");
+        case 'w':
+            this->file_ptr_ = write_file(filename.c_str(), true);
             break;
-        case 'a', 's':
-            c_mode = std::string("rb+");
+        case 'a':
+            this->file_ptr_ = update_file(filename.c_str(), true);
+            break;
+        case 'p':
+            this->file_ptr_ = write_file(filename.c_str(), false);
+            break;
+        case 's':
+            this->file_ptr_ = update_file(filename.c_str(), true);
             break;
     }
-    this->file_ptr_ = std::fopen(filename.c_str(), c_mode.c_str());
     if (this->file_ptr_ == NULL) {
         FAILURE(std::ios_base::failure, "Cannot open file \"%s\".\n", filename.c_str());
     }

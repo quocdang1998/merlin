@@ -2,7 +2,7 @@
 #ifndef MERLIN_ARRAY_STOCK_HPP_
 #define MERLIN_ARRAY_STOCK_HPP_
 
-#include <cstdint>  // std::uint64_t
+#include <cstdint>  // std::uint64_t, std::uintptr_t
 #include <cstdio>  // std::FILE
 #include <fstream>  // std::fstream
 #include <mutex>  // std::mutex
@@ -12,19 +12,6 @@
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 
 namespace merlin::array {
-
-class MERLIN_EXPORTS FileLock {
-  public:
-    FileLock(void) = default;
-    FileLock(const char * fname);
-
-    void lock(void);
-
-    ~FileLock(void);
-
-  private:
-    void * file_handle = NULL;
-};
 
 /** @brief Multi-dimensional array exported to a file.*/
 class MERLIN_EXPORTS Stock : public NdData {
@@ -41,6 +28,7 @@ class MERLIN_EXPORTS Stock : public NdData {
      *    - a: Read and write (equivalent to ``r+``).
      *    - p: Parallel write (multiple processes can write at the same time).
      *    - s: Shared (multiple processes can read and write at the same time).
+     *  @param offset Starting position from the beginning of file.
      *  @note In mode ``p`` and mode ``s``, user is responsible to prevent data race (each process reads/writes a different
      *  subset of the data file).
      */

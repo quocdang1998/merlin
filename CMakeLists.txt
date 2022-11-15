@@ -201,7 +201,7 @@ list(APPEND AP3_MPO_SRC_CPP
      ext/apollo3/main.cpp
 )
 add_executable(ap3_mpo ${AP3_MPO_SRC_CPP})
-target_include_directories(ap3_mpo PUBLIC ext/apollo3)
+target_include_directories(ap3_mpo PUBLIC ext/apollo3 ${HDF5_INCLUDE_DIRS})
 target_link_libraries(ap3_mpo libmerlin ${HDF5_CXX_LIBRARIES} ${HDF5_C_LIBRARIES})
 
 # =============================================================================

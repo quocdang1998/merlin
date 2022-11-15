@@ -1,6 +1,6 @@
 // Copyright 2022 quocdang1998
-#ifndef MERLIN_DEVICE_STREAM_HPP_
-#define MERLIN_DEVICE_STREAM_HPP_
+#ifndef MERLIN_DEVICE_CONTEXT_HPP_
+#define MERLIN_DEVICE_CONTEXT_HPP_
 
 #include <cstdint>  // std::uintptr_t
 #include <utility>  // std::exchange, std::pair
@@ -33,7 +33,7 @@ class MERLIN_EXPORTS Context {
     /// @name Constructor
     /// @{
     /** @brief Construct a context referencing to the current context.*/
-    Context(void) {};
+    Context(void) {}
     /** @brief Construct a context assigned to a GPU and attached to the current CPU process.*/
     Context(const Device & gpu, Flags flag = Flags::AutoSchedule);
     /// @}
@@ -118,4 +118,4 @@ class MERLIN_EXPORTS Context {
 
 }  // namespace merlin::device
 
-#endif  // MERLIN_DEVICE_STREAM_HPP_
+#endif  // MERLIN_DEVICE_CONTEXT_HPP_

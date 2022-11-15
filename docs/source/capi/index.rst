@@ -75,6 +75,7 @@ Utils
    merlin::inner_prod
    merlin::ndim_to_contiguous_idx
    merlin::contiguous_to_ndim_idx
+   merlin::FileLock
 
 GPU with CUDA
 -------------

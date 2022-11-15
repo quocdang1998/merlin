@@ -13,13 +13,15 @@
 #include "cuda.h"  // CUresult, cuGetErrorName
 #endif  // __NVCC__
 
+#include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
+
 // Log MESSAGE, WARNING and FAILURE for CPU
 // ----------------------------------------
 
 // Macro expands to function name
-#if defined(__GNUG__)
+#if defined(__MERLIN_LINUX__)
     #define __FUNCNAME__ __PRETTY_FUNCTION__
-#elif defined(WIN32) || defined(_WIN32) || defined(WIN64) || defined(_WIN64)
+#elif defined(__MERLIN_WINDOWS__)
     #define __FUNCNAME__ __FUNCSIG__
 #endif
 
