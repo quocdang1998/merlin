@@ -3,15 +3,15 @@
 
 #include "merlin/logger.hpp"  // FAILURE
 
-namespace merlin::array {
+namespace merlin {
 
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // NdData
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 // Member initialization for C++ interface
-NdData::NdData(float * data, std::uint64_t ndim,
-               const intvec & shape, const intvec & strides) : ndim_(ndim), shape_(shape), strides_(strides) {
+array::NdData::NdData(float * data, std::uint64_t ndim,
+                      const intvec & shape, const intvec & strides) : ndim_(ndim), shape_(shape), strides_(strides) {
     this->data_ = data;
     if (shape.size() != ndim) {
         FAILURE(std::range_error, "Expected size of shape (%u) equals to ndim (%u).\n", shape.size(), ndim);
@@ -21,7 +21,7 @@ NdData::NdData(float * data, std::uint64_t ndim,
 }
 
 // Constructor from Numpy np.array
-NdData::NdData(float * data, std::uint64_t ndim, const std::uint64_t * shape, const std::uint64_t * strides) {
+array::NdData::NdData(float * data, std::uint64_t ndim, const std::uint64_t * shape, const std::uint64_t * strides) {
     this->ndim_ = ndim;
     this->data_ = data;
     this->shape_ = intvec(shape, shape + ndim);
@@ -29,14 +29,14 @@ NdData::NdData(float * data, std::uint64_t ndim, const std::uint64_t * shape, co
 }
 
 // Constructor from a slice
-NdData::NdData(const NdData & whole, std::initializer_list<Slice> slices) {
+array::NdData::NdData(const array::NdData & whole, std::initializer_list<array::Slice> slices) {
     // check size
     if (slices.size() != whole.ndim_) {
         CUHDERR(std::invalid_argument, "Dimension of Slices and NdData not compatible (expected %u, got %u).\n",
                 static_cast<unsigned int>(whole.ndim_), static_cast<unsigned int>(slices.size()));
     }
     // create result
-    const Slice * slice_data = slices.begin();
+    const array::Slice * slice_data = slices.begin();
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(whole.data_);
     std::uintptr_t result_ndim = 0;
     intvec new_shape(whole.ndim_, 0);
@@ -57,4 +57,4 @@ NdData::NdData(const NdData & whole, std::initializer_list<Slice> slices) {
     this->strides_ = (result_ndim == 0) ? intvec({sizeof(float)}) : intvec(new_strides.data(), result_ndim);
 }
 
-}  // namespace merlin::array
+}  // namespace merlin

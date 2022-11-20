@@ -1,8 +1,8 @@
 # Copyright 2022 quocdang1998
 
-cdef extern from "merlin/device/gpu_query.hpp":
+cdef extern from "merlin/cuda/gpu_query.hpp":
 
-    cpdef enum class DeviceLimit "merlin::device::Device::Limit":
+    cpdef enum class DeviceLimit "merlin::cuda::Device::Limit":
         """GPU limit flags.
 
         *Values*
@@ -19,7 +19,7 @@ cdef extern from "merlin/device/gpu_query.hpp":
         SyncDepth,
         LaunchPendingCount
 
-    cdef cppclass CppDevice "merlin::device::Device":
+    cdef cppclass CppDevice "merlin::cuda::Device":
         CppDevice() except +
         CppDevice(int id) except +
         CppDevice(const CppDevice & src) except +
@@ -41,5 +41,5 @@ cdef extern from "merlin/device/gpu_query.hpp":
     bint operator==(const CppDevice & left, const CppDevice & right) except +
     bint operator!=(const CppDevice & left, const CppDevice & right) except +
 
-    void cpp_print_all_gpu_specification "merlin::device::print_all_gpu_specification" () except +
-    bint cpp_test_all_gpu "merlin::device::test_all_gpu" () except +
+    void cpp_print_all_gpu_specification "merlin::cuda::print_all_gpu_specification" () except +
+    bint cpp_test_all_gpu "merlin::cuda::test_all_gpu" () except +

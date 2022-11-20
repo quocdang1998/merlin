@@ -18,9 +18,9 @@
 
 namespace merlin {
 
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // FileLock (Windows)
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 #if defined(__MERLIN_WINDOWS__)
 
@@ -51,10 +51,10 @@ void FileLock::lock(void) {
     if (handle == -1) {
         FAILURE(std::ios_base::failure, "Invalid file handle returned.\n");
     }
-    bool succeed = LockFileEx(reinterpret_cast<HANDLE>(handle), LOCKFILE_EXCLUSIVE_LOCK, 0, len, len, &ovrlap);
+    bool succeed = LockFileEx(reinterpret_cast<void *>(handle), LOCKFILE_EXCLUSIVE_LOCK, 0, len, len, &ovrlap);
     if (!succeed) {
         std::string err_message = throw_windows_last_error(GetLastError());
-        FAILURE(std::ios_base::failure, "Lock file failed with message \"%s\".\n", err_message.c_str());
+        FAILURE(std::ios_base::failure, "Exclusive lock file failed with message \"%s\".\n", err_message.c_str());
     }
 }
 
@@ -62,11 +62,12 @@ void FileLock::lock(void) {
 bool FileLock::try_lock(void) {
     const unsigned long int len = ULONG_MAX;
     static OVERLAPPED ovrlap;
+    std::memset(&ovrlap, 0, sizeof(OVERLAPPED));
     intptr_t handle = ::_get_osfhandle(this->file_descriptor);
     if (handle == -1) {
         FAILURE(std::ios_base::failure, "Invalid file handle returned.\n");
     }
-    bool succeed = LockFileEx(reinterpret_cast<HANDLE>(handle), LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY,
+    bool succeed = LockFileEx(reinterpret_cast<void *>(handle), LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY,
                               0, len, len, &ovrlap);
     if (!succeed) {
         unsigned long int err_ = GetLastError();
@@ -74,7 +75,7 @@ bool FileLock::try_lock(void) {
             return false;
         }
         std::string err_message = throw_windows_last_error(err_);
-        FAILURE(std::ios_base::failure, "Lock file failed with message \"%s\".\n", err_message.c_str());
+        FAILURE(std::ios_base::failure, "Try exclusive lock file failed with message \"%s\".\n", err_message.c_str());
     }
     return true;
 }
@@ -88,18 +89,55 @@ void FileLock::unlock(void) {
     if (handle == -1) {
         FAILURE(std::ios_base::failure, "Invalid file handle returned.\n");
     }
-    bool succeed = UnlockFileEx(reinterpret_cast<HANDLE>(handle), 0, len, len, &ovrlap);
+    bool succeed = UnlockFileEx(reinterpret_cast<void *>(handle), 0, len, len, &ovrlap);
     if (!succeed) {
         std::string err_message = throw_windows_last_error(GetLastError());
-        FAILURE(std::ios_base::failure, "Unlock file failed with message \"%s\".\n", err_message.c_str());
+        FAILURE(std::ios_base::failure, "Unlock exclusively file failed with message \"%s\".\n", err_message.c_str());
     }
+}
+
+// Sharable lock file handle
+void FileLock::lock_shared(void) {
+    const unsigned long int len = ULONG_MAX;
+    OVERLAPPED ovrlap;
+    std::memset(&ovrlap, 0, sizeof(OVERLAPPED));
+    intptr_t handle = ::_get_osfhandle(this->file_descriptor);
+    if (handle == -1) {
+        FAILURE(std::ios_base::failure, "Invalid file handle returned.\n");
+    }
+    bool succeed = LockFileEx(reinterpret_cast<void *>(handle), 0, 0, len, len, &ovrlap);
+    if (!succeed) {
+        std::string err_message = throw_windows_last_error(GetLastError());
+        FAILURE(std::ios_base::failure, "Shared lock file failed with message \"%s\".\n", err_message.c_str());
+    }
+}
+
+// Attemp to sharably lock file
+bool FileLock::try_lock_shared(void) {
+    const unsigned long int len = ULONG_MAX;
+    static OVERLAPPED ovrlap;
+    std::memset(&ovrlap, 0, sizeof(OVERLAPPED));
+    intptr_t handle = ::_get_osfhandle(this->file_descriptor);
+    if (handle == -1) {
+        FAILURE(std::ios_base::failure, "Invalid file handle returned.\n");
+    }
+    bool succeed = LockFileEx(reinterpret_cast<void *>(handle), LOCKFILE_FAIL_IMMEDIATELY, 0, len, len, &ovrlap);
+    if (!succeed) {
+        unsigned long int err_ = GetLastError();
+        if (err_ == ERROR_LOCK_VIOLATION) {
+            return false;
+        }
+        std::string err_message = throw_windows_last_error(err_);
+        FAILURE(std::ios_base::failure, "Try shared lock file failed with message \"%s\".\n", err_message.c_str());
+    }
+    return true;
 }
 
 #endif  // __MERLIN_WINDOWS__
 
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // FileLock (Linux)
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 #if defined(__MERLIN_LINUX__)
 
@@ -120,7 +158,7 @@ static inline std::string throw_linux_last_error(void) {
 
 // Exclusively lock file handle
 void FileLock::lock(void) {
-    struct ::flock lock_;
+    ::flock lock_;
     lock_.l_type    = F_WRLCK;
     lock_.l_whence  = SEEK_SET;
     lock_.l_start   = 0;
@@ -128,13 +166,13 @@ void FileLock::lock(void) {
     int err_ = ::fcntl(this->file_descriptor, F_SETLKW, &lock_);
     if (err_ == -1) {
         std::string err_message = throw_linux_last_error();
-        FAILURE(std::ios_base::failure, "Lock file failed with message \"%s\".\n", err_message.c_str());
+        FAILURE(std::ios_base::failure, "Exclusive lock file failed with message \"%s\".\n", err_message.c_str());
     }
 }
 
 // Attemp to exclusively lock file
 bool FileLock::try_lock(void) {
-    struct ::flock lock_;
+    ::flock lock_;
     lock_.l_type    = F_WRLCK;
     lock_.l_whence  = SEEK_SET;
     lock_.l_start   = 0;
@@ -145,14 +183,14 @@ bool FileLock::try_lock(void) {
             return false;
         }
         std::string err_message = throw_linux_last_error();
-        FAILURE(std::ios_base::failure, "Lock file failed with message \"%s\".\n", err_message.c_str());
+        FAILURE(std::ios_base::failure, "Try exclusive lock file failed with message \"%s\".\n", err_message.c_str());
     }
     return true;
 }
 
 // Exclusively unlock file handle
 void FileLock::unlock(void) {
-    struct ::flock lock_;
+    ::flock lock_;
     lock_.l_type    = F_UNLCK;
     lock_.l_whence  = SEEK_SET;
     lock_.l_start   = 0;
@@ -160,8 +198,40 @@ void FileLock::unlock(void) {
     int err_ = ::fcntl(this->file_descriptor, F_SETLK, &lock_);
     if (err_ == -1) {
         std::string err_message = throw_linux_last_error();
-        FAILURE(std::ios_base::failure, "Unlock file failed with message \"%s\".\n", err_message.c_str());
+        FAILURE(std::ios_base::failure, "Unlock exclusively file failed with message \"%s\".\n", err_message.c_str());
     }
+}
+
+// Sharable lock file handle
+void FileLock::lock_shared(void) {
+    ::flock lock_;
+    lock_.l_type    = F_RDLCK;
+    lock_.l_whence  = SEEK_SET;
+    lock_.l_start   = 0;
+    lock_.l_len     = 0;
+    int err_ = ::fcntl(this->file_descriptor, F_SETLKW, &lock_);
+    if (err_ == -1) {
+        std::string err_message = throw_linux_last_error();
+        FAILURE(std::ios_base::failure, "Exclusive lock file failed with message \"%s\".\n", err_message.c_str());
+    }
+}
+
+// Attemp to sharably lock file
+bool FileLock::try_lock_shared(void) {
+    ::flock lock_;
+    lock_.l_type    = F_RDLCK;
+    lock_.l_whence  = SEEK_SET;
+    lock_.l_start   = 0;
+    lock_.l_len     = 0;
+    int err_ = ::fcntl(this->file_descriptor, F_SETLK, &lock_);
+    if (err_ == -1) {
+        if (errno == EAGAIN || errno == EACCES) {
+            return false;
+        }
+        std::string err_message = throw_linux_last_error();
+        FAILURE(std::ios_base::failure, "Try exclusive lock file failed with message \"%s\".\n", err_message.c_str());
+    }
+    return true;
 }
 
 #endif  // __MERLIN_LINUX__

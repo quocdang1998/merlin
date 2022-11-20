@@ -22,7 +22,8 @@ def get_extension_options():
 
     # extra compile arguments
     if (sys.platform == "linux"):
-        ext_options["extra_compile_args"] = ["-std=c++17"]
+        ext_options["extra_compile_args"] = ["-std=c++17",
+                                             "-Wno-unused-but-set-variable"]
     elif (sys.platform == "win32"):
         ext_options["extra_compile_args"] = ["-std:c++17"]
         if MERLIN_LIBKIND == "SHARED":

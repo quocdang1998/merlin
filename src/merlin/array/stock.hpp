@@ -29,8 +29,8 @@ class MERLIN_EXPORTS Stock : public NdData {
      *    - p: Parallel write (multiple processes can write at the same time).
      *    - s: Shared (multiple processes can read and write at the same time).
      *  @param offset Starting position from the beginning of file.
-     *  @note In mode ``p`` and mode ``s``, user is responsible to prevent data race (each process reads/writes a different
-     *  subset of the data file).
+     *  @note In mode ``p`` and mode ``s``, user is responsible to prevent data race (each process reads/writes a
+     *  different subset of the data file).
      */
     Stock(const std::string & filename, char mode = 'a', std::uint64_t offset = 0);
     /// @}

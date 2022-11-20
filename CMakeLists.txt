@@ -24,8 +24,8 @@ list(APPEND MERLIN_SRC_CPP
      array/parcel.cpp
      array/stock.cpp
      # src/autodiff.cpp
-     device/gpu_query.cpp
-     device/context.cpp
+     cuda/gpu_query.cpp
+     cuda/context.cpp
      filelock.cpp
      iterator.cpp
      interpolant/grid.cpp
@@ -34,15 +34,15 @@ list(APPEND MERLIN_SRC_CPP
 list(APPEND MERLIN_SRC_CU
      array/parcel.cu
      array/array.cu
-     device/gpu_query.cu
-     device/context.cu
+     cuda/gpu_query.cu
+     cuda/context.cu
      interpolant/grid.cu
 )
 list(APPEND MERLIN_SRC_RDC
      array/nddata.rdc
      array/parcel.rdc
      array/slice.rdc
-     device/gpu_query.rdc
+     cuda/gpu_query.rdc
      utils.rdc
 )
 
@@ -114,6 +114,7 @@ mark_as_advanced(CUDA_DRIVER_LIBRARY)
 
 # OpenMP
 find_package(OpenMP)
+set(MERLIN_LINKLIBRARY ${MERLIN_LINKLIBRARY} OpenMP::OpenMP_CXX)
 
 # =============================================================================
 # library
@@ -164,14 +165,14 @@ if(MERLIN_CUDA_STATIC_LIB)
                                $<$<COMPILE_LANGUAGE:CUDA>: ${MERLIN_CUDA_OPTION} >)
         target_link_libraries(libmerlincuda PUBLIC ${CUDA_DRIVER_LIBRARY})
     endif(MERLIN_CUDA)
-    target_link_libraries(libmerlincuda PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(libmerlincuda PUBLIC ${MERLIN_LINKLIBRARY})
 endif(MERLIN_CUDA_STATIC_LIB)
 
 # set property for main library
 set_property(TARGET libmerlin PROPERTY OUTPUT_NAME merlin)
 set_property(TARGET libmerlin PROPERTY POSITION_INDEPENDENT_CODE 1)
 target_include_directories(libmerlin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(libmerlin PUBLIC OpenMP::OpenMP_CXX)
+target_link_libraries(libmerlin PUBLIC ${MERLIN_LINKLIBRARY})
 if(MERLIN_CUDA_STATIC_LIB)
     target_link_libraries(libmerlin PUBLIC libmerlincuda)
 endif(MERLIN_CUDA_STATIC_LIB)

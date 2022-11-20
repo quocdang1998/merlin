@@ -1,5 +1,5 @@
 // Copyright 2022 quocdang1998
-#include "merlin/device/gpu_query.hpp"
+#include "merlin/cuda/gpu_query.hpp"
 
 #include <cstdio>  // std::printf
 #include <map>  // std::map
@@ -9,14 +9,15 @@
 
 #include "merlin/logger.hpp"  // WARNING, FAILURE, cuda_runtime_error
 
-namespace merlin::device {
+namespace merlin::cuda {
 
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // Get GPU core
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 // Convert GPU major.minor version to number of CUDA core
-// Adapted from function _ConvertSMVer2Cores, see https://github.com/NVIDIA/cuda-samples/blob/master/Common/helper_cuda.h
+// Adapted from function _ConvertSMVer2Cores
+// For more info, see https://github.com/NVIDIA/cuda-samples/blob/master/Common/helper_cuda.h
 static int convert_SM_version_to_core(int major, int minor) {
     std::map<int, int> num_gpu_arch_cores_per_SM = {
         {0x30, 192},
@@ -43,9 +44,9 @@ static int convert_SM_version_to_core(int major, int minor) {
     return num_gpu_arch_cores_per_SM[SM];
 }
 
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // Device
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 // Print limit of device
 void Device::print_specification(void) {
@@ -77,7 +78,8 @@ void Device::print_specification(void) {
     // Total global memory
     std::printf("    Total amount of global memory: %f GB.\n", static_cast<float>(prop.totalGlobalMem)/1073741824.0f);
     // Max shared memory per block
-    std::printf("    Maximum amount of shared memory available to a thread block: %zu bytes.\n", prop.sharedMemPerBlock);
+    std::printf("    Maximum amount of shared memory available to a thread block: %zu bytes.\n",
+                prop.sharedMemPerBlock);
     // Max constant memory
     std::printf("    Memory available on device for __constant__ variables in a CUDA C kernel: %zu bytes.\n",
                 prop.totalConstMem);
@@ -200,4 +202,4 @@ bool test_all_gpu(void) {
 // Map from GPU ID to is details
 std::map<int, Device> gpu_map;
 
-}  // namespace merlin::device
+}  // namespace merlin::cuda

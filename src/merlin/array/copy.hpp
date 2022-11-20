@@ -6,18 +6,19 @@
 #include <tuple>  // std::tuple
 
 #include "merlin/array/nddata.hpp"  // merlin::array::NdData
-#include "merlin/device/decorator.hpp"  // __cuhost__, __cuhostdev__
+#include "merlin/cuda_decorator.hpp"  // __cuhost__, __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/vector.hpp"  // merlin::intvec
 
 namespace merlin::array {
 
 /** @brief Calculate C-contiguous stride vector.
- *  @details Get stride vector from dims vector and size of one element as if the merlin::array::NdData is C-contiguous.
+ *  @details Get stride vector from dims vector and size of one element as if the merlin::array::NdData is
+ *  C-contiguous.
  *  @param shape Shape vector.
  *  @param element_size Size on one element.
  */
-MERLIN_EXPORTS intvec contiguous_strides(const intvec & shape, std::uint64_t element_size);
+MERLIN_EXPORTS intvec contiguous_strides(const merlin::intvec & shape, std::uint64_t element_size);
 
 /** @brief Calculate the longest contiguous segment and break index of an tensor.
  *  @details Longest contiguous segment is the length (in bytes) of the longest sub-tensor that is C-contiguous in the
@@ -30,7 +31,8 @@ MERLIN_EXPORTS intvec contiguous_strides(const intvec & shape, std::uint64_t ele
  *  @param shape Shape vector.
  *  @param strides Strides vector.
 */
-MERLIN_EXPORTS std::tuple<std::uint64_t, std::int64_t> lcseg_and_brindex(const intvec & shape, const intvec & strides);
+MERLIN_EXPORTS std::tuple<std::uint64_t, std::int64_t> lcseg_and_brindex(const merlin::intvec & shape,
+                                                                         const merlin::intvec & strides);
 
 /** @brief Copy data from an merlin::array::NdData to another.
  *  @details This function allows user to choose the copy function (for example, std::memcpy, or cudaMemcpy).

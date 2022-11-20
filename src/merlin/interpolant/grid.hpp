@@ -7,7 +7,7 @@
 
 #include "merlin/array/array.hpp"  // merlin::Array
 #include "merlin/array/nddata.hpp"  // merlin::NdData, merlin::Iterator
-#include "merlin/device/decorator.hpp"  // __cuhostdev__
+#include "merlin/cuda_decorator.hpp"  // __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/iterator.hpp"  // merlin::Iterator
 #include "merlin/vector.hpp"  // merlin::Vector, merlin::intvec, merlin::floatvec

@@ -1,13 +1,13 @@
 // Copyright 2022 quocdang1998
-#include "merlin/device/gpu_query.hpp"
+#include "merlin/cuda/gpu_query.hpp"
 
 #include "merlin/logger.hpp"  // CUHDERR
 
-namespace merlin::device {
+namespace merlin::cuda {
 
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // Device
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 // Construct a device from its ID
 __cuhostdev__ Device::Device(int id) {
@@ -49,4 +49,4 @@ __cuhostdev__ Device Device::get_current_gpu(void) {
 // Destructor
 __cuhostdev__ Device::~Device(void) {}
 
-}  // namespace merlin::device
+}  // namespace merlin::cuda

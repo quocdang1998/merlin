@@ -1,14 +1,14 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/nddata.hpp"
 
-namespace merlin::array {
+namespace merlin {
 
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // NdData
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 // Number of elements
-__cuhostdev__ std::uint64_t NdData::size(void) {
+__cuhostdev__ std::uint64_t array::NdData::size(void) {
     std::uint64_t size = 1;
     for (int i = 0; i < this->ndim_; i++) {
         size *= this->shape_[i];
@@ -16,4 +16,4 @@ __cuhostdev__ std::uint64_t NdData::size(void) {
     return size;
 }
 
-}  // namespace merlin::array
+}  // namespace merlin

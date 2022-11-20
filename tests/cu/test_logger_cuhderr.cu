@@ -1,6 +1,6 @@
 #include "merlin/logger.hpp"
 
-#include "merlin/device/decorator.hpp"
+#include "merlin/cuda_decorator.hpp"
 
 __cuhostdev__ void errfunction(void) {
     CUHDERR(std::runtime_error, "An error message %d.\n", 2);

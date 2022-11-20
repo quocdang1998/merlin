@@ -88,12 +88,12 @@ GPU with CUDA
 .. doxysummary::
    :toctree: generated
 
-   merlin::device::Device
-   merlin::device::Context
+   merlin::cuda::Device
+   merlin::cuda::Context
 
 .. doxysummary::
    :toctree: generated
 
-   merlin::device::print_all_gpu_specification
-   merlin::device::test_all_gpu
+   merlin::cuda::print_all_gpu_specification
+   merlin::cuda::test_all_gpu
 

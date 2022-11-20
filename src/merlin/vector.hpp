@@ -6,7 +6,7 @@
 #include <cstdint>  // std::int64_t, std::uint64_t, std::uintptr_t
 #include <initializer_list>  // std::initializer_list
 
-#include "merlin/device/decorator.hpp"  // __cuhost__, __cuhostdev__
+#include "merlin/cuda_decorator.hpp"  // __cuhost__, __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_TEMPLATE_EXPORTS
 
 namespace merlin {
@@ -27,16 +27,16 @@ class Vector {
     /** @brief Constructor from size and fill-in value.*/
     __cuhostdev__ Vector(std::uint64_t size, T value = 0);
     /** @brief Copy constructor from a pointer to first and last element.
-     *  @tparam Convertable Type convertable to ``T`` (constructor of ``T`` from ``Convertable``, i.e ``T(Convertable)``
-     *  must exists).
+     *  @tparam Convertable Type convertable to ``T`` (constructor of ``T`` from ``Convertable``, i.e
+     *  ``T(Convertable)`` must exists).
      *  @param ptr_first Pointer to the first element.
      *  @param ptr_last Pointer to the last element.
      */
     template <typename Convertable>
     __cuhostdev__ Vector(const Convertable * ptr_first, const Convertable * ptr_last);
     /** @brief Copy constructor from pointer to an array and size.
-     *  @tparam Convertable Type convertable to ``T`` (constructor of ``T`` from ``Convertable``, i.e ``T(Convertable)``
-     *  must exists).
+     *  @tparam Convertable Type convertable to ``T`` (constructor of ``T`` from ``Convertable``, i.e
+     *  ``T(Convertable)`` must exists).
      *  @param ptr_src Pointer to the first element of source array.
      *  @param size Size of resulted vector (can be smaller or equals the original array).
      */

@@ -8,11 +8,12 @@
 
 namespace merlin {
 
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // CartesianInterpolant
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
-CartesianInterpolant::CartesianInterpolant(CartesianGrid & grid, array::NdData & value) : grid_(&grid), value_(&value) {
+CartesianInterpolant::CartesianInterpolant(CartesianGrid & grid, array::NdData & value) :
+grid_(&grid), value_(&value) {
     // check number of points of grid and value vector
     if (grid.ndim() != value.ndim()) {
         FAILURE(std::invalid_argument, "Ndim of Grid (%d) and value tensor (%d) are inconsistent.\n",
@@ -22,18 +23,19 @@ CartesianInterpolant::CartesianInterpolant(CartesianGrid & grid, array::NdData &
     intvec grid_shape = grid.grid_shape();
     for (int i = 0; i < grid.ndim(); i++) {
         if (grid_shape[i] < value.shape()[i]) {
-            FAILURE(std::invalid_argument, "Expected less or equal shape Grid (%d) and value tensor (%d) at index %d.\n",
+            FAILURE(std::invalid_argument, "Expected shape Grid (%d) less or equal value tensor (%d) at index %d.\n",
                     grid_shape[i], value.shape()[i], i);
         }
     }
 }
 
 
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // LagrangeInterpolant
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
-LagrangeInterpolant::LagrangeInterpolant(CartesianGrid & grid, array::NdData & value) : CartesianInterpolant(grid, value) {
+LagrangeInterpolant::LagrangeInterpolant(CartesianGrid & grid, array::NdData & value) :
+CartesianInterpolant(grid, value) {
     // copy value to coef_ tensor
     this->coef_ = value;
     /*

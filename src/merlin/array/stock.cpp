@@ -18,11 +18,9 @@
 #include <share.h>  // _SH_DENYNO, _SH_DENYRW, _SH_DENYWR
 #endif  // __MERLIN_WINDOWS__
 
-namespace merlin::array {
-
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // Open file pointer (Windows)
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 #if defined(__MERLIN_WINDOWS__)
 
@@ -45,9 +43,9 @@ static inline std::FILE * update_file(const char * fname, bool thread_safe = tru
 
 #endif  // __MERLIN_WINDOWS__
 
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // Open file pointer (Linux)
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 #if defined(__MERLIN_LINUX__)
 
@@ -68,9 +66,9 @@ static inline std::FILE * update_file(const char * fname, bool thread_safe = tru
 
 #endif  // __MERLIN_LINUX__
 
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // Data read/write
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 // Read an array from file
 static inline void read_from_file(float * dest, std::fstream & file, float * src, std::uint64_t count) {
@@ -83,29 +81,31 @@ static inline void write_to_file(std::fstream & file, float * dest, float * src,
     file.write(reinterpret_cast<char *>(src), count);
 }
 
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // Stock
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace merlin {
 
 // Constructor from filename
-Stock::Stock(const std::string & filename, char mode, std::uint64_t offset) : filename_(filename),
-                                                                              mode_(mode), offset_(offset) {
+array::Stock::Stock(const std::string & filename, char mode, std::uint64_t offset) : filename_(filename),
+mode_(mode), offset_(offset) {
     std::string c_mode;
     switch (mode) {
         case 'r':
-            this->file_ptr_ = read_file(filename.c_str());
+            this->file_ptr_ = ::read_file(filename.c_str());
             break;
         case 'w':
-            this->file_ptr_ = write_file(filename.c_str(), true);
+            this->file_ptr_ = ::write_file(filename.c_str(), true);
             break;
         case 'a':
-            this->file_ptr_ = update_file(filename.c_str(), true);
+            this->file_ptr_ = ::update_file(filename.c_str(), true);
             break;
         case 'p':
-            this->file_ptr_ = write_file(filename.c_str(), false);
+            this->file_ptr_ = ::write_file(filename.c_str(), false);
             break;
         case 's':
-            this->file_ptr_ = update_file(filename.c_str(), true);
+            this->file_ptr_ = ::update_file(filename.c_str(), true);
             break;
     }
     if (this->file_ptr_ == NULL) {
@@ -119,7 +119,7 @@ Stock::Stock(const std::string & filename, char mode, std::uint64_t offset) : fi
 }
 
 // Temporary close the file
-void Stock::temporary_close(void) {
+void array::Stock::temporary_close(void) {
     if (this->file_ptr_ != NULL) {
         int err_ = std::fclose(this->file_ptr_);
         if (err_ != 0) {
@@ -197,7 +197,7 @@ void Stock::write_data_to_file(Array & src) {
 }
 */
 // Destructor
-Stock::~Stock(void) {
+array::Stock::~Stock(void) {
     if ((this->file_ptr_ != NULL) && this->force_close) {
         int err_ = std::fclose(this->file_ptr_);
         if (err_ != 0) {
@@ -206,4 +206,4 @@ Stock::~Stock(void) {
     }
 }
 
-}  // namespace merlin::array
+}  // namespace merlin

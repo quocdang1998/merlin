@@ -6,7 +6,9 @@
 #include <initializer_list>  // std::initializer_list
 #include <tuple>  // std::tuple
 
-#include "merlin/device/decorator.hpp"  // __cuhostdev__
+#include "merlin/cuda_decorator.hpp"  // __cuhostdev__
+
+typedef std::tuple<std::uint64_t, std::uint64_t, std::uint64_t> triplet_uint64;
 
 namespace merlin::array {
 
@@ -79,11 +81,10 @@ class Slice {
     /** @brief Calculate offset, new shape and stride of a dimension.
      *  @param shp Shape of sliced dimension.
      *  @param strd Stride of sliced dimension.
-     *  @return A tuple of 3 ``std::uint64_t``, respectively the offset, new shape and new stride of dimension of sliced
-     *  array. If the slice has only one element, new shape is 1.
+     *  @return A tuple of 3 ``std::uint64_t``, respectively the offset, new shape and new stride of dimension of
+     *  sliced array. If the slice has only one element, new shape is 1.
      */
-    __cuhostdev__ std::tuple<std::uint64_t, std::uint64_t, std::uint64_t> slice_on(std::uint64_t shp,
-                                                                                   std::uint64_t strd) const;
+    __cuhostdev__ triplet_uint64 slice_on(std::uint64_t shp, std::uint64_t strd) const;
     /// @}
 
   protected:

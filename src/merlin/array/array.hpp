@@ -6,7 +6,7 @@
 #include <string>  // std::string
 #include <initializer_list>  // std::initializer_list
 
-#include "merlin/array/nddata.hpp"  // merlin::array::NdData, merlin::array::Parcel, merlin::Iterator
+#include "merlin/array/nddata.hpp"  // merlin::array::NdData, merlin::array::Parcel
 #include "merlin/array/slice.hpp"  // merlin::Slice
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/iterator.hpp"  // merlin::Iterator

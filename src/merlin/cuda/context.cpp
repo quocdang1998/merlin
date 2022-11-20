@@ -1,14 +1,20 @@
 // Copyright 2022 quocdang1998
-#include "merlin/device/context.hpp"
+#include "merlin/cuda/context.hpp"
 
-namespace merlin::device {
+namespace merlin::cuda {
 
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 // Context
-// -------------------------------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------------------------
 
 // List of primary contexts
 std::vector<Context> Context::primary_contexts;
+
+// Reference count of each context
+std::map<std::uintptr_t, unsigned int> Context::reference_count_;
+
+// Status of the context is attached to current CPU process
+std::map<std::uintptr_t, bool> Context::attached_;
 
 #ifndef __MERLIN_CUDA__
 
@@ -28,6 +34,12 @@ Context & Context::pop_current(void) {
     return *this;
 }
 
+// Get current context
+Context Context::get_current(void) {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for context management.\n");
+    return Context();
+}
+
 // Check if the context is the top of context stack
 bool Context::is_current(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for context management.\n");
@@ -38,9 +50,6 @@ bool Context::is_current(void) {
 void Context::set_current(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for context management.\n");
 }
-
-// List of primary contexts
-std::vector<Context> Context::primary_contexts;
 
 // Create list of primary contexts
 void Context::create_primary_context_list(void) {
@@ -65,10 +74,8 @@ void Context::set_flag_primary_context(const Device & gpu, Context::Flags flag) 
 }
 
 // Destructor
-Context::~Context(void) {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for context management.\n");
-}
+Context::~Context(void) {}
 
 #endif  // __MERLIN_CUDA__
 
-}  // namespace merlin::device
+}  // namespace merlin::cuda

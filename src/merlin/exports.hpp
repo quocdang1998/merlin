@@ -7,7 +7,6 @@
 #if defined(__MERLIN_BUILT_AS_STATIC__) || defined(LIBMERLIN_STATIC) || defined(__MERLIN_LINUX__)
     #define MERLIN_EXPORTS
     #define MERLIN_NO_EXPORT
-    #define MERLIN_TEMPLATE_EXPORTS
 #else
     // define MERLIN_EXPORTS to export extern variables, classes and functions to WIndows DLL library
     #ifndef MERLIN_EXPORTS
