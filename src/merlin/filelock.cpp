@@ -30,8 +30,8 @@ static inline std::string throw_windows_last_error(unsigned long int last_error)
         char * buffer = NULL;
         const unsigned long int format = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
                                          | FORMAT_MESSAGE_IGNORE_INSERTS;
-        unsigned long int size = FormatMessageA(format, NULL, last_error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                                                reinterpret_cast<char *>(&buffer), 0, NULL);
+        unsigned long int size = ::FormatMessageA(format, NULL, last_error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                                                  reinterpret_cast<char *>(&buffer), 0, NULL);
         return std::string(buffer, size);
     } else {
         return std::string();
@@ -51,9 +51,9 @@ void FileLock::lock(void) {
     if (handle == -1) {
         FAILURE(std::ios_base::failure, "Invalid file handle returned.\n");
     }
-    bool succeed = LockFileEx(reinterpret_cast<void *>(handle), LOCKFILE_EXCLUSIVE_LOCK, 0, len, len, &ovrlap);
+    bool succeed = ::LockFileEx(reinterpret_cast<void *>(handle), LOCKFILE_EXCLUSIVE_LOCK, 0, len, len, &ovrlap);
     if (!succeed) {
-        std::string err_message = throw_windows_last_error(GetLastError());
+        std::string err_message = throw_windows_last_error(::GetLastError());
         FAILURE(std::ios_base::failure, "Exclusive lock file failed with message \"%s\".\n", err_message.c_str());
     }
 }
@@ -67,10 +67,10 @@ bool FileLock::try_lock(void) {
     if (handle == -1) {
         FAILURE(std::ios_base::failure, "Invalid file handle returned.\n");
     }
-    bool succeed = LockFileEx(reinterpret_cast<void *>(handle), LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY,
-                              0, len, len, &ovrlap);
+    bool succeed = ::LockFileEx(reinterpret_cast<void *>(handle), LOCKFILE_EXCLUSIVE_LOCK | LOCKFILE_FAIL_IMMEDIATELY,
+                                0, len, len, &ovrlap);
     if (!succeed) {
-        unsigned long int err_ = GetLastError();
+        unsigned long int err_ = ::GetLastError();
         if (err_ == ERROR_LOCK_VIOLATION) {
             return false;
         }
@@ -89,9 +89,9 @@ void FileLock::unlock(void) {
     if (handle == -1) {
         FAILURE(std::ios_base::failure, "Invalid file handle returned.\n");
     }
-    bool succeed = UnlockFileEx(reinterpret_cast<void *>(handle), 0, len, len, &ovrlap);
+    bool succeed = ::UnlockFileEx(reinterpret_cast<void *>(handle), 0, len, len, &ovrlap);
     if (!succeed) {
-        std::string err_message = throw_windows_last_error(GetLastError());
+        std::string err_message = throw_windows_last_error(::GetLastError());
         FAILURE(std::ios_base::failure, "Unlock exclusively file failed with message \"%s\".\n", err_message.c_str());
     }
 }
@@ -105,9 +105,9 @@ void FileLock::lock_shared(void) {
     if (handle == -1) {
         FAILURE(std::ios_base::failure, "Invalid file handle returned.\n");
     }
-    bool succeed = LockFileEx(reinterpret_cast<void *>(handle), 0, 0, len, len, &ovrlap);
+    bool succeed = ::LockFileEx(reinterpret_cast<void *>(handle), 0, 0, len, len, &ovrlap);
     if (!succeed) {
-        std::string err_message = throw_windows_last_error(GetLastError());
+        std::string err_message = throw_windows_last_error(::GetLastError());
         FAILURE(std::ios_base::failure, "Shared lock file failed with message \"%s\".\n", err_message.c_str());
     }
 }
@@ -121,9 +121,9 @@ bool FileLock::try_lock_shared(void) {
     if (handle == -1) {
         FAILURE(std::ios_base::failure, "Invalid file handle returned.\n");
     }
-    bool succeed = LockFileEx(reinterpret_cast<void *>(handle), LOCKFILE_FAIL_IMMEDIATELY, 0, len, len, &ovrlap);
+    bool succeed = ::LockFileEx(reinterpret_cast<void *>(handle), LOCKFILE_FAIL_IMMEDIATELY, 0, len, len, &ovrlap);
     if (!succeed) {
-        unsigned long int err_ = GetLastError();
+        unsigned long int err_ = ::GetLastError();
         if (err_ == ERROR_LOCK_VIOLATION) {
             return false;
         }

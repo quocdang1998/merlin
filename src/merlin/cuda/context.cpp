@@ -7,14 +7,11 @@ namespace merlin::cuda {
 // Context
 // --------------------------------------------------------------------------------------------------------------------
 
-// List of primary contexts
-std::vector<Context> Context::primary_contexts;
+// Mutex lock for updating static attributes
+std::mutex Context::m_;
 
-// Reference count of each context
-std::map<std::uintptr_t, unsigned int> Context::reference_count_;
-
-// Status of the context is attached to current CPU process
-std::map<std::uintptr_t, bool> Context::attached_;
+// Attributes of instances
+std::map<std::uintptr_t, Context::SharedAttribures> Context::shared_attributes_;
 
 #ifndef __MERLIN_CUDA__
 
@@ -73,9 +70,19 @@ void Context::set_flag_primary_context(const Device & gpu, Context::Flags flag) 
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for context management.\n");
 }
 
+// String representation
+std::string Context::repr(void) {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
+    return "";
+}
+
 // Destructor
 Context::~Context(void) {}
 
 #endif  // __MERLIN_CUDA__
+
+// --------------------------------------------------------------------------------------------------------------------
+// PrimaryContext
+// --------------------------------------------------------------------------------------------------------------------
 
 }  // namespace merlin::cuda

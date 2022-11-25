@@ -20,16 +20,16 @@ cdef extern from "merlin/cuda/context.hpp":
 
     cdef cppclass CppContext "merlin::cuda::Context":
         CppContext()
-        CppContext(const CppDevice & gpu, ContextFlags flag)
-        CppContext(const CppContext & src)
-        CppDevice get_gpu()
-        bint is_attached()
-        void push_current()
-        CppContext & pop_current()
-        bint is_current()
-        void set_current()
+        CppContext(const CppDevice & gpu, ContextFlags flag) except +
+        CppContext(const CppContext & src) except +
+        uintptr_t get_context_ptr()
+        CppDevice get_gpu() except +
+        bint is_attached() except +
+        void push_current() except +
+        CppContext & pop_current() except +
+        bint is_current() except +
+        void set_current() except +
+        string repr() except +
 
         @staticmethod
-        CppContext & get_primary_context(const CppDevice & gpu)
-        @staticmethod
-        pair[bint, ContextFlags] get_primary_ctx_state(const CppDevice & gpu)
+        CppContext get_current() except +

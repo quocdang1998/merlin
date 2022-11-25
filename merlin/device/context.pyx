@@ -32,6 +32,9 @@ cdef class Context:
         if kwargs:
             raise ValueError("Invalid keywords: " + ", ".join(k for k in kwargs.keys()))
 
+    def __repr__(self):
+        return PyUnicode_FromString(self.core.repr().c_str())
+
     def assign(self, uintptr_t ptr):
         """assign(self, ptr)
         Assign pointer to a C++ object to the Python class wrapper.
@@ -89,6 +92,13 @@ cdef class Context:
         result.c_assign(c_result)
         return result
 
+    @classmethod
+    def get_current(self):
+        result = Context()
+        cdef CppContext * c_result = new CppContext(move(CppContext.get_current()))
+        result.c_assign(c_result)
+        return result;
+
     def is_current(self):
         """is_current(self)
         Check if the context is the top of the context stack.
@@ -101,17 +111,8 @@ cdef class Context:
         """
         self.core.set_current()
 
-    @classmethod
-    def get_primary_context(self, Device gpu):
-        result = Context()
-        cdef CppContext * c_result = &CppContext.get_primary_context(dereference(gpu.core))
-        result.c_assign(c_result)
-        return result
-
-    @classmethod
-    def get_primary_ctx_state(self, Device gpu):
-        cdef pair[bint, ContextFlags] c_result = CppContext.get_primary_ctx_state(dereference(gpu.core))
-        return (c_result.first, c_result.second)
+    def __eq__(Context left, Context right):
+        return left.core.get_context_ptr() == right.core.get_context_ptr()
 
     def __dealloc__(self):
         del self.core

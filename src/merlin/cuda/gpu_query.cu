@@ -162,6 +162,7 @@ void Device::reset_all(void) {
     cudaDeviceReset();
 }
 
+// String representation
 std::string Device::repr(void) {
     char name[256];
     cuDeviceGetName(name, sizeof(name), this->id_);
