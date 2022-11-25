@@ -30,6 +30,4 @@ cdef extern from "merlin/cuda/context.hpp":
         void set_current()
 
         @staticmethod
-        CppContext & get_primary_context(const CppDevice & gpu)
-        @staticmethod
-        pair[bint, ContextFlags] get_primary_ctx_state(const CppDevice & gpu)
+        CppContext get_current()

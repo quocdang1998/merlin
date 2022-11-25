@@ -33,7 +33,7 @@ class MERLIN_EXPORTS FileLock {
     /// @{
     /** @brief Default constructor.*/
     FileLock(void) = default;
-    /** @brief Constructor from file pointer.*/
+    /** @brief Constructor from C file stream pointer.*/
     FileLock(std::FILE * file_ptr);
     /// @}
 
@@ -70,7 +70,7 @@ class MERLIN_EXPORTS FileLock {
     /// @}
 
   private:
-    /** @brief File descriptor.*/
+    /** @brief POSIX file descriptor.*/
     int file_descriptor = 0;
 };
 

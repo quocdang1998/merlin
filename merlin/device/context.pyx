@@ -89,6 +89,13 @@ cdef class Context:
         result.c_assign(c_result)
         return result
 
+    @classmethod
+    def get_current(self):
+        result = Context()
+        cdef CppContext * c_result = new CppContext(CppContext.get_current())
+        result.c_assign(c_result)
+        return result;
+
     def is_current(self):
         """is_current(self)
         Check if the context is the top of the context stack.
@@ -100,18 +107,6 @@ cdef class Context:
         Set the context as the top context of the stack.
         """
         self.core.set_current()
-
-    @classmethod
-    def get_primary_context(self, Device gpu):
-        result = Context()
-        cdef CppContext * c_result = &CppContext.get_primary_context(dereference(gpu.core))
-        result.c_assign(c_result)
-        return result
-
-    @classmethod
-    def get_primary_ctx_state(self, Device gpu):
-        cdef pair[bint, ContextFlags] c_result = CppContext.get_primary_ctx_state(dereference(gpu.core))
-        return (c_result.first, c_result.second)
 
     def __dealloc__(self):
         del self.core

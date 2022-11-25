@@ -18,14 +18,15 @@ Context::Context(const Device & gpu, Context::Flags flag) {
         FAILURE(cuda_runtime_error, "Create context failed with message \"%s\".\n", cuda_get_error_name(err_));
     }
     this->context_ = reinterpret_cast<std::uintptr_t>(ctx);
-    this->device_ = gpu;
     // Increase reference count and initialize attached flag
-    auto [it_current, success] = Context::reference_count_.insert({this->context_, 1});
+    Context::m_.lock();
+    auto [it_current, success] = Context::shared_attributes_.insert({this->context_, {1, true, gpu}});
     if (!success) {
         FAILURE(cuda_runtime_error, "Create context failed because the context has already exist.\n");
     }
-    Context::attached_[this->context_] = true;
+    Context::m_.unlock();
 }
+
 
 // Push the context to the stack
 void Context::push_current(void) {
@@ -38,7 +39,9 @@ void Context::push_current(void) {
         FAILURE(cuda_runtime_error, "Push context to current stack failed with message \"%s\".\n",
                 cuda_get_error_name(err_));
     }
-    Context::attached_[this->context_] = true;
+    Context::m_.lock();
+    Context::shared_attributes_[this->context_].attached = true;
+    Context::m_.unlock();
 }
 
 // Pop the context out of the stack
@@ -52,7 +55,9 @@ Context & Context::pop_current(void) {
         FAILURE(cuda_runtime_error, "Pop current context out of the stack failed with message \"%s\".\n",
                 cuda_get_error_name(err_));
     }
-    Context::attached_[this->context_] = false;
+    Context::m_.lock();
+    Context::shared_attributes_[this->context_].attached = false;
+    Context::m_.unlock();
     return *this;
 }
 
@@ -65,11 +70,12 @@ Context Context::get_current(void) {
         FAILURE(cuda_runtime_error, "Get current context failed with message \"%s\".\n", cuda_get_error_name(err_));
     }
     result.context_ = reinterpret_cast<std::uintptr_t>(current_ctx);
-    result.device_ = Device::get_current_gpu();
-    if (Context::reference_count_.find(result.context_) == Context::reference_count_.end()) {
-        Context::reference_count_[result.context_] = 1;
+    Context::m_.lock();
+    if (Context::shared_attributes_.find(result.context_) == Context::shared_attributes_.end()) {
+        Context::shared_attributes_[result.context_] = {1, true, Device::get_current_gpu()};
     }
-    Context::reference_count_[result.context_] += 1;
+    Context::shared_attributes_[result.context_].reference_count += 1;
+    Context::m_.unlock();
     return result;
 }
 
@@ -91,60 +97,21 @@ void Context::set_current(void) {
     }
 }
 
-// Create list of primary contexts
-void Context::create_primary_context_list(void) {
-    int num_gpu = Device::get_num_gpu();
-    // skip when the primary contexts are initialized
-    if (num_gpu == Context::primary_contexts.size()) {
-        return;
-    }
-    for (int i = 0; i < num_gpu; i++) {
-        Context::primary_contexts.emplace_back(Context::create_primary_context(Device(i)));
-    }
-}
-
-// Create primary context instance assigned to a GPU
-Context Context::create_primary_context(const Device & gpu) {
-    Context result;
-    result.device_ = gpu;
-    auto [active, _] = result.get_primary_ctx_state(gpu);
-    Context::reference_count_[result.context_] = 1;
-    Context::attached_[result.context_] = active;
-    return result;
-}
-
-// Get state of the primary context
-std::pair<bool, Context::Flags> Context::get_primary_ctx_state(const Device & gpu) {
-    unsigned int flags;
-    int active;
-    CUresult err_ = cuDevicePrimaryCtxGetState(gpu.id(), &flags, &active);
-    if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Get state of primary context of GPU %d failed with message \"%s\".\n",
-                gpu.id(), cuda_get_error_name(err_));
-    }
-    return std::pair<bool, Context::Flags>(static_cast<bool>(active), Context::Flags(flags));
-}
-
-// Set flag for primary context
-void Context::set_flag_primary_context(const Device & gpu, Context::Flags flag) {
-    CUresult err_ = cuDevicePrimaryCtxSetFlags(gpu.id(), static_cast<unsigned int>(flag));
-    if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Set flag to primary context of GPU %d failed with message \"%s\".\n",
-                gpu.id(), cuda_get_error_name(err_));
-    }
-}
-
 // Destructor
 Context::~Context(void) {
     // free if the context is not a primary context and reference count goes to zero
     if (this->context_ != 0) {
-        Context::reference_count_[this->context_] -= 1;
-        if (Context::reference_count_[this->context_] == 0) {
-            Context::reference_count_.erase(this->context_);
-            Context::attached_.erase(this->context_);
+        Context::m_.lock();
+        if (--Context::shared_attributes_[this->context_].reference_count == 0) {
+            Context::shared_attributes_.erase(this->context_);
             cuCtxDestroy(reinterpret_cast<CUcontext>(this->context_));
         }
+        Context::m_.unlock();
     }
 }
+
+// --------------------------------------------------------------------------------------------------------------------
+// PrimaryContext
+// --------------------------------------------------------------------------------------------------------------------
 
 }  // namespace merlin::cuda

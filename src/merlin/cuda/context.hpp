@@ -4,6 +4,7 @@
 
 #include <cstdint>  // std::uintptr_t
 #include <map>  // std::map
+#include <mutex>  // std::mutex
 #include <utility>  // std::exchange, std::pair
 #include <vector>  // std::vector
 
@@ -51,7 +52,6 @@ class MERLIN_EXPORTS Context {
             FAILURE(cuda_runtime_error, "Original context is a primary context.\n");
         }
         this->context_ = std::exchange(src.context_, 0);
-        this->device_ = std::exchange(src.device_, 0);
     }
     /** @brief Move assignment.*/
     Context & operator=(Context && src) {
@@ -59,7 +59,6 @@ class MERLIN_EXPORTS Context {
             FAILURE(cuda_runtime_error, "Original context is a primary context.\n");
         }
         this->context_ = std::exchange(src.context_, 0);
-        this->device_ = std::exchange(src.device_, 0);
         return *this;
     }
     /// @}
@@ -67,9 +66,9 @@ class MERLIN_EXPORTS Context {
     /// @name Get attributes
     /// @{
     /** @brief Get GPU bounded to the context.*/
-    Device get_gpu(void) const {return this->device_;}
+    Device get_gpu(void) const {return Context::shared_attributes_[this->context_].device;}
     /** @brief Check if the context is attached to any CPU process.*/
-    bool is_attached(void) const {return Context::attached_[this->context_];}
+    bool is_attached(void) const {return Context::shared_attributes_[this->context_].attached;}
     /// @}
 
     /// @name Manipulation of the context stack
@@ -86,25 +85,6 @@ class MERLIN_EXPORTS Context {
     void set_current(void);
     /// @}
 
-    /// @name Interaction with primary context.
-    /// @{
-    /** @brief List of primary contexts of each GPU.*/
-    static std::vector<Context> primary_contexts;
-    /** @brief Create list of primary contexts at initialization.*/
-    static void create_primary_context_list(void);
-    /** @brief Create primary context instance assigned to a GPU.*/
-    static Context create_primary_context(const Device & gpu);
-    /** @brief Get primary context instance corresponding to a GPU.*/
-    static Context & get_primary_context(const Device & gpu) {return Context::primary_contexts[gpu.id()];}
-    /** @brief Get state of the primary context.
-     *  @returns Active state (``false`` means inactive) and setting flag of the primary context associated with the
-     *  GPU.
-     */
-    static std::pair<bool, Flags> get_primary_ctx_state(const Device & gpu);
-    /** @brief Set flag for primary context.*/
-    static void set_flag_primary_context(const Device & gpu, Flags flag);
-    /// @}
-
     /// @name Destructor
     /// @{
     /** @brief Destructor.*/
@@ -114,14 +94,16 @@ class MERLIN_EXPORTS Context {
   protected:
     /** @brief Pointer to ``CUctx_st`` object.*/
     std::uintptr_t context_ = 0;
-    /** @brief GPU associated to the CUDA context.*/
-    Device device_;
-
-  private:
-    /** @brief Number of times a context pointer is referenced.*/
-    static std::map<std::uintptr_t, unsigned int> reference_count_;
-    /** @brief The current context is attached to the CPU process.*/
-    static std::map<std::uintptr_t, bool> attached_;
+    /** @brief Mutex lock for updating static attributes.*/
+    static std::mutex m_;
+    /** @brief Attributes shared between contextes instances.*/
+    struct SharedAttribures {
+        unsigned int reference_count;
+        bool attached;
+        Device device;
+    };
+    /** @brief Attributes of Context instances.*/
+    static std::map<std::uintptr_t, SharedAttribures> shared_attributes_;
 };
 
 }  // namespace merlin::cuda
