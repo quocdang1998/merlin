@@ -116,12 +116,6 @@ class cuda_runtime_error : public std::runtime_error {
 #define CUDAERR(fmt, ...) \
     std::printf("\033[1;35m[CUDAERR]\033[0m [%s] " fmt, __FUNCNAME__, ##__VA_ARGS__);\
     asm("trap;")
-
-inline const char * cuda_get_error_name(CUresult err_) {
-    const char * buffer;
-    cuGetErrorName(err_, &buffer);
-    return buffer;
-}
 #endif  // __NVCC__
 
 // Log CUHDERR for host-device error

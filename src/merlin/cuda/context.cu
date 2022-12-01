@@ -1,6 +1,8 @@
 // Copyright 2022 quocdang1998
 #include "merlin/cuda/context.hpp"
 
+#include <sstream>  // std::ostringstream
+
 #include "cuda.h"  // cuCtxCreate, cuCtxDestroy, CUcontext
 
 namespace merlin::cuda {
@@ -13,9 +15,9 @@ namespace merlin::cuda {
 Context::Context(const Device & gpu, Context::Flags flag) {
     // Create context
     CUcontext ctx;
-    CUresult err_ = cuCtxCreate(&ctx, static_cast<unsigned int>(flag), gpu.id());
+    cudaError_t err_ = static_cast<cudaError_t>(cuCtxCreate(&ctx, static_cast<unsigned int>(flag), gpu.id()));
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Create context failed with message \"%s\".\n", cuda_get_error_name(err_));
+        FAILURE(cuda_runtime_error, "Create context failed with message \"%s\".\n", cudaGetErrorName(err_));
     }
     this->context_ = reinterpret_cast<std::uintptr_t>(ctx);
     // Increase reference count and initialize attached flag
@@ -34,10 +36,10 @@ void Context::push_current(void) {
         FAILURE(cuda_runtime_error, "The current context is being attached to the CPU process\n");
     }
     CUcontext ctx = reinterpret_cast<CUcontext>(this->context_);
-    CUresult err_ = cuCtxPushCurrent(ctx);
+    cudaError_t err_ = static_cast<cudaError_t>(cuCtxPushCurrent(ctx));
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Push context to current stack failed with message \"%s\".\n",
-                cuda_get_error_name(err_));
+                cudaGetErrorName(err_));
     }
     Context::m_.lock();
     Context::shared_attributes_[this->context_].attached = true;
@@ -50,10 +52,10 @@ Context & Context::pop_current(void) {
         FAILURE(cuda_runtime_error, "The current context is not being attached to any processes\n");
     }
     CUcontext ctx = reinterpret_cast<CUcontext>(this->context_);
-    CUresult err_ = cuCtxPopCurrent(&ctx);
+    cudaError_t err_ = static_cast<cudaError_t>(cuCtxPopCurrent(&ctx));
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Pop current context out of the stack failed with message \"%s\".\n",
-                cuda_get_error_name(err_));
+                cudaGetErrorName(err_));
     }
     Context::m_.lock();
     Context::shared_attributes_[this->context_].attached = false;
@@ -65,9 +67,9 @@ Context & Context::pop_current(void) {
 Context Context::get_current(void) {
     Context result;
     CUcontext current_ctx;
-    CUresult err_ = cuCtxGetCurrent(&current_ctx);
+    cudaError_t err_ = static_cast<cudaError_t>(cuCtxGetCurrent(&current_ctx));
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Get current context failed with message \"%s\".\n", cuda_get_error_name(err_));
+        FAILURE(cuda_runtime_error, "Get current context failed with message \"%s\".\n", cudaGetErrorName(err_));
     }
     result.context_ = reinterpret_cast<std::uintptr_t>(current_ctx);
     Context::m_.lock();
@@ -91,10 +93,17 @@ void Context::set_current(void) {
         FAILURE(cuda_runtime_error, "The current context is not being attached to any process\n");
     }
     CUcontext current_ctx = reinterpret_cast<CUcontext>(this->context_);
-    CUresult err_ = cuCtxSetCurrent(current_ctx);
+    cudaError_t err_ = static_cast<cudaError_t>(cuCtxSetCurrent(current_ctx));
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Set current context failed with message \"%s\".\n", cuda_get_error_name(err_));
+        FAILURE(cuda_runtime_error, "Set current context failed with message \"%s\".\n", cudaGetErrorName(err_));
     }
+}
+
+// String representation
+std::string Context::repr(void) {
+    std::ostringstream os;
+    os << "<Context instance at " << std::hex << this->context_ << std::dec << ">";
+    return os.str();
 }
 
 // Destructor

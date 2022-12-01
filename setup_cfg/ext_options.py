@@ -30,10 +30,13 @@ def get_extension_options():
             ext_options["extra_compile_args"] += ["/wd4251", "/wd4551"]
 
     # dependancies
+    depends = glob.glob(os.path.join(module_dir, "setup_cfg", "*.py"))
     if (sys.platform == "linux"):
-        depends = glob.glob(os.path.join(module_dir, "build", "libmerlin.*"))
+        depends += glob.glob(os.path.join(module_dir, "build", "libmerlin.*"))
     elif (sys.platform == "win32"):
-        depends = glob.glob(os.path.join(module_dir, "build", "merlin.lib"))
+        depends += [os.path.join(module_dir, "build", "merlin.lib")]
+        if MERLIN_LIBKIND == "SHARED":
+            depends += [os.path.join(module_dir, "build", "merlin.dll")]
     ext_options["depends"] = depends
 
     # extra link options
@@ -46,7 +49,7 @@ def get_extension_options():
     if MERLIN_LIBKIND == "SHARED":
         ext_options["libraries"] += ["merlincuda"]
     if MERLIN_CUDA:
-        ext_options["libraries"] += ["cuda", "cudadevrt", "cudart_static"]
+        ext_options["libraries"] += ["cudart_static", "cudadevrt", "cuda"]
 
     # library directory
     ext_options["library_dirs"] = [os.path.join(module_dir, "build")]

@@ -12,7 +12,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 # options
 set(MERLIN_CUDA ON CACHE BOOL "Build library using CUDA")  # -DMERLIN_CUDA=OFF
-set(MERLIN_LIBKIND "SHARED"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
+set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
     CACHE INTERNAL "Type of the created library (static or shared/dynamic)")
 set(MERLIN_TEST OFF CACHE BOOL "Build test executables")  # -DMERLIN_TEST=ON
 
@@ -88,29 +88,34 @@ endif()
 
 # CUDA
 if(MERLIN_CUDA)
+    # set CUDA compile properties
     find_package(CUDA QUIET REQUIRED)
     set(CMAKE_CUDA_STANDARD 17)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
     set(CMAKE_CUDA_SEPARABLE_COMPILATION ON)
     set_source_files_properties(${MERLIN_SRC_RDC} PROPERTIES LANGUAGE CUDA)
+    # CUDA Driver library (adapted from CMake/FindCUDAToolkit.cmake#L550-L585)
+    find_library(CUDA_DRIVER_LIBRARY NAMES cuda_driver cuda
+                 HINTS ${CUDA_TOOLKIT_ROOT_DIR} ENV CUDA_PATH
+                 PATH_SUFFIXES nvidia/current lib64 lib/x64 lib)
+    if(NOT CUDA_DRIVER_LIBRARY)
+        find_library(CUDA_DRIVER_LIBRARY NAMES cuda_driver cuda
+                     HINTS ${CUDA_TOOLKIT_ROOT_DIR} ENV CUDA_PATH
+                     PATH_SUFFIXES lib64/stubs lib/x64/stubs lib/stubs stubs)
+    endif(NOT CUDA_DRIVER_LIBRARY)
+    mark_as_advanced(CUDA_DRIVER_LIBRARY)
+    # detect CUDA architechture
+    include(FindCUDA/select_compute_arch)
+    CUDA_DETECT_INSTALLED_GPUS(INSTALLED_GPU_CCS_1)
+    string(STRIP "${INSTALLED_GPU_CCS_1}" INSTALLED_GPU_CCS_2)
+    string(REPLACE " " ";" INSTALLED_GPU_CCS_3 "${INSTALLED_GPU_CCS_2}")
+    string(REPLACE "." "" CUDA_ARCH_LIST "${INSTALLED_GPU_CCS_3}")
+    set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCH_LIST})
+    set_property(GLOBAL PROPERTY CUDA_ARCHITECTURES "${CUDA_ARCH_LIST}")
+    message(STATUS "Detected CUDA architechtures ${CUDA_ARCH_LIST}")
 else()
     set_source_files_properties(${MERLIN_SRC_RDC} PROPERTIES LANGUAGE CXX)
 endif(MERLIN_CUDA)
-
-# CUDA Driver library (Adapted from CMake/FindCUDAToolkit.cmake#L550-L585)
-find_library(CUDA_DRIVER_LIBRARY
-             NAMES cuda_driver cuda
-             HINTS ${CUDA_TOOLKIT_ROOT_DIR}
-             ENV CUDA_PATH
-             PATH_SUFFIXES nvidia/current lib64 lib/x64 lib)
-if(NOT CUDA_DRIVER_LIBRARY)
-    find_library(CUDA_DRIVER_LIBRARY
-                 NAMES cuda_driver cuda
-                 HINTS ${CUDA_TOOLKIT_ROOT_DIR}
-                 ENV CUDA_PATH
-                 PATH_SUFFIXES lib64/stubs lib/x64/stubs lib/stubs stubs)
-endif()
-mark_as_advanced(CUDA_DRIVER_LIBRARY)
 
 # OpenMP
 find_package(OpenMP)

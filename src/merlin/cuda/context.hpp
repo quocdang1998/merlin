@@ -65,6 +65,8 @@ class MERLIN_EXPORTS Context {
 
     /// @name Get attributes
     /// @{
+    /** @brief Get pointer to Context object.*/
+    std::uintptr_t get_context_ptr(void) const {return this->context_;}
     /** @brief Get GPU bounded to the context.*/
     Device get_gpu(void) const {return Context::shared_attributes_[this->context_].device;}
     /** @brief Check if the context is attached to any CPU process.*/
@@ -85,6 +87,12 @@ class MERLIN_EXPORTS Context {
     void set_current(void);
     /// @}
 
+    /// @name Representation
+    /// @{
+    /** @brief String representation.*/
+    std::string repr(void);
+    /// @}
+
     /// @name Destructor
     /// @{
     /** @brief Destructor.*/
@@ -98,8 +106,11 @@ class MERLIN_EXPORTS Context {
     static std::mutex m_;
     /** @brief Attributes shared between contextes instances.*/
     struct SharedAttribures {
+        /** Number of instances referencing the context.*/
         unsigned int reference_count;
+        /** Indication that the context is active or not.*/
         bool attached;
+        /** GPU to which the context is attached.*/
         Device device;
     };
     /** @brief Attributes of Context instances.*/

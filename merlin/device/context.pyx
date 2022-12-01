@@ -32,6 +32,9 @@ cdef class Context:
         if kwargs:
             raise ValueError("Invalid keywords: " + ", ".join(k for k in kwargs.keys()))
 
+    def __repr__(self):
+        return PyUnicode_FromString(self.core.repr().c_str())
+
     def assign(self, uintptr_t ptr):
         """assign(self, ptr)
         Assign pointer to a C++ object to the Python class wrapper.
@@ -92,7 +95,7 @@ cdef class Context:
     @classmethod
     def get_current(self):
         result = Context()
-        cdef CppContext * c_result = new CppContext(CppContext.get_current())
+        cdef CppContext * c_result = new CppContext(move(CppContext.get_current()))
         result.c_assign(c_result)
         return result;
 
@@ -107,6 +110,9 @@ cdef class Context:
         Set the context as the top context of the stack.
         """
         self.core.set_current()
+
+    def __eq__(Context left, Context right):
+        return left.core.get_context_ptr() == right.core.get_context_ptr()
 
     def __dealloc__(self):
         del self.core

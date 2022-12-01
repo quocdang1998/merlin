@@ -70,6 +70,12 @@ void Context::set_flag_primary_context(const Device & gpu, Context::Flags flag) 
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for context management.\n");
 }
 
+// String representation
+std::string Context::repr(void) {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
+    return "";
+}
+
 // Destructor
 Context::~Context(void) {}
 
