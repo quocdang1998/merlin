@@ -19,7 +19,7 @@ array::Parcel::Parcel(void) {}
 // Constructor from CPU array
 array::Parcel::Parcel(const array::Array & cpu_array, std::uintptr_t stream) : array::NdData(cpu_array) {
     // get device id
-    this->device_ = cuda::Device();
+    this->device_ = cuda::Device::get_current_gpu();
     // allocate data
     cudaError_t err_ = cudaMalloc(&(this->data_), sizeof(float) * this->size());
     if (err_ != cudaSuccess) {
@@ -85,7 +85,7 @@ array::Parcel::Parcel(array::Parcel && src) : array::NdData(src) {
     // move device id
     this->device_ = src.device_;
     // take over pointer to source
-    src.data_ = NULL;
+    src.data_ = nullptr;
 }
 
 // Move assignment
@@ -97,7 +97,7 @@ array::Parcel & array::Parcel::operator=(array::Parcel && src) {
     // copy metadata
     this->array::NdData::operator=(src);
     // take over pointer to source
-    src.data_ = NULL;
+    src.data_ = nullptr;
     return *this;
 }
 
@@ -115,9 +115,9 @@ void array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_pt
     this->shape_.copy_to_gpu(&(gpu_ptr->shape_), reinterpret_cast<std::uint64_t *>(shape_strides_ptr));
     this->strides_.copy_to_gpu(&(gpu_ptr->strides_), reinterpret_cast<std::uint64_t *>(shape_strides_ptr)+this->ndim_);
     // nullify data pointer to avoid free data
-    copy_on_gpu.data_ = NULL;
-    copy_on_gpu.shape_.data() = NULL;
-    copy_on_gpu.strides_.data() = NULL;
+    copy_on_gpu.data_ = nullptr;
+    copy_on_gpu.shape_.data() = nullptr;
+    copy_on_gpu.strides_.data() = nullptr;
 }
 
 // Free old data
@@ -128,9 +128,9 @@ void array::Parcel::free_current_data(void) {
     cuda::Device current_device = cuda::Device::get_current_gpu();
     this->device_.set_as_current();
     // free data
-    if ((this->data_ != NULL) && this->force_free) {
+    if ((this->data_ != nullptr) && this->force_free) {
         cudaFree(this->data_);
-        this->data_ = NULL;
+        this->data_ = nullptr;
     }
     // finalize: set back the original GPU and unlock the mutex
     current_device.set_as_current();

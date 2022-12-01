@@ -2,7 +2,7 @@
 #ifndef MERLIN_ARRAY_NDDATA_HPP_
 #define MERLIN_ARRAY_NDDATA_HPP_
 
-#include <cstddef>  // NULL
+#include <cstddef>  // nullptr
 #include <cstdint>  // std::int64_t, std::uint64_t, std::uintptr_t
 #include <initializer_list>  // std::initializer_list
 #include <tuple>  // std::tie
@@ -86,7 +86,7 @@ class MERLIN_EXPORTS NdData {
 
   protected:
     /** @brief Pointer to data.*/
-    float * data_ = NULL;
+    float * data_ = nullptr;
     /** @brief Number of dimension.*/
     std::uint64_t ndim_;
     /** @brief Shape vector.

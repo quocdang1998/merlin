@@ -1,15 +1,15 @@
 // Copyright 2022 quocdang1998
 #include "merlin/cuda/gpu_query.hpp"
 
+#include <cstdint>  // std::uintptr_t
 #include <cstdio>  // std::printf
 #include <map>  // std::map
 #include <sstream>  // std::ostringstream
 
-#include "cuda.h"  // cuDeviceGetName
+#include "cuda.h"  // cuCtxGetCurrent, cuDeviceGetName
 
+#include "merlin/cuda/context.hpp"  // merlin::cuda::Context
 #include "merlin/logger.hpp"  // WARNING, FAILURE, cuda_runtime_error
-
-namespace merlin::cuda {
 
 // --------------------------------------------------------------------------------------------------------------------
 // Get GPU core
@@ -35,7 +35,8 @@ static int convert_SM_version_to_core(int major, int minor) {
         {0x75,  64},
         {0x80,  64},
         {0x86, 128},
-        {0x87, 128}
+        {0x87, 128},
+        {0x90, 128}
     };
     int SM = (major << 4) + minor;
     if (num_gpu_arch_cores_per_SM.find(SM) == num_gpu_arch_cores_per_SM.end()) {
@@ -44,19 +45,28 @@ static int convert_SM_version_to_core(int major, int minor) {
     return num_gpu_arch_cores_per_SM[SM];
 }
 
+// Add 2 integers on GPU
+__global__ static void add_2_int_on_gpu(int * p_a, int * p_b, int * p_result) {
+    *p_result = *p_a + *p_b;
+}
+
 // --------------------------------------------------------------------------------------------------------------------
 // Device
 // --------------------------------------------------------------------------------------------------------------------
 
+namespace merlin {
+
 // Print limit of device
-void Device::print_specification(void) {
+void cuda::Device::print_specification(void) {
     if (this->id_ == -1) {
         WARNING("Device initialized without a valid id (id = %d).\n", this->id_);
     }
-    cudaDeviceProp prop;
-    cudaGetDeviceProperties(&prop, this->id_);
+    ::cudaDeviceProp prop;
+    ::cudaGetDeviceProperties(&prop, this->id_);
     // Device name
     std::printf("    Name : %s.\n", prop.name);
+    // Architechture
+    std::printf("    Architechture : %d.%d.\n", prop.major, prop.minor);
     // Max multi-processor
     std::printf("    Number of multiprocessors on the device: %d.\n", prop.multiProcessorCount);
     // Number of CUDA core
@@ -85,45 +95,40 @@ void Device::print_specification(void) {
                 prop.totalConstMem);
 }
 
-// Add 2 integers on GPU
-__global__ static void add_2_int_on_gpu(int * p_a, int * p_b, int * p_result) {
-    *p_result = *p_a + *p_b;
-}
-
 // Test functionality of a GPU
-bool Device::test_gpu(void) {
+bool cuda::Device::test_gpu(void) {
     // initialize
     int cpu_int[3] = {2, 4, 0};
     int * gpu_int;
-    cudaError_t err_;
+    ::cudaError_t err_;
     int reference = cpu_int[0] + cpu_int[1];
     // set device
-    err_ = cudaSetDevice(this->id_);
+    err_ = ::cudaSetDevice(this->id_);
     if (err_ != cudaSuccess) {
         FAILURE(cuda_runtime_error, "cudaSetDevice for id = %d failed with message \"%s\".\n",
-                this->id_, cudaGetErrorName(err_));
+                this->id_, ::cudaGetErrorName(err_));
     }
     // malloc
-    err_ = cudaMalloc(&gpu_int, 3*sizeof(int));
+    err_ = ::cudaMalloc(&gpu_int, 3*sizeof(int));
     if (err_ != cudaSuccess) {
-        FAILURE(cuda_runtime_error, "cudaMalloc failed with message \"%s\".\n", cudaGetErrorName(err_));
+        FAILURE(cuda_runtime_error, "cudaMalloc failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // copy to gpu
-    err_ = cudaMemcpy(gpu_int, cpu_int, 3*sizeof(int), cudaMemcpyHostToDevice);
+    err_ = ::cudaMemcpy(gpu_int, cpu_int, 3*sizeof(int), cudaMemcpyHostToDevice);
     if (err_ != cudaSuccess) {
-        FAILURE(cuda_runtime_error, "cudaMemcpyHostToDevice failed with message \"%s\".\n", cudaGetErrorName(err_));
+        FAILURE(cuda_runtime_error, "cudaMemcpyHostToDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // launch kernel
     add_2_int_on_gpu<<<1, 1>>>(gpu_int, gpu_int+1, gpu_int+2);
-    cudaDeviceSynchronize();
-    err_ = cudaGetLastError();
+    ::cudaDeviceSynchronize();
+    err_ = ::cudaGetLastError();
     if (err_ != cudaSuccess) {
-        FAILURE(cuda_runtime_error, "Launch kernel failed with message \"%s\".\n", cudaGetErrorName(err_));
+        FAILURE(cuda_runtime_error, "Launch kernel failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // copy to cpu
-    err_ = cudaMemcpy(cpu_int, gpu_int, 3*sizeof(int), cudaMemcpyDeviceToHost);
+    err_ = ::cudaMemcpy(cpu_int, gpu_int, 3*sizeof(int), cudaMemcpyDeviceToHost);
     if (err_ != cudaSuccess) {
-        FAILURE(cuda_runtime_error, "cudaMemcpyDeviceToHost failed with message \"%s\".\n", cudaGetErrorName(err_));
+        FAILURE(cuda_runtime_error, "cudaMemcpyDeviceToHost failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // check result
     if (cpu_int[2] != reference) {
@@ -135,22 +140,26 @@ bool Device::test_gpu(void) {
 }
 
 // Set as current GPU
-void Device::set_as_current(void) const {
-    cudaSetDevice(this->id_);
+void cuda::Device::set_as_current(void) const {
+    // query the current context
+    cuda::Context current = cuda::Context::get_current();
+    // set GPU to current context
+    ::cudaSetDevice(this->id_);
+    Context::shared_attributes[current.get_context_ptr()].device = cuda::Device(this->id_);
 }
 
 // Get and set GPU limit
-std::uint64_t Device::limit(Device::Limit limit, std::uint64_t size) {
+std::uint64_t cuda::Device::limit(cuda::Device::Limit limit, std::uint64_t size) {
     std::uint64_t result;
     if (size == UINT64_MAX) {
         size_t limit_value;
-        cudaDeviceGetLimit(&limit_value, static_cast<cudaLimit>(limit));
+        ::cudaDeviceGetLimit(&limit_value, static_cast<cudaLimit>(limit));
         result = static_cast<std::uint64_t>(limit_value);
     } else {
         size_t limit_value = static_cast<size_t>(size);
-        cudaError_t err_ = cudaDeviceSetLimit(static_cast<cudaLimit>(limit), limit_value);
+        ::cudaError_t err_ = ::cudaDeviceSetLimit(static_cast<cudaLimit>(limit), limit_value);
         if (err_ != cudaSuccess) {
-            FAILURE(cuda_runtime_error, "cudaDeviceSetLimit failed with message \"%s\".\n", cudaGetErrorName(err_));
+            FAILURE(cuda_runtime_error, "cudaDeviceSetLimit failed with message \"%s\".\n", ::cudaGetErrorName(err_));
         }
         result = size;
     }
@@ -158,38 +167,38 @@ std::uint64_t Device::limit(Device::Limit limit, std::uint64_t size) {
 }
 
 // Reset all GPU
-void Device::reset_all(void) {
-    cudaDeviceReset();
+void cuda::Device::reset_all(void) {
+    ::cudaDeviceReset();
 }
 
 // String representation
-std::string Device::repr(void) {
+std::string cuda::Device::repr(void) {
     char name[256];
-    cuDeviceGetName(name, sizeof(name), this->id_);
+    ::cuDeviceGetName(name, sizeof(name), this->id_);
     std::ostringstream os;
     os << "<GPU " << name << ", ID " << this->id_ << ">";
     return os.str();
 }
 
 // Print limit of all GPU
-void print_all_gpu_specification(void) {
-    int tot_device = Device::get_num_gpu();
+void cuda::print_all_gpu_specification(void) {
+    int tot_device = cuda::Device::get_num_gpu();
     for (int i = 0; i < tot_device; i++) {
         std::printf("GPU Id: %d.\n", i);
-        cudaSetDevice(i);
-        Device current_device(i);
+        ::cudaSetDevice(i);
+        cuda::Device current_device(i);
         current_device.print_specification();
     }
 }
 
 // Test functionality of all GPU
-bool test_all_gpu(void) {
-    int tot_device = Device::get_num_gpu();
+bool cuda::test_all_gpu(void) {
+    int tot_device = cuda::Device::get_num_gpu();
     bool result = true;
     for (int i = 0; i < tot_device; i++) {
         std::printf("Checking device: %d...", i);
-        cudaSetDevice(i);
-        Device current_device(i);
+        ::cudaSetDevice(i);
+        cuda::Device current_device(i);
         result = result && current_device.test_gpu();
         if (!result) {
             WARNING("\rCheck on device %d has failed.\n", i);
@@ -201,6 +210,6 @@ bool test_all_gpu(void) {
 }
 
 // Map from GPU ID to is details
-std::map<int, Device> gpu_map;
+std::map<int, cuda::Device> gpu_map;
 
 }  // namespace merlin::cuda

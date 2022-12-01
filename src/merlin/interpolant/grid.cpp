@@ -62,14 +62,14 @@ RegularGrid & RegularGrid::operator=(const RegularGrid & src) {
 // Move constructor
 RegularGrid::RegularGrid(RegularGrid && src) : npoint_(src.npoint_) {
     this->points_ = src.points_;
-    src.points_ = NULL;
+    src.points_ = nullptr;
 }
 
 // Move assignment
 RegularGrid & RegularGrid::operator=(RegularGrid && src) {
     this->npoint_ = src.npoint_;
     this->points_ = src.points_;
-    src.points_ = NULL;
+    src.points_ = nullptr;
     return *this;
 }
 
@@ -136,7 +136,7 @@ void RegularGrid::pop_back(void) {
 
 // Destructor
 RegularGrid::~RegularGrid(void) {
-    if (this->points_ != NULL) {
+    if (this->points_ != nullptr) {
         delete this->points_;
     }
 }
@@ -159,7 +159,7 @@ CartesianGrid::CartesianGrid(std::initializer_list<floatvec> grid_vectors) : gri
     }
     intvec shape = this->grid_shape();
     intvec strides = array::contiguous_strides(shape, sizeof(float));
-    this->points_ = new array::NdData(NULL, this->ndim(), shape, strides);
+    this->points_ = new array::NdData(nullptr, this->ndim(), shape, strides);
 }
 
 // Get total number of points
@@ -252,9 +252,9 @@ void copy_to_gpu(CartesianGrid * gpu_ptr, void * grid_vector_data_ptr) {
 
 // Destructor
 CartesianGrid::~CartesianGrid(void) {
-    if (this->points_ != NULL) {
+    if (this->points_ != nullptr) {
         delete this->points_;
-        this->points_ = NULL;
+        this->points_ = nullptr;
     }
 }
 

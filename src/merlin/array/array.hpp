@@ -12,10 +12,10 @@
 #include "merlin/iterator.hpp"  // merlin::Iterator
 #include "merlin/vector.hpp"  // merlin::intvec
 
-namespace merlin::array {
+namespace merlin {
 
 /** @brief Multi-dimensional array on CPU.*/
-class MERLIN_EXPORTS Array : public NdData {
+class MERLIN_EXPORTS array::Array : public array::NdData {
   public:
     /// @name Constructor
     /// @{
@@ -44,19 +44,19 @@ class MERLIN_EXPORTS Array : public NdData {
      *  @param whole merlin::array::NdData of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    Array(const Array & whole, std::initializer_list<Slice> slices);
+    Array(const array::Array & whole, std::initializer_list<array::Slice> slices);
     /// @}
 
     /// @name Copy and move
     /// @{
     /** @brief Deep copy constructor.*/
-    Array(const Array & src);
+    Array(const array::Array & src);
     /** @brief Deep copy assignment.*/
-    Array & operator=(const Array & src);
+    Array & operator=(const array::Array & src);
     /** @brief Move constructor.*/
-    Array(Array && src);
+    Array(array::Array && src);
     /** @brief Move assignment.*/
-    Array & operator=(Array && src);
+    Array & operator=(array::Array && src);
     /// @}
 
     /// @name Iterator
@@ -66,11 +66,11 @@ class MERLIN_EXPORTS Array : public NdData {
     /** @brief Begin iterator.
      *  @details Vector of index \f$(0, 0, ..., 0)\f$.
      */
-    Array::iterator begin(void);
+    array::Array::iterator begin(void);
     /** @brief End iterator.
      *  @details Vector of index \f$(d_0, 0, ..., 0)\f$.
      */
-    Array::iterator end(void);
+    array::Array::iterator end(void);
     /** @brief Sciling operator.
      *  @details Get an element at a given index.
      *  @param index Vector of indices along each dimension.
@@ -82,7 +82,7 @@ class MERLIN_EXPORTS Array : public NdData {
     /// @name Transfer data
     /// @{
     /** @brief Copy data from GPU array.*/
-    void sync_from_gpu(const Parcel & gpu_array, std::uintptr_t stream = 0);
+    void sync_from_gpu(const array::Parcel & gpu_array, std::uintptr_t stream = 0);
     /** @brief Export data to a file.
      *  @param filename Name of exported file.
      */
@@ -104,6 +104,6 @@ class MERLIN_EXPORTS Array : public NdData {
     intvec end_;
 };
 
-}  // namespace merlin::array
+}  // namespace merlin
 
 #endif  // MERLIN_ARRAY_ARRAY_HPP_

@@ -36,6 +36,7 @@ list(APPEND MERLIN_SRC_CU
      array/array.cu
      cuda/gpu_query.cu
      cuda/context.cu
+     cuda/stream.cu
      interpolant/grid.cu
 )
 list(APPEND MERLIN_SRC_RDC

@@ -24,7 +24,7 @@ class MERLIN_EXPORTS Grid {
 
   protected:
     /** @brief Array holding coordinates of points in the Grid.*/
-    array::NdData * points_ = NULL;
+    array::NdData * points_ = nullptr;
 };
 
 /** @brief A set of multi-dimensional points.*/

@@ -24,7 +24,7 @@ void CartesianGrid::copy_to_gpu(CartesianGrid * gpu_ptr, void * grid_vector_data
         data_ptr += this->grid_vectors_[i].size() * sizeof(float);
     }
     // nullify data pointer to avoid free data
-    copy_on_gpu.grid_vectors_.data() = NULL;
+    copy_on_gpu.grid_vectors_.data() = nullptr;
 }
 
 }  // namespace merlin

@@ -108,7 +108,7 @@ mode_(mode), offset_(offset) {
             this->file_ptr_ = ::update_file(filename.c_str(), true);
             break;
     }
-    if (this->file_ptr_ == NULL) {
+    if (this->file_ptr_ == nullptr) {
         FAILURE(std::ios_base::failure, "Cannot open file \"%s\".\n", filename.c_str());
     }
     int err_ = std::fseek(this->file_ptr_, offset, SEEK_SET);
@@ -120,12 +120,12 @@ mode_(mode), offset_(offset) {
 
 // Temporary close the file
 void array::Stock::temporary_close(void) {
-    if (this->file_ptr_ != NULL) {
+    if (this->file_ptr_ != nullptr) {
         int err_ = std::fclose(this->file_ptr_);
         if (err_ != 0) {
             FAILURE(std::ios_base::failure, "Cannot close file \"%s\".\n", this->filename_.c_str());
         }
-        this->file_ptr_ = NULL;
+        this->file_ptr_ = nullptr;
     }
 }
 
@@ -198,7 +198,7 @@ void Stock::write_data_to_file(Array & src) {
 */
 // Destructor
 array::Stock::~Stock(void) {
-    if ((this->file_ptr_ != NULL) && this->force_close) {
+    if ((this->file_ptr_ != nullptr) && this->force_close) {
         int err_ = std::fclose(this->file_ptr_);
         if (err_ != 0) {
             FAILURE(std::ios_base::failure, "Cannot close file \"%s\".\n", this->filename_.c_str());

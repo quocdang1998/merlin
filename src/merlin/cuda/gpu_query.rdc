@@ -3,16 +3,16 @@
 
 #include "merlin/logger.hpp"  // CUHDERR
 
-namespace merlin::cuda {
+namespace merlin {
 
 // --------------------------------------------------------------------------------------------------------------------
 // Device
 // --------------------------------------------------------------------------------------------------------------------
 
 // Construct a device from its ID
-__cuhostdev__ Device::Device(int id) {
+__cuhostdev__ cuda::Device::Device(int id) {
     #ifdef __MERLIN_CUDA__
-    int limit = Device::get_num_gpu();
+    int limit = cuda::Device::get_num_gpu();
     if ((id < 0) || (id >= limit)) {
         CUHDERR(cuda_runtime_error, "Invalid ID of GPU (expected value between 0 and %d).\n", limit);
     }
@@ -23,10 +23,10 @@ __cuhostdev__ Device::Device(int id) {
 }
 
 // Get total number of GPU
-__cuhostdev__ int Device::get_num_gpu(void) {
+__cuhostdev__ int cuda::Device::get_num_gpu(void) {
     #ifdef __MERLIN_CUDA__
     int count;
-    cudaGetDeviceCount(&count);
+    ::cudaGetDeviceCount(&count);
     return count;
     #else
     FAILURE(cuda_compile_error, "Enable option MERLIN_CUDA at compilation to use this feature.\n");
@@ -35,11 +35,11 @@ __cuhostdev__ int Device::get_num_gpu(void) {
 }
 
 // Get instance point to current GPU
-__cuhostdev__ Device Device::get_current_gpu(void) {
+__cuhostdev__ cuda::Device cuda::Device::get_current_gpu(void) {
     #ifdef __MERLIN_CUDA__
     int current_device;
-    cudaGetDevice(&current_device);
-    return Device(current_device);
+    ::cudaGetDevice(&current_device);
+    return cuda::Device(current_device);
     #else
     FAILURE(cuda_compile_error, "Enable option MERLIN_CUDA at compilation to use this feature.\n");
     return 0;
@@ -47,6 +47,6 @@ __cuhostdev__ Device Device::get_current_gpu(void) {
 }
 
 // Destructor
-__cuhostdev__ Device::~Device(void) {}
+__cuhostdev__ cuda::Device::~Device(void) {}
 
 }  // namespace merlin::cuda

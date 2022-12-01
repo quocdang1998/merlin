@@ -63,14 +63,29 @@ class MERLIN_EXPORTS Context {
     }
     /// @}
 
+    /// @name Shared attributes
+    /// @{
+    /** @brief Attributes shared between contextes instances.*/
+    struct SharedAttribures {
+        /** Number of instances referencing the context.*/
+        unsigned int reference_count;
+        /** Indication that the context is active or not.*/
+        bool attached;
+        /** GPU to which the context is attached.*/
+        Device device;
+    };
+    /** @brief Attributes of Context instances.*/
+    static std::map<std::uintptr_t, SharedAttribures> shared_attributes;
+    /// @}
+
     /// @name Get attributes
     /// @{
     /** @brief Get pointer to Context object.*/
     std::uintptr_t get_context_ptr(void) const {return this->context_;}
     /** @brief Get GPU bounded to the context.*/
-    Device get_gpu(void) const {return Context::shared_attributes_[this->context_].device;}
+    Device get_gpu(void) const {return Context::shared_attributes[this->context_].device;}
     /** @brief Check if the context is attached to any CPU process.*/
-    bool is_attached(void) const {return Context::shared_attributes_[this->context_].attached;}
+    bool is_attached(void) const {return Context::shared_attributes[this->context_].attached;}
     /// @}
 
     /// @name Manipulation of the context stack
@@ -104,17 +119,6 @@ class MERLIN_EXPORTS Context {
     std::uintptr_t context_ = 0;
     /** @brief Mutex lock for updating static attributes.*/
     static std::mutex m_;
-    /** @brief Attributes shared between contextes instances.*/
-    struct SharedAttribures {
-        /** Number of instances referencing the context.*/
-        unsigned int reference_count;
-        /** Indication that the context is active or not.*/
-        bool attached;
-        /** GPU to which the context is attached.*/
-        Device device;
-    };
-    /** @brief Attributes of Context instances.*/
-    static std::map<std::uintptr_t, SharedAttribures> shared_attributes_;
 };
 
 }  // namespace merlin::cuda

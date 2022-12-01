@@ -106,7 +106,7 @@ array::Array::Array(array::Array && src) : array::NdData(src) {
     this->force_free = src.force_free;
     src.force_free = false;
     // nullify source data
-    src.data_ = NULL;
+    src.data_ = nullptr;
 }
 
 // Move assignment
@@ -120,7 +120,7 @@ array::Array & array::Array::operator=(array::Array && src) {
     this->force_free = src.force_free;
     src.force_free = false;
     // move data
-    src.data_ = NULL;
+    src.data_ = nullptr;
     return *this;
 }
 

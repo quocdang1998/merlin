@@ -67,11 +67,11 @@ class MERLIN_EXPORTS Iterator {
 
   protected:
     /** @brief Pointer to item.*/
-    float * item_ptr_ = NULL;
+    float * item_ptr_ = nullptr;
     /** @brief Index vector.*/
     intvec index_;
     /** @brief Pointer to NdData object possessing the item.*/
-    array::NdData * container_ = NULL;
+    array::NdData * container_ = nullptr;
 };
 
 }  // namespace merlin
