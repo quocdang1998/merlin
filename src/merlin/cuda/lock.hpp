@@ -68,7 +68,7 @@ class KernelLock {
 
   private:
     /** @brief Pointer to the state of the lock on GPU.*/
-    int * state_ = NULL;
+    int * state_ = nullptr;
     /** @brief Number of locks utilizing the same pointer to the state.*/
     int reference_count_ = 0;
 };

@@ -58,7 +58,7 @@ __cuhostdev__ Vector<T>::Vector(const Vector<T> & src) : size_(src.size_) {
 template <typename T>
 __cuhostdev__ Vector<T> & Vector<T>::operator=(const Vector<T> & src) {
     // free old data
-    if (this->data_ != NULL) {
+    if (this->data_ != nullptr) {
         delete[] this->data_;
     }
     // copy new data
@@ -73,23 +73,23 @@ __cuhostdev__ Vector<T> & Vector<T>::operator=(const Vector<T> & src) {
 // Move constructor
 template <typename T>
 __cuhostdev__ Vector<T>::Vector(Vector<T> && src) : size_(src.size_), data_(src.data_) {
-    src.data_ = NULL;
+    src.data_ = nullptr;
 }
 
 // Move assignment
 template <typename T>
 __cuhostdev__ Vector<T> & Vector<T>::operator=(Vector<T> && src) {
-    if (this->data_ != NULL) {
+    if (this->data_ != nullptr) {
         delete[] this->data_;
     }
     this->size_ = src.size_;
     this->data_ = src.data_;
-    src.data_ = NULL;
+    src.data_ = nullptr;
     return *this;
 }
 
-// Copy data to GPU
 #ifndef __MERLIN_CUDA__
+
 // Copy data from CPU to a global memory on GPU
 template <typename T>
 void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr) {
@@ -103,6 +103,7 @@ void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
 }
 
 #elif defined(__NVCC__)
+
 // Copy data from CPU to a global memory on GPU
 template <typename T>
 void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr) {
@@ -115,7 +116,7 @@ void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr) {
     copy_on_gpu.size_ = this->size_;
     cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(Vector<T>), cudaMemcpyHostToDevice);
     // nullify data on copy to avoid deallocate memory on CPU
-    copy_on_gpu.data_ = NULL;
+    copy_on_gpu.data_ = nullptr;
 }
 
 // Copy data from GPU to CPU
@@ -126,6 +127,7 @@ void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
     cudaMemcpy(reinterpret_cast<T *>(gpu_data), this->data_,
                this->size_*sizeof(T), cudaMemcpyDeviceToHost);
 }
+
 #endif  // __MERLIN_CUDA__
 
 #ifdef __NVCC__
@@ -149,7 +151,7 @@ __cudevice__ void Vector<T>::copy_to_shared_mem(Vector<T> * share_ptr, void * da
 // Destructor
 template <typename T>
 __cuhostdev__ Vector<T>::~Vector(void) {
-    if (this->data_ != NULL) {
+    if (this->data_ != nullptr) {
         delete[] this->data_;
     }
 }

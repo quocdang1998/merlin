@@ -9,16 +9,16 @@
 #include <vector>  // std::vector
 
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/cuda/gpu_query.hpp"  // merlin::device::Device
+#include "merlin/cuda/gpu_query.hpp"  // merlin::cuda::Device
 #include "merlin/logger.hpp"  // cuda_runtime_error, FAILURE
 
-namespace merlin::cuda {
+namespace merlin {
 
 /** @brief Abstract class representing a CUDA context.
  *  @details CUDA associated to each CPU process a stack of context, each of which is bounded to a GPU. All CUDA
  *  operations are performed inside the context at the top of the stack.
  */
-class MERLIN_EXPORTS Context {
+class MERLIN_EXPORTS cuda::Context {
   public:
     /** @brief Parameter controlling how the CPU process schedules tasks when waiting for results from the GPU.*/
     enum class Flags : unsigned int {
@@ -37,24 +37,24 @@ class MERLIN_EXPORTS Context {
     /** @brief Construct a context referencing to the current context.*/
     Context(void) = default;
     /** @brief Construct a context assigned to a GPU and attached to the current CPU process.*/
-    Context(const Device & gpu, Flags flag = Flags::AutoSchedule);
+    Context(const cuda::Device & gpu, cuda::Context::Flags flag = cuda::Context::Flags::AutoSchedule);
     /// @}
 
     /// @name Copy and Move
     /// @{
     /** @brief Copy constructor (deleted).*/
-    Context(const Context & src) = delete;
+    Context(const cuda::Context & src) = delete;
     /** @brief Copy assignment (deleted).*/
-    Context & operator=(const Context & src) = delete;
+    cuda::Context & operator=(const cuda::Context & src) = delete;
     /** @brief Move constructor.*/
-    Context(Context && src) {
+    Context(cuda::Context && src) {
         if (src.context_ == 0) {
             FAILURE(cuda_runtime_error, "Original context is a primary context.\n");
         }
         this->context_ = std::exchange(src.context_, 0);
     }
     /** @brief Move assignment.*/
-    Context & operator=(Context && src) {
+    cuda::Context & operator=(cuda::Context && src) {
         if (src.context_ == 0) {
             FAILURE(cuda_runtime_error, "Original context is a primary context.\n");
         }
@@ -63,14 +63,29 @@ class MERLIN_EXPORTS Context {
     }
     /// @}
 
+    /// @name Shared attributes
+    /// @{
+    /** @brief Attributes shared between contextes instances.*/
+    struct SharedAttribures {
+        /** Number of instances referencing the context.*/
+        unsigned int reference_count;
+        /** Indication that the context is active or not.*/
+        bool attached;
+        /** GPU to which the context is attached.*/
+        Device device;
+    };
+    /** @brief Attributes of Context instances.*/
+    static std::map<std::uintptr_t, cuda::Context::SharedAttribures> shared_attributes;
+    /// @}
+
     /// @name Get attributes
     /// @{
     /** @brief Get pointer to Context object.*/
     std::uintptr_t get_context_ptr(void) const {return this->context_;}
     /** @brief Get GPU bounded to the context.*/
-    Device get_gpu(void) const {return Context::shared_attributes_[this->context_].device;}
+    cuda::Device get_gpu(void) const {return cuda::Context::shared_attributes[this->context_].device;}
     /** @brief Check if the context is attached to any CPU process.*/
-    bool is_attached(void) const {return Context::shared_attributes_[this->context_].attached;}
+    bool is_attached(void) const {return cuda::Context::shared_attributes[this->context_].attached;}
     /// @}
 
     /// @name Manipulation of the context stack
@@ -78,9 +93,9 @@ class MERLIN_EXPORTS Context {
     /** @brief Push the context to the stack owned by the current CPU process.*/
     void push_current(void);
     /** @brief Pop the context out of the stack of the current CPU process.*/
-    Context & pop_current(void);
+    cuda::Context & pop_current(void);
     /** @brief Get current context.*/
-    static Context get_current(void);
+    static cuda::Context get_current(void);
     /** @brief Check if the context is the top of context stack.*/
     bool is_current(void);
     /** @brief Set current context at the top of the stack.*/
@@ -104,17 +119,6 @@ class MERLIN_EXPORTS Context {
     std::uintptr_t context_ = 0;
     /** @brief Mutex lock for updating static attributes.*/
     static std::mutex m_;
-    /** @brief Attributes shared between contextes instances.*/
-    struct SharedAttribures {
-        /** Number of instances referencing the context.*/
-        unsigned int reference_count;
-        /** Indication that the context is active or not.*/
-        bool attached;
-        /** GPU to which the context is attached.*/
-        Device device;
-    };
-    /** @brief Attributes of Context instances.*/
-    static std::map<std::uintptr_t, SharedAttribures> shared_attributes_;
 };
 
 }  // namespace merlin::cuda

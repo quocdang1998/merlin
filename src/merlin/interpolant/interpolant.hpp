@@ -16,8 +16,8 @@ class CartesianInterpolant {
     virtual float operator()(const floatvec & x) {return 0.0;}
 
   protected:
-    CartesianGrid * grid_ = NULL;
-    array::NdData * value_ = NULL;
+    CartesianGrid * grid_ = nullptr;
+    array::NdData * value_ = nullptr;
 };
 
 class LagrangeInterpolant : public CartesianInterpolant {

@@ -6,47 +6,54 @@
 #include <initializer_list>  // std::initializer_list
 #include <mutex>  // std::mutex
 
-#include "merlin/array/nddata.hpp"  // merlin::array::NdData
+#include "merlin/array/nddata.hpp"  // merlin::array::Array, merlin::array::NdData
+#include "merlin/array/slice.hpp"  // merlin::array::Slice
 #include "merlin/cuda_decorator.hpp"  // __cudevice__, __cuhostdev__
 #include "merlin/cuda/gpu_query.hpp"  // merlin::cuda::Device
+#include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/vector.hpp"  // merlin::intvec
 
-namespace merlin::array {
+namespace merlin {
 
 /** @brief Multi-dimensional array on GPU.*/
-class MERLIN_EXPORTS Parcel : public NdData {
+class MERLIN_EXPORTS array::Parcel : public array::NdData {
   public:
     /// @name Constructors
     /// @{
     /** @brief Default constructor (do nothing).*/
-    Parcel(void);
+    __cuhostdev__ Parcel(void) {}
     /** @brief Construct array from CPU array.*/
-    Parcel(const Array & cpu_array, std::uintptr_t stream = 0);
+    Parcel(const array::Array & cpu_array, const cuda::Stream & stream = cuda::Stream());
     /** @brief Constructor from a slice.
      *  @param whole merlin::array::NdData of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    Parcel(const Parcel & whole, std::initializer_list<Slice> slices);
+    Parcel(const array::Parcel & whole, std::initializer_list<array::Slice> slices);
+    #ifdef __NVCC__
+    /** @brief Construct a contiguous array from shape on GPU.*/
+    __cudevice__ Parcel(const intvec & shape);
+    #endif
     /// @}
 
     /// @name Copy and Move
     /// @{
     /** @brief Deep copy constructor.*/
-    Parcel(const Parcel & src);
+    Parcel(const array::Parcel & src);
     /** @brief Deep copy assignment.*/
-    Parcel & operator=(const Parcel & src);
+    array::Parcel & operator=(const array::Parcel & src);
     /** @brief Move constructor.*/
-    Parcel(Parcel && src);
+    Parcel(array::Parcel && src);
     /** @brief Move assignment.*/
-    Parcel & operator=(Parcel && src);
+    array::Parcel & operator=(array::Parcel && src);
     /// @}
 
     /// @name Get members
     /// @{
     /** @brief Get reference to ID of device containing data.*/
-    merlin::cuda::Device & device(void) {return this->device_;}
+    cuda::Device & device(void) {return this->device_;}
     /** @brief Get constant reference to ID of device containing data of a constant instance.*/
-    const merlin::cuda::Device & device(void) const {return this->device_;}
+    const cuda::Device & device(void) const {return this->device_;}
     /// @}
 
     /// @name Atributes
@@ -73,7 +80,7 @@ class MERLIN_EXPORTS Parcel : public NdData {
      *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and
      *  stride vector.
      */
-    void copy_to_gpu(Parcel * gpu_ptr, void * shape_strides_ptr);
+    void copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr);
     #ifdef __NVCC__
     /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
      *  @note This operation is single-threaded.
@@ -81,28 +88,28 @@ class MERLIN_EXPORTS Parcel : public NdData {
      *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and
      *  stride vector.
      */
-    __cudevice__ void copy_to_shared_mem(Parcel * share_ptr, void * shape_strides_ptr);
+    __cudevice__ void copy_to_shared_mem(array::Parcel * share_ptr, void * shape_strides_ptr);
     #endif  // __NVCC__
 
     /// @name Utils
     /// @{
     /** @brief Free current data hold by the object.*/
-    void free_current_data(void);
+    __cuhostdev__ void free_current_data(void);
     /// @}
 
     /// @name Destructor
     /// @{
     /** @brief Destructor.*/
-    ~Parcel(void);
+    __cuhostdev__ ~Parcel(void);
     /// @}
 
   protected:
     /** @brief Decision to delete Array::data_ at destruction or not.*/
     bool force_free = true;
     /** @brief Device containing data of Parcel.*/
-    merlin::cuda::Device device_;
+    cuda::Device device_;
     /** @brief Mutex lock at destruction time.*/
-    static std::mutex m_;
+    static std::mutex mutex_;
 };
 
 }  // namespace merlin::array

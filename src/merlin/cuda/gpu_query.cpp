@@ -3,60 +3,60 @@
 
 #include "merlin/logger.hpp"  // FAILURE, cuda_compile_error
 
-namespace merlin::cuda {
+namespace merlin {
 
 // --------------------------------------------------------------------------------------------------------------------
 // Device
 // --------------------------------------------------------------------------------------------------------------------
 
+// Map from GPU ID to is details
+std::map<int, cuda::Device> gpu_map;
+
 #ifndef __MERLIN_CUDA__
 
 // Print limit of device
-void Device::print_specification(void) {
+void cuda::Device::print_specification(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
 }
 
 // Test functionality of a GPU
-bool Device::test_gpu(void) {
+bool cuda::Device::test_gpu(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
     return false;
 }
 
 // Set as current GPU
-void Device::set_as_current(void) const {
+void cuda::Device::set_as_current(void) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
 }
 
 // Get and set limit
-std::uint64_t Device::limit(Device::Limit limit, std::uint64_t size) {
+std::uint64_t cuda::Device::limit(cuda::Device::Limit limit, std::uint64_t size) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
     return 0;
 }
 
 // Reset all GPU
-void Device::reset_all(void) {
+void cuda::Device::reset_all(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
 }
 
 // String representation
-std::string Device::repr(void) {
+std::string cuda::Device::repr(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
     return "";
 }
 
 // Print limit of all GPU
-void print_all_gpu_specification(void) {
+void cuda::print_all_gpu_specification(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
 }
 
 // Test functionality of all GPU
-bool test_all_gpu(void) {
+bool cuda::test_all_gpu(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
     return false;
 }
-
-// Map from GPU ID to is details
-std::map<int, Device> gpu_map;
 
 #endif  // __MERLIN_CUDA__
 

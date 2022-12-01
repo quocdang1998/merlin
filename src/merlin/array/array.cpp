@@ -22,7 +22,7 @@ namespace merlin {
 // Constructor Array of one element
 array::Array::Array(float value) {
     // allocate data
-    this->data_ = new float[1];
+    this->data_ = allocate_memory(1);
     this->data_[0] = value;
 
     // set metadata
@@ -40,7 +40,7 @@ array::Array::Array(const intvec & shape) {
     // calculate strides
     this->strides_ = array::contiguous_strides(this->shape_, sizeof(float));
     // initialize data
-    this->data_ = new float[this->size()];
+    this->data_ = allocate_memory(this->size());
     // other meta data
     this->force_free = true;
 }
@@ -57,7 +57,7 @@ array::Array::Array(float * data, std::uint64_t ndim,
     // copy / assign data
     if (copy) {  // copy data
         // allocate a new tensor
-        this->data_ = new float[this->size()];
+        this->data_ = allocate_memory(this->size());
         // reform the stride tensor (force into C shape)
         this->strides_ = array::contiguous_strides(this->shape_, sizeof(float));
         // copy data from old tensor to new tensor (optimized with memcpy)
@@ -80,7 +80,7 @@ array::Array::Array(const array::Array & src) : array::NdData(src) {
     this->strides_ = array::contiguous_strides(this->shape_, sizeof(float));
     this->force_free = true;
     // copy data
-    this->data_ = new float[this->size()];
+    this->data_ = allocate_memory(this->size());
     array::array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), std::memcpy);
 }
 
@@ -95,7 +95,7 @@ array::Array & array::Array::operator=(const array::Array & src) {
     }
     this->force_free = true;
     // copy data
-    this->data_ = new float[this->size()];
+    this->data_ = allocate_memory(this->size());
     array::array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), std::memcpy);
     return *this;
 }
@@ -106,21 +106,21 @@ array::Array::Array(array::Array && src) : array::NdData(src) {
     this->force_free = src.force_free;
     src.force_free = false;
     // nullify source data
-    src.data_ = NULL;
+    src.data_ = nullptr;
 }
 
 // Move assignment
 array::Array & array::Array::operator=(array::Array && src) {
     // disable force_free of the source and free current data
     if (this->force_free) {
-        delete[] this->data_;
+        free_memory(this->data_, this->size());
     }
     // copy meta data
     this->array::NdData::operator=(src);
     this->force_free = src.force_free;
     src.force_free = false;
     // move data
-    src.data_ = NULL;
+    src.data_ = nullptr;
     return *this;
 }
 
@@ -146,25 +146,23 @@ float & array::Array::operator[] (const intvec & index) {
 
 // Copy data from GPU array
 #ifndef __MERLIN_CUDA__
-void sync_from_gpu(const array::Parcel & gpu_array, std::uintptr_t stream) {
+void sync_from_gpu(const array::Parcel & gpu_array, const cuda::Stream & stream) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 #endif  // __MERLIN_CUDA__
 
 // Export data to a file
-/*
-void Array::export_to_file(const std::string & filename) {
-    Stock Stk(filename, 'w');
-    Stk.get_metadata(*this);
-    Stk.write_metadata();
-    Stk.write_data_to_file(*this);
+void array::Array::export_to_file(const std::string & filename) {
+    array::Stock exported(filename, 'w');
+    exported.get_metadata(*this);
+    exported.write_metadata();
+    exported.write_data_to_file(*this);
 }
-*/
 
 // Destructor
 array::Array::~Array(void) {
     if (this->force_free) {
-        delete[] this->data_;
+        free_memory(this->data_, this->size());
     }
 }
 

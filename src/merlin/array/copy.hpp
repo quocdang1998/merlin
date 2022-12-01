@@ -18,7 +18,7 @@ namespace merlin::array {
  *  @param shape Shape vector.
  *  @param element_size Size on one element.
  */
-MERLIN_EXPORTS intvec contiguous_strides(const merlin::intvec & shape, std::uint64_t element_size);
+__cuhostdev__ intvec contiguous_strides(const merlin::intvec & shape, std::uint64_t element_size);
 
 /** @brief Calculate the longest contiguous segment and break index of an tensor.
  *  @details Longest contiguous segment is the length (in bytes) of the longest sub-tensor that is C-contiguous in the
@@ -31,8 +31,8 @@ MERLIN_EXPORTS intvec contiguous_strides(const merlin::intvec & shape, std::uint
  *  @param shape Shape vector.
  *  @param strides Strides vector.
 */
-MERLIN_EXPORTS std::tuple<std::uint64_t, std::int64_t> lcseg_and_brindex(const merlin::intvec & shape,
-                                                                         const merlin::intvec & strides);
+__cuhostdev__ std::tuple<std::uint64_t, std::int64_t> lcseg_and_brindex(const merlin::intvec & shape,
+                                                                        const merlin::intvec & strides);
 
 /** @brief Copy data from an merlin::array::NdData to another.
  *  @details This function allows user to choose the copy function (for example, std::memcpy, or cudaMemcpy).

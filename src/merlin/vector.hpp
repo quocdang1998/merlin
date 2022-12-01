@@ -2,7 +2,7 @@
 #ifndef MERLIN_VECTOR_HPP_
 #define MERLIN_VECTOR_HPP_
 
-#include <cstddef>  // NULL
+#include <cstddef>  // nullptr
 #include <cstdint>  // std::int64_t, std::uint64_t, std::uintptr_t
 #include <initializer_list>  // std::initializer_list
 
@@ -71,9 +71,9 @@ class Vector {
     /** @brief Constant begin iterator.*/
     const T * cbegin(void) const {return this->data_;}
     /** @brief End iterator.*/
-    T * end(void) {return this->data_ + this->size_;}
+    T * end(void) {return &this->data_[this->size_];}
     /** @brief Constant begin iterator.*/
-    const T * cend(void) const {return this->data_ + this->size_;}
+    const T * cend(void) const {return &this->data_[this->size_];}
     /// @}
 
     /// @name Slicing operator
@@ -116,7 +116,7 @@ class Vector {
 
   private:
     /** @brief Pointer to data.*/
-    T * data_ = NULL;
+    T * data_ = nullptr;
     /** @brief Size of data.*/
     std::uint64_t size_;
 };
