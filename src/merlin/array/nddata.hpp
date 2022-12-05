@@ -12,15 +12,24 @@
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/vector.hpp"  // merlin::intvec
 
+
 namespace merlin::array {
+class NdData;  // Basic ndim array
+class Array;  // CPU Array, defined in array.hpp
+class Parcel;  // GPU Array, defined in parcel.hpp
+class Stock;  // Out of core array, defined in stock.hpp
+}  // namespace merlin::array
+
+
+namespace merlin {
 
 /** @brief Abstract class of N-dim array.*/
-class MERLIN_EXPORTS NdData {
+class MERLIN_EXPORTS array::NdData {
   public:
     /// @name Constructor
     /// @{
     /** @brief Default constructor (do nothing).*/
-    NdData(void) {}
+    __cuhostdev__ NdData(void) {}
     /** @brief Constructor from data pointer and meta-data.
      *  @details This constructor is used to construct explicitly an NdData in C++ interface.
      *  @param data Pointer to data.
@@ -41,19 +50,19 @@ class MERLIN_EXPORTS NdData {
      *  @param whole merlin::array::NdData of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    NdData(const NdData & whole, std::initializer_list<Slice> slices);
+    __cuhostdev__ NdData(const array::NdData & whole, std::initializer_list<array::Slice> slices);
     /// @}
 
     /// @name Copy and move
     /// @{
     /** @brief Shallow copy constructor.*/
-    NdData(const NdData & source) = default;
+    NdData(const array::NdData & source) = default;
     /** @brief Shallow copy assignment.*/
-    NdData & operator= (const NdData & source) = default;
+    array::NdData & operator= (const array::NdData & source) = default;
     /** @brief Move constructor.*/
-    NdData(NdData && source) = default;
+    NdData(array::NdData && source) = default;
     /** @brief Move assignment.*/
-    NdData & operator= (NdData && source) = default;
+    array::NdData & operator= (array::NdData && source) = default;
     /// @}
 
     /// @name Get members
@@ -81,7 +90,7 @@ class MERLIN_EXPORTS NdData {
     /// @name Destructor
     /// @{
     /** @brief Default destructor.*/
-    virtual ~NdData(void) = default;
+    __cuhostdev__ ~NdData(void) {}
     /// @}
 
   protected:
@@ -99,11 +108,6 @@ class MERLIN_EXPORTS NdData {
     intvec strides_;
 };
 
-// Forward declaration of subclasses
-class Array;  // CPU Array, defined in array.hpp
-class Parcel;  // GPU Array, defined in parcel.hpp
-class Stock;  // Out of core array, defined in stock.hpp
-
-}  // namespace merlin::array
+}  // namespace merlin
 
 #endif  // MERLIN_ARRAY_NDDATA_HPP_

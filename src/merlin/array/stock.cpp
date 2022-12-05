@@ -1,12 +1,8 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/stock.hpp"
 
-#include <chrono>  // std::chrono::milliseconds
 #include <cinttypes>  // PRIu64
-#include <ios>  // std::ios_base::failure
-#include <filesystem>  // std::filesystem::exists
-#include <functional>  // std::bind, std::placeholders, std::ref
-#include <thread>  // std::this_thread::sleep_for
+#include <functional>  // std::bind, std::placeholders
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/array/copy.hpp"  // merlin::array::array_copy, merlin::array::contiguous_strides
@@ -32,7 +28,9 @@ static inline std::FILE * read_file(const char * fname) {
 // Open file for write (read and write access denied)
 static inline std::FILE * write_file(const char * fname, bool thread_safe = true) {
     int sh_flag = thread_safe ? _SH_DENYRW : _SH_DENYNO;
-    return ::_fsopen(fname, "wb", sh_flag);
+    std::FILE * temporary = std::fopen(fname, "wb");  // crash old content
+    std::fclose(temporary);
+    return ::_fsopen(fname, "rb+", sh_flag);
 }
 
 // Open file for read and write (read and write access denied)
@@ -56,7 +54,9 @@ static inline std::FILE * read_file(const char * fname) {
 
 // Open file for write (read and write access denied)
 static inline std::FILE * write_file(const char * fname, bool thread_safe = true) {
-    return std::fopen(fname, "wb");
+    std::FILE * temporary = std::fopen(fname, "wb");  // crash old content
+    std::fclose(temporary);
+    return std::fopen(fname, "rb+");
 }
 
 // Open file for read and write (read and write access denied)
@@ -71,14 +71,14 @@ static inline std::FILE * update_file(const char * fname, bool thread_safe = tru
 // --------------------------------------------------------------------------------------------------------------------
 
 // Read an array from file
-static inline void read_from_file(float * dest, std::fstream & file, float * src, std::uint64_t count) {
-    file.seekg(reinterpret_cast<std::uintptr_t>(src));
-    file.read(reinterpret_cast<char *>(dest), count);
+static inline void read_from_file(float * dest, std::FILE * file, float * src, std::uint64_t bytes) {
+    std::fseek(file, reinterpret_cast<std::uintptr_t>(src), SEEK_SET);
+    std::fread(dest, sizeof(float), bytes / sizeof(float), file);
 }
 
-static inline void write_to_file(std::fstream & file, float * dest, float * src, std::uint64_t count) {
-    file.seekg(reinterpret_cast<std::uintptr_t>(dest));
-    file.write(reinterpret_cast<char *>(src), count);
+static inline void write_to_file(std::FILE * file, float * dest, float * src, std::uint64_t bytes) {
+    std::fseek(file, reinterpret_cast<std::uintptr_t>(dest), SEEK_SET);
+    std::fwrite(src, sizeof(float), bytes / sizeof(float), file);
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -88,29 +88,29 @@ static inline void write_to_file(std::fstream & file, float * dest, float * src,
 namespace merlin {
 
 // Constructor from filename
-array::Stock::Stock(const std::string & filename, char mode, std::uint64_t offset) : filename_(filename),
-mode_(mode), offset_(offset) {
-    std::string c_mode;
+array::Stock::Stock(const std::string & filename, char mode, std::uint64_t offset) :
+filename_(filename), mode_(mode), offset_(offset) {
     switch (mode) {
         case 'r':
-            this->file_ptr_ = ::read_file(filename.c_str());
+            this->file_ptr_ = read_file(filename.c_str());
             break;
         case 'w':
-            this->file_ptr_ = ::write_file(filename.c_str(), true);
+            this->file_ptr_ = write_file(filename.c_str(), true);
             break;
         case 'a':
-            this->file_ptr_ = ::update_file(filename.c_str(), true);
+            this->file_ptr_ = update_file(filename.c_str(), true);
             break;
         case 'p':
-            this->file_ptr_ = ::write_file(filename.c_str(), false);
+            this->file_ptr_ = write_file(filename.c_str(), false);
             break;
         case 's':
-            this->file_ptr_ = ::update_file(filename.c_str(), true);
+            this->file_ptr_ = update_file(filename.c_str(), false);
             break;
     }
     if (this->file_ptr_ == nullptr) {
         FAILURE(std::ios_base::failure, "Cannot open file \"%s\".\n", filename.c_str());
     }
+    this->flock_ = FileLock(this->file_ptr_);
     int err_ = std::fseek(this->file_ptr_, offset, SEEK_SET);
     if (err_ != 0) {
         FAILURE(std::ios_base::failure, "Cannot move cursor to position %" PRIu64 " to file \"%s\".\n",
@@ -118,45 +118,29 @@ mode_(mode), offset_(offset) {
     }
 }
 
-// Temporary close the file
-void array::Stock::temporary_close(void) {
-    if (this->file_ptr_ != nullptr) {
-        int err_ = std::fclose(this->file_ptr_);
-        if (err_ != 0) {
-            FAILURE(std::ios_base::failure, "Cannot close file \"%s\".\n", this->filename_.c_str());
-        }
-        this->file_ptr_ = nullptr;
-    }
-}
-
-/*
 // Read metadata from file (this function is single threaded to avoid data race)
-void Stock::read_metadata(void) {
-    Stock::mutex_.lock();
-    this->reopen_fstream();
-    this->file_stream_.seekg(0, std::ios_base::beg);
-    this->file_stream_.read(reinterpret_cast<char *>(&(this->ndim_)), sizeof(std::uint64_t));
+void array::Stock::read_metadata(void) {
+    this->flock_.lock_shared();
+    std::fseek(this->file_ptr_, this->offset_, SEEK_SET);
+    std::fread(&(this->ndim_), sizeof(std::uint64_t), 1, this->file_ptr_);
     this->shape_ = intvec(this->ndim_, 0);
-    this->file_stream_.read(reinterpret_cast<char *>(this->shape_.data()), this->ndim_*sizeof(std::uint64_t));
-    this->strides_ = contiguous_strides(this->shape_, sizeof(float));
-    this->data_ = reinterpret_cast<float *>(std::uintptr_t(this->file_stream_.tellg()));
-    this->file_stream_.close();
-    Stock::mutex_.unlock();
+    std::fread(this->shape_.data(), sizeof(std::uint64_t), this->ndim_, this->file_ptr_);
+    this->strides_ = array::contiguous_strides(this->shape_, sizeof(float));
+    this->data_ = reinterpret_cast<float *>(std::uintptr_t(std::ftell(this->file_ptr_)));
+    this->flock_.unlock();
 }
 
 // Copy data from file to an array
-void Stock::copy_to_array(Array & arr) {
-    auto read_func = std::bind(read_from_file, std::placeholders::_1, std::ref(this->file_stream_),
+void array::Stock::copy_to_array(array::Array & arr) {
+    auto read_func = std::bind(read_from_file, std::placeholders::_1, this->file_ptr_,
                                std::placeholders::_2, std::placeholders::_3);
-    Stock::mutex_.lock();
-    this->reopen_fstream();
-    array_copy(&arr, this, read_func);
-    this->file_stream_.close();
-    Stock::mutex_.unlock();
+    this->flock_.lock_shared();
+    array::array_copy(&arr, this, read_func);
+    this->flock_.unlock();
 }
 
 // Copy data from Stock to Array
-Array Stock::to_array(void) {
+array::Array array::Stock::to_array(void) {
     // read metadata
     this->read_metadata();
     // allocate result
@@ -167,38 +151,34 @@ Array Stock::to_array(void) {
 }
 
 // Get metadata from an array
-void Stock::get_metadata(Array & src) {
+void array::Stock::get_metadata(array::Array & src) {
     this->ndim_ = src.ndim();
     this->shape_ = src.shape();
     this->strides_ = contiguous_strides(this->shape_, sizeof(float));
+    this->data_ = reinterpret_cast<float *>(this->offset_ + sizeof(std::uint64_t)*(1+this->ndim_));
 }
 
 // Write metadata to file
-void Stock::write_metadata(void) {
-    Stock::mutex_.lock();
-    // this->reopen_fstream();
-    this->file_stream_.seekg(0, std::ios_base::beg);
-    this->file_stream_.write(reinterpret_cast<char *>(&(this->ndim_)), sizeof(std::uint64_t));
-    this->file_stream_.write(reinterpret_cast<char *>(this->shape_.data()), this->ndim_*sizeof(std::uint64_t));
-    this->data_ = reinterpret_cast<float *>(std::uintptr_t(this->file_stream_.tellg()));
-    // this->file_stream_.close();
-    Stock::mutex_.unlock();
+void array::Stock::write_metadata(void) {
+    this->flock_.lock();
+    std::fseek(this->file_ptr_, this->offset_, SEEK_SET);
+    std::fwrite(&(this->ndim_), sizeof(std::uint64_t), 1, this->file_ptr_);
+    std::fwrite(this->shape_.data(), sizeof(std::uint64_t), this->ndim_, this->file_ptr_);
+    this->flock_.unlock();
 }
 
 // Write data from an array to a file
-void Stock::write_data_to_file(Array & src) {
-    auto write_func = std::bind(write_to_file, std::ref(this->file_stream_),
+void array::Stock::write_data_to_file(array::Array & src) {
+    auto write_func = std::bind(write_to_file, this->file_ptr_,
                                 std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-    Stock::mutex_.lock();
-    // this->reopen_fstream();
+    this->flock_.lock();
     array_copy(this, &src, write_func);
-    // this->file_stream_.close();
-    Stock::mutex_.unlock();
+    this->flock_.unlock();
 }
-*/
+
 // Destructor
 array::Stock::~Stock(void) {
-    if ((this->file_ptr_ != nullptr) && this->force_close) {
+    if (this->file_ptr_ != nullptr) {
         int err_ = std::fclose(this->file_ptr_);
         if (err_ != 0) {
             FAILURE(std::ios_base::failure, "Cannot close file \"%s\".\n", this->filename_.c_str());

@@ -7,12 +7,21 @@
 #include <initializer_list>  // std::initializer_list
 
 #include "merlin/array/nddata.hpp"  // merlin::array::NdData, merlin::array::Parcel
-#include "merlin/array/slice.hpp"  // merlin::Slice
+#include "merlin/array/slice.hpp"  // merlin::array::Slice
+#include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/iterator.hpp"  // merlin::Iterator
 #include "merlin/vector.hpp"  // merlin::intvec
 
 namespace merlin {
+
+/** @brief Allocate non pageable memory.
+ *  @param size Number of element in the allocated array.
+ */
+float * allocate_memory(std::uint64_t size);
+
+/** @brief Free array allocated in non pageable memory.*/
+void free_memory(float * ptr, std::uint64_t size);
 
 /** @brief Multi-dimensional array on CPU.*/
 class MERLIN_EXPORTS array::Array : public array::NdData {
@@ -82,11 +91,11 @@ class MERLIN_EXPORTS array::Array : public array::NdData {
     /// @name Transfer data
     /// @{
     /** @brief Copy data from GPU array.*/
-    void sync_from_gpu(const array::Parcel & gpu_array, std::uintptr_t stream = 0);
+    void sync_from_gpu(const array::Parcel & gpu_array, const cuda::Stream & stream = cuda::Stream());
     /** @brief Export data to a file.
      *  @param filename Name of exported file.
      */
-    // void export_to_file(const std::string & filename);
+    void export_to_file(const std::string & filename);
     /// @}
 
     /// @name Destructor

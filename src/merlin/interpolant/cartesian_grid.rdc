@@ -1,0 +1,50 @@
+// Copyright 2022 quocdang1998
+#include "merlin/interpolant/cartesian_grid.hpp"
+
+namespace merlin {
+
+// --------------------------------------------------------------------------------------------------------------------
+// CartesianGrid
+// --------------------------------------------------------------------------------------------------------------------
+
+// Get total number of points
+__cuhostdev__ std::uint64_t interpolant::CartesianGrid::size(void) const {
+    std::uint64_t result = 1;
+    for (int i = 0; i < this->grid_vectors_.size(); i++) {
+        result *= this->grid_vectors_[i].size();
+    }
+    return result;
+}
+
+// Get shape of the grid
+__cuhostdev__ intvec interpolant::CartesianGrid::grid_shape(void) const {
+    intvec result(this->ndim());
+    for (int i = 0; i < this->ndim(); i++) {
+        result[i] = this->grid_vectors_[i].size();
+    }
+    return result;
+}
+
+#ifdef __NVCC__
+
+// Copy to shared memory
+__cudevice__ void interpolant::CartesianGrid::copy_to_shared_mem(interpolant::CartesianGrid * share_ptr,
+                                                                 void * grid_vector_data_ptr) {
+    // shallow copy of grid vector
+    bool check_zeroth_thread = (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
+    if (check_zeroth_thread) {
+        share_ptr->grid_vectors_.data() = reinterpret_cast<floatvec *>(grid_vector_data_ptr);
+        share_ptr->grid_vectors_.size() = this->ndim();
+    }
+    __syncthreads();
+    // copy data of each grid vector
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(grid_vector_data_ptr) + this->ndim()*sizeof(floatvec);
+    for (int i = 0; i < this->ndim(); i++) {
+        this->grid_vectors_[i].copy_to_shared_mem(&(share_ptr->grid_vectors_[i]), reinterpret_cast<float *>(data_ptr));
+        data_ptr += this->grid_vectors_[i].size() * sizeof(float);
+    }
+}
+
+#endif  // __NVCC__
+
+}  // namespace merlin

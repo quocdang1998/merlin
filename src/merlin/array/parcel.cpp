@@ -11,7 +11,7 @@ namespace merlin {
 // --------------------------------------------------------------------------------------------------------------------
 
 // Initialize mutex
-std::mutex array::Parcel::m_;
+std::mutex array::Parcel::mutex_;
 
 #ifndef __MERLIN_CUDA__
 
@@ -21,7 +21,7 @@ array::Parcel::Parcel(void) {
 }
 
 // Constructor from CPU array
-array::Parcel::Parcel(const array::Array & cpu_array, std::uintptr_t stream) {
+array::Parcel::Parcel(const array::Array & cpu_array, const cuda::Stream & stream) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 

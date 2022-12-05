@@ -10,9 +10,16 @@
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 
 namespace merlin::cuda {
+class Device;  // GPU device
+class Context;  // CUDA runtime context
+class Stream;  // CUDA streams (queues of tasks)
+class Event;  // CUDA events (milestone in the stream)
+}  // namespace merlin::cuda
+
+namespace merlin {
 
 /** @brief Class representing CPU device.*/
-class MERLIN_EXPORTS Device {
+class MERLIN_EXPORTS cuda::Device {
   public:
     /** @brief Limit to get.*/
     enum class Limit {
@@ -40,9 +47,9 @@ class MERLIN_EXPORTS Device {
     /// @details Move constructor and Move assignment are deleted because they are not necessary.
     /// @{
     /** @brief Copy constructor.*/
-    __cuhostdev__ Device(const Device & src) {this->id_ = src.id_;}
+    __cuhostdev__ Device(const cuda::Device & src) {this->id_ = src.id_;}
     /** @brief Copy assignment.*/
-    __cuhostdev__ Device & operator=(const Device & src) {
+    __cuhostdev__ cuda::Device & operator=(const cuda::Device & src) {
         this->id_ = src.id_;
         return *this;
     }
@@ -51,7 +58,7 @@ class MERLIN_EXPORTS Device {
     /// @name GPU query
     /// @{
     /** @brief Get current GPU.*/
-    __cuhostdev__ static Device get_current_gpu(void);
+    __cuhostdev__ static cuda::Device get_current_gpu(void);
     /** @brief Get total number of CUDA capable GPU.*/
     __cuhostdev__ static int get_num_gpu(void);
     /** @brief Print GPU specifications.*/
@@ -70,15 +77,15 @@ class MERLIN_EXPORTS Device {
     /** @brief Get and set limit.
      *  @return Value of current limit if argument ``size`` is not given, and the value of size otherwise.
      */
-    static std::uint64_t limit(Limit limit, std::uint64_t size = UINT64_MAX);
+    static std::uint64_t limit(cuda::Device::Limit limit, std::uint64_t size = UINT64_MAX);
     /** @brief Reset GPU.
      *  @details Destroy all allocations and reset all state on the current device in the current process.
      */
     static void reset_all(void);
     /** @brief Compare 2 GPU.*/
-    friend bool operator==(const Device & left, const Device & right) {return left.id_ == right.id_;}
+    friend bool operator==(const cuda::Device & left, const cuda::Device & right) {return left.id_ == right.id_;}
     /** @brief Compare 2 GPU.*/
-    friend bool operator!=(const Device & left, const Device & right) {return left.id_ != right.id_;}
+    friend bool operator!=(const cuda::Device & left, const cuda::Device & right) {return left.id_ != right.id_;}
     /// @}
 
     /// @name Get members
@@ -106,6 +113,8 @@ class MERLIN_EXPORTS Device {
     int id_ = -1;
 };
 
+namespace cuda {
+
 /** @brief Print GPU specifications.
  *  @details Print GPU specifications (number of threads, total global memory, max shared memory) and API limitation
  *  (max thread per block, max block per grid).
@@ -118,6 +127,8 @@ MERLIN_EXPORTS void print_all_gpu_specification(void);
  */
 MERLIN_EXPORTS bool test_all_gpu(void);
 
-}  // namespace merlin::cuda
+}  // namespace cuda
+
+}  // namespace merlin
 
 #endif  // MERLIN_CUDA_GPU_QUERY_HPP_

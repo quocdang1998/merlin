@@ -2,10 +2,10 @@
 #include <cstdio>
 #include <cinttypes>
 
-#include "merlin/interpolant/grid.hpp"
+#include "merlin/interpolant/regular_grid.hpp"
 
 int main (void) {
-    merlin::RegularGrid gr(8,3);
+    merlin::interpolant::RegularGrid gr(8,3);
 
     for (int i = 0; i < gr.size(); i++) {
         gr[i][{0}] = i*1.0;
@@ -19,7 +19,7 @@ int main (void) {
     gr.pop_back();
 
     MESSAGE("Expected 3 columns, col1 = range(0, 8), col2 = col1*2, col3 = col1*3.\n");
-    for (merlin::RegularGrid::iterator it = gr.begin(); it != gr.end(); it++) {
+    for (merlin::interpolant::RegularGrid::iterator it = gr.begin(); it != gr.end(); it++) {
         MESSAGE("Point number %" PRIu64 ":", it.index()[0]);
         for (int j = 0; j < 3; j++) {
             std::printf("%4.1f", gr.grid_points()[it.index()]);

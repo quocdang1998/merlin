@@ -88,8 +88,8 @@ __cuhostdev__ Vector<T> & Vector<T>::operator=(Vector<T> && src) {
     return *this;
 }
 
-// Copy data to GPU
 #ifndef __MERLIN_CUDA__
+
 // Copy data from CPU to a global memory on GPU
 template <typename T>
 void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr) {
@@ -103,6 +103,7 @@ void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
 }
 
 #elif defined(__NVCC__)
+
 // Copy data from CPU to a global memory on GPU
 template <typename T>
 void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr) {
@@ -126,6 +127,7 @@ void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
     cudaMemcpy(reinterpret_cast<T *>(gpu_data), this->data_,
                this->size_*sizeof(T), cudaMemcpyDeviceToHost);
 }
+
 #endif  // __MERLIN_CUDA__
 
 #ifdef __NVCC__

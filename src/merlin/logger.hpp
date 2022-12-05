@@ -6,6 +6,7 @@
 #include <cstdio>  // std::printf, std::vsnprintf
 #include <filesystem>  // std::filesystem::filesystem_error
 #include <stdexcept>  // std::runtime_error
+#include <string>  // std::string
 #include <system_error>  // std::error_code
 #include <type_traits>  // std::is_same
 
@@ -15,15 +16,17 @@
 
 #include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
 
+#if defined(__MERLIN_WINDOWS__)
+    #define __FUNCNAME__ __FUNCSIG__
+    #include <windows.h>  // FormatMessageA
+#elif defined(__MERLIN_LINUX__)
+    #define __FUNCNAME__ __PRETTY_FUNCTION__
+    #include <errno.h>  // errno
+    #include <string.h>  // strerror
+#endif
+
 // Log MESSAGE, WARNING and FAILURE for CPU
 // ----------------------------------------
-
-// Macro expands to function name
-#if defined(__MERLIN_LINUX__)
-    #define __FUNCNAME__ __PRETTY_FUNCTION__
-#elif defined(__MERLIN_WINDOWS__)
-    #define __FUNCNAME__ __FUNCSIG__
-#endif
 
 /** @brief Print message to the standard output.
  *  @details Example:
@@ -86,6 +89,38 @@ class cuda_runtime_error : public std::runtime_error {
     cuda_runtime_error(const char * message) : std::runtime_error(message) {}
     const char * what() const noexcept {return std::runtime_error::what();}
 };
+
+// Error message from Windows and POSIX
+// ------------------------------------
+
+#if defined(__MERLIN_WINDOWS__)
+// Get error from Windows API
+inline std::string throw_windows_last_error(unsigned long int last_error) {
+    if (last_error != 0) {
+        char * buffer = nullptr;
+        const unsigned long int format = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
+                                         | FORMAT_MESSAGE_IGNORE_INSERTS;
+        unsigned long int size = ::FormatMessageA(format, nullptr, last_error,
+                                                  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                                                  reinterpret_cast<char *>(&buffer), 0, nullptr);
+        return std::string(buffer, size);
+    } else {
+        return std::string();
+    }
+}
+
+#elif defined(__MERLIN_LINUX__)
+// Get error from Linux
+inline std::string throw_linux_last_error(void) {
+    if (errno != 0) {
+        char * buffer = ::strerror(errno);
+        return std::string(buffer);
+    } else {
+        return std::string();
+    }
+}
+
+#endif
 
 // Log CUDAOUT for GPU
 // -------------------

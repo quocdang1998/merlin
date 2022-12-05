@@ -5,6 +5,7 @@
 #if (defined(_WIN32) || defined(_WIN64))  // On Windows, detect MSVC
     #if defined(_MSC_VER)
         #define __MERLIN_WINDOWS__
+        #define NOMINMAX
     #elif defined(__MINGW32__) || defined(__MINGW64__)
         #error MinGW on Windows not supported, use MSVC compiler instead.
     #else

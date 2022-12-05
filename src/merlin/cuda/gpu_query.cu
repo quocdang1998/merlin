@@ -209,7 +209,4 @@ bool cuda::test_all_gpu(void) {
     return result;
 }
 
-// Map from GPU ID to is details
-std::map<int, cuda::Device> gpu_map;
-
 }  // namespace merlin::cuda

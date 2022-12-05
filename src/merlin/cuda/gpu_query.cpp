@@ -9,6 +9,9 @@ namespace merlin {
 // Device
 // --------------------------------------------------------------------------------------------------------------------
 
+// Map from GPU ID to is details
+std::map<int, cuda::Device> gpu_map;
+
 #ifndef __MERLIN_CUDA__
 
 // Print limit of device
@@ -54,9 +57,6 @@ bool cuda::test_all_gpu(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
     return false;
 }
-
-// Map from GPU ID to is details
-std::map<int, Device> gpu_map;
 
 #endif  // __MERLIN_CUDA__
 

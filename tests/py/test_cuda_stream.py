@@ -1,3 +1,8 @@
+import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(__file__, "../../../")))
+
 import merlin.device
 
 num_gpu = merlin.device.Device.get_num_gpu()

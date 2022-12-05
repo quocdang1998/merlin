@@ -71,9 +71,9 @@ class Vector {
     /** @brief Constant begin iterator.*/
     const T * cbegin(void) const {return this->data_;}
     /** @brief End iterator.*/
-    T * end(void) {return this->data_ + this->size_;}
+    T * end(void) {return &this->data_[this->size_];}
     /** @brief Constant begin iterator.*/
-    const T * cend(void) const {return this->data_ + this->size_;}
+    const T * cend(void) const {return &this->data_[this->size_];}
     /// @}
 
     /// @name Slicing operator

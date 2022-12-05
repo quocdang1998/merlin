@@ -20,7 +20,6 @@ set(MERLIN_TEST OFF CACHE BOOL "Build test executables")  # -DMERLIN_TEST=ON
 list(APPEND MERLIN_SRC_CPP
      array/nddata.cpp
      array/array.cpp
-     array/copy.cpp
      array/parcel.cpp
      array/stock.cpp
      # src/autodiff.cpp
@@ -28,8 +27,11 @@ list(APPEND MERLIN_SRC_CPP
      cuda/context.cpp
      filelock.cpp
      iterator.cpp
+     interpolant/cartesian_grid.cpp
      interpolant/grid.cpp
-     interpolant/interpolant.cpp
+     interpolant/regular_grid.cpp
+     interpolant/sparse_grid.cpp
+     # interpolant/interpolant.cpp
 )
 list(APPEND MERLIN_SRC_CU
      array/parcel.cu
@@ -37,13 +39,17 @@ list(APPEND MERLIN_SRC_CU
      cuda/gpu_query.cu
      cuda/context.cu
      cuda/stream.cu
-     interpolant/grid.cu
+     interpolant/cartesian_grid.cu
 )
 list(APPEND MERLIN_SRC_RDC
+     array/array.rdc
+     array/copy.rdc
      array/nddata.rdc
      array/parcel.rdc
      array/slice.rdc
      cuda/gpu_query.rdc
+     interpolant/cartesian_grid.rdc
+     interpolant/sparse_grid.rdc
      utils.rdc
 )
 
@@ -217,6 +223,7 @@ target_link_libraries(ap3_mpo libmerlin ${HDF5_CXX_LIBRARIES} ${HDF5_C_LIBRARIES
 
 # build execuatble for each tests/{LANGUAGE}/test_* files
 function(CONFIGURE_TESTFILES LANGUAGE)
+    message(STATUS "Build unit tests ${LANGUAGE}")
     file(GLOB MERLIN_TESTFILES "tests/${LANGUAGE}/test_*")
     foreach (TESTFILE ${MERLIN_TESTFILES})
         get_filename_component(TESTFILENAME ${TESTFILE} NAME)

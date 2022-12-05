@@ -19,4 +19,5 @@ int main(void) {
     } catch(std::exception & e) {}
     // GPU code
     an_errored_kernel<<<1,1>>>();
+    ::cudaDeviceSynchronize();
 }

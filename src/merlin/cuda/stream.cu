@@ -78,9 +78,11 @@ void cuda::Stream::synchronize(void) {
 
 // Destructor
 cuda::Stream::~Stream(void) {
-    cudaError_t err_ = ::cudaStreamDestroy(reinterpret_cast<cudaStream_t>(this->stream_));
-    if (err_ != cudaSuccess) {
-        FAILURE(cuda_runtime_error, "cudaStreamDestroy failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+    if (this->stream_ != 0) {
+        cudaError_t err_ = ::cudaStreamDestroy(reinterpret_cast<cudaStream_t>(this->stream_));
+        if (err_ != cudaSuccess) {
+            FAILURE(cuda_runtime_error, "cudaStreamDestroy failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        }
     }
 }
 

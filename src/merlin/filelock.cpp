@@ -8,12 +8,10 @@
 
 #if defined(__MERLIN_WINDOWS__)
 #include <cstring>  // std::memset
-#include <windows.h>  // LockFileEx, UnlockFileEx, GetLastError, FormatMessageA
+#include <windows.h>  // LockFileEx, UnlockFileEx, GetLastError
 #include <io.h>  // _get_osfhandle
 #elif defined(__MERLIN_LINUX__)
-#include <errno.h>  // errno
 #include <fcntl.h>  // flock
-#include <string.h>  // strerror
 #endif
 
 namespace merlin {
@@ -23,21 +21,6 @@ namespace merlin {
 // --------------------------------------------------------------------------------------------------------------------
 
 #if defined(__MERLIN_WINDOWS__)
-
-// Get error from Windows API
-static inline std::string throw_windows_last_error(unsigned long int last_error) {
-    if (last_error != 0) {
-        char * buffer = nullptr;
-        const unsigned long int format = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
-                                         | FORMAT_MESSAGE_IGNORE_INSERTS;
-        unsigned long int size = ::FormatMessageA(format, nullptr, last_error,
-                                                  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                                                  reinterpret_cast<char *>(&buffer), 0, nullptr);
-        return std::string(buffer, size);
-    } else {
-        return std::string();
-    }
-}
 
 // Constructor from file pointer
 FileLock::FileLock(std::FILE * file_ptr) {
@@ -145,16 +128,6 @@ bool FileLock::try_lock_shared(void) {
 // Constructor from file pointer
 FileLock::FileLock(std::FILE * file_ptr) {
     this->file_descriptor = ::fileno(file_ptr);
-}
-
-// Get error from Linux
-static inline std::string throw_linux_last_error(void) {
-    if (errno != 0) {
-        char * buffer = ::strerror(errno);
-        return std::string(buffer);
-    } else {
-        return std::string();
-    }
 }
 
 // Exclusively lock file handle

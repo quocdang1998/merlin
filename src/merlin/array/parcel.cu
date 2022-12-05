@@ -13,20 +13,17 @@ namespace merlin {
 // Parcel
 // --------------------------------------------------------------------------------------------------------------------
 
-// Default constructor
-array::Parcel::Parcel(void) {}
-
 // Constructor from CPU array
-array::Parcel::Parcel(const array::Array & cpu_array, std::uintptr_t stream) : array::NdData(cpu_array) {
+array::Parcel::Parcel(const array::Array & cpu_array, const cuda::Stream & stream) : array::NdData(cpu_array) {
     // get device id
-    this->device_ = cuda::Device::get_current_gpu();
+    this->device_ = stream.get_gpu();
     // allocate data
-    cudaError_t err_ = cudaMalloc(&(this->data_), sizeof(float) * this->size());
+    cudaError_t err_ = ::cudaMalloc(&(this->data_), sizeof(float) * this->size());
     if (err_ != cudaSuccess) {
         FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", cudaGetErrorString(err_));
     }
     // cast stream
-    cudaStream_t copy_stream = reinterpret_cast<cudaStream_t>(stream);
+    cudaStream_t copy_stream = reinterpret_cast<cudaStream_t>(stream.stream());
     // reset strides vector
     this->strides_ = array::contiguous_strides(this->shape_, sizeof(float));
     // create copy function
@@ -45,11 +42,11 @@ array::Parcel::Parcel(const array::Parcel & whole, std::initializer_list<array::
 // Copy constructor
 array::Parcel::Parcel(const array::Parcel & src) : array::NdData(src) {
     // get device id
-    this->device_ = cuda::Device();
+    this->device_ = cuda::Device::get_current_gpu();
     // reform strides vector
     this->strides_ = array::contiguous_strides(this->shape_, sizeof(float));
     // allocate data
-    cudaError_t err_ = cudaMalloc(&(this->data_), sizeof(float) * this->size());
+    cudaError_t err_ = ::cudaMalloc(&(this->data_), sizeof(float) * this->size());
     if (err_ != cudaSuccess) {
         FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", cudaGetErrorString(err_));
     }
@@ -68,7 +65,7 @@ array::Parcel & array::Parcel::operator=(const array::Parcel & src) {
     this->array::NdData::operator=(src);
     this->strides_ = array::contiguous_strides(this->shape_, sizeof(float));
     // allocate data
-    cudaError_t err_ = cudaMalloc(&(this->data_), sizeof(float) * this->size());
+    cudaError_t err_ = ::cudaMalloc(&(this->data_), sizeof(float) * this->size());
     if (err_ != cudaSuccess) {
         FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", cudaGetErrorString(err_));
     }
@@ -121,24 +118,28 @@ void array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_pt
 }
 
 // Free old data
-void array::Parcel::free_current_data(void) {
+__cuhostdev__ void array::Parcel::free_current_data(void) {
+    #ifndef __CUDA_ARCH__
     // lock mutex
-    array::Parcel::m_.lock();
+    array::Parcel::mutex_.lock();
     // save current device and set device to the corresponding GPU
     cuda::Device current_device = cuda::Device::get_current_gpu();
     this->device_.set_as_current();
+    #endif  // __CUDA_ARCH__
     // free data
     if ((this->data_ != nullptr) && this->force_free) {
         cudaFree(this->data_);
         this->data_ = nullptr;
     }
+    #ifndef __CUDA_ARCH__
     // finalize: set back the original GPU and unlock the mutex
     current_device.set_as_current();
-    array::Parcel::m_.unlock();
+    array::Parcel::mutex_.unlock();
+    #endif  // __CUDA_ARCH__
 }
 
 // Destructor
-array::Parcel::~Parcel(void) {
+__cuhostdev__ array::Parcel::~Parcel(void) {
     this->free_current_data();
 }
 
