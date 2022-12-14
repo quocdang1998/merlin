@@ -40,9 +40,8 @@ static std::vector<std::string> query_geometry(H5::Group * root) {
     return result;
 }
 
-Ap3HomogXS::Ap3HomogXS(const std::string & filename,
-                                           const std::string & isotope, const std::string & reaction,
-                                           unsigned int energy_group) {
+Ap3HomogXS::Ap3HomogXS(const std::string & filename, const std::string & isotope, const std::string & reaction,
+                       unsigned int energy_group) {
     // read metadata
     this->isotope_ = isotope;
     if (isotope.empty()) {

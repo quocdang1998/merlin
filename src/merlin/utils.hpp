@@ -2,10 +2,21 @@
 #ifndef MERLIN_UTILS_HPP_
 #define MERLIN_UTILS_HPP_
 
+#include <string>  // std::string
+
 #include "merlin/cuda_decorator.hpp"  // __cuhostdev__
 #include "merlin/vector.hpp"  // merlin::Vector
 
 namespace merlin {
+
+// System
+// ------
+
+/** @brief Get process ID in form of a string.*/
+std::string get_current_process_id(void);
+
+/** @brief Get current time in form of a string.*/
+std::string get_time(void);
 
 // Multi-dimensional Index
 // -----------------------

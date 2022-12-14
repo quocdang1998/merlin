@@ -2,33 +2,44 @@
 #ifndef MERLIN_INTERPOLANT_INTERPOLANT_HPP_
 #define MERLIN_INTERPOLANT_INTERPOLANT_HPP_
 
-#include "merlin/array/nddata.hpp"  // merlin::NdData
+#include "merlin/array/nddata.hpp"  // merlin::array::NdData
+#include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/interpolant/grid.hpp"  // merlin::CartesianGrid
 #include "merlin/vector.hpp"  // merlin::floatvec
 
+namespace merlin::interpolant {
+class CartesianInterpolant;
+class LagrangianInterpolant;
+}  // namespace merlin::interpolant
+
 namespace merlin {
 
-class CartesianInterpolant {
+class interpolant::CartesianInterpolant {
   public:
-    CartesianInterpolant(CartesianGrid & grid, array::NdData & value);
-    ~CartesianInterpolant(void) = default;
+    /** @brief Method to choose.*/
+    enum class Method {
+        Lagrange,
+        Newton
+    };
 
-    virtual float operator()(const floatvec & x) {return 0.0;}
+    CartesianInterpolant(const interpolant::CartesianGrid & grid, const array::NdData & value,
+                         array::NdData & coeff, interpolant::CartesianInterpolant::Method method);
+    ~CartesianInterpolant(void);
+
+    float operator()(const floatvec & x) {return 0.0;}
 
   protected:
-    CartesianGrid * grid_ = nullptr;
-    array::NdData * value_ = nullptr;
+    const interpolant::CartesianGrid * pgrid_ = nullptr;
+    const array::NdData * pvalue_ = nullptr;
+    array::NdData * pcoeff_ = nullptr;
 };
 
-class LagrangeInterpolant : public CartesianInterpolant {
-  public:
-    LagrangeInterpolant(CartesianGrid & grid, array::NdData & value);
-    ~LagrangeInterpolant(void) = default;
+array::Array calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid * pgrid, const array::Array * pvalue,
+                                      const Vector<array::Slice> & slices);
 
-  protected:
-    /** @brief Interpolation coefficient vector.*/
-    array::NdData coef_;
-};
+array::Array calc_lagrange_coeffs_gpu(const interpolant::CartesianGrid * pgrid, const array::Array * pvalue,
+                                      const Vector<array::Slice> & slices,
+                                      const cuda::Stream & stream = cuda::Stream());
 
 }  // namespace merlin
 

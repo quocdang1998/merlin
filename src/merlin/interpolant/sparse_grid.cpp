@@ -5,6 +5,7 @@
 #include <cstdint>  // std::uint64_t
 #include <cinttypes>  // PRIu64
 
+#include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
 #include "merlin/logger.hpp"  // FAILURE
 #include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx
 
@@ -48,6 +49,7 @@ interpolant::SparseGrid::SparseGrid(std::initializer_list<floatvec> grid_vectors
     check_validity(this->grid_vectors_);
     this->max_ = get_level_from_size(this->grid_vectors_[0].size());
     this->weight_ = intvec(grid_vectors.size(), 1);
+    this->calc_level_vectors();
 }
 
 // Constructor anisotropic grid from grid vectors
@@ -55,12 +57,13 @@ interpolant::SparseGrid::SparseGrid(std::initializer_list<floatvec> grid_vectors
                                     std::uint64_t max, const intvec & weight) :
 grid_vectors_(grid_vectors), max_(max), weight_(weight) {
     check_validity(this->grid_vectors_, false);
+    this->calc_level_vectors();
 }
 
 // Calculate valid level vectors
 void interpolant::SparseGrid::calc_level_vectors(void) {
     // terminate if the lelvel vectors is already calculated
-    if (this->level_vectors_.size() == 0) {
+    if (this->level_vectors_.size() != 0) {
         return;
     }
     // calculate the full grids count
@@ -71,7 +74,7 @@ void interpolant::SparseGrid::calc_level_vectors(void) {
         full_grid_count *= maxlevel[i];
     }
     // loop over each grid index and see if it is in the sparse grid
-    Vector<intvec> levels_vectors(full_grid_count);
+    intvec levels_vectors(full_grid_count * this->ndim());
     std::uint64_t sparse_grid_count = 0;
     for (int i = 0; i < full_grid_count; i++) {
         intvec grid_indx = contiguous_to_ndim_idx(i, maxlevel);
@@ -79,10 +82,12 @@ void interpolant::SparseGrid::calc_level_vectors(void) {
         if (alpha_l > this->max_) {
             continue;
         }
-        levels_vectors[sparse_grid_count] = grid_indx;
+        for (int j = 0; j < this->ndim(); j++) {
+            levels_vectors[sparse_grid_count*this->ndim() + j] = grid_indx[j];
+        }
         ++sparse_grid_count;
     }
-    this->level_vectors_ = Vector<intvec>(levels_vectors.data(), sparse_grid_count);
+    this->level_vectors_ = intvec(levels_vectors.cbegin(), sparse_grid_count*this->ndim());
 }
 
 // Get Cartesian Grid corresponding to a given level vector
@@ -92,7 +97,16 @@ interpolant::CartesianGrid interpolant::SparseGrid::get_cartesian_grid(const int
     if (level_vector.size() != this->ndim()) {
         FAILURE(std::invalid_argument, "Expected level vector of size %" PRIu64 ", got %" PRIu64 ".\n");
     }
-    for (int i = 0; i < )
+    Vector<floatvec> cart_grid_vectors(this->ndim());
+    for (int i = 0; i < this->ndim(); i++) {
+        intvec dim_index = hiearchical_index(level_vector[i], this->grid_vectors_[i].size());
+        floatvec points(dim_index.size());
+        for (int j = 0; j < points.size(); j++) {
+            points[j] = this->grid_vectors_[i][j];
+        }
+        cart_grid_vectors[i] = points;
+    }
+    return interpolant::CartesianGrid(cart_grid_vectors);
 }
 
 // Destructor

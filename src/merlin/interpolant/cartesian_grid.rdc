@@ -16,15 +16,6 @@ __cuhostdev__ std::uint64_t interpolant::CartesianGrid::size(void) const {
     return result;
 }
 
-// Get shape of the grid
-__cuhostdev__ intvec interpolant::CartesianGrid::grid_shape(void) const {
-    intvec result(this->ndim());
-    for (int i = 0; i < this->ndim(); i++) {
-        result[i] = this->grid_vectors_[i].size();
-    }
-    return result;
-}
-
 #ifdef __NVCC__
 
 // Copy to shared memory
@@ -43,6 +34,7 @@ __cudevice__ void interpolant::CartesianGrid::copy_to_shared_mem(interpolant::Ca
         this->grid_vectors_[i].copy_to_shared_mem(&(share_ptr->grid_vectors_[i]), reinterpret_cast<float *>(data_ptr));
         data_ptr += this->grid_vectors_[i].size() * sizeof(float);
     }
+    // this->grid_shape_.copy_to_shared_mem(&(share_ptr->grid_shape_), reinterpret_cast<std::uint64_t *>(data_ptr));
 }
 
 #endif  // __NVCC__

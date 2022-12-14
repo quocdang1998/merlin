@@ -4,7 +4,6 @@
 
 #include <cstdint>  // std::uint64_t, std::uintptr_t
 #include <string>  // std::string
-#include <initializer_list>  // std::initializer_list
 
 #include "merlin/array/nddata.hpp"  // merlin::array::NdData, merlin::array::Parcel
 #include "merlin/array/slice.hpp"  // merlin::array::Slice
@@ -53,7 +52,7 @@ class MERLIN_EXPORTS array::Array : public array::NdData {
      *  @param whole merlin::array::NdData of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    Array(const array::Array & whole, std::initializer_list<array::Slice> slices);
+    Array(const array::Array & whole, const Vector<array::Slice> & slices);
     /// @}
 
     /// @name Copy and move
@@ -86,6 +85,18 @@ class MERLIN_EXPORTS array::Array : public array::NdData {
      *  @return Reference to the element at the provided index.
      */
     float & operator[](const intvec & index);
+    /// @}
+
+    /// @name Get and set element
+    /// @{
+    /** @brief Get value of element at a n-dim index.*/
+    float get(const intvec & index) const;
+    /** @brief Get value of element at a C-contiguous index.*/
+    float get(std::uint64_t index) const;
+    /** @brief Set value of element at a n-dim index.*/
+    void set(const intvec index, float value);
+    /** @brief Set value of element at a C-contiguous index.*/
+    void set(std::uint64_t index, float value);
     /// @}
 
     /// @name Transfer data

@@ -1,11 +1,14 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/array.hpp"
 
+#include <cinttypes>  // PRIu64
+
 #include "merlin/logger.hpp"  // FAILURE, throw_linux_last_error, throw_windows_last_error
+#include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
+#include "merlin/settings.hpp"  // merlin::setting::cpu_mem_limit
 
 #if defined(__MERLIN_WINDOWS__)
-#include <memoryapi.h>  // VirtualAlloc, VirtualFree, VirtualLock, VirtualUnlock
-#include <windows.h>  // GetLastError
+#include <windows.h>  // GetLastError, VirtualAlloc, VirtualFree, VirtualLock, VirtualUnlock
 #elif defined(__MERLIN_LINUX__)
 #include <sys/mman.h>  // mlock, posix_memalign
 #include <unistd.h>  // sysconf
@@ -20,6 +23,12 @@ namespace merlin {
 // Allocate non pageable memory
 float * allocate_memory(std::uint64_t size) {
     float * result = nullptr;
+    /*
+    if (settings::cpu_mem_limit < size*sizeof(float)) {
+        FAILURE(std::out_of_range, "Cannot allocate array with size bigger than limit (memory available %" PRIu64
+                ", allocation demands %" PRIu64 ".\n", settings::cpu_mem_limit, size*sizeof(float));
+    }
+    */
     #ifndef __MERLIN_CUDA__
         #if defined(__MERLIN_WINDOWS__)
         void * temp_ = ::VirtualAlloc(NULL, sizeof(float) * size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
@@ -54,6 +63,7 @@ float * allocate_memory(std::uint64_t size) {
                 ::cudaGetErrorName(err_));
     }
     #endif  // __MERLIN_CUDA__
+    settings::cpu_mem_limit -= size * sizeof(float);
     return result;
 }
 
@@ -82,6 +92,7 @@ void free_memory(float * ptr, std::uint64_t size) {
                 ::cudaGetErrorName(err_));
     }
     #endif  // __MERLIN_CUDA__
+    settings::cpu_mem_limit += size * sizeof(float);
 }
 
 }  // namespace merlin

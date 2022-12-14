@@ -23,6 +23,8 @@ void interpolant::CartesianGrid::copy_to_gpu(CartesianGrid * gpu_ptr, void * gri
         this->grid_vectors_[i].copy_to_gpu(&(copy_on_gpu.grid_vectors_[i]), reinterpret_cast<float *>(data_ptr));
         data_ptr += this->grid_vectors_[i].size() * sizeof(float);
     }
+    // copy of grid shape
+    // this->grid_shape_.copy_to_gpu(&(gpu_ptr->grid_shape_), reinterpret_cast<std::uint64_t *>(data_ptr));
     // nullify data pointer to avoid free data
     copy_on_gpu.grid_vectors_.data() = nullptr;
 }

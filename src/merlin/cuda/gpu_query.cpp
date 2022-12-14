@@ -9,9 +9,6 @@ namespace merlin {
 // Device
 // --------------------------------------------------------------------------------------------------------------------
 
-// Map from GPU ID to is details
-std::map<int, cuda::Device> gpu_map;
-
 #ifndef __MERLIN_CUDA__
 
 // Print limit of device

@@ -8,7 +8,7 @@ namespace merlin {
 // --------------------------------------------------------------------------------------------------------------------
 
 // Number of elements
-__cuhostdev__ std::uint64_t array::NdData::size(void) {
+__cuhostdev__ std::uint64_t array::NdData::size(void) const {
     std::uint64_t size = 1;
     for (int i = 0; i < this->ndim_; i++) {
         size *= this->shape_[i];

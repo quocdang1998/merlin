@@ -25,7 +25,7 @@ class Vector {
     /** @brief Constructor from initializer list.*/
     __cuhostdev__ Vector(std::initializer_list<T> data);
     /** @brief Constructor from size and fill-in value.*/
-    __cuhostdev__ Vector(std::uint64_t size, T value = 0);
+    __cuhostdev__ Vector(std::uint64_t size, T value = T());
     /** @brief Copy constructor from a pointer to first and last element.
      *  @tparam Convertable Type convertable to ``T`` (constructor of ``T`` from ``Convertable``, i.e
      *  ``T(Convertable)`` must exists).
@@ -118,7 +118,7 @@ class Vector {
     /** @brief Pointer to data.*/
     T * data_ = nullptr;
     /** @brief Size of data.*/
-    std::uint64_t size_;
+    std::uint64_t size_ = 0;
 };
 
 /** @brief Vector of unsigned integer values.

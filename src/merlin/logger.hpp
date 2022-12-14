@@ -18,11 +18,8 @@
 
 #if defined(__MERLIN_WINDOWS__)
     #define __FUNCNAME__ __FUNCSIG__
-    #include <windows.h>  // FormatMessageA
 #elif defined(__MERLIN_LINUX__)
     #define __FUNCNAME__ __PRETTY_FUNCTION__
-    #include <errno.h>  // errno
-    #include <string.h>  // strerror
 #endif
 
 // Log MESSAGE, WARNING and FAILURE for CPU
@@ -95,31 +92,10 @@ class cuda_runtime_error : public std::runtime_error {
 
 #if defined(__MERLIN_WINDOWS__)
 // Get error from Windows API
-inline std::string throw_windows_last_error(unsigned long int last_error) {
-    if (last_error != 0) {
-        char * buffer = nullptr;
-        const unsigned long int format = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
-                                         | FORMAT_MESSAGE_IGNORE_INSERTS;
-        unsigned long int size = ::FormatMessageA(format, nullptr, last_error,
-                                                  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                                                  reinterpret_cast<char *>(&buffer), 0, nullptr);
-        return std::string(buffer, size);
-    } else {
-        return std::string();
-    }
-}
-
+std::string throw_windows_last_error(unsigned long int last_error);
 #elif defined(__MERLIN_LINUX__)
 // Get error from Linux
-inline std::string throw_linux_last_error(void) {
-    if (errno != 0) {
-        char * buffer = ::strerror(errno);
-        return std::string(buffer);
-    } else {
-        return std::string();
-    }
-}
-
+std::string throw_linux_last_error(void);
 #endif
 
 // Log CUDAOUT for GPU

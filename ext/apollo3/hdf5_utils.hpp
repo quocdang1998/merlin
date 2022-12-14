@@ -3,6 +3,7 @@
 #define HDF5_UTILS_HPP_
 
 #include <algorithm>  // std::transform, std::remove_if
+#include <cctype>  // std::tolower
 #include <cstdint>  // std::uint64_t
 #include <string>  // std::string
 #include <utility>  // std::pair

@@ -3,7 +3,6 @@
 #define MERLIN_ARRAY_PARCEL_HPP_
 
 #include <cstdint>  // std::uint64_t, std::uintptr_t
-#include <initializer_list>  // std::initializer_list
 #include <mutex>  // std::mutex
 
 #include "merlin/array/nddata.hpp"  // merlin::array::Array, merlin::array::NdData
@@ -29,11 +28,9 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
      *  @param whole merlin::array::NdData of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    Parcel(const array::Parcel & whole, std::initializer_list<array::Slice> slices);
-    #ifdef __NVCC__
+    Parcel(const array::Parcel & whole, const Vector<array::Slice> & slices);
     /** @brief Construct a contiguous array from shape on GPU.*/
-    __cudevice__ Parcel(const intvec & shape);
-    #endif
+    Parcel(const intvec & shape);
     /// @}
 
     /// @name Copy and Move
@@ -70,6 +67,18 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
     #endif  // __NVCC__
     /// @}
 
+    /// @name Get and set element
+    /// @{
+    /** @brief Get value of element at a n-dim index.*/
+    float get(const intvec & index) const;
+    /** @brief Get value of element at a C-contiguous index.*/
+    float get(std::uint64_t index) const;
+    /** @brief Set value of element at a n-dim index.*/
+    void set(const intvec index, float value);
+    /** @brief Set value of element at a C-contiguous index.*/
+    void set(std::uint64_t index, float value);
+    /// @}
+
     /// @name GPU related features
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the object and its data.*/
@@ -100,7 +109,7 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
     /// @name Destructor
     /// @{
     /** @brief Destructor.*/
-    __cuhostdev__ ~Parcel(void);
+    ~Parcel(void);
     /// @}
 
   protected:

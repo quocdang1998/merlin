@@ -23,15 +23,15 @@ class MERLIN_EXPORTS Stock : public NdData {
      *  @param filename Name of input file (or output file).
      *  @param mode Open mode:
      *    - r: Read only.
-     *    - w: Write only.
-     *    - a: Read and write (equivalent to ``r+``).
-     *    - p: Parallel write (multiple processes can write at the same time).
-     *    - s: Shared (multiple processes can read and write at the same time).
+     *    - w: Write only (crash old file if exist).
+     *    - a: Thread safe read and write (multiple thread can read simultaneously, but only one can write at a time).
      *  @param offset Starting position from the beginning of file.
-     *  @note In mode ``p`` and mode ``s``, user is responsible to prevent data race (each process reads/writes a
-     *  different subset of the data file).
+     *  @param threadsafe When it is set to ``true``, multiple threads/processes can read file at the same time, but
+     *  only one can write the file. If a thread/process opening the file for reading (respectively writing), it will
+     *  have to wait until all currently writing (respectively reading) threads/processes finished their jobs.
      */
-    Stock(const std::string & filename, char mode = 'a', std::uint64_t offset = 0);
+    Stock(const std::string & filename, char mode = 'a', std::uint64_t offset = 0, bool thread_safe = true);
+    Stock(const std::string & filename, const intvec & shape, bool thread_safe = true);
     /// @}
 
     /// @name Copy and Move
@@ -52,6 +52,18 @@ class MERLIN_EXPORTS Stock : public NdData {
     std::string filename(void) const {return this->filename_;}
     /** @brief Get pointer to file.*/
     std::FILE * file_ptr(void) const {return this->file_ptr_;}
+    /// @}
+
+    /// @name Get and set element
+    /// @{
+    /** @brief Get value of element at a n-dim index.*/
+    float get(const intvec & index) const;
+    /** @brief Get value of element at a C-contiguous index.*/
+    float get(std::uint64_t index) const;
+    /** @brief Set value of element at a n-dim index.*/
+    void set(const intvec index, float value);
+    /** @brief Set value of element at a C-contiguous index.*/
+    void set(std::uint64_t index, float value);
     /// @}
 
     /// @name Read from file
@@ -78,10 +90,17 @@ class MERLIN_EXPORTS Stock : public NdData {
     ~Stock(void);
 
   protected:
+    /** @brief Pointer to file stream.*/
     std::FILE * file_ptr_;
-    FileLock flock_;
+    /** @brief Lock file.*/
+    mutable FileLock flock_;
+    /** @brief Filename.*/
     std::string filename_;
+    /** @brief Open mode.*/
     char mode_;
+    /** @brief Thread safe read/write.*/
+    bool thread_safe_ = true;
+    /** @brief Start writing/reading position wrt. the beginning of file.*/
     std::uint64_t offset_;
 };
 

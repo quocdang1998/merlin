@@ -2,6 +2,8 @@
 #ifndef MERLIN_ITERATOR_HPP_
 #define MERLIN_ITERATOR_HPP_
 
+#include <cstdint>  // std::uintptr_t
+
 #include "merlin/array/nddata.hpp"  // merlin::array::NdData
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/vector.hpp"  // merlin::intvec
@@ -18,9 +20,9 @@ class MERLIN_EXPORTS Iterator {
     /** @brief Default constructor.*/
     Iterator(void) = default;
     /** @brief Constructor from multi-dimensional index and container.*/
-    Iterator(const intvec & index, array::NdData & container);
+    Iterator(const intvec & index, const intvec & shape);
     /** @brief Constructor from C-contiguous index.*/
-    Iterator(std::uint64_t index, array::NdData & container);
+    Iterator(std::uint64_t index, const intvec & shape);
     /// @}
 
     /// @name Copy and Move
@@ -41,12 +43,11 @@ class MERLIN_EXPORTS Iterator {
     intvec & index(void) {return this->index_;}
     /** @brief Get constant multi-dimensional index of an iterator.*/
     const intvec & index(void) const {return this->index_;}
+    std::uintptr_t item_ptr(void) const {return this->item_ptr_;}
     /// @}
 
     /// @name Operators
     /// @{
-    /** @brief Dereference operator of an iterator.*/
-    float & operator*(void) {return *(this->item_ptr_);}
     /** @brief Comparison operator.*/
     MERLIN_EXPORTS friend bool operator!=(const Iterator & left, const Iterator & right) {
         return left.item_ptr_ != right.item_ptr_;
@@ -67,11 +68,11 @@ class MERLIN_EXPORTS Iterator {
 
   protected:
     /** @brief Pointer to item.*/
-    float * item_ptr_ = nullptr;
+    std::uintptr_t item_ptr_ = 0;
     /** @brief Index vector.*/
     intvec index_;
     /** @brief Pointer to NdData object possessing the item.*/
-    array::NdData * container_ = nullptr;
+    const intvec * pshape_;
 };
 
 }  // namespace merlin

@@ -56,9 +56,13 @@ class MERLIN_EXPORTS interpolant::SparseGrid : interpolant::Grid {
     /** @brief Get grid vectors.*/
     __cuhostdev__ const Vector<floatvec> & grid_vectors(void) const {return this->grid_vectors_;}
     /** @brief Number of dimension of the SparseGrid.*/
-    __cuhostdev__ std::uint64_t ndim(void) {return this->grid_vectors_.size();}
-    /** @brief List of valid level vectors.*/
-    __cuhostdev__ const Vector<intvec> & level_vectors(void) {return this->level_vectors_;}
+    __cuhostdev__ std::uint64_t ndim(void) const {return this->grid_vectors_.size();}
+    /** @brief List of valid level vectors.
+     *  @details The list is represented as a contiguous vector of index, having the size of valid level vectors times
+     *  the number of dimesions.
+     */
+    __cuhostdev__ const intvec & level_vectors(void) const {return this->level_vectors_;}
+    __cuhostdev__ std::uint64_t num_subgrid(void) const {return this->level_vectors_.size() / this->ndim();}
     /** @brief Number of points in the SparseGrid.*/
     // __cuhostdev__ std::uint64_t size(void);
     /// @}
@@ -107,7 +111,7 @@ class MERLIN_EXPORTS interpolant::SparseGrid : interpolant::Grid {
     /** @brief End iterator.*/
     intvec end_;
     /** @brief Valid level vectors.*/
-    Vector<intvec> level_vectors_;
+    intvec level_vectors_;
 };
 
 }  // namespace merlin

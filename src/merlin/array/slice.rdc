@@ -77,7 +77,7 @@ __cuhostdev__ bool array::Slice::in_range(std::int64_t lower, std::int64_t upper
 __cuhostdev__ triplet_uint64 array::Slice::slice_on(std::uint64_t shp, std::uint64_t strd) const {
     // check range
     if (!this->in_range(0, shp)) {
-            CUHDERR(std::invalid_argument, "Index of Slice out of range.\n");
+        CUHDERR(std::invalid_argument, "Index of Slice out of range.\n");
     }
     // initialize results
     std::uint64_t offset = 0, new_shp = shp, new_strd = strd;
@@ -98,6 +98,11 @@ __cuhostdev__ triplet_uint64 array::Slice::slice_on(std::uint64_t shp, std::uint
         new_shp = 1;
     }
     return {offset, new_shp, new_strd};
+}
+
+// Get index in whole array given index in a sliced array
+__cuhostdev__ std::uint64_t array::Slice::get_index_in_whole_array(std::uint64_t index_sliced_array) const {
+    return this->start_ + (this->step_ * index_sliced_array);
 }
 
 }  // namespace merlin

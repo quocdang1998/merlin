@@ -4,14 +4,12 @@
 
 #include <cstddef>  // nullptr
 #include <cstdint>  // std::int64_t, std::uint64_t, std::uintptr_t
-#include <initializer_list>  // std::initializer_list
-#include <tuple>  // std::tie
+#include <utility>  // std::pair
 
 #include "merlin/array/slice.hpp"  // merlin::array::Slice
 #include "merlin/cuda_decorator.hpp"  // __cuhost__, __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/vector.hpp"  // merlin::intvec
-
 
 namespace merlin::array {
 class NdData;  // Basic ndim array
@@ -46,11 +44,13 @@ class MERLIN_EXPORTS array::NdData {
      *  @param strides Pointer to strides vector.
      */
     NdData(float * data, std::uint64_t ndim, const std::uint64_t * shape, const std::uint64_t * strides);
+    /** @brief Constructor from shape vector.*/
+    NdData(const intvec & shape);
     /** @brief Constructor from a slice.
      *  @param whole merlin::array::NdData of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    __cuhostdev__ NdData(const array::NdData & whole, std::initializer_list<array::Slice> slices);
+    NdData(const array::NdData & whole, const Vector<array::Slice> & slices);
     /// @}
 
     /// @name Copy and move
@@ -84,13 +84,35 @@ class MERLIN_EXPORTS array::NdData {
     /// @name Atributes
     /// @{
     /** @brief Number of element.*/
-    __cuhostdev__ std::uint64_t size(void);
+    __cuhostdev__ std::uint64_t size(void) const;
+    /// @}
+
+    /// @name Get and set element
+    /// @{
+    /** @brief Get value of element at a n-dim index.*/
+    virtual float get(const intvec & index) const {return 0.0;}
+    /** @brief Get value of element at a C-contiguous index.*/
+    virtual float get(std::uint64_t index) const {return 0.0;}
+    /** @brief Set value of element at a n-dim index.*/
+    virtual void set(const intvec index, float value) {}
+    /** @brief Set value of element at a C-contiguous index.*/
+    virtual void set(std::uint64_t index, float value) {}
+    /// @}
+
+    /// @name Partite data
+    /// @{
+    /** @brief Partite a big array into smaller array given a limit size to each subsidary array.
+     *  @param max_memory Limit size of each subsidary array.
+     *  @return A tuple of limit dimension and number of sub-array. If the original array fits in the memory, a tuple
+     *  of ``UINT64_MAX, UINT64_MAX`` is returned.
+     */
+    Vector<Vector<array::Slice>> partite(std::uint64_t max_memory);
     /// @}
 
     /// @name Destructor
     /// @{
     /** @brief Default destructor.*/
-    __cuhostdev__ ~NdData(void) {}
+    virtual ~NdData(void) {}
     /// @}
 
   protected:

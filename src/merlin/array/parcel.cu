@@ -6,6 +6,7 @@
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides, merlin::array::array_copy
 #include "merlin/logger.hpp"  // FAILURE
+#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::inner_prod
 
 namespace merlin {
 
@@ -27,16 +28,25 @@ array::Parcel::Parcel(const array::Array & cpu_array, const cuda::Stream & strea
     // reset strides vector
     this->strides_ = array::contiguous_strides(this->shape_, sizeof(float));
     // create copy function
-    auto copy_func = std::bind(cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+    auto copy_func = std::bind(::cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                                cudaMemcpyHostToDevice, copy_stream);
     // copy data to GPU
     array::array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&cpu_array), copy_func);
 }
 
 // Constructor from a slice
-array::Parcel::Parcel(const array::Parcel & whole, std::initializer_list<array::Slice> slices) :
-        array::NdData(whole, slices) {
+array::Parcel::Parcel(const array::Parcel & whole, const Vector<array::Slice> & slices) :
+array::NdData(whole, slices) {
     this->force_free = false;
+}
+
+// Constructor from shape vector
+array::Parcel::Parcel(const intvec & shape) : array::NdData(shape) {
+    // allocate data
+    cudaError_t err_ = ::cudaMalloc(&(this->data_), sizeof(float) * this->size());
+    if (err_ != cudaSuccess) {
+        FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", cudaGetErrorString(err_));
+    }
 }
 
 // Copy constructor
@@ -51,7 +61,7 @@ array::Parcel::Parcel(const array::Parcel & src) : array::NdData(src) {
         FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", cudaGetErrorString(err_));
     }
     // create copy function
-    auto copy_func = std::bind(cudaMemcpyPeer, std::placeholders::_1, this->device_.id(),
+    auto copy_func = std::bind(::cudaMemcpyPeer, std::placeholders::_1, this->device_.id(),
                                std::placeholders::_2, src.device_.id(), std::placeholders::_3);
     // copy data to GPU
     array::array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), copy_func);
@@ -70,7 +80,7 @@ array::Parcel & array::Parcel::operator=(const array::Parcel & src) {
         FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", cudaGetErrorString(err_));
     }
     // create copy function
-    auto copy_func = std::bind(cudaMemcpyPeer, std::placeholders::_1, this->device_.id(),
+    auto copy_func = std::bind(::cudaMemcpyPeer, std::placeholders::_1, this->device_.id(),
                                std::placeholders::_2, src.device_.id(), std::placeholders::_3);
     // copy data to GPU
     array::array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), copy_func);
@@ -98,6 +108,42 @@ array::Parcel & array::Parcel::operator=(array::Parcel && src) {
     return *this;
 }
 
+// Get value of element at a n-dim index
+float array::Parcel::get(const intvec & index) const {
+    std::uint64_t leap = inner_prod(index, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    float result;
+    array::Parcel::mutex_.lock();
+    cuda::Device current_device = cuda::Device::get_current_gpu();
+    this->device_.set_as_current();
+    ::cudaMemcpy(&result, reinterpret_cast<float *>(data_ptr), sizeof(float), ::cudaMemcpyDeviceToHost);
+    current_device.set_as_current();
+    array::Parcel::mutex_.unlock();
+    return result;
+}
+
+// Get value of element at a C-contiguous index
+float array::Parcel::get(std::uint64_t index) const {
+    return this->get(contiguous_to_ndim_idx(index, this->shape()));
+}
+
+// Set value of element at a n-dim index
+void array::Parcel::set(const intvec index, float value) {
+    std::uint64_t leap = inner_prod(index, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    array::Parcel::mutex_.lock();
+    cuda::Device current_device = cuda::Device::get_current_gpu();
+    this->device_.set_as_current();
+    ::cudaMemcpy(reinterpret_cast<float *>(data_ptr), &value, sizeof(float), ::cudaMemcpyHostToDevice);
+    current_device.set_as_current();
+    array::Parcel::mutex_.unlock();
+}
+
+// Set value of element at a C-contiguous index
+void array::Parcel::set(std::uint64_t index, float value) {
+    this->set(contiguous_to_ndim_idx(index, this->shape()), value);
+}
+
 // Copy data to a pre-allocated memory
 void array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr) {
     // initialize buffer to store data of the copy before cloning it to GPU
@@ -118,28 +164,24 @@ void array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_pt
 }
 
 // Free old data
-__cuhostdev__ void array::Parcel::free_current_data(void) {
-    #ifndef __CUDA_ARCH__
+void array::Parcel::free_current_data(void) {
     // lock mutex
     array::Parcel::mutex_.lock();
     // save current device and set device to the corresponding GPU
     cuda::Device current_device = cuda::Device::get_current_gpu();
     this->device_.set_as_current();
-    #endif  // __CUDA_ARCH__
     // free data
     if ((this->data_ != nullptr) && this->force_free) {
         cudaFree(this->data_);
         this->data_ = nullptr;
     }
-    #ifndef __CUDA_ARCH__
     // finalize: set back the original GPU and unlock the mutex
     current_device.set_as_current();
     array::Parcel::mutex_.unlock();
-    #endif  // __CUDA_ARCH__
 }
 
 // Destructor
-__cuhostdev__ array::Parcel::~Parcel(void) {
+array::Parcel::~Parcel(void) {
     this->free_current_data();
 }
 

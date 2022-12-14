@@ -86,12 +86,12 @@ interpolant::RegularGrid::iterator interpolant::RegularGrid::begin(void) {
     this->begin_ = intvec(2, 0);
     this->end_ = intvec(2, 0);
     this->end_[0] = this->npoint_;
-    return interpolant::RegularGrid::iterator(this->begin_, *(this->points_));
+    return interpolant::RegularGrid::iterator(this->begin_, this->points_->shape());
 }
 
 // End iterator
 interpolant::RegularGrid::iterator interpolant::RegularGrid::end(void) {
-    return interpolant::RegularGrid::iterator(this->end_, *(this->points_));
+    return interpolant::RegularGrid::iterator(this->end_, this->points_->shape());
 }
 
 // Append a point at the end of the grid

@@ -85,6 +85,8 @@ class Slice {
      *  sliced array. If the slice has only one element, new shape is 1.
      */
     __cuhostdev__ triplet_uint64 slice_on(std::uint64_t shp, std::uint64_t strd) const;
+    /** @brief Get index in whole array given index in a sliced array.*/
+    __cuhostdev__ std::uint64_t get_index_in_whole_array(std::uint64_t index_sliced_array) const;
     /// @}
 
   protected:

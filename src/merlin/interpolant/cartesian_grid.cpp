@@ -1,6 +1,7 @@
 // Copyright 2022 quocdang1998
 #include "merlin/interpolant/cartesian_grid.hpp"
 
+#include <algorithm>  // std::is_sorted
 #include <cstring>  // std::memcpy
 #include <numeric>  // std::iota
 #include <utility>  // std::move
@@ -17,18 +18,21 @@ namespace merlin {
 
 // Construct from a list of vector of values
 interpolant::CartesianGrid::CartesianGrid(std::initializer_list<floatvec> grid_vectors) : grid_vectors_(grid_vectors) {
-    // check grid vector
-    this->grid_vectors_ = grid_vectors;
     for (int i = 0; i < this->ndim(); i++) {
-        for (int j = 1; j < this->grid_vectors_[i].size(); j++) {
-            if (this->grid_vectors_[i][j-1] >= this->grid_vectors_[i][j]) {
-                FAILURE(std::invalid_argument, "Expected vector entries in increasing order, fail at index %d.\n", i);
-            }
+        if (!std::is_sorted(this->grid_vectors_[i].begin(), this->grid_vectors_[i].end())) {
+            FAILURE(std::invalid_argument, "Expected vector entries in increasing order, fail at index %d.\n", i);
         }
     }
-    intvec shape = this->grid_shape();
-    intvec strides = array::contiguous_strides(shape, sizeof(float));
-    this->points_ = new array::NdData(nullptr, this->ndim(), shape, strides);
+    this->calc_grid_shape();
+}
+
+interpolant::CartesianGrid::CartesianGrid(const Vector<floatvec> & grid_vectors) : grid_vectors_(grid_vectors) {
+    for (int i = 0; i < this->ndim(); i++) {
+        if (!std::is_sorted(this->grid_vectors_[i].begin(), this->grid_vectors_[i].end())) {
+            FAILURE(std::invalid_argument, "Expected vector entries in increasing order, fail at index %d.\n", i);
+        }
+    }
+    this->calc_grid_shape();
 }
 
 // Construct 2D table of points in a Cartesian Grid
@@ -36,7 +40,6 @@ array::Array interpolant::CartesianGrid::grid_points(void) {
     // initialize table of grid points
     std::uint64_t npoint = this->size();
     array::Array result({npoint, this->ndim()});
-
     // assign value to each point
     intvec shape_ = this->grid_shape();
     for (int i = 0; i < npoint; i++) {
@@ -47,7 +50,6 @@ array::Array interpolant::CartesianGrid::grid_points(void) {
         }
         std::memcpy(&(result[{static_cast<std::uint64_t>(i), 0}]), value_.data(), sizeof(float)*this->ndim());
     }
-
     return result;
 }
 
@@ -56,12 +58,12 @@ interpolant::CartesianGrid::iterator interpolant::CartesianGrid::begin(void) {
     this->begin_ = intvec(this->ndim(), 0);
     this->end_ = intvec(this->ndim(), 0);
     this->end_[0] = this->grid_vectors_[0].size();
-    return interpolant::CartesianGrid::iterator(this->begin_, *(this->points_));
+    return interpolant::CartesianGrid::iterator(this->begin_, this->grid_shape_);
 }
 
 // End iterator
 interpolant::CartesianGrid::iterator interpolant::CartesianGrid::end(void) {
-    return interpolant::CartesianGrid::iterator(this->end_, *(this->points_));
+    return interpolant::CartesianGrid::iterator(this->end_, this->grid_shape_);
 }
 
 // Get element at a C-contiguous index
@@ -89,6 +91,7 @@ std::uint64_t interpolant::CartesianGrid::malloc_size(void) {
     for (int i = 0; i < this->ndim(); i++) {
         size += this->grid_vectors_[i].size() * sizeof(float);
     }
+    size += this->ndim()*sizeof(std::uint64_t);
     return size;
 }
 
@@ -100,6 +103,14 @@ void copy_to_gpu(interpolant::CartesianGrid * gpu_ptr, void * grid_vector_data_p
 }
 
 #endif  // __MERLIN_CUDA__
+
+// Calculate grid shape
+void interpolant::CartesianGrid::calc_grid_shape(void) {
+    this->grid_shape_ = intvec(this->ndim());
+    for (int i = 0; i < this->grid_shape_.size(); i++) {
+        this->grid_shape_[i] = this->grid_vectors_[i].size();
+    }
+}
 
 // Destructor
 __cuhostdev__ interpolant::CartesianGrid::~CartesianGrid(void) {}

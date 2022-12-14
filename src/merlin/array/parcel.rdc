@@ -13,18 +13,6 @@ namespace merlin {
 
 #ifdef __NVCC__
 
-// Constructor from shape vector
-__cudevice__ array::Parcel::Parcel(const intvec & shape) {
-    // initialize shape and strides
-    this->shape_ = shape;
-    this->strides_ = array::contiguous_strides(shape, sizeof(float));
-    // allocate data
-    cudaError_t err_ = ::cudaMalloc(&(this->data_), sizeof(float) * this->size());
-    if (err_ != cudaSuccess) {
-        CUDAERR("Memory allocation failed with message \"%s\".\n", cudaGetErrorString(err_));
-    }
-}
-
 // Get element at a given C-contiguous index
 __cudevice__ float & array::Parcel::operator[](std::uint64_t index) {
     // calculate index vector

@@ -6,9 +6,6 @@
 
 #include <cinttypes>
 
-
-#include <unistd.h>
-
 __global__ void foo(void) {
     CUDAOUT("A message.\n");
 }

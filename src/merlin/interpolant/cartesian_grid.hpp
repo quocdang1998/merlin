@@ -23,6 +23,8 @@ class MERLIN_EXPORTS interpolant::CartesianGrid : public interpolant::Grid {
     CartesianGrid(void) {}
     /** @brief Constructor from a list of vector of values.*/
     CartesianGrid(std::initializer_list<floatvec> grid_vectors);
+    /** @brief Constructor from a vector of values.*/
+    CartesianGrid(const Vector<floatvec> & grid_vectors);
     /// @}
 
     /// @name Copy and Move
@@ -47,14 +49,14 @@ class MERLIN_EXPORTS interpolant::CartesianGrid : public interpolant::Grid {
     /// @{
     /** @brief Get grid vectors.*/
     __cuhostdev__ const Vector<floatvec> & grid_vectors(void) const {return this->grid_vectors_;}
+    /** @brief Shape of the grid.*/
+    const intvec & grid_shape(void) const {return this->grid_shape_;}
     /** @brief Full tensor of each point in the CartesianGrid in form of 2D table.*/
     array::Array grid_points(void);
     /** @brief Number of dimension of the CartesianGrid.*/
     __cuhostdev__ std::uint64_t ndim(void) const {return this->grid_vectors_.size();}
     /** @brief Number of points in the CartesianGrid.*/
     __cuhostdev__ std::uint64_t size(void) const;
-    /** @brief Shape of the grid.*/
-    __cuhostdev__ intvec grid_shape(void) const;
     /// @}
 
     /// @name Iterator
@@ -107,10 +109,15 @@ class MERLIN_EXPORTS interpolant::CartesianGrid : public interpolant::Grid {
   protected:
     /** @brief List of vector of values.*/
     Vector<floatvec> grid_vectors_;
+    /** @brief Shape of the grid (number of points on each dimension).*/
+    intvec grid_shape_;
     /** @brief Begin iterator.*/
     intvec begin_;
     /** @brief End iterator.*/
     intvec end_;
+
+  private:
+    void calc_grid_shape(void);
 };
 
 }  // namespace merlin

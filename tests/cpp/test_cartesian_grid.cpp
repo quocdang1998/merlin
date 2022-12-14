@@ -1,4 +1,5 @@
 // Copyright 2022 quocdang1998
+#include <cinttypes>
 
 #include "merlin/interpolant/cartesian_grid.hpp"
 #include "merlin/vector.hpp"

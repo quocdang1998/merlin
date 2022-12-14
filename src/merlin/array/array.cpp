@@ -11,7 +11,7 @@
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/array/stock.hpp"  // merlin::array::Stock
 #include "merlin/logger.hpp"  // FAILURE
-#include "merlin/utils.hpp"  // merlin::inner_prod
+#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::inner_prod
 
 namespace merlin {
 
@@ -33,12 +33,7 @@ array::Array::Array(float value) {
 }
 
 // Construct empty Array from shape vector
-array::Array::Array(const intvec & shape) {
-    // initilaize ndim and shape
-    this->ndim_ = shape.size();
-    this->shape_ = shape;
-    // calculate strides
-    this->strides_ = array::contiguous_strides(this->shape_, sizeof(float));
+array::Array::Array(const intvec & shape) : array::NdData(shape) {
     // initialize data
     this->data_ = allocate_memory(this->size());
     // other meta data
@@ -69,7 +64,7 @@ array::Array::Array(float * data, std::uint64_t ndim,
 }
 
 // Constructor from a slice
-array::Array::Array(const array::Array & whole, std::initializer_list<array::Slice> slices) :
+array::Array::Array(const array::Array & whole, const Vector<array::Slice> & slices) :
 array::NdData(whole, slices) {
     this->force_free = false;
 }
@@ -129,12 +124,12 @@ array::Array::iterator array::Array::begin(void) {
     this->begin_ = intvec(this->ndim_, 0);
     this->end_ = intvec(this->ndim_, 0);
     this->end_[0] = this->shape_[0];
-    return array::Array::iterator(this->begin_, *this);
+    return array::Array::iterator(this->begin_, this->shape_);
 }
 
 // End iterator
 array::Array::iterator array::Array::end(void) {
-    return array::Array::iterator(this->end_, *this);
+    return array::Array::iterator(this->end_, this->shape_);
 }
 
 // Get value operator
@@ -142,6 +137,30 @@ float & array::Array::operator[] (const intvec & index) {
     std::uint64_t leap = inner_prod(index, this->strides_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<float *>(data_ptr));
+}
+
+// Get value of element at a n-dim index
+float array::Array::get(const intvec & index) const {
+    std::uint64_t leap = inner_prod(index, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    return *(reinterpret_cast<float *>(data_ptr));
+}
+
+// Get value of element at a C-contiguous index
+float array::Array::get(std::uint64_t index) const {
+    return this->get(contiguous_to_ndim_idx(index, this->shape()));
+}
+
+// Set value of element at a n-dim index
+void array::Array::set(const intvec index, float value) {
+    std::uint64_t leap = inner_prod(index, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    *(reinterpret_cast<float *>(data_ptr)) = value;
+}
+
+// Set value of element at a C-contiguous index
+void array::Array::set(std::uint64_t index, float value) {
+    this->set(contiguous_to_ndim_idx(index, this->shape()), value);
 }
 
 // Copy data from GPU array

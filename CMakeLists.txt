@@ -31,7 +31,8 @@ list(APPEND MERLIN_SRC_CPP
      interpolant/grid.cpp
      interpolant/regular_grid.cpp
      interpolant/sparse_grid.cpp
-     # interpolant/interpolant.cpp
+     interpolant/interpolant.cpp
+     settings.cpp
 )
 list(APPEND MERLIN_SRC_CU
      array/parcel.cu
@@ -40,6 +41,7 @@ list(APPEND MERLIN_SRC_CU
      cuda/context.cu
      cuda/stream.cu
      interpolant/cartesian_grid.cu
+     interpolant/interpolant.cu
 )
 list(APPEND MERLIN_SRC_RDC
      array/array.rdc
@@ -50,6 +52,7 @@ list(APPEND MERLIN_SRC_RDC
      cuda/gpu_query.rdc
      interpolant/cartesian_grid.rdc
      interpolant/sparse_grid.rdc
+     logger.rdc
      utils.rdc
 )
 
