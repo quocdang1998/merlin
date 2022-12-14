@@ -9,20 +9,41 @@ Python API
 GPU with CUDA
 -------------
 
-.. autosummary::
-   :toctree: generated
-   :nosignatures:
-   :template: pyclass.rst
-
-   merlin.device.Device
-   merlin.device.print_all_gpu_specification
-   merlin.device.test_all_gpu
-   merlin.device.DeviceLimit
+GPU query
+^^^^^^^^^
 
 .. autosummary::
    :toctree: generated
    :nosignatures:
    :template: pyclass.rst
 
-   merlin.device.Context
-   merlin.device.ContextFlags
+   merlin.cuda.Device
+   merlin.cuda.DeviceLimit
+   merlin.cuda.print_all_gpu_specification
+   merlin.cuda.test_all_gpu
+
+Manage CUDA Context
+^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.cuda.Context
+   merlin.cuda.ContextFlags
+   merlin.cuda.create_primary_context
+
+CUDA Stream and Event
+^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.cuda.Stream
+   merlin.cuda.StreamSetting
+   merlin.cuda.Event
+   merlin.cuda.EventCategory
+   merlin.cuda.record_event

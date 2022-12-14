@@ -1,11 +1,14 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/array.hpp"
 
+#include <cinttypes>  // PRIu64
+
 #include "merlin/logger.hpp"  // FAILURE, throw_linux_last_error, throw_windows_last_error
+#include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
+#include "merlin/settings.hpp"  // merlin::setting::cpu_mem_limit
 
 #if defined(__MERLIN_WINDOWS__)
-#include <memoryapi.h>  // VirtualAlloc, VirtualFree, VirtualLock, VirtualUnlock
-#include <windows.h>  // GetLastError
+#include <windows.h>  // GetLastError, VirtualAlloc, VirtualFree, VirtualLock, VirtualUnlock
 #elif defined(__MERLIN_LINUX__)
 #include <sys/mman.h>  // mlock, posix_memalign
 #include <unistd.h>  // sysconf
@@ -18,29 +21,33 @@ namespace merlin {
 // --------------------------------------------------------------------------------------------------------------------
 
 // Allocate non pageable memory
-float * allocate_memory(std::uint64_t size) {
-    float * result = nullptr;
+double * allocate_memory(std::uint64_t size) {
+    double * result = nullptr;
+    if (settings::cpu_mem_limit < size*sizeof(double)) {
+        FAILURE(std::out_of_range, "Cannot allocate array with size bigger than limit (memory available %" PRIu64
+                ", allocation demands %" PRIu64 ".\n", settings::cpu_mem_limit, size*sizeof(double));
+    }
     #ifndef __MERLIN_CUDA__
         #if defined(__MERLIN_WINDOWS__)
-        void * temp_ = ::VirtualAlloc(NULL, sizeof(float) * size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-        result = reinterpret_cast<float *>(temp_);
+        void * temp_ = ::VirtualAlloc(NULL, sizeof(double) * size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+        result = reinterpret_cast<double *>(temp_);
         if (result == nullptr) {
             std::string err_message = throw_windows_last_error(::GetLastError());
             FAILURE(std::runtime_error, "Allocate memory failed with message \"%s\".\n", err_message.c_str());
         }
-        bool success = ::VirtualLock(result, sizeof(float) * size);
+        bool success = ::VirtualLock(result, sizeof(double) * size);
         if (!success) {
-            ::VirtualFree(result, sizeof(float)*size, 0);
+            ::VirtualFree(result, sizeof(double)*size, 0);
             std::string err_message = throw_windows_last_error(::GetLastError());
             FAILURE(std::runtime_error, "Lock memory failed with message \"%s\".\n", err_message.c_str());
         }
         #elif defined(__MERLIN_LINUX__)
-        size_t array_size = sizeof(float) * size;
+        size_t array_size = sizeof(double) * size;
         int failed = ::posix_memalign(reinterpret_cast<void **>(&result), ::sysconf(_SC_PAGESIZE), array_size);
         if (failed) {
             FAILURE(std::runtime_error, "Allocate memory failed.\n");
         }
-        int err_ = ::mlock(result, sizeof(float) * size);
+        int err_ = ::mlock(result, sizeof(double) * size);
         if (err_ == -1) {
             ::free(result);
             std::string err_message = throw_linux_last_error();
@@ -48,27 +55,28 @@ float * allocate_memory(std::uint64_t size) {
         }
         #endif
     #else
-    cudaError_t err_ = ::cudaMallocHost(&result, sizeof(float) * size);
+    ::cudaError_t err_ = ::cudaMallocHost(&result, sizeof(double) * size);
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Allocate non-pageable memory failed with message \"%s\".\n",
                 ::cudaGetErrorName(err_));
     }
     #endif  // __MERLIN_CUDA__
+    settings::cpu_mem_limit -= size * sizeof(double);
     return result;
 }
 
 // Free non pageable memory
-void free_memory(float * ptr, std::uint64_t size) {
+void free_memory(double * ptr, std::uint64_t size) {
     #ifndef __MERLIN_CUDA__
     #if defined(__MERLIN_WINDOWS__)
-        bool success = ::VirtualUnlock(ptr, sizeof(float) * size);
+        bool success = ::VirtualUnlock(ptr, sizeof(double) * size);
         if (!success) {
             std::string err_message = throw_windows_last_error(::GetLastError());
             FAILURE(std::runtime_error, "Unlock memory failed with message \"%s\".\n", err_message.c_str());
         }
-        ::VirtualFree(ptr, sizeof(float) * size, 0);
+        ::VirtualFree(ptr, sizeof(double) * size, 0);
         #elif defined(__MERLIN_LINUX__)
-        int err_ = ::munlock(ptr, sizeof(float) * size);
+        int err_ = ::munlock(ptr, sizeof(double) * size);
         if (err_ == -1) {
             std::string err_message = throw_linux_last_error();
             FAILURE(std::runtime_error, "Exclusive lock file failed with message \"%s\".\n", err_message.c_str());
@@ -76,12 +84,13 @@ void free_memory(float * ptr, std::uint64_t size) {
         ::free(ptr);
         #endif
     #else
-    cudaError_t err_ = ::cudaFreeHost(ptr);
+    ::cudaError_t err_ = ::cudaFreeHost(ptr);
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Free non-pageable memory failed with message \"%s\".\n",
                 ::cudaGetErrorName(err_));
     }
     #endif  // __MERLIN_CUDA__
+    settings::cpu_mem_limit += size * sizeof(double);
 }
 
 }  // namespace merlin

@@ -4,21 +4,12 @@
 
 #include <cstddef>  // nullptr
 #include <cstdint>  // std::int64_t, std::uint64_t, std::uintptr_t
-#include <initializer_list>  // std::initializer_list
-#include <tuple>  // std::tie
+#include <utility>  // std::pair
 
-#include "merlin/array/slice.hpp"  // merlin::array::Slice
+#include "merlin/array/declaration.hpp"  // merlin::array::NdData, merlin::array::Slice
 #include "merlin/cuda_decorator.hpp"  // __cuhost__, __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/vector.hpp"  // merlin::intvec
-
-
-namespace merlin::array {
-class NdData;  // Basic ndim array
-class Array;  // CPU Array, defined in array.hpp
-class Parcel;  // GPU Array, defined in parcel.hpp
-class Stock;  // Out of core array, defined in stock.hpp
-}  // namespace merlin::array
 
 
 namespace merlin {
@@ -37,7 +28,7 @@ class MERLIN_EXPORTS array::NdData {
      *  @param shape Shape vector.
      *  @param strides Strides vector.
      */
-    NdData(float * data, std::uint64_t ndim, const intvec & shape, const intvec & strides);
+    NdData(double * data, std::uint64_t ndim, const intvec & shape, const intvec & strides);
     /** @brief Constructor from data pointer and meta-data pointers.
      *  @details This constructor is designed for initializing object from Numpy np.array.
      *  @param data Pointer to data.
@@ -45,12 +36,14 @@ class MERLIN_EXPORTS array::NdData {
      *  @param shape Pointer to shape vector.
      *  @param strides Pointer to strides vector.
      */
-    NdData(float * data, std::uint64_t ndim, const std::uint64_t * shape, const std::uint64_t * strides);
+    NdData(double * data, std::uint64_t ndim, const std::uint64_t * shape, const std::uint64_t * strides);
+    /** @brief Constructor from shape vector.*/
+    NdData(const intvec & shape);
     /** @brief Constructor from a slice.
      *  @param whole merlin::array::NdData of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    __cuhostdev__ NdData(const array::NdData & whole, std::initializer_list<array::Slice> slices);
+    __cuhostdev__ NdData(const array::NdData & whole, const Vector<array::Slice> & slices);
     /// @}
 
     /// @name Copy and move
@@ -68,34 +61,52 @@ class MERLIN_EXPORTS array::NdData {
     /// @name Get members
     /// @{
     /** @brief Get pointer to data.*/
-    __cuhostdev__ float * data(void) const {return this->data_;}
+    __cuhostdev__ constexpr double * data(void) const noexcept {return this->data_;}
     /** @brief Get number of dimension.*/
-    __cuhostdev__ std::uint64_t ndim(void) const {return this->ndim_;}
-    /** @brief Get reference to shape vector.*/
-    __cuhostdev__ intvec & shape(void) {return this->shape_;}
+    __cuhostdev__ constexpr std::uint64_t ndim(void) const noexcept {return this->ndim_;}
     /** @brief Get constant reference to shape vector.*/
-    __cuhostdev__ const intvec & shape(void) const {return this->shape_;}
-    /** @brief Get reference to stride vector.*/
-    __cuhostdev__ intvec & strides(void) {return this->strides_;}
+    __cuhostdev__ constexpr const intvec & shape(void) const noexcept {return this->shape_;}
     /** @brief Get constant reference to stride vector.*/
-    __cuhostdev__ const intvec & strides(void) const {return this->strides_;}
+    __cuhostdev__ constexpr const intvec & strides(void) const noexcept {return this->strides_;}
     /// @}
 
     /// @name Atributes
     /// @{
     /** @brief Number of element.*/
-    __cuhostdev__ std::uint64_t size(void);
+    __cuhostdev__ std::uint64_t size(void) const noexcept;
+    /// @}
+
+    /// @name Get and set element
+    /// @{
+    /** @brief Get value of element at a n-dim index.*/
+    virtual double get(const intvec & index) const {return 0.0;}
+    /** @brief Get value of element at a C-contiguous index.*/
+    virtual double get(std::uint64_t index) const {return 0.0;}
+    /** @brief Set value of element at a n-dim index.*/
+    virtual void set(const intvec index, double value) {}
+    /** @brief Set value of element at a C-contiguous index.*/
+    virtual void set(std::uint64_t index, double value) {}
+    /// @}
+
+    /// @name Partite data
+    /// @{
+    /** @brief Partite a big array into smaller array given a limit size to each subsidary array.
+     *  @param max_memory Limit size of each subsidary array.
+     *  @return A tuple of limit dimension and number of sub-array. If the original array fits in the memory, a tuple
+     *  of ``UINT64_MAX, UINT64_MAX`` is returned.
+     */
+    Vector<Vector<array::Slice>> partite(std::uint64_t max_memory);
     /// @}
 
     /// @name Destructor
     /// @{
     /** @brief Default destructor.*/
-    __cuhostdev__ ~NdData(void) {}
+    virtual ~NdData(void) {}
     /// @}
 
   protected:
     /** @brief Pointer to data.*/
-    float * data_ = nullptr;
+    double * data_ = nullptr;
     /** @brief Number of dimension.*/
     std::uint64_t ndim_;
     /** @brief Shape vector.
@@ -106,6 +117,8 @@ class MERLIN_EXPORTS array::NdData {
      *  @details Number of incresing bytes in memory when an intvec of a dimension jumps by 1.
      */
     intvec strides_;
+    /** @brief Release memory in destructor.*/
+    bool release_ = false;
 };
 
 }  // namespace merlin

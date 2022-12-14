@@ -4,10 +4,9 @@
 
 #include <cstdint>  // std::uint64_t, std::uintptr_t
 #include <string>  // std::string
-#include <initializer_list>  // std::initializer_list
 
-#include "merlin/array/nddata.hpp"  // merlin::array::NdData, merlin::array::Parcel
-#include "merlin/array/slice.hpp"  // merlin::array::Slice
+#include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Parcel
+#include "merlin/array/nddata.hpp"  // merlin::array::NdData
 #include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/iterator.hpp"  // merlin::Iterator
@@ -18,10 +17,10 @@ namespace merlin {
 /** @brief Allocate non pageable memory.
  *  @param size Number of element in the allocated array.
  */
-float * allocate_memory(std::uint64_t size);
+double * allocate_memory(std::uint64_t size);
 
 /** @brief Free array allocated in non pageable memory.*/
-void free_memory(float * ptr, std::uint64_t size);
+void free_memory(double * ptr, std::uint64_t size);
 
 /** @brief Multi-dimensional array on CPU.*/
 class MERLIN_EXPORTS array::Array : public array::NdData {
@@ -30,10 +29,10 @@ class MERLIN_EXPORTS array::Array : public array::NdData {
     /// @{
     /** @brief Default constructor (do nothing).*/
     Array(void) = default;
-    /** @brief Construct 1D array holding a float value.
+    /** @brief Construct 1D array holding a double precision value.
      *  @param value Assigned value.
      */
-    Array(float value);
+    Array(double value);
     /** @brief Construct C-contiguous empty array from dimension vector.
      *  @param shape Shape vector.
      */
@@ -47,13 +46,13 @@ class MERLIN_EXPORTS array::Array : public array::NdData {
      *  @note The original memory tied to the pointer will not be freed at destruction. But if copy is true, the
         copied tensor is automatically deallocated inside the destructor.
      */
-    Array(float * data, std::uint64_t ndim,
+    Array(double * data, std::uint64_t ndim,
           const std::uint64_t * shape, const std::uint64_t * strides, bool copy = false);
     /** @brief Constructor from a slice.
-     *  @param whole merlin::array::NdData of the original array.
+     *  @param whole merlin::array::Array of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    Array(const array::Array & whole, std::initializer_list<array::Slice> slices);
+    Array(const array::Array & whole, const Vector<array::Slice> & slices);
     /// @}
 
     /// @name Copy and move
@@ -75,27 +74,39 @@ class MERLIN_EXPORTS array::Array : public array::NdData {
     /** @brief Begin iterator.
      *  @details Vector of index \f$(0, 0, ..., 0)\f$.
      */
-    array::Array::iterator begin(void);
+    constexpr const array::Array::iterator & begin(void) const noexcept {return this->begin_;}
     /** @brief End iterator.
      *  @details Vector of index \f$(d_0, 0, ..., 0)\f$.
      */
-    array::Array::iterator end(void);
+    constexpr const array::Array::iterator & end(void) const noexcept {return this->end_;}
     /** @brief Sciling operator.
      *  @details Get an element at a given index.
      *  @param index Vector of indices along each dimension.
      *  @return Reference to the element at the provided index.
      */
-    float & operator[](const intvec & index);
+    double & operator[](const intvec & index);
+    /// @}
+
+    /// @name Get and set element
+    /// @{
+    /** @brief Get value of element at a n-dim index.*/
+    double get(const intvec & index) const;
+    /** @brief Get value of element at a C-contiguous index.*/
+    double get(std::uint64_t index) const;
+    /** @brief Set value of element at a n-dim index.*/
+    void set(const intvec index, double value);
+    /** @brief Set value of element at a C-contiguous index.*/
+    void set(std::uint64_t index, double value);
     /// @}
 
     /// @name Transfer data
     /// @{
     /** @brief Copy data from GPU array.*/
-    void sync_from_gpu(const array::Parcel & gpu_array, const cuda::Stream & stream = cuda::Stream());
+    void clone_data_from_gpu(const array::Parcel & gpu_array, const cuda::Stream & stream = cuda::Stream());
     /** @brief Export data to a file.
-     *  @param filename Name of exported file.
+     *  @param src Exported array.
      */
-    void export_to_file(const std::string & filename);
+    void extract_data_from_file(const array::Stock & src);
     /// @}
 
     /// @name Destructor
@@ -105,12 +116,14 @@ class MERLIN_EXPORTS array::Array : public array::NdData {
     /// @}
 
   protected:
-    /** @brief Decision to delete merlin::array::Array::data_ at destruction or not.*/
-    bool force_free;
     /** @brief Index vector of begin element.*/
-    intvec begin_;
+    array::Array::iterator begin_;
     /** @brief Index vector of last element.*/
-    intvec end_;
+    array::Array::iterator end_;
+
+  private:
+    /** @brief Initialize begin and end iterators.*/
+    void initialize_iterator(void) noexcept;
 };
 
 }  // namespace merlin

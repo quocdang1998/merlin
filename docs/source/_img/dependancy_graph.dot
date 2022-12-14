@@ -1,0 +1,42 @@
+digraph G {
+    rankdir="BT";
+    compound=true;
+    fontname="Fira Code SemiBold";
+    node [fontname="Fira Code SemiBold", shape=record, labelloc=c];
+
+    subgraph cluster_0 {
+        node [label="platform"] platform;
+        node [label="cuda_decorator"] cuda_decorator;
+        node [label="exports"] exports;
+        exports -> platform;
+        {rank=same; platform; cuda_decorator}
+        label="System and Compiler";
+    }
+
+    subgraph cluster_1 {
+        node [label="vector"] vector;
+        node [label="filelock"] filelock;
+        node [label="logger"] logger;
+        node [label="utils"] utils;
+        node [label="iterator"] iterator;
+        utils -> vector; utils -> logger;
+        iterator -> utils; iterator -> vector;
+        {rank=same; vector; logger; filelock;}
+        label="Basic utils";
+    }
+
+    subgraph cluster_2 {
+        node [label="device"] device;
+        node [label="context"] context;
+        node [label="stream"] stream;
+        node [label="event"] event;
+        stream -> context; stream -> device;
+        event -> context; event -> device;
+        event -> stream;
+        label="cuda";
+    }
+
+    logger -> platform [lhead=cluster_0,ltail=cluster_1,minlen=4];
+    device -> platform [lhead=cluster_0,ltail=cluster_2,minlen=4];
+
+}

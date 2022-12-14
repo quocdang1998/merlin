@@ -2,7 +2,8 @@
 #ifndef MERLIN_ITERATOR_HPP_
 #define MERLIN_ITERATOR_HPP_
 
-#include "merlin/array/nddata.hpp"  // merlin::array::NdData
+#include <cstdint>  // std::uint64_t
+
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/vector.hpp"  // merlin::intvec
 
@@ -18,9 +19,9 @@ class MERLIN_EXPORTS Iterator {
     /** @brief Default constructor.*/
     Iterator(void) = default;
     /** @brief Constructor from multi-dimensional index and container.*/
-    Iterator(const intvec & index, array::NdData & container);
+    Iterator(const intvec & index, const intvec & shape);
     /** @brief Constructor from C-contiguous index.*/
-    Iterator(std::uint64_t index, array::NdData & container);
+    Iterator(std::uint64_t index, const intvec & shape);
     /// @}
 
     /// @name Copy and Move
@@ -37,26 +38,22 @@ class MERLIN_EXPORTS Iterator {
 
     /// @name Get members
     /// @{
-    /** @brief Get multi-dimensional index of an iterator.*/
-    intvec & index(void) {return this->index_;}
-    /** @brief Get constant multi-dimensional index of an iterator.*/
-    const intvec & index(void) const {return this->index_;}
+    /** @brief Get constant multi-dimensional index.*/
+    constexpr const intvec & index(void) const noexcept {return this->index_;}
+    /** @brief Get contiguous index.*/
+    constexpr const std::uint64_t & contiguous_index(void) const noexcept {return this->item_ptr_;}
     /// @}
 
     /// @name Operators
     /// @{
-    /** @brief Dereference operator of an iterator.*/
-    float & operator*(void) {return *(this->item_ptr_);}
     /** @brief Comparison operator.*/
-    MERLIN_EXPORTS friend bool operator!=(const Iterator & left, const Iterator & right) {
+    MERLIN_EXPORTS friend bool operator!=(const Iterator & left, const Iterator & right) noexcept {
         return left.item_ptr_ != right.item_ptr_;
     }
     /** @brief Pre-increment operator.*/
     Iterator & operator++(void);
     /** @brief Post-increment operator.*/
     Iterator operator++(int) {return ++(*this);}
-    /** @brief Update index vector to be consistent with the shape.*/
-    void MERLIN_DEPRECATED update(void);
     /// @}
 
     /// @name Destructor
@@ -67,11 +64,15 @@ class MERLIN_EXPORTS Iterator {
 
   protected:
     /** @brief Pointer to item.*/
-    float * item_ptr_ = nullptr;
+    std::uint64_t item_ptr_ = 0;
     /** @brief Index vector.*/
     intvec index_;
     /** @brief Pointer to NdData object possessing the item.*/
-    array::NdData * container_ = nullptr;
+    intvec shape_;
+
+  private:
+    /** @brief Update index vector to be consistent with the shape (deprecated).*/
+    void MERLIN_DEPRECATED update(void);
 };
 
 }  // namespace merlin

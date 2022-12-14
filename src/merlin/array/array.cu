@@ -5,7 +5,7 @@
 
 #include "merlin/array/copy.hpp"  // merlin::array::array_copy
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/cuda/gpu_query.hpp"  // merlin::cuda::Device
+#include "merlin/cuda/device.hpp"  // merlin::cuda::Device
 #include "merlin/logger.hpp"  // FAILURE
 
 namespace merlin {
@@ -15,7 +15,7 @@ namespace merlin {
 // --------------------------------------------------------------------------------------------------------------------
 
 // Copy data from GPU array
-void array::Array::sync_from_gpu(const array::Parcel & gpu_array, const cuda::Stream & stream) {
+void array::Array::clone_data_from_gpu(const array::Parcel & gpu_array, const cuda::Stream & stream) {
     // save current gpu
     cuda::Device current_gpu = cuda::Device::get_current_gpu();
     // check GPU of stream
@@ -24,10 +24,10 @@ void array::Array::sync_from_gpu(const array::Parcel & gpu_array, const cuda::St
                 gpu_array.device(), stream.get_gpu());
     }
     // cast stream
-    cudaStream_t copy_stream = reinterpret_cast<cudaStream_t>(stream.stream());
+    ::cudaStream_t copy_stream = reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr());
     // create copy function
-    auto copy_func = std::bind(cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-                               cudaMemcpyDeviceToHost, copy_stream);
+    auto copy_func = std::bind(::cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                               ::cudaMemcpyDeviceToHost, copy_stream);
     // copy data to GPU
     gpu_array.device().set_as_current();
     array::array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&gpu_array), copy_func);

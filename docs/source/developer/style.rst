@@ -42,7 +42,7 @@ Besides the standard Google style rules, some additional rules are also applied:
 
 *  Declarations and definitions must be enclosed in namespace ``merlin``. The
    use of ``using namspace`` is prohibited except in executable source file
-   (containing the ``int main`` function).
+   (inside the ``main`` function).
 
    .. code-block:: c++
       :linenos:

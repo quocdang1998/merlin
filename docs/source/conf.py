@@ -46,6 +46,12 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+# List of custom sections to include for napoleon
+napoleon_custom_sections = [
+    ("Shape constructor", "Parameters"),
+    ("Numpy constructor", "Parameters")
+]
+
 # Doxygen generated XML files
 breathe_projects = { "merlin": os.path.abspath("./xml") }
 breathe_default_project = "merlin"
@@ -66,7 +72,7 @@ pygments_style = 'rainbow_dash'
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
-html_theme_options = {'navigation_depth': 3}
+html_theme_options = {'navigation_depth': 4}
 html_favicon = '_static/merlin_favicon.svg'
 html_css_files = ['azura.css']
 html_js_files = [('azura.js', {'defer': 'defer'}), 'hsl_rgb.js']

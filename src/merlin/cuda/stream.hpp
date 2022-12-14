@@ -4,49 +4,61 @@
 
 #include <cstddef>  // nullptr
 #include <cstdint>  // std::uintptr_t
+#include <string>  // std::string
 #include <utility>  // std::exchange
 
-#include "merlin/cuda/context.hpp"  // merlin::cuda::Context
+#include "merlin/cuda/declaration.hpp"  // merlin::cuda::Event
+#include "merlin/cuda/device.hpp"  // merlin::cuda::Device
 
 namespace merlin::cuda {
 #ifdef __NVCC__
 /** @brief Type of CPU callback function.*/
-typedef cudaHostFn_t CudaStreamCallback;
+typedef cudaStreamCallback_t CudaStreamCallback;
 #else
-typedef void(* CudaStreamCallback)(void *);
+typedef void(* CudaStreamCallback)(std::uintptr_t, int, void *);
 #endif  // __NVCC__
 }  // namespace merlin::cuda
 
 namespace merlin {
 
+/** @brief CUDA stream of tasks.*/
 class MERLIN_EXPORTS cuda::Stream {
   public:
+    /** @brief Parameter controlling the behavior of the stream.*/
     enum class Setting : unsigned int {
-        /** @brief Default stream creation flag (synchonized with the null stream).*/
+        /** Default stream creation flag (synchonized with the null stream).*/
         Default = 0x00,
-        /** @brief Works may run concurrently with null stream.*/
+        /** Works may run concurrently with null stream.*/
         NonBlocking = 0x01
     };
 
     /// @name Constructor
     /// @{
-    /** @brief Default constructor.*/
-    Stream(void) = default;
-    /** @brief Constructor from Setting and priority.*/
-    Stream(cuda::Context & context, cuda::Stream::Setting setting = cuda::Stream::Setting::Default, int priority = 0);
+    /** @brief Default constructor (the null stream).*/
+    Stream(void);
+    /** @brief Constructor from Setting and priority.
+     *  @details Construct a CUDA stream from its setting and priority in the current context.
+     *  @param setting %Stream creation flag.
+     *  @param priority %Stream task priority (lower number means higher priority).
+     */
+    Stream(cuda::Stream::Setting setting, int priority = 0);
     /// @}
 
     /// @name Copy and Move
     /// @{
+    /** @brief Copy constructor (deleted).*/
     Stream(const cuda::Stream & src) = delete;
+    /** @brief Copy assignment (deleted).*/
     cuda::Stream & operator=(const cuda::Stream & src) = delete;
+    /** @brief Move constructor.*/
     Stream(cuda::Stream && src) {
         this->stream_ = std::exchange(src.stream_, 0);
-        this->context_ = std::exchange(src.context_, nullptr);
+        this->device_ = src.device_;
     }
+    /** @brief Move assignment.*/
     cuda::Stream & operator=(cuda::Stream && src) {
         this->stream_ = std::exchange(src.stream_, 0);
-        this->context_ = std::exchange(src.context_, nullptr);
+        this->device_ = src.device_;
         return *this;
     }
     /// @}
@@ -54,42 +66,86 @@ class MERLIN_EXPORTS cuda::Stream {
     /// @name Get attributes
     /// @{
     /** @brief Get stream pointer.*/
-    std::uintptr_t stream(void) const {return this->stream_;}
-    /** @brief Get flag.*/
-    Setting setting(void);
-    /** @brief Get priority.*/
-    int priority(void);
+    constexpr std::uintptr_t get_stream_ptr(void) const noexcept {return this->stream_;}
+    /** @brief Get setting flag of the stream.*/
+    cuda::Stream::Setting setting(void) const;
+    /** @brief Get priority of the stream.*/
+    int priority(void) const;
+    /** @brief Get context associated to stream.*/
+    cuda::Context get_context(void) const;
+    /** @brief Get GPU.*/
+    constexpr const cuda::Device & get_gpu(void) const noexcept {return this->device_;}
+    /// @}
+
+    /// @name Query
+    /// @{
     /** @brief Query for completion status.
      *  @details ``true`` if all operations in the stream have completed.
      */
-    bool is_complete(void);
-    /** @brief Get GPU.*/
-    cuda::Device get_gpu(void) const {
-        if (this->context_ == nullptr) {
-            return cuda::Device::get_current_gpu();
-        }
-        return this->context_->get_gpu();
-    }
+    bool is_complete(void) const;
+    /** @brief Check validity of GPU and context.
+     * @details Check if the current CUDA context and active GPU is valid for the stream.
+     */
+    void check_cuda_context(void) const;
     /// @}
 
     /// @name Operations
     /// @{
-    void launch_cpu_function(cuda::CudaStreamCallback func, void * arg);
-    /** @brief Synchronize the stream.*/
-    void synchronize(void);
+    /** @brief Launch CPU function with a certain arguments.
+     *  @param func Function to be launched, prototype ``void func(void *)``.
+     *  @param arg Argument to be provided to the function.
+     *  @details Example:
+     *  @code {.cu}
+     *  // arguments
+     *  void str_callback(::cudaStream_t stream, ::cudaError_t status, void * data) {
+     *      int & a = *(static_cast<int *>(data));
+     *      std::printf("Callback argument: %d\n", a);
+     *  }
+     *  int data = 1;
+     *
+     *  // use
+     *  merlin::cuda::Stream s();
+     *  s.add_callback(str_callback, &data);
+     *
+     *  // result
+     *  Callback argument: 1
+     *  @endcode
+     */
+    void add_callback(cuda::CudaStreamCallback func, void * arg);
+    /** @brief Synchronize the stream.
+     *  @details Pause the CPU process until all operations on the stream has finished.
+     */
+    void synchronize(void) const;
+    /// @}
+
+    /// @name Representation
+    /// @{
+    /** @brief String representation.*/
+    std::string str(void) const;
     /// @}
 
     /// @name Destructor
     /// @{
+    /** @brief Destructor.*/
     ~Stream(void);
     /// @}
 
   protected:
     /** @brief Pointer to ``CUstream_st`` object.*/
     std::uintptr_t stream_ = 0;
-    /** @brief Pointer to context containing the stream.*/
-    cuda::Context * context_ = nullptr;
+    /** @brief GPU associated to the stream.*/
+    cuda::Device device_;
 };
+
+namespace cuda {
+
+/** @brief Record (register) an event on CUDA stream.
+ *  @param event CUDA event to be recorded.
+ *  @param stream CUDA stream on which the event is recorded (default value is the null stream).
+ */
+void record_event(const cuda::Event & event, const cuda::Stream & stream = cuda::Stream());
+
+}  // namespace cuda
 
 }  // namespace merlin
 

@@ -30,12 +30,12 @@ __cuhostdev__ intvec contiguous_strides(const merlin::intvec & shape, std::uint6
  *  of 4 and break index of 0.
  *  @param shape Shape vector.
  *  @param strides Strides vector.
-*/
+ */
 __cuhostdev__ std::tuple<std::uint64_t, std::int64_t> lcseg_and_brindex(const merlin::intvec & shape,
                                                                         const merlin::intvec & strides);
 
 /** @brief Copy data from an merlin::array::NdData to another.
- *  @details This function allows user to choose the copy function (for example, std::memcpy, or cudaMemcpy).
+ *  @details This function allows user to choose the copy function (for example, ``std::memcpy``, or ``cudaMemcpy``).
  *  @tparam CopyFunction Function copy an array to another. This function must take exactly 3 arguments:
  *  destination pointer, source pointer and length of copied memory in bytes.
  *  @param dest Pointer to destination merlin::array::NdData.

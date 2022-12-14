@@ -1,7 +1,12 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/nddata.hpp"
 
+#include <cinttypes>  // PRIu64
+
+#include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides
+#include "merlin/array/slice.hpp"  // merlin::array::Slice
 #include "merlin/logger.hpp"  // FAILURE
+#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx
 
 namespace merlin {
 
@@ -10,8 +15,9 @@ namespace merlin {
 // --------------------------------------------------------------------------------------------------------------------
 
 // Member initialization for C++ interface
-array::NdData::NdData(float * data, std::uint64_t ndim,
-                      const intvec & shape, const intvec & strides) : ndim_(ndim), shape_(shape), strides_(strides) {
+array::NdData::NdData(double * data, std::uint64_t ndim,
+                      const intvec & shape, const intvec & strides) :
+ndim_(ndim), data_(data), shape_(shape), strides_(strides) {
     this->data_ = data;
     if (shape.size() != ndim) {
         FAILURE(std::range_error, "Expected size of shape (%u) equals to ndim (%u).\n", shape.size(), ndim);
@@ -21,40 +27,43 @@ array::NdData::NdData(float * data, std::uint64_t ndim,
 }
 
 // Constructor from Numpy np.array
-array::NdData::NdData(float * data, std::uint64_t ndim, const std::uint64_t * shape, const std::uint64_t * strides) {
-    this->ndim_ = ndim;
-    this->data_ = data;
-    this->shape_ = intvec(shape, shape + ndim);
-    this->strides_ = intvec(strides, strides + ndim);
+array::NdData::NdData(double * data, std::uint64_t ndim, const std::uint64_t * shape, const std::uint64_t * strides) :
+ndim_(ndim), data_(data), shape_(shape, shape + ndim), strides_(strides, strides + ndim) {}
+
+// Constructor from shape vector
+array::NdData::NdData(const intvec & shape) : ndim_(shape.size()), shape_(shape) {
+    this->strides_ = array::contiguous_strides(shape, sizeof(double));
 }
 
-// Constructor from a slice
-array::NdData::NdData(const array::NdData & whole, std::initializer_list<array::Slice> slices) {
-    // check size
-    if (slices.size() != whole.ndim_) {
-        CUHDERR(std::invalid_argument, "Dimension of Slices and NdData not compatible (expected %u, got %u).\n",
-                static_cast<unsigned int>(whole.ndim_), static_cast<unsigned int>(slices.size()));
+// Partite an array into multiple parts
+Vector<Vector<array::Slice>> array::NdData::partite(std::uint64_t max_memory) {
+    // if memory fit in, skip
+    std::uint64_t data_size = this->size() * sizeof(double);
+    if (data_size < max_memory) {
+        return Vector<Vector<array::Slice>>(1, Vector<array::Slice>(this->ndim_));
     }
-    // create result
-    const array::Slice * slice_data = slices.begin();
-    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(whole.data_);
-    std::uintptr_t result_ndim = 0;
-    intvec new_shape(whole.ndim_, 0);
-    intvec new_strides(whole.ndim_, 0);
-    for (int i = 0; i < whole.ndim_; i++) {
-        auto [offset, shape, stride] = slice_data[i].slice_on(whole.shape_[i], whole.strides_[i]);
-        data_ptr += offset;
-        if (shape != 1) {
-            new_shape[result_ndim] = shape;
-            new_strides[result_ndim] = stride;
-            result_ndim++;
+    // find dimension at which index = 1 -> memory just fit
+    intvec size_per_dimension = array::contiguous_strides(this->shape_, sizeof(double));
+    std::uint64_t divide_dimension = 0;
+    while (size_per_dimension[divide_dimension] > max_memory) {
+        --divide_dimension;
+    }
+    // calculate number of partition
+    std::uint64_t num_partition = 1;
+    for (std::uint64_t i = 0; i < divide_dimension; i++) {
+        num_partition *= this->shape_[i];
+    }
+    // get slices for each partition
+    intvec divident_shape(this->shape_.cbegin(), divide_dimension);  // shape of array of which elements are sub-arrays
+    Vector<Vector<array::Slice>> result(num_partition, Vector<array::Slice>(this->ndim_));
+    for (std::uint64_t i_partition = 0; i_partition < num_partition; i_partition++) {
+        // slices of dividing index
+        intvec index = contiguous_to_ndim_idx(i_partition, divident_shape);
+        for (std::uint64_t i_dim = 0; i_dim < divident_shape.size(); i_dim++) {
+            result[i_partition][i_dim] = array::Slice({index[i_dim]});
         }
     }
-    // finalize
-    this->data_ = reinterpret_cast<float *>(data_ptr);
-    this->ndim_ = (result_ndim == 0) ? 1 : result_ndim;
-    this->shape_ = (result_ndim == 0) ? intvec({1}) : intvec(new_shape.data(), result_ndim);
-    this->strides_ = (result_ndim == 0) ? intvec({sizeof(float)}) : intvec(new_strides.data(), result_ndim);
+    return result;
 }
 
 }  // namespace merlin

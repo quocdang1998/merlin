@@ -4,41 +4,36 @@
 #include <cstdlib>  // std::abs, div_t, div
 
 #include "merlin/logger.hpp"  // FAILURE
-#include "merlin/utils.hpp"  // merlin::inner_prod, merlin::contiguous_to_ndim_idx
+#include "merlin/utils.hpp"  // merlin::inner_prod, merlin::contiguous_to_ndim_idx, merlin::ndim_to_contiguous_idx
 
 namespace merlin {
 
 // Constructor from multi-dimensional index and container
-Iterator::Iterator(const intvec & index, array::NdData & container)  : index_(index), container_(&container) {
-    std::uint64_t leap = inner_prod(index, container.strides());
-    this->item_ptr_ = reinterpret_cast<float *>(reinterpret_cast<std::uintptr_t>(container.data()) + leap);
+Iterator::Iterator(const intvec & index, const intvec & shape) : index_(index), shape_(shape) {
+    this->item_ptr_ = ndim_to_contiguous_idx(index, shape);
 }
 
 // Constructor from C-contiguous index
-Iterator::Iterator(std::uint64_t index, array::NdData & container) : container_(&container) {
-    this->index_ = contiguous_to_ndim_idx(index, this->container_->shape());
-    std::uint64_t leap = inner_prod(this->index_, container.strides());
-    this->item_ptr_ = reinterpret_cast<float *>(reinterpret_cast<std::uintptr_t>(container.data()) + leap);
+Iterator::Iterator(std::uint64_t index, const intvec & shape) : item_ptr_(index), shape_(shape) {
+    this->index_ = contiguous_to_ndim_idx(index, shape);
 }
 
 // Pre-increment operator
 Iterator & Iterator::operator++(void) {
-    this->index_[this->index_.size() - 1]++;
+    this->index_[this->index_.size()-1]++;
     std::uint64_t current_dim = this->index_.size() - 1;
-    intvec & shape = this->container_->shape();
-    while (this->index_[current_dim] >= shape[current_dim]) {
+    while (this->index_[current_dim] >= this->shape_[current_dim]) {
         if (current_dim == 0) {
-            if (this->index_[current_dim] == shape[current_dim]) {
+            if (this->index_[current_dim] == this->shape_[current_dim]) {
                 break;
             } else {
-                FAILURE(std::out_of_range, "Maximum size reached, cannot add more.\n");
+                FAILURE(std::out_of_range, "Maximum size reached, cannot increase more.\n");
             }
         }
         this->index_[current_dim] = 0;
         this->index_[--current_dim] += 1;
     }
-    std::uint64_t leap = inner_prod(this->index_, this->container_->strides());
-    this->item_ptr_ = reinterpret_cast<float *>(reinterpret_cast<std::uintptr_t>(this->container_->data()) + leap);
+    this->item_ptr_ = ndim_to_contiguous_idx(this->index_, this->shape_);
     return *this;
 }
 
@@ -46,9 +41,8 @@ Iterator & Iterator::operator++(void) {
 void Iterator::update(void) {
     // detect dimensions having index bigger than dim
     std::uint64_t current_dim = this->index_.size();
-    intvec & shape = this->container_->shape();
-    for (int i = this->index_.size() - 1; i >= 0; i--) {
-        if (this->index_[i] >= shape[i]) {
+    for (std::int64_t i = this->index_.size() - 1; i >= 0; i--) {
+        if (this->index_[i] >= this->shape_[i]) {
             current_dim = i;
             break;
         }
@@ -57,22 +51,21 @@ void Iterator::update(void) {
         return;
     }
     // carry the surplus to the dimensions with bigger strides
-    while (this->index_[current_dim] >= shape[current_dim]) {
+    while (this->index_[current_dim] >= this->shape_[current_dim]) {
         if (current_dim == 0) {
-            if (this->index_[current_dim] == shape[current_dim]) {
+            if (this->index_[current_dim] == this->shape_[current_dim]) {
                 break;
             } else {
                 FAILURE(std::out_of_range, "Maximum size reached, cannot add more.\n");
             }
         }
         ldiv_t carry = ldiv(static_cast<std::int64_t>(this->index_[current_dim]),
-                            static_cast<std::int64_t>(shape[current_dim]));
+                            static_cast<std::int64_t>(this->shape_[current_dim]));
         this->index_[current_dim] = carry.rem;
         this->index_[--current_dim] += carry.quot;
     }
     // calculate leap and update pointer
-    std::uint64_t leap = inner_prod(this->index_, this->container_->strides());
-    this->item_ptr_ = reinterpret_cast<float *>(reinterpret_cast<std::uintptr_t>(this->container_->data()) + leap);
+    this->item_ptr_ = ndim_to_contiguous_idx(this->index_, this->shape_);
 }
 
 }  // namespace merlin

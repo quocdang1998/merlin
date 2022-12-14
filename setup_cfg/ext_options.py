@@ -21,26 +21,26 @@ def get_extension_options():
         ext_options["define_macros"] += [("__MERLIN_BUILT_AS_STATIC__", None)]
 
     # extra compile arguments
-    if (sys.platform == "linux"):
+    if sys.platform == "linux":
         ext_options["extra_compile_args"] = ["-std=c++17",
                                              "-Wno-unused-but-set-variable"]
-    elif (sys.platform == "win32"):
+    elif sys.platform == "win32":
         ext_options["extra_compile_args"] = ["-std:c++17"]
         if MERLIN_LIBKIND == "SHARED":
             ext_options["extra_compile_args"] += ["/wd4251", "/wd4551"]
 
     # dependancies
     depends = glob.glob(os.path.join(module_dir, "setup_cfg", "*.py"))
-    if (sys.platform == "linux"):
+    if sys.platform == "linux":
         depends += glob.glob(os.path.join(module_dir, "build", "libmerlin.*"))
-    elif (sys.platform == "win32"):
+    elif sys.platform == "win32":
         depends += [os.path.join(module_dir, "build", "merlin.lib")]
         if MERLIN_LIBKIND == "SHARED":
             depends += [os.path.join(module_dir, "build", "merlin.dll")]
     ext_options["depends"] = depends
 
     # extra link options
-    if (sys.platform == "win32"):
+    if sys.platform == "win32":
         ext_options["extra_link_args"] = ["/NODEFAULTLIB:LIBCMT.lib",
                                           "/IGNORE:4286"]
 
@@ -50,6 +50,8 @@ def get_extension_options():
         ext_options["libraries"] += ["merlincuda"]
     if MERLIN_CUDA:
         ext_options["libraries"] += ["cudart_static", "cudadevrt", "cuda"]
+    if MERLIN_DEBUG and (sys.platform == "win32"):
+        ext_options["libraries"] += ["DbgHelp"]
 
     # library directory
     ext_options["library_dirs"] = [os.path.join(module_dir, "build")]

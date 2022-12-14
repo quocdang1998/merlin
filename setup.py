@@ -20,14 +20,18 @@ from setup_cfg import build_ext, ext_options
 
 # extensions
 extensions = [
-    Extension("merlin.device", ["merlin/device/core.pyx"],
+    Extension("merlin.cuda", ["merlin/cuda/core.pyx"],
+              language="c++", **ext_options),
+    Extension("merlin.array", ["merlin/array/core.pyx"],
               language="c++", **ext_options)
 ]
 
 # build extensions and install
-setup(name="merlin",
-      version="1.0.0",
-      ext_modules=cythonize(extensions, language_level="3str",
-                            nthreads=os.cpu_count(), annotate=False),
-      cmdclass={"build_ext": build_ext}
-)
+if __name__ == "__main__":
+    setup(name="merlin",
+        version="1.0.0",
+        ext_modules=cythonize(extensions, language_level="3str",
+                              include_path=[os.path.abspath("./")],
+                              nthreads=os.cpu_count(), annotate=False),
+        cmdclass={"build_ext": build_ext}
+    )

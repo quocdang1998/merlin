@@ -18,12 +18,15 @@
 
 #if defined(__MERLIN_WINDOWS__)
     #define __FUNCNAME__ __FUNCSIG__
-    #include <windows.h>  // FormatMessageA
 #elif defined(__MERLIN_LINUX__)
     #define __FUNCNAME__ __PRETTY_FUNCTION__
-    #include <errno.h>  // errno
-    #include <string.h>  // strerror
 #endif
+
+// Stack tracing
+// -------------
+
+/** @brief Print the stacktrace at the crash moment.*/
+void _merlin_print_stacktrace_(int skip = 1);
 
 // Log MESSAGE, WARNING and FAILURE for CPU
 // ----------------------------------------
@@ -55,11 +58,11 @@
  *  @param exception Name of the exception class (like ``std::runtime_error``, ``std::invalid_argument``, etc).
  *  @param fmt Formatted string (same syntax as ``std::printf``).
  */
-#define FAILURE(exception, fmt, ...) error_<exception>(__FUNCNAME__, fmt, ##__VA_ARGS__)
+#define FAILURE(exception, fmt, ...) _merlin_error_<exception>(__FUNCNAME__, fmt, ##__VA_ARGS__)
 
 // print log for FAILURE + throw exception
 template <class Exception = std::runtime_error>
-void error_(const char * func_name, const char * fmt, ...) {
+void _merlin_error_(const char * func_name, const char * fmt, ...) {
     // save formatted string to a buffer
     char buffer[1024];
     std::va_list args;
@@ -68,6 +71,7 @@ void error_(const char * func_name, const char * fmt, ...) {
     va_end(args);
     // print exception message and throw an exception object
     std::fprintf(stderr, "\033[1;31m[FAILURE]\033[0m [%s] %s", func_name, buffer);
+    _merlin_print_stacktrace_(2);  // skip this function and print_stacktrace function
     if constexpr(std::is_same<Exception, std::filesystem::filesystem_error>::value) {
         throw std::filesystem::filesystem_error(const_cast<char *>(buffer),
                                                 std::error_code(1, std::iostream_category()));
@@ -95,31 +99,10 @@ class cuda_runtime_error : public std::runtime_error {
 
 #if defined(__MERLIN_WINDOWS__)
 // Get error from Windows API
-inline std::string throw_windows_last_error(unsigned long int last_error) {
-    if (last_error != 0) {
-        char * buffer = nullptr;
-        const unsigned long int format = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
-                                         | FORMAT_MESSAGE_IGNORE_INSERTS;
-        unsigned long int size = ::FormatMessageA(format, nullptr, last_error,
-                                                  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                                                  reinterpret_cast<char *>(&buffer), 0, nullptr);
-        return std::string(buffer, size);
-    } else {
-        return std::string();
-    }
-}
-
+std::string throw_windows_last_error(unsigned long int last_error);
 #elif defined(__MERLIN_LINUX__)
 // Get error from Linux
-inline std::string throw_linux_last_error(void) {
-    if (errno != 0) {
-        char * buffer = ::strerror(errno);
-        return std::string(buffer);
-    } else {
-        return std::string();
-    }
-}
-
+std::string throw_linux_last_error(void);
 #endif
 
 // Log CUDAOUT for GPU
@@ -172,11 +155,5 @@ inline std::string throw_linux_last_error(void) {
  */
 #define CUHDERR(exception, fmt, ...) FAILURE(exception, fmt, ##__VA_ARGS__)
 #endif  // __CUDA_ARCH__
-
-// Stack tracing
-// -------------
-
-/** @brief Print the stacktrace at the crash moment.*/
-// void print_stacktrace(void);
 
 #endif  // MERLIN_LOGGER_HPP_

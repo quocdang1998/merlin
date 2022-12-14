@@ -2,84 +2,58 @@
 #include "merlin/array/stock.hpp"
 
 #include <cinttypes>  // PRIu64
+#include <filesystem>  // std::filesystem::filesystem_error, std::filesystem::file_size, std::filesystem::resize_file
 #include <functional>  // std::bind, std::placeholders
+#include <ios>  // std::ios_base::failure
+#include <sstream>  // std::ostringstream
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/array/copy.hpp"  // merlin::array::array_copy, merlin::array::contiguous_strides
 #include "merlin/logger.hpp"  // WARNING, FAILURE
 #include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
+#include "merlin/utils.hpp"  // merlin::get_current_process_id, merlin::get_time
 #include "merlin/vector.hpp"  // merlin::intvec
-
-#if defined(__MERLIN_WINDOWS__)
-#include <share.h>  // _SH_DENYNO, _SH_DENYRW, _SH_DENYWR
-#endif  // __MERLIN_WINDOWS__
-
-// --------------------------------------------------------------------------------------------------------------------
-// Open file pointer (Windows)
-// --------------------------------------------------------------------------------------------------------------------
-
-#if defined(__MERLIN_WINDOWS__)
-
-// Open file for read (write access denied)
-static inline std::FILE * read_file(const char * fname) {
-    return ::_fsopen(fname, "rb", _SH_DENYWR);
-}
-
-// Open file for write (read and write access denied)
-static inline std::FILE * write_file(const char * fname, bool thread_safe = true) {
-    int sh_flag = thread_safe ? _SH_DENYRW : _SH_DENYNO;
-    std::FILE * temporary = std::fopen(fname, "wb");  // crash old content
-    std::fclose(temporary);
-    return ::_fsopen(fname, "rb+", sh_flag);
-}
-
-// Open file for read and write (read and write access denied)
-static inline std::FILE * update_file(const char * fname, bool thread_safe = true) {
-    int sh_flag = thread_safe ? _SH_DENYRW : _SH_DENYNO;
-    return ::_fsopen(fname, "rb+", sh_flag);
-}
-
-#endif  // __MERLIN_WINDOWS__
-
-// --------------------------------------------------------------------------------------------------------------------
-// Open file pointer (Linux)
-// --------------------------------------------------------------------------------------------------------------------
-
-#if defined(__MERLIN_LINUX__)
-
-// Open file for read (write access denied)
-static inline std::FILE * read_file(const char * fname) {
-    return std::fopen(fname, "rb");
-}
-
-// Open file for write (read and write access denied)
-static inline std::FILE * write_file(const char * fname, bool thread_safe = true) {
-    std::FILE * temporary = std::fopen(fname, "wb");  // crash old content
-    std::fclose(temporary);
-    return std::fopen(fname, "rb+");
-}
-
-// Open file for read and write (read and write access denied)
-static inline std::FILE * update_file(const char * fname, bool thread_safe = true) {
-    return std::fopen(fname, "rb+");
-}
-
-#endif  // __MERLIN_LINUX__
 
 // --------------------------------------------------------------------------------------------------------------------
 // Data read/write
 // --------------------------------------------------------------------------------------------------------------------
 
 // Read an array from file
-static inline void read_from_file(float * dest, std::FILE * file, float * src, std::uint64_t bytes) {
+static inline void read_from_file(double * dest, std::FILE * file, double * src, std::uint64_t bytes) {
     std::fseek(file, reinterpret_cast<std::uintptr_t>(src), SEEK_SET);
-    std::fread(dest, sizeof(float), bytes / sizeof(float), file);
+    std::uint64_t count = bytes / sizeof(double);
+    if (std::fread(dest, sizeof(double), count, file) != count) {
+        FAILURE(std::ios_base::failure, "Read file error.\n");
+    }
 }
 
-static inline void write_to_file(std::FILE * file, float * dest, float * src, std::uint64_t bytes) {
+// Write an array from file
+static inline void write_to_file(std::FILE * file, double * dest, double * src, std::uint64_t bytes) {
     std::fseek(file, reinterpret_cast<std::uintptr_t>(dest), SEEK_SET);
-    std::fwrite(src, sizeof(float), bytes / sizeof(float), file);
+    std::uint64_t count = bytes / sizeof(double);
+    if (std::fwrite(src, sizeof(double), bytes / sizeof(double), file) != count) {
+        FAILURE(std::ios_base::failure, "Write file error.\n");
+    }
 }
+
+// Check if file exists
+static inline bool check_file_exist(const char * name) noexcept {
+    if (std::FILE * file_ptr = std::fopen(name, "r")) {
+        std::fclose(file_ptr);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+// Acquire lockfile if thread safe
+#define EXCLUSIVE_LOCK_THREADSAFE() if (this->thread_safe_) this->flock_.lock()
+
+// Acquire shared lockfile if thread safe
+#define SHARED_LOCK_THREADSAFE() if (this->thread_safe_) this->flock_.lock_shared()
+
+// Unlock file if thread safe
+#define UNLOCK_THREADSAFE() if (this->thread_safe_) this->flock_.unlock()
 
 // --------------------------------------------------------------------------------------------------------------------
 // Stock
@@ -87,98 +61,148 @@ static inline void write_to_file(std::FILE * file, float * dest, float * src, st
 
 namespace merlin {
 
-// Constructor from filename
-array::Stock::Stock(const std::string & filename, char mode, std::uint64_t offset) :
-filename_(filename), mode_(mode), offset_(offset) {
-    switch (mode) {
-        case 'r':
-            this->file_ptr_ = read_file(filename.c_str());
-            break;
-        case 'w':
-            this->file_ptr_ = write_file(filename.c_str(), true);
-            break;
-        case 'a':
-            this->file_ptr_ = update_file(filename.c_str(), true);
-            break;
-        case 'p':
-            this->file_ptr_ = write_file(filename.c_str(), false);
-            break;
-        case 's':
-            this->file_ptr_ = update_file(filename.c_str(), false);
-            break;
-    }
-    if (this->file_ptr_ == nullptr) {
-        FAILURE(std::ios_base::failure, "Cannot open file \"%s\".\n", filename.c_str());
-    }
-    this->flock_ = FileLock(this->file_ptr_);
-    int err_ = std::fseek(this->file_ptr_, offset, SEEK_SET);
-    if (err_ != 0) {
-        FAILURE(std::ios_base::failure, "Cannot move cursor to position %" PRIu64 " to file \"%s\".\n",
-                offset, filename.c_str());
-    }
-}
-
-// Read metadata from file (this function is single threaded to avoid data race)
-void array::Stock::read_metadata(void) {
-    this->flock_.lock_shared();
+// Read metadata from file
+std::uint64_t array::Stock::read_metadata(void) {
+    // read ndim and shape data from file at position offset
+    SHARED_LOCK_THREADSAFE();
     std::fseek(this->file_ptr_, this->offset_, SEEK_SET);
-    std::fread(&(this->ndim_), sizeof(std::uint64_t), 1, this->file_ptr_);
+    if (std::fread(&(this->ndim_), sizeof(std::uint64_t), 1, this->file_ptr_) != 1) {
+        FAILURE(std::ios_base::failure, "Read file error.\n");
+    }
     this->shape_ = intvec(this->ndim_, 0);
-    std::fread(this->shape_.data(), sizeof(std::uint64_t), this->ndim_, this->file_ptr_);
-    this->strides_ = array::contiguous_strides(this->shape_, sizeof(float));
-    this->data_ = reinterpret_cast<float *>(std::uintptr_t(std::ftell(this->file_ptr_)));
-    this->flock_.unlock();
+    if (std::fread(this->shape_.data(), sizeof(std::uint64_t), this->ndim_, this->file_ptr_) != this->ndim_) {
+        FAILURE(std::ios_base::failure, "Read file error.\n");
+    }
+    std::uint64_t cursor = std::ftell(this->file_ptr_);
+    UNLOCK_THREADSAFE();
+    // calculate stride and assign data pointer
+    this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
+    this->data_ = reinterpret_cast<double *>(cursor);
+    // check file size
+    std::uint64_t file_size = std::filesystem::file_size(this->filename_);
+    std::uint64_t expected_size = this->offset_ + (1+this->ndim_)*sizeof(std::uint64_t) + this->size()*sizeof(double);
+    if (file_size < expected_size) {
+        FAILURE(std::filesystem::filesystem_error, "Expected filesize of at least %" PRIu64 ", got %" PRIu64 ".\n",
+                expected_size, file_size);
+    }
+    return cursor;
 }
 
-// Copy data from file to an array
-void array::Stock::copy_to_array(array::Array & arr) {
-    auto read_func = std::bind(read_from_file, std::placeholders::_1, this->file_ptr_,
-                               std::placeholders::_2, std::placeholders::_3);
-    this->flock_.lock_shared();
-    array::array_copy(&arr, this, read_func);
-    this->flock_.unlock();
+// Write metadata to file at offset position
+std::uint64_t array::Stock::write_metadata(void) {
+    // write ndim and shape data to file at position offset
+    EXCLUSIVE_LOCK_THREADSAFE();
+    std::fseek(this->file_ptr_, this->offset_, SEEK_SET);
+    if (std::fwrite(&(this->ndim_), sizeof(std::uint64_t), 1, this->file_ptr_) != 1) {
+        FAILURE(std::ios_base::failure, "Write file error.\n");
+    }
+    if (std::fwrite(this->shape_.data(), sizeof(std::uint64_t), this->ndim_, this->file_ptr_) != this->ndim_) {
+        FAILURE(std::ios_base::failure, "Write file error.\n");
+    }
+    std::uint64_t cursor = std::ftell(this->file_ptr_);
+    UNLOCK_THREADSAFE();
+    // change data pointer to current cursor
+    this->data_ = reinterpret_cast<double *>(cursor);
+    return cursor;
 }
 
-// Copy data from Stock to Array
-array::Array array::Stock::to_array(void) {
-    // read metadata
+// Construct empty Array from shape vector
+array::Stock::Stock(const std::string & filename, const intvec & shape, std::uint64_t offset, bool thread_safe) :
+array::NdData(shape), filename_(filename), offset_(0), thread_safe_(thread_safe) {
+    // create file if not exists
+    bool file_exist = check_file_exist(filename.c_str());
+    if (!file_exist) {
+        std::FILE * temporary = std::fopen(filename.c_str(), "wb");
+        std::fclose(temporary);
+    }
+    // resize file
+    std::uint64_t file_size = std::filesystem::file_size(filename);
+    std::uint64_t new_file_size = (1+this->ndim_)*sizeof(std::uint64_t) + this->size()*sizeof(double);
+    if (offset + new_file_size > file_size) {
+        if (offset < file_size) {
+            new_file_size += file_size - offset;
+        } else {
+            new_file_size += offset;
+        }
+        std::filesystem::resize_file(filename, new_file_size);
+    }
+    // assign file pointer
+    this->file_ptr_ = std::fopen(filename.c_str(), "rb+");
+    this->flock_ = FileLock(this->file_ptr_);
+    // write metatdata
+    this->write_metadata();
+    this->release_ = true;
+}
+
+// Constructor from filename
+array::Stock::Stock(const std::string & filename, std::uint64_t offset, bool thread_safe) :
+filename_(filename), offset_(offset), thread_safe_(thread_safe) {
+    // check if file exists
+    bool file_exist = check_file_exist(filename.c_str());
+    if (!file_exist) {
+        FAILURE(std::filesystem::filesystem_error, "Cannot find file \"%s\", please make sure that the file exists.\n",
+                filename.c_str());
+    }
+    // open file
+    this->file_ptr_ = std::fopen(filename.c_str(), "rb+");
+    this->flock_ = FileLock(this->file_ptr_);
     this->read_metadata();
-    // allocate result
-    Array result(this->shape_);
-    // copy data
-    this->copy_to_array(result);
+    this->release_ = true;
+}
+
+// Constructor from a slice
+array::Stock::Stock(const array::Stock & whole, const Vector<array::Slice> & slices)  :
+array::NdData(whole, slices) {
+    this->file_ptr_ = whole.file_ptr_;
+    this->flock_ = whole.flock_;
+    this->offset_ = whole.offset_;
+    this->thread_safe_ = whole.thread_safe_;
+    this->filename_ = whole.filename_;
+    this->release_ = false;
+}
+
+// Get value of element at a n-dim index
+double array::Stock::get(const intvec & index) const {
+    std::uint64_t leap = inner_prod(index, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    double result;
+    SHARED_LOCK_THREADSAFE();
+    read_from_file(&result, this->file_ptr_, reinterpret_cast<double *>(data_ptr), sizeof(double));
+    UNLOCK_THREADSAFE();
     return result;
 }
 
-// Get metadata from an array
-void array::Stock::get_metadata(array::Array & src) {
-    this->ndim_ = src.ndim();
-    this->shape_ = src.shape();
-    this->strides_ = contiguous_strides(this->shape_, sizeof(float));
-    this->data_ = reinterpret_cast<float *>(this->offset_ + sizeof(std::uint64_t)*(1+this->ndim_));
+// Get value of element at a C-contiguous index
+double array::Stock::get(std::uint64_t index) const {
+    return this->get(contiguous_to_ndim_idx(index, this->shape()));
 }
 
-// Write metadata to file
-void array::Stock::write_metadata(void) {
-    this->flock_.lock();
-    std::fseek(this->file_ptr_, this->offset_, SEEK_SET);
-    std::fwrite(&(this->ndim_), sizeof(std::uint64_t), 1, this->file_ptr_);
-    std::fwrite(this->shape_.data(), sizeof(std::uint64_t), this->ndim_, this->file_ptr_);
-    this->flock_.unlock();
+// Set value of element at a n-dim index
+void array::Stock::set(const intvec index, double value) {
+    std::uint64_t leap = inner_prod(index, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    EXCLUSIVE_LOCK_THREADSAFE();
+    write_to_file(this->file_ptr_, reinterpret_cast<double *>(data_ptr), &value, sizeof(double));
+    UNLOCK_THREADSAFE();
+}
+
+// Set value of element at a C-contiguous index
+void array::Stock::set(std::uint64_t index, double value) {
+    this->set(contiguous_to_ndim_idx(index, this->shape()), value);
 }
 
 // Write data from an array to a file
-void array::Stock::write_data_to_file(array::Array & src) {
+void array::Stock::record_data_to_file(const array::Array & src) {
     auto write_func = std::bind(write_to_file, this->file_ptr_,
                                 std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-    this->flock_.lock();
+    EXCLUSIVE_LOCK_THREADSAFE();
     array_copy(this, &src, write_func);
-    this->flock_.unlock();
+    UNLOCK_THREADSAFE();
 }
 
 // Destructor
 array::Stock::~Stock(void) {
-    if (this->file_ptr_ != nullptr) {
+    if (this->release_ && (this->file_ptr_ != nullptr)) {
         int err_ = std::fclose(this->file_ptr_);
         if (err_ != 0) {
             FAILURE(std::ios_base::failure, "Cannot close file \"%s\".\n", this->filename_.c_str());

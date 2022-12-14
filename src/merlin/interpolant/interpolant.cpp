@@ -1,63 +1,115 @@
 // Copyright 2022 quocdang1998
 #include "merlin/interpolant/interpolant.hpp"
 
-#include <thread>
+#include <omp.h>  // pragma omp
 
+#include <algorithm>  // std::max
+#include <cinttypes>  // PRIu64
+#include <utility>  // std::pair
+
+#include "merlin/array/copy.hpp"  // merlin::array::array_copy
+#include "merlin/array/slice.hpp"  // merlin::array::Slice
+#include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CatesianGrid
+#include "merlin/interpolant/sparse_grid.hpp"  // merlin::interpolant::SparseGrid
 #include "merlin/logger.hpp"  // FAILURE
-#include "merlin/vector.hpp"  // merlin::intvec
+#include "merlin/vector.hpp"  // merlin::floatvec, merlin::intvec
 
 namespace merlin {
+
+// --------------------------------------------------------------------------------------------------------------------
+// Calculate coefficients
+// --------------------------------------------------------------------------------------------------------------------
+
+static Vector<array::Slice> get_slice_from_level(const intvec & level, const intvec & max_level) {
+    Vector<array::Slice> result(level.size());
+    for (std::uint64_t i_dim = 0; i_dim < level.size(); i_dim++) {
+        // calculate the size of max_level
+        const std::uint64_t & max = max_level[i_dim];
+        std::uint64_t size = (max == 0) ? 1 : (1 << max) + 1;
+        // calculate start point and step
+        const std::uint64_t & lv = level[i_dim];
+        if (lv == 0) {
+            result[i_dim] = array::Slice({(size - 1) / 2});
+        } else if (lv == 1) {
+            result[i_dim].step() = size-1;
+        } else {
+            result[i_dim].step() = 1 << (max_level[i_dim] - level[i_dim] + 1);
+            result[i_dim].start() = result[i_dim].step() >> 1;
+        }
+    }
+    return result;
+}
+
+array::Array calc_lagrange_coeffs_cpu(const interpolant::SparseGrid * pgrid, const array::Array * pvalue) {
+    // check size of p_value
+    if (pvalue->ndim() != 1) {
+        FAILURE(std::runtime_error, "Invalid shpae of value array.\n");
+    }
+    if (pvalue->size() != pgrid->size()) {
+        FAILURE(std::invalid_argument, "Expected value array and grid having the same size.");
+    }
+    // loop over each level, updat maximum current level
+    std::uint64_t num_level = pgrid->level_vectors().size() / pgrid->ndim();
+    intvec max_current_level(pgrid->ndim(), 0);
+    interpolant::CartesianGrid current_cart_grid(pgrid->ndim());
+    array::Array result(pvalue->shape());
+    for (std::uint64_t i_level = 0; i_level < num_level; ++i_level) {
+        intvec level;
+        level.data() = const_cast<std::uint64_t *>(pgrid->level_vectors().data()) + i_level*pvalue->ndim();
+        level.size() = pvalue->ndim();
+        // update max current level
+        for (std::uint64_t i_dim = 0; i_dim < max_current_level.size(); i_dim++) {
+            max_current_level[i_dim] = std::max(max_current_level[i_dim], level[i_dim]);
+        }
+        // calculate union of cartesian grid
+        current_cart_grid = current_cart_grid + pgrid->get_cartesian_grid(level);
+        // get values of cart grid
+        array::Slice sub_slice(pgrid->sub_grid_start_index()[i_level], pgrid->sub_grid_start_index()[i_level+1], 1);
+        Vector<array::Slice> vec_slice({sub_slice});
+        array::Array level_value(*pvalue, Vector<array::Slice>({sub_slice}));
+        // get slices
+        Vector<array::Slice> level_slc = get_slice_from_level(level, max_current_level);
+        // get sub array of result
+        array::Array level_coeff(result, vec_slice);
+        // calculate coefficient
+        calc_lagrange_coeffs_cpu(&current_cart_grid, &level_value, level_slc, &level_coeff);
+        // neutralize level vector
+        level.data() = nullptr;
+    }
+    return result;
+}
 
 // --------------------------------------------------------------------------------------------------------------------
 // CartesianInterpolant
 // --------------------------------------------------------------------------------------------------------------------
 
-CartesianInterpolant::CartesianInterpolant(CartesianGrid & grid, array::NdData & value) :
-grid_(&grid), value_(&value) {
-    // check number of points of grid and value vector
-    if (grid.ndim() != value.ndim()) {
-        FAILURE(std::invalid_argument, "Ndim of Grid (%d) and value tensor (%d) are inconsistent.\n",
-                grid.ndim(), value.ndim());
+interpolant::CartesianInterpolant::CartesianInterpolant(const CartesianGrid & grid, const array::Array & value,
+                                                        const Vector<array::Slice> & slices,
+                                                        interpolant::PolynomialInterpolant::Method method) :
+grid_(&grid), coeff_(value.shape()) {
+    // check ndim
+    std::uint64_t ndim = grid.ndim();
+    if (value.ndim() != ndim) {
+        FAILURE(std::invalid_argument, "Ndim of grid (%" PRIu64 ") and value array (%" PRIu64 ") are different.\n",
+                ndim, value.ndim());
     }
-    // check number of dimension of grid and value vector
-    intvec grid_shape = grid.grid_shape();
-    for (int i = 0; i < grid.ndim(); i++) {
-        if (grid_shape[i] < value.shape()[i]) {
-            FAILURE(std::invalid_argument, "Expected shape Grid (%d) less or equal value tensor (%d) at index %d.\n",
-                    grid_shape[i], value.shape()[i], i);
-        }
+    if (slices.size() != ndim) {
+        FAILURE(std::invalid_argument, "Ndim of grid (%" PRIu64 ") and slice vector size %" PRIu64 ") must equals.\n",
+                ndim, slices.size());
     }
-}
-
-
-// --------------------------------------------------------------------------------------------------------------------
-// LagrangeInterpolant
-// --------------------------------------------------------------------------------------------------------------------
-
-LagrangeInterpolant::LagrangeInterpolant(CartesianGrid & grid, array::NdData & value) :
-CartesianInterpolant(grid, value) {
-    // copy value to coef_ tensor
-    this->coef_ = value;
-    /*
-    // loop on each point in value
-    for (Tensor::iterator it = this->coef_.begin(); it != this->coef_.end(); it++) {
-        // calculate f(x_i) / prod((x-i-x_j) for j != i)
-        float weight_ = 1.0;
-        std::vector<unsigned int> & index_ = it.index();
-        for (int dim_ = 0; dim_ < index_.size(); dim_++) {
-            std::vector<float> & dim_values = this->grid_->grid_vectors()[dim_];
-            for (int j = 0; j < dim_values.size(); j++) {
-                if (j == index_[dim_]) {
-                    continue;  // skip if j == i
-                }
-                weight_ *= (dim_values[index_[dim_]] - dim_values[j]);
-            }
-        }
-        // multiply weight to coef
-        float & coef_ = this->coef_[it.index()];
-        coef_ = static_cast<float>(coef_) / static_cast<float>(weight_);
+    // check size of value array
+    for (std::uint64_t i_dim = 0; i_dim < ndim; i++) {
+        auto [_, expected_shape, __] = slices[i_dim].slice_on(value.shape()[i_dim], sizeof(double));
     }
-    */
+    // calculate coefficient
+    switch (method) {
+    case interpolant::PolynomialInterpolant::Method::Lagrange:
+        interpolant::calc_lagrange_coeffs_cpu(grid, value, slices, this->coeff_);
+        break;
+    default:
+        FAILURE(std::runtime_error, "Configuration not implemented.\n");
+        break;
+    }
 }
 
 }  // namespace merlin

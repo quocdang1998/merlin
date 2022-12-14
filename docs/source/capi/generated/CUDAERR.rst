@@ -1,0 +1,4 @@
+CUDAERR
+=======
+
+.. doxygendefine:: CUDAERR

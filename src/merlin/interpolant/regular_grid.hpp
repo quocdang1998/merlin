@@ -10,7 +10,7 @@
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/interpolant/grid.hpp"  //  merlin::interpolant::Grid
 #include "merlin/iterator.hpp"  // merlin::Iterator
-#include "merlin/vector.hpp"  // merlin::Vector, merlin::intvec, merlin::floatvec
+#include "merlin/vector.hpp"  // merlin::Vector, merlin::intvec
 
 namespace merlin {
 
@@ -47,13 +47,15 @@ class MERLIN_EXPORTS interpolant::RegularGrid : interpolant::Grid {
     /// @name Get members and attributes
     /// @{
     /** @brief Get reference to array of grid points.*/
-    array::Array grid_points(void) const {return *(static_cast<array::Array *>(this->points_));}
+    constexpr array::Array & grid_points(void) noexcept {return *(dynamic_cast<array::Array *>(this->points_));}
+    /** @brief Get constant reference to array of grid points.*/
+    const array::Array & grid_points(void) const noexcept {return *(dynamic_cast<array::Array *>(this->points_));}
     /** @brief Number of dimension of each point in the grid.*/
-    std::uint64_t ndim(void) const {return this->points_->shape()[1];}
+    constexpr std::uint64_t ndim(void) const noexcept {return this->points_->shape()[1];}
     /** @brief Number of points in the grid.*/
-    std::uint64_t size(void) const {return this->npoint_;}
+    constexpr std::uint64_t size(void) const noexcept {return this->npoint_;}
     /** @brief Maximum number of point which the RegularGrid can hold without reallocating memory.*/
-    std::uint64_t capacity(void) const {return this->points_->shape()[0];}
+    constexpr std::uint64_t capacity(void) const noexcept {return this->points_->shape()[0];}
     /// @}
 
     /// @name Iterator
@@ -71,9 +73,9 @@ class MERLIN_EXPORTS interpolant::RegularGrid : interpolant::Grid {
     /** @brief Get reference Array to a point.
      *  @param index Index of point to get in the grid.
      */
-    array::Array operator[](unsigned int index);
+    Vector<double> operator[](std::uint64_t index);
     /** @brief Append a point at the end of the grid.*/
-    void push_back(Vector<float> && point);
+    void push_back(Vector<double> && point);
     /** @brief Remove a point at the end of the grid.*/
     void pop_back(void);
     /// @}
@@ -88,9 +90,9 @@ class MERLIN_EXPORTS interpolant::RegularGrid : interpolant::Grid {
     /** @brief Number of points in the grid.*/
     std::uint64_t npoint_;
     /** @brief Begin iterator.*/
-    intvec begin_;
+    interpolant::RegularGrid::iterator begin_;
     /** @brief End iterator.*/
-    intvec end_;
+    interpolant::RegularGrid::iterator end_;
 };
 
 }  // namespace merlin
