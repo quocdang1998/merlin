@@ -5,7 +5,7 @@
 #include "merlin/array/nddata.hpp"  // merlin::array::NdData
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/interpolant/grid.hpp"  // merlin::CartesianGrid
-#include "merlin/vector.hpp"  // merlin::floatvec
+#include "merlin/vector.hpp"  // merlin::floatvec, merlin::Vector
 
 namespace merlin::interpolant {
 class CartesianInterpolant;
@@ -33,6 +33,9 @@ class interpolant::CartesianInterpolant {
     const array::NdData * pvalue_ = nullptr;
     array::NdData * pcoeff_ = nullptr;
 };
+
+float eval_lagrange_cpu(const interpolant::CartesianGrid * pgrid, const array::NdData * pcoeff,
+                        const merlin::floatvec & x);
 
 array::Array calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid * pgrid, const array::Array * pvalue,
                                       const Vector<array::Slice> & slices);

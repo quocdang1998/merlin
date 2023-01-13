@@ -16,7 +16,10 @@ int main(void) {
                 grid.level_vectors()[i*grid.ndim()+0],
                 grid.level_vectors()[i*grid.ndim()+1],
                 grid.level_vectors()[i*grid.ndim()+2]);
+        MESSAGE("Index of first point in sub-grid relative to the grid: %" PRIu64 ".\n",
+                grid.sub_grid_start_index()[i]);
     }
+    MESSAGE("Number of points in grid: %" PRIu64 ".\n", grid.size());
 
     merlin::interpolant::SparseGrid ani_grid({v1, v2, v3}, 3, {2, 1, 1});
     num_level_vector = ani_grid.num_subgrid();

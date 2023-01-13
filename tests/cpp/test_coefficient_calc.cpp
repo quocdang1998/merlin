@@ -19,4 +19,14 @@ int main(void) {
         MESSAGE("Coefficient of index (%d, %d) : %f.\n", int(it.index()[0]), int(it.index()[1]), coeff.get(it.index()));
     }
     MESSAGE("Theorical calculated values (C-contiguous order): -1/2 3 -5/2 1 -4 3.\n");
+
+    merlin::floatvec p1({1.0, 2.0});  // on grid
+    float p1_eval = merlin::eval_lagrange_cpu(&grid, &coeff, p1);
+    MESSAGE("Evaluated value: %f.\n", p1_eval);
+    merlin::floatvec p2({1.0, 0.5});  // 1st dim on grid
+    float p2_eval = merlin::eval_lagrange_cpu(&grid, &coeff, p2);
+    MESSAGE("Evaluated value: %f.\n", p2_eval);
+    merlin::floatvec p3({0.5, 0.25});  // both dim off grid
+    float p3_eval = merlin::eval_lagrange_cpu(&grid, &coeff, p3);
+    MESSAGE("Evaluated value: %f.\n", p3_eval);
 }

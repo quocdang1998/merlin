@@ -83,13 +83,13 @@ class MERLIN_EXPORTS interpolant::CartesianGrid : public interpolant::Grid {
     /// @name GPU related features
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the grid and its data.*/
-    std::uint64_t malloc_size(void);
+    std::uint64_t malloc_size(void) const;
     /** @brief Copy the grid from CPU to a pre-allocated memory on GPU.
      *  @details Values of vectors should be copied to the memory region that comes right after the copied object.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
      *  @param grid_vector_data_ptr Pointer to a pre-allocated GPU memory storing data of grid vectors.
      */
-    void copy_to_gpu(interpolant::CartesianGrid * gpu_ptr, void * grid_vector_data_ptr);
+    void copy_to_gpu(interpolant::CartesianGrid * gpu_ptr, void * grid_vector_data_ptr) const;
     #ifdef __NVCC__
     /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
      *  @note This operation is single-threaded.

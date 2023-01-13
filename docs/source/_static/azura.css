@@ -101,38 +101,6 @@
     --yinyang:                    black;  /* black and white */
 }
 
-:root[color-scheme="dark"] {
-    --text-color:                 hsl(var(--hue),  10%, 80%);  /* text color */
-    --header-color:               hsl(var(--hue),  10%, 95%);  /* header color */
-    --content-background:         hsl(var(--hue),  10%, 20%);  /* background */
-    --background:                 hsl(var(--hue),  10%, 10%);  /* background */
-    --table-odd-row:              hsl(var(--hue),  10%, 25%);  /* table odd row */
-    --table-border:               hsl(var(--hue),  10%, 50%);  /* table border */
-
-    --literal:                    hsl(var(--hue),  70%, 70%);  /* literal text */
-    --literal-background:         hsl(var(--hue),  10%, 15%);  /* literal background */
-    --codeblock-background:       hsl(var(--hue),  10%, 10%);  /* codeblock background */
-
-    --link:                       hsl(var(--hue),  81%, 76%);  /* link */
-    --visited-link:               hsl(var(--hue), 100%, 42%);  /* visited link */
-
-    --itembox-background:         hsl(var(--hue),  79%, 15%);  /* item box background */
-    --itembox-text-color:         hsl(var(--hue),  10%, 95%);  /* item text color */
-    --subitem-background:         hsl(var(--hue),  10%, 15%);  /* subitem box background */
-
-    --keyword:                    hsl(var(--hpl), 100%, 70%);  /* keyworks of code language */
-    --type:                       hsl(var(--hmn),  53%, 70%);  /* type */
-
-    --admonition-background:      hsl(var(--hue),  10%, 15%);  /* admonition content background */
-    --note:                       hsl(var(--hls),  80%, 40%);  /* note title */
-    --warning:                    hsl(var(--hrv), 100%, 50%);  /* warning title */
-
-    --sun-display:                flex;  /* display of light mode icon */
-    --moon-display:               none;  /* display of light mode icon */
-    --invert-color:               invert(1.0) hue-rotate(180deg);  /* invert color of item */
-    --yinyang:                    white;  /* black and white */
-}
-
 /* ============================================================================
  WHOLE DOCUMENT
 ============================================================================ */

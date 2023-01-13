@@ -26,7 +26,7 @@ class MERLIN_EXPORTS Stock : public NdData {
      *    - w: Write only (crash old file if exist).
      *    - a: Thread safe read and write (multiple thread can read simultaneously, but only one can write at a time).
      *  @param offset Starting position from the beginning of file.
-     *  @param threadsafe When it is set to ``true``, multiple threads/processes can read file at the same time, but
+     *  @param thread_safe When it is set to ``true``, multiple threads/processes can read file at the same time, but
      *  only one can write the file. If a thread/process opening the file for reading (respectively writing), it will
      *  have to wait until all currently writing (respectively reading) threads/processes finished their jobs.
      */

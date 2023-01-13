@@ -40,9 +40,9 @@ Grid API
 .. doxysummary::
    :toctree: generated
 
-   merlin::Grid
-   merlin::RegularGrid
-   merlin::CartesianGrid
+   merlin::interpolant::Grid
+   merlin::interpolant::RegularGrid
+   merlin::interpolant::CartesianGrid
 
 
 Log API

@@ -23,12 +23,10 @@ namespace merlin {
 // Allocate non pageable memory
 float * allocate_memory(std::uint64_t size) {
     float * result = nullptr;
-    /*
     if (settings::cpu_mem_limit < size*sizeof(float)) {
         FAILURE(std::out_of_range, "Cannot allocate array with size bigger than limit (memory available %" PRIu64
                 ", allocation demands %" PRIu64 ".\n", settings::cpu_mem_limit, size*sizeof(float));
     }
-    */
     #ifndef __MERLIN_CUDA__
         #if defined(__MERLIN_WINDOWS__)
         void * temp_ = ::VirtualAlloc(NULL, sizeof(float) * size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);

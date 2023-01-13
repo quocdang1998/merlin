@@ -20,7 +20,11 @@ __cuhostdev__ std::uint64_t get_level_from_size(std::uint64_t size) noexcept;
  */
 __cuhostdev__ intvec hiearchical_index(std::uint64_t level, std::uint64_t size);
 
-/** @brief A set of multi-dimensional points.*/
+/** @brief Sparse grid.
+ *  @details A set of point in multi-dimensional space based on hierarchical basis. Here, the sparse grid is composed
+ *  of disjointed union of many multi-dimensional Cartesian grids, each associated with a level vector (an array of
+ *  level on each dimension). Each point in the grid belongs to a sub-grid, and associated to an index in the grid.
+ */
 class MERLIN_EXPORTS interpolant::SparseGrid : interpolant::Grid {
   public:
     /// @name Constructor
@@ -62,17 +66,18 @@ class MERLIN_EXPORTS interpolant::SparseGrid : interpolant::Grid {
      *  the number of dimesions.
      */
     __cuhostdev__ const intvec & level_vectors(void) const {return this->level_vectors_;}
+    /** @brief List of index of first point of each Cartesian sub-grid.*/
+    __cuhostdev__ const intvec & sub_grid_start_index(void) const {return this->sub_grid_start_index_;}
+    /** @brief Get number of Cartesian sub-grid.*/
     __cuhostdev__ std::uint64_t num_subgrid(void) const {return this->level_vectors_.size() / this->ndim();}
     /** @brief Number of points in the SparseGrid.*/
-    // __cuhostdev__ std::uint64_t size(void);
+    __cuhostdev__ std::uint64_t size(void);
     /// @}
 
     /// @name Grid levels
     /// @{
     /** @brief Max level on each dimension.*/
     __cuhostdev__ intvec max_levels(void);
-    /** @brief Calculate and save a list of valid level vectors taken in the grid.*/
-    void calc_level_vectors(void);
     /** @brief Get Cartesian Grid corresponding to a given level vector.*/
     interpolant::CartesianGrid get_cartesian_grid(const intvec & level_vector);
     /// @}
@@ -106,12 +111,20 @@ class MERLIN_EXPORTS interpolant::SparseGrid : interpolant::Grid {
     /** @brief Weight vector.*/
     intvec weight_;
 
+  private:
     /** @brief Begin iterator.*/
     intvec begin_;
     /** @brief End iterator.*/
     intvec end_;
     /** @brief Valid level vectors.*/
     intvec level_vectors_;
+    /** @brief Index relative to the full sparse grid of the first point of the Cartesian sub-grid corresponding to
+     *  each level vector.
+     */
+    intvec sub_grid_start_index_;
+
+    /** @brief Calculate and save a list of valid level vectors taken in the grid.*/
+    void calc_level_vectors(void);
 };
 
 }  // namespace merlin

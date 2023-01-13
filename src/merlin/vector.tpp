@@ -10,7 +10,7 @@ namespace merlin {
 template <typename T>
 __cuhostdev__ Vector<T>::Vector(std::initializer_list<T> data) : size_(data.size()) {
     this->data_ = new T[data.size()];
-    for (int i = 0; i < data.size(); i++) {
+    for (std::uint64_t i = 0; i < data.size(); i++) {
         this->data_[i] = data.begin()[i];
     }
 }
@@ -19,7 +19,7 @@ __cuhostdev__ Vector<T>::Vector(std::initializer_list<T> data) : size_(data.size
 template <typename T>
 __cuhostdev__ Vector<T>::Vector(std::uint64_t size, T value) : size_(size) {
     this->data_ = new T[size];
-    for (int i = 0; i < size; i++) {
+    for (std::uint64_t i = 0; i < size; i++) {
         this->data_[i] = value;
     }
 }
@@ -30,7 +30,7 @@ template <typename Convertable>
 __cuhostdev__ Vector<T>::Vector(const Convertable * ptr_first, const Convertable * ptr_last) {
     this->size_ = ptr_last - ptr_first;
     this->data_ = new T[this->size_];
-    for (int i = 0; i < this->size_; i++) {
+    for (std::uint64_t i = 0; i < this->size_; i++) {
         this->data_[i] = T(ptr_first[i]);
     }
 }
@@ -40,7 +40,7 @@ template <typename T>
 template <typename Convertable>
 __cuhostdev__ Vector<T>::Vector(const Convertable * ptr_src, std::uint64_t size) : size_(size) {
     this->data_ = new T[this->size_];
-    for (int i = 0; i < this->size_; i++) {
+    for (std::uint64_t i = 0; i < this->size_; i++) {
         this->data_[i] = T(ptr_src[i]);
     }
 }
@@ -49,7 +49,7 @@ __cuhostdev__ Vector<T>::Vector(const Convertable * ptr_src, std::uint64_t size)
 template <typename T>
 __cuhostdev__ Vector<T>::Vector(const Vector<T> & src) : size_(src.size_) {
     this->data_ = new T[this->size_];
-    for (int i = 0; i < src.size_; i++) {
+    for (std::uint64_t i = 0; i < src.size_; i++) {
         this->data_[i] = src.data_[i];
     }
 }
@@ -64,7 +64,7 @@ __cuhostdev__ Vector<T> & Vector<T>::operator=(const Vector<T> & src) {
     // copy new data
     this->size_ = src.size_;
     this->data_ = new T[this->size_];
-    for (int i = 0; i < src.size_; i++) {
+    for (std::uint64_t i = 0; i < src.size_; i++) {
         this->data_[i] = src.data_[i];
     }
     return *this;
@@ -106,15 +106,15 @@ void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
 
 // Copy data from CPU to a global memory on GPU
 template <typename T>
-void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr) {
+void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr) const {
     // initialize buffer to store data of the copy before cloning it to GPU
     Vector<T> copy_on_gpu;
     // copy data
-    cudaMemcpy(data_ptr, this->data_, this->size_*sizeof(T), cudaMemcpyHostToDevice);
+    ::cudaMemcpy(data_ptr, this->data_, this->size_*sizeof(T), cudaMemcpyHostToDevice);
     // copy metadata
     copy_on_gpu.data_ = reinterpret_cast<T *>(data_ptr);
     copy_on_gpu.size_ = this->size_;
-    cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(Vector<T>), cudaMemcpyHostToDevice);
+    ::cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(Vector<T>), cudaMemcpyHostToDevice);
     // nullify data on copy to avoid deallocate memory on CPU
     copy_on_gpu.data_ = nullptr;
 }
@@ -124,7 +124,7 @@ template <typename T>
 void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
     // copy data
     std::uintptr_t gpu_data = reinterpret_cast<std::uintptr_t>(gpu_ptr) + sizeof(Vector<T>);
-    cudaMemcpy(reinterpret_cast<T *>(gpu_data), this->data_,
+    ::cudaMemcpy(reinterpret_cast<T *>(gpu_data), this->data_,
                this->size_*sizeof(T), cudaMemcpyDeviceToHost);
 }
 
@@ -139,8 +139,8 @@ __cudevice__ void Vector<T>::copy_to_shared_mem(Vector<T> * share_ptr, void * da
         // copy size
         share_ptr->size_ = this->size_;
         share_ptr->data_ = reinterpret_cast<T *>(data_ptr);
-        // copy data in parallel
-        for (int i = 0; i < this->size_; i++) {
+        // copy data
+        for (std::uint64_t i = 0; i < this->size_; i++) {
             share_ptr->data_[i] = this->data_[i];
         }
     }

@@ -1,7 +1,7 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/nddata.hpp"
 
-#include <vector>  // std::vector
+#include <cinttypes>  // PRIu64
 
 #include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides
 #include "merlin/logger.hpp"  // FAILURE
@@ -45,25 +45,17 @@ array::NdData::NdData(const array::NdData & whole, const Vector<array::Slice> & 
                 static_cast<unsigned int>(whole.ndim_), static_cast<unsigned int>(slices.size()));
     }
     // create result
-    const array::Slice * slice_data = slices.cbegin();
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(whole.data_);
-    std::uintptr_t result_ndim = 0;
-    intvec new_shape(whole.ndim_, 0);
-    intvec new_strides(whole.ndim_, 0);
-    for (int i = 0; i < whole.ndim_; i++) {
-        auto [offset, shape, stride] = slice_data[i].slice_on(whole.shape_[i], whole.strides_[i]);
+    this->ndim_ = whole.ndim_;
+    this->shape_ = intvec(whole.ndim_);
+    this->strides_ = intvec(whole.ndim_);
+    for (std::uint64_t i_dim = 0; i_dim < whole.ndim_; i_dim++) {
+        auto [offset, shape, stride] = slices[i_dim].slice_on(whole.shape_[i_dim], whole.strides_[i_dim]);
         data_ptr += offset;
-        if (shape != 1) {
-            new_shape[result_ndim] = shape;
-            new_strides[result_ndim] = stride;
-            result_ndim++;
-        }
+        this->shape_[i_dim] = shape;
+        this->strides_[i_dim] = stride;
     }
-    // finalize
     this->data_ = reinterpret_cast<float *>(data_ptr);
-    this->ndim_ = (result_ndim == 0) ? 1 : result_ndim;
-    this->shape_ = (result_ndim == 0) ? intvec({1}) : intvec(new_shape.data(), result_ndim);
-    this->strides_ = (result_ndim == 0) ? intvec({sizeof(float)}) : intvec(new_strides.data(), result_ndim);
 }
 
 // Partite an array into multiple parts

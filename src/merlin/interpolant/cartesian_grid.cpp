@@ -39,7 +39,7 @@ interpolant::CartesianGrid::CartesianGrid(const Vector<floatvec> & grid_vectors)
 array::Array interpolant::CartesianGrid::grid_points(void) {
     // initialize table of grid points
     std::uint64_t npoint = this->size();
-    array::Array result({npoint, this->ndim()});
+    array::Array result(intvec({npoint, this->ndim()}));
     // assign value to each point
     intvec shape_ = this->grid_shape();
     for (int i = 0; i < npoint; i++) {
@@ -86,7 +86,7 @@ floatvec interpolant::CartesianGrid::operator[](const intvec & index) {
 }
 
 // Calculate minimum size to allocate to store the object
-std::uint64_t interpolant::CartesianGrid::malloc_size(void) {
+std::uint64_t interpolant::CartesianGrid::malloc_size(void) const {
     std::uint64_t size = sizeof(CartesianGrid) + this->ndim()*sizeof(floatvec);
     for (int i = 0; i < this->ndim(); i++) {
         size += this->grid_vectors_[i].size() * sizeof(float);
@@ -98,7 +98,7 @@ std::uint64_t interpolant::CartesianGrid::malloc_size(void) {
 #ifndef __MERLIN_CUDA__
 
 // Copy data to a pre-allocated memory
-void copy_to_gpu(interpolant::CartesianGrid * gpu_ptr, void * grid_vector_data_ptr) {
+void copy_to_gpu(interpolant::CartesianGrid * gpu_ptr, void * grid_vector_data_ptr) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
 }
 

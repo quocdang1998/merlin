@@ -87,10 +87,8 @@ cdef class Context:
         """pop_current(self)
         Pop the context out of the context stack.
         """
-        result = Context()
-        cdef CppContext * c_result = &self.core.pop_current()
-        result.c_assign(c_result)
-        return result
+        self.core.pop_current()
+        return self
 
     @classmethod
     def get_current(self):

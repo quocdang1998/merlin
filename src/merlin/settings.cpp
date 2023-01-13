@@ -3,6 +3,6 @@
 
 namespace merlin {
 
-extern std::uint64_t settings::cpu_mem_limit = 20 << 30;
+std::uint64_t settings::cpu_mem_limit = static_cast<std::uint64_t>(20) << 30;
 
 }  // namepsace merlin

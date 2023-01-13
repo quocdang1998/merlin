@@ -62,32 +62,46 @@ grid_vectors_(grid_vectors), max_(max), weight_(weight) {
 
 // Calculate valid level vectors
 void interpolant::SparseGrid::calc_level_vectors(void) {
-    // terminate if the lelvel vectors is already calculated
+    // terminate if the level vectors is already calculated
     if (this->level_vectors_.size() != 0) {
         return;
     }
     // calculate the full grids count
-    std::uint64_t full_grid_count = 1;
+    std::uint64_t num_subgrid_in_fullgrid = 1;
     intvec maxlevel = this->max_levels();
-    for (int i = 0; i < maxlevel.size(); i++) {
-        maxlevel[i] += 1;
-        full_grid_count *= maxlevel[i];
+    for (std::uint64_t i = 0; i < maxlevel.size(); i++) {
+        num_subgrid_in_fullgrid *= ++maxlevel[i];
     }
-    // loop over each grid index and see if it is in the sparse grid
-    intvec levels_vectors(full_grid_count * this->ndim());
-    std::uint64_t sparse_grid_count = 0;
-    for (int i = 0; i < full_grid_count; i++) {
-        intvec grid_indx = contiguous_to_ndim_idx(i, maxlevel);
-        std::uint64_t alpha_l = inner_prod(grid_indx, this->weight_);
+    // loop over each subgrid index and see if it is in the sparse grid
+    intvec level_vector_storage(num_subgrid_in_fullgrid * this->ndim());
+    std::uint64_t num_subgrid_in_sparsegrid = 0;
+    for (std::uint64_t i_subgrid = 0; i_subgrid < num_subgrid_in_fullgrid; i_subgrid++) {
+        intvec subgrid_index = contiguous_to_ndim_idx(i_subgrid, maxlevel);
+        std::uint64_t alpha_l = inner_prod(subgrid_index, this->weight_);
         if (alpha_l > this->max_) {
-            continue;
+            continue;  // exclude if alpha_l > max
         }
-        for (int j = 0; j < this->ndim(); j++) {
-            levels_vectors[sparse_grid_count*this->ndim() + j] = grid_indx[j];
+        for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+            level_vector_storage[num_subgrid_in_sparsegrid*this->ndim() + i_dim] = subgrid_index[i_dim];
         }
-        ++sparse_grid_count;
+        ++num_subgrid_in_sparsegrid;
     }
-    this->level_vectors_ = intvec(levels_vectors.cbegin(), sparse_grid_count*this->ndim());
+    // resize by copying value to level_vectors
+    this->level_vectors_ = intvec(level_vector_storage.cbegin(), num_subgrid_in_sparsegrid*this->ndim());
+    // calculate start index of point for each level vector
+    this->sub_grid_start_index_ = intvec(num_subgrid_in_sparsegrid, 0);
+    for (std::uint64_t i_subgrid = 1; i_subgrid < num_subgrid_in_sparsegrid; i_subgrid++) {
+        std::uint64_t subgrid_size = 1;
+        std::uint64_t level_index = (i_subgrid-1) * this->ndim();
+        for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+            std::uint64_t & dim_level = this->level_vectors_[level_index + i_dim];
+            if (dim_level == 0) {
+                continue;
+            }
+            subgrid_size *= ((dim_level == 1) ? 2 : (1 << (dim_level-1)));
+        }
+        this->sub_grid_start_index_[i_subgrid] = this->sub_grid_start_index_[i_subgrid-1] + subgrid_size;
+    }
 }
 
 // Get Cartesian Grid corresponding to a given level vector

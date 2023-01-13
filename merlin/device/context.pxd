@@ -25,6 +25,8 @@ cdef extern from "merlin/cuda/context.hpp":
         uintptr_t get_context_ptr()
         CppDevice get_gpu() except +
         bint is_attached() except +
+        void increase_reference_count() except +
+        void decrease_reference_count() except +
         void push_current() except +
         CppContext & pop_current() except +
         bint is_current() except +

@@ -22,7 +22,7 @@ interpolant::RegularGrid::RegularGrid(std::uint64_t npoint, std::uint64_t ndim) 
         capacity <<= 1;
     }
     // allocate data
-    this->points_ = new array::Array({capacity, ndim});
+    this->points_ = new array::Array(intvec({capacity, ndim}));
 }
 
 // Construct a grid and copy data
@@ -38,14 +38,14 @@ interpolant::RegularGrid::RegularGrid(const array::Array & points) {
         capacity <<= 1;
     }
     // copy data from old array to new array
-    this->points_ = new array::Array({capacity, points.ndim()});
+    this->points_ = new array::Array(intvec({capacity, points.ndim()}));
     array_copy(this->points_, &points, std::memcpy);
 }
 
 // Copy constructor
 interpolant::RegularGrid::RegularGrid(const interpolant::RegularGrid & src) : npoint_(src.npoint_) {
     // copy data from old array to new array
-    this->points_ = new array::Array({src.capacity(), src.ndim()});
+    this->points_ = new array::Array(intvec({src.capacity(), src.ndim()}));
     std::memcpy(this->points_->data(), src.points_->data(), sizeof(float)*src.capacity()*src.ndim());
 }
 
@@ -53,7 +53,7 @@ interpolant::RegularGrid::RegularGrid(const interpolant::RegularGrid & src) : np
 interpolant::RegularGrid & interpolant::RegularGrid::operator=(const interpolant::RegularGrid & src) {
     this->npoint_ = src.npoint_;
     // copy data from old array to new array
-    this->points_ = new array::Array({src.capacity(), src.ndim()});
+    this->points_ = new array::Array(intvec({src.capacity(), src.ndim()}));
     std::memcpy(this->points_->data(), src.points_->data(), sizeof(float)*src.capacity()*src.ndim());
     return *this;
 }
@@ -105,7 +105,7 @@ void interpolant::RegularGrid::push_back(Vector<float> && point) {
     this->npoint_ += 1;
     if (this->npoint_ > this->capacity()) {
         // reallocate data
-        array::Array * new_location = new array::Array({2*this->capacity(), this->ndim()});
+        array::Array * new_location = new array::Array(intvec({2*this->capacity(), this->ndim()}));
         // copy data from old location to new location
         std::memcpy(new_location->data(), this->points_->data(), sizeof(float)*this->capacity()*this->ndim());
         delete this->points_;
@@ -121,7 +121,7 @@ void interpolant::RegularGrid::pop_back(void) {
     this->npoint_ -= 1;
     if (this->npoint_ <= this->capacity()/2) {
         // reallocate data
-        array::Array * new_location = new array::Array({this->capacity()/2, this->ndim()});
+        array::Array * new_location = new array::Array(intvec({this->capacity()/2, this->ndim()}));
         // copy data from old location to new location
         std::memcpy(new_location->data(), this->points_->data(), sizeof(float)*(this->capacity()/2)*this->ndim());
         delete this->points_;

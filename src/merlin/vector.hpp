@@ -87,13 +87,13 @@ class Vector {
     /// @name Transfer data from/to GPU
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the object and its data.*/
-    __cuhostdev__ std::uint64_t malloc_size(void) {return sizeof(Vector<T>) + this->size_*sizeof(T);}
+    __cuhostdev__ std::uint64_t malloc_size(void) const {return sizeof(Vector<T>) + this->size_*sizeof(T);}
     /** @brief Copy data from CPU to a pre-allocated memory on GPU.
      *  @details The object and its data is copied to the global memory of the GPU.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory storing the object.
      *  @param data_ptr Pre-allocated pointer to memory region storing data of the vector.
      */
-    void copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr);
+    void copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr) const;
     /** @brief Copy data from GPU to CPU.
      *  @param gpu_ptr Pointer to object on GPU global memory.
      */

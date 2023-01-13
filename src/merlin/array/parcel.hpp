@@ -82,14 +82,14 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
     /// @name GPU related features
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the object and its data.*/
-    std::uint64_t malloc_size(void) {return sizeof(Parcel) + 2*this->ndim_*sizeof(std::uint64_t);}
+    std::uint64_t malloc_size(void) const {return sizeof(Parcel) + 2*this->ndim_*sizeof(std::uint64_t);}
     /** @brief Copy meta-data (shape and strides) from CPU to a pre-allocated memory on GPU.
      *  @details The meta-data should be to the memory region that comes right after the copied object.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
      *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and
      *  stride vector.
      */
-    void copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr);
+    void copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr) const;
     #ifdef __NVCC__
     /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
      *  @note This operation is single-threaded.
@@ -103,7 +103,7 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
     /// @name Utils
     /// @{
     /** @brief Free current data hold by the object.*/
-    __cuhostdev__ void free_current_data(void);
+    void free_current_data(void);
     /// @}
 
     /// @name Destructor

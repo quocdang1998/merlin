@@ -145,7 +145,7 @@ void array::Parcel::set(std::uint64_t index, float value) {
 }
 
 // Copy data to a pre-allocated memory
-void array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr) {
+void array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr) const {
     // initialize buffer to store data of the copy before cloning it to GPU
     array::Parcel copy_on_gpu;
     // shallow copy of the current object

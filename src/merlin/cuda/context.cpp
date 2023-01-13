@@ -20,6 +20,16 @@ cuda::Context::Context(const cuda::Device & gpu, cuda::Context::Flags flag) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for context management.\n");
 }
 
+// Increase reference count
+void cuda::Context::increase_reference_count(void) {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for context management.\n");
+}
+
+// Decrease reference count
+void cuda::Context::decrease_reference_count(void) {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for context management.\n");
+}
+
 // Push the context to the stack
 void cuda::Context::push_current(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for context management.\n");

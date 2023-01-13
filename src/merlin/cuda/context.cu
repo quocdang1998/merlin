@@ -29,6 +29,15 @@ cuda::Context::Context(const cuda::Device & gpu, cuda::Context::Flags flag) {
     cuda::Context::m_.unlock();
 }
 
+// Increase reference count
+void cuda::Context::increase_reference_count(void) {
+    cuda::Context::shared_attributes[this->context_].reference_count += 1;
+}
+
+// Decrease reference count
+void cuda::Context::decrease_reference_count(void) {
+    cuda::Context::shared_attributes[this->context_].reference_count -= 1;
+}
 
 // Push the context to the stack
 void cuda::Context::push_current(void) {

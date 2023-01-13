@@ -48,16 +48,10 @@ class MERLIN_EXPORTS cuda::Context {
     cuda::Context & operator=(const cuda::Context & src) = delete;
     /** @brief Move constructor.*/
     Context(cuda::Context && src) {
-        if (src.context_ == 0) {
-            FAILURE(cuda_runtime_error, "Original context is a primary context.\n");
-        }
         this->context_ = std::exchange(src.context_, 0);
     }
     /** @brief Move assignment.*/
     cuda::Context & operator=(cuda::Context && src) {
-        if (src.context_ == 0) {
-            FAILURE(cuda_runtime_error, "Original context is a primary context.\n");
-        }
         this->context_ = std::exchange(src.context_, 0);
         return *this;
     }
@@ -76,6 +70,10 @@ class MERLIN_EXPORTS cuda::Context {
     };
     /** @brief Attributes of Context instances.*/
     static std::map<std::uintptr_t, cuda::Context::SharedAttribures> shared_attributes;
+    /** @brief Increase reference count.*/
+    void increase_reference_count(void);
+    /** @brief Decrease reference count.*/
+    void decrease_reference_count(void);
     /// @}
 
     /// @name Get attributes
