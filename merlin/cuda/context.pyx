@@ -11,9 +11,9 @@ cdef class Context:
 
         Parameters
         ----------
-        gpu: merlin.device.Device
+        gpu: merlin.cuda.Device
             GPU.
-        flag: merlin.device.ContextFlags
+        flag: merlin.cuda.ContextFlags
             Setting flag.
         """
         cdef Device gpu
@@ -33,7 +33,7 @@ cdef class Context:
             raise ValueError("Invalid keywords: " + ", ".join(k for k in kwargs.keys()))
 
     def __repr__(self):
-        return PyUnicode_FromString(self.core.repr().c_str())
+        return PyUnicode_FromString(self.core.str().c_str())
 
     def assign(self, uintptr_t ptr):
         """assign(self, ptr)
@@ -62,21 +62,6 @@ cdef class Context:
         """
         return <uintptr_t>(self.core)
 
-    def get_gpu(self):
-        """get_gpu(self)
-        Get GPU assigned to the context.
-        """
-        result = Device()
-        cdef CppDevice * c_result = new CppDevice(self.core.get_gpu())
-        result.c_assign(c_result)
-        return result
-
-    def is_attached(self):
-        """is_attached(self)
-        Check if the context is attached to CPU process.
-        """
-        return self.core.is_attached()
-
     def push_current(self):
         """push_current(self)
         Push the context to the context stack.
@@ -90,27 +75,57 @@ cdef class Context:
         self.core.pop_current()
         return self
 
-    @classmethod
-    def get_current(self):
-        result = Context()
-        cdef CppContext * c_result = new CppContext(move(CppContext.get_current()))
-        result.c_assign(c_result)
-        return result;
-
     def is_current(self):
         """is_current(self)
         Check if the context is the top of the context stack.
         """
         return self.core.is_current()
 
-    def set_current(self):
-        """set_current(self)
-        Set the context as the top context of the stack.
+    @classmethod
+    def get_current(self):
+        """get_current(self)
+        Get the current context.
         """
-        self.core.set_current()
+        result = Context()
+        cdef CppContext * c_result = new CppContext(move(CppContext.get_current()))
+        result.c_assign(c_result)
+        return result
+
+    @classmethod
+    def get_gpu_of_current_context(self):
+        """get_gpu_of_current_context(self)
+        Get the GPU currently associated to the current context.
+        """
+        cdef CppDevice c_device = CppContext.get_gpu_of_current_context()
+        return Device(id=c_device.id())
+
+    @classmethod
+    def get_flag_of_current_context(self):
+        """get_flag_of_current_context(self)
+        Get the setting flag of the current context.
+        """
+        cdef ContextFlags flag = CppContext.get_flag_of_current_context()
+        return ContextFlags(flag)
 
     def __eq__(Context left, Context right):
-        return left.core.get_context_ptr() == right.core.get_context_ptr()
+        return dereference(left.core) == dereference(right.core)
+
+    def __ne__(Context left, Context right):
+        return dereference(left.core) == dereference(right.core)
 
     def __dealloc__(self):
         del self.core
+
+def create_primary_context(Device gpu, ContextFlags flag):
+    """
+    Retain the primary context associated to a GPU and set the flag to that context.
+
+    Primary contexts are contexts shared with the CUDA driver API. There is a correspondance one-to-one between primary
+    contexts and GPU.
+    If the primary context of the GPU has been retained, the function only change the flag of the context.
+    """
+    result = Context()
+    cdef CppContext * c_result = new CppContext(cpp_create_primary_context(dereference(gpu.core), flag))
+    result.c_assign(c_result)
+    return result
+

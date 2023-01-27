@@ -61,6 +61,8 @@ class custom_du_build_ext(_du_build_ext):
         for undef in ext.undef_macros:
             macros.append((undef,))
         # compile step
+        if MERLIN_DEBUG:
+            self.debug = True
         objects = self.compiler.compile(
             sources,
             output_dir=self.build_temp,

@@ -37,8 +37,10 @@ class interpolant::CartesianInterpolant {
 float eval_lagrange_cpu(const interpolant::CartesianGrid * pgrid, const array::NdData * pcoeff,
                         const merlin::floatvec & x);
 
-array::Array calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid * pgrid, const array::Array * pvalue,
-                                      const Vector<array::Slice> & slices);
+void calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid * pgrid, const array::Array * pvalue,
+                                      const Vector<array::Slice> & slices, array::Array * presult);
+
+array::Array calc_lagrange_coeffs_cpu(const interpolant::SparseGrid * pgrid, const array::Array * pvalue);
 
 array::Array calc_lagrange_coeffs_gpu(const interpolant::CartesianGrid * pgrid, const array::Array * pvalue,
                                       const Vector<array::Slice> & slices,

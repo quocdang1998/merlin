@@ -1,6 +1,6 @@
 # Copyright 2022 quocdang1998
 
-cdef extern from "merlin/cuda/gpu_query.hpp":
+cdef extern from "merlin/cuda/device.hpp":
 
     cpdef enum class DeviceLimit "merlin::cuda::Device::Limit":
         """GPU limit flags.
@@ -26,7 +26,7 @@ cdef extern from "merlin/cuda/gpu_query.hpp":
         void print_specification() except +
         bint test_gpu() except +
         void set_as_current() except +
-        string repr() except +
+        string str() except +
         int & id() except +
 
         @staticmethod

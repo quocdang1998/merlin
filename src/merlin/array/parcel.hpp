@@ -8,7 +8,7 @@
 #include "merlin/array/nddata.hpp"  // merlin::array::Array, merlin::array::NdData
 #include "merlin/array/slice.hpp"  // merlin::array::Slice
 #include "merlin/cuda_decorator.hpp"  // __cudevice__, __cuhostdev__
-#include "merlin/cuda/gpu_query.hpp"  // merlin::cuda::Device
+#include "merlin/cuda/device.hpp"  // merlin::cuda::Device
 #include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/vector.hpp"  // merlin::intvec
@@ -89,7 +89,7 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
      *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and
      *  stride vector.
      */
-    void copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr) const;
+    void * copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr) const;
     #ifdef __NVCC__
     /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
      *  @note This operation is single-threaded.
@@ -97,7 +97,7 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
      *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and
      *  stride vector.
      */
-    __cudevice__ void copy_to_shared_mem(array::Parcel * share_ptr, void * shape_strides_ptr);
+    __cudevice__ void * copy_to_shared_mem(array::Parcel * share_ptr, void * shape_strides_ptr);
     #endif  // __NVCC__
 
     /// @name Utils

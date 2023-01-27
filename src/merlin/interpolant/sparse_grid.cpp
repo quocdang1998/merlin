@@ -47,7 +47,7 @@ namespace merlin {
 // Constructor isotropic grid from grid vectors
 interpolant::SparseGrid::SparseGrid(std::initializer_list<floatvec> grid_vectors) : grid_vectors_(grid_vectors) {
     check_validity(this->grid_vectors_);
-    this->max_ = get_level_from_size(this->grid_vectors_[0].size());
+    this->max_ = get_level_from_valid_size(this->grid_vectors_[0].size());
     this->weight_ = intvec(grid_vectors.size(), 1);
     this->calc_level_vectors();
 }
@@ -89,8 +89,8 @@ void interpolant::SparseGrid::calc_level_vectors(void) {
     // resize by copying value to level_vectors
     this->level_vectors_ = intvec(level_vector_storage.cbegin(), num_subgrid_in_sparsegrid*this->ndim());
     // calculate start index of point for each level vector
-    this->sub_grid_start_index_ = intvec(num_subgrid_in_sparsegrid, 0);
-    for (std::uint64_t i_subgrid = 1; i_subgrid < num_subgrid_in_sparsegrid; i_subgrid++) {
+    this->sub_grid_start_index_ = intvec(num_subgrid_in_sparsegrid+1, 0);
+    for (std::uint64_t i_subgrid = 1; i_subgrid < this->sub_grid_start_index_.size(); i_subgrid++) {
         std::uint64_t subgrid_size = 1;
         std::uint64_t level_index = (i_subgrid-1) * this->ndim();
         for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
@@ -105,7 +105,7 @@ void interpolant::SparseGrid::calc_level_vectors(void) {
 }
 
 // Get Cartesian Grid corresponding to a given level vector
-interpolant::CartesianGrid interpolant::SparseGrid::get_cartesian_grid(const intvec & level_vector) {
+interpolant::CartesianGrid interpolant::SparseGrid::get_cartesian_grid(const intvec & level_vector) const {
     // check for valid level vector
     intvec maxlevel = this->max_levels();
     if (level_vector.size() != this->ndim()) {
@@ -125,5 +125,26 @@ interpolant::CartesianGrid interpolant::SparseGrid::get_cartesian_grid(const int
 
 // Destructor
 interpolant::SparseGrid::~SparseGrid(void) {}
+
+// Retrieve values of points in the sparse grid from a full Cartesian array of value
+array::Array get_element_from_cartesian_array(const interpolant::SparseGrid & grid, const array::NdData & value) {
+    // check size
+    if (grid.ndim() != value.ndim()) {
+        FAILURE(std::invalid_argument, "Expected grid and value array have equal number of dimension.\n");
+    }
+    std::uint64_t ndim = grid.ndim();
+    for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
+        if (grid.grid_vectors()[i_dim].size() != value.shape()[i_dim]) {
+            FAILURE(std::invalid_argument, "The grid and the value array should have the same shape.\n");
+        }
+    }
+    // get element by index
+    array::Array result(intvec({grid.size()}));
+    for (std::uint64_t i = 0; i < result.size(); i++) {
+        intvec index_in_full_grid = grid.index_from_contiguous(i);
+        result.set(i, value.get(index_in_full_grid));
+    }
+    return result;
+}
 
 }  // namespace merlin

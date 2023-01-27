@@ -24,4 +24,14 @@ int main(void) {
     }
 
     merlin::array::Array ar = cart_gr.grid_points();
+
+    merlin::interpolant::CartesianGrid gr_1({{1.0, 2.0}, {0.3, 0.4, 0.5}});
+    merlin::interpolant::CartesianGrid gr_2({{3.0, 4.0}, {0.1, 0.2, 0.4}});
+    merlin::interpolant::CartesianGrid gr_union = gr_1 + gr_2;
+    MESSAGE("Vector of union:\n");
+    for (int i = 0; i < gr_union.ndim(); i++) {
+        const merlin::floatvec & v = gr_union.grid_vectors()[i];
+        std::printf("%s", v.str().c_str());
+        std:printf("\n");
+    }
 }

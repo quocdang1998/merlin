@@ -24,7 +24,7 @@ array::Parcel::Parcel(const array::Array & cpu_array, const cuda::Stream & strea
         FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", cudaGetErrorString(err_));
     }
     // cast stream
-    cudaStream_t copy_stream = reinterpret_cast<cudaStream_t>(stream.stream());
+    cudaStream_t copy_stream = reinterpret_cast<cudaStream_t>(stream.get_stream_ptr());
     // reset strides vector
     this->strides_ = array::contiguous_strides(this->shape_, sizeof(float));
     // create copy function
@@ -145,7 +145,7 @@ void array::Parcel::set(std::uint64_t index, float value) {
 }
 
 // Copy data to a pre-allocated memory
-void array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr) const {
+void * array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr) const {
     // initialize buffer to store data of the copy before cloning it to GPU
     array::Parcel copy_on_gpu;
     // shallow copy of the current object
@@ -155,12 +155,13 @@ void array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_pt
     // copy temporary object to GPU
     cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(array::Parcel), cudaMemcpyHostToDevice);
     // copy shape and strides data
-    this->shape_.copy_to_gpu(&(gpu_ptr->shape_), reinterpret_cast<std::uint64_t *>(shape_strides_ptr));
-    this->strides_.copy_to_gpu(&(gpu_ptr->strides_), reinterpret_cast<std::uint64_t *>(shape_strides_ptr)+this->ndim_);
+    void * strides_data_ptr_gpu = this->shape_.copy_to_gpu(&(gpu_ptr->shape_), shape_strides_ptr);
+    void * result_ptr = this->strides_.copy_to_gpu(&(gpu_ptr->strides_), strides_data_ptr_gpu);
     // nullify data pointer to avoid free data
     copy_on_gpu.data_ = nullptr;
     copy_on_gpu.shape_.data() = nullptr;
     copy_on_gpu.strides_.data() = nullptr;
+    return result_ptr;
 }
 
 // Free old data

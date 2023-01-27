@@ -1,5 +1,5 @@
 // Copyright 2022 quocdang1998
-#include "merlin/cuda/gpu_query.hpp"
+#include "merlin/cuda/device.hpp"
 
 #include "merlin/logger.hpp"  // CUHDERR
 
@@ -22,24 +22,24 @@ __cuhostdev__ cuda::Device::Device(int id) {
     #endif  // __MERLIN_CUDA__
 }
 
-// Get total number of GPU
-__cuhostdev__ int cuda::Device::get_num_gpu(void) {
-    #ifdef __MERLIN_CUDA__
-    int count;
-    ::cudaGetDeviceCount(&count);
-    return count;
-    #else
-    FAILURE(cuda_compile_error, "Enable option MERLIN_CUDA at compilation to use this feature.\n");
-    return 0;
-    #endif  // __MERLIN_CUDA__
-}
-
 // Get instance point to current GPU
 __cuhostdev__ cuda::Device cuda::Device::get_current_gpu(void) {
     #ifdef __MERLIN_CUDA__
     int current_device;
     ::cudaGetDevice(&current_device);
     return cuda::Device(current_device);
+    #else
+    FAILURE(cuda_compile_error, "Enable option MERLIN_CUDA at compilation to use this feature.\n");
+    return 0;
+    #endif  // __MERLIN_CUDA__
+}
+
+// Get total number of GPU
+__cuhostdev__ int cuda::Device::get_num_gpu(void) {
+    #ifdef __MERLIN_CUDA__
+    int count;
+    ::cudaGetDeviceCount(&count);
+    return count;
     #else
     FAILURE(cuda_compile_error, "Enable option MERLIN_CUDA at compilation to use this feature.\n");
     return 0;

@@ -218,6 +218,11 @@ body {
     background: var(--nav-l23-background);
 }
 
+.wy-menu-vertical li.toctree-l3.current>a,
+.wy-menu-vertical li.toctree-l3.current li.toctree-l4>a {
+    background: var(--nav-l23-background);
+}
+
 /* search link */
 #search-results .search li a {
     font-size: 100%;
@@ -231,34 +236,6 @@ body {
 /* mobile nav top */
 .wy-nav-top {
     background: var(--nav-title);
-}
-
-/* ============================================================================
- DARKMODE BUTTON
-============================================================================ */
-
-/* darmode button */
-button#darkmode-button {
-    display: block;
-    float: right;
-    border: none;
-    height: 38px;
-    background: none;
-}
-
-.button-image {
-    width: 24px;
-    height: 24px;
-    padding: 0;
-}
-
-img#sun-button {
-    display: var(--sun-display);
-    filter: invert(0.95);
-}
-
-img#moon-button {
-    display: var(--moon-display);
 }
 
 

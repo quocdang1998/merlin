@@ -4,6 +4,7 @@
 
 #include <cstdint>  // std::uintptr_t
 #include <cstdio>  // std::FILE
+#include <string>  // std::string
 
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 
@@ -62,6 +63,11 @@ class MERLIN_EXPORTS FileLock {
     /** @brief Exclusively unlock file.*/
     void unlock(void);
     /// @}
+
+    /// @name String representation
+    /// @{
+    /** @brief String representation.*/
+    std::string str() const;
 
     /// @name Destructor
     /// @{

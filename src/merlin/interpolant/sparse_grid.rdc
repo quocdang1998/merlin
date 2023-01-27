@@ -5,59 +5,26 @@
 #include <cinttypes>  // PRIu64
 
 #include "merlin/logger.hpp"  // CUHDERR
-
-// --------------------------------------------------------------------------------------------------------------------
-// Utils
-// --------------------------------------------------------------------------------------------------------------------
+#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::get_level_from_valid_size
+                             // merlin::hiearchical_index, merlin::get_level_shape
 
 namespace merlin {
-
-// Get the level from a given valid size
-__cuhostdev__ std::uint64_t get_level_from_size(std::uint64_t size) noexcept {
-    size -= 1;
-    std::uint64_t level = 0;
-    while(size >>= 1) {
-        ++level;
-    }
-    return level;
-}
-
-__cuhostdev__ intvec hiearchical_index(std::uint64_t level, std::uint64_t size) {
-    // check level validity
-    std::uint64_t max_level = get_level_from_size(size);
-    if (level > max_level) {
-        CUHDERR(std::invalid_argument, "Expected level less than %" PRIu64 ", got %" PRIu64 ".\n", max_level, level);
-    }
-    // trivial cases
-    if (level == 0) {
-        return intvec{(size - 1) / 2};
-    } else if (level == 1) {
-        return intvec{0, (size - 1)};
-    }
-    // normal cases: calculate the jump and loop over each odd number
-    std::uint64_t jump = 1 << (max_level - level);
-    intvec indices(1 << (level - 1));
-    for (int i = 0; i < indices.size(); i++) {
-        indices[i] = jump * (2*i + 1);
-    }
-    return indices;
-}
 
 // --------------------------------------------------------------------------------------------------------------------
 // SparseGrid
 // --------------------------------------------------------------------------------------------------------------------
 
 // Max level per dimension
-__cuhostdev__ intvec interpolant::SparseGrid::max_levels(void) {
+__cuhostdev__ intvec interpolant::SparseGrid::max_levels(void) const {
     intvec result(this->ndim(), 0);
     for (int i = 0; i < result.size(); i++) {
-        result[i] = get_level_from_size(this->grid_vectors_[i].size());
+        result[i] = get_level_from_valid_size(this->grid_vectors_[i].size());
     }
     return result;
 }
 
 // Number of points in grid
-__cuhostdev__ std::uint64_t interpolant::SparseGrid::size(void) {
+__cuhostdev__ std::uint64_t interpolant::SparseGrid::size(void) const {
     std::uint64_t num_subgrid = this->num_subgrid();
     std::uint64_t ndim = this->ndim();
     std::uint64_t result = 0;
@@ -65,7 +32,7 @@ __cuhostdev__ std::uint64_t interpolant::SparseGrid::size(void) {
         std::uint64_t subgrid_size = 1;
         std::uint64_t level_index = i_subgrid * ndim;
         for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
-            std::uint64_t & dim_level = this->level_vectors_[level_index + i_dim];
+            const std::uint64_t & dim_level = this->level_vectors_[level_index + i_dim];
             if (dim_level == 0) {
                 continue;
             }
@@ -73,6 +40,33 @@ __cuhostdev__ std::uint64_t interpolant::SparseGrid::size(void) {
         }
         result += subgrid_size;
     }
+    return result;
+}
+
+// Index of point in grid given its contiguous order
+__cuhostdev__ intvec interpolant::SparseGrid::index_from_contiguous(std::uint64_t contiguous_index) const {
+    // determine i_level
+    std::uint64_t i_level;
+    for (i_level = 0; i_level < this->ndim(); i_level++) {
+        if (contiguous_index < this->sub_grid_start_index_[i_level+1]) {
+            break;
+        }
+    }
+    std::uint64_t contiguous_index_in_level = contiguous_index - this->sub_grid_start_index_[i_level];
+    // calculate level shape
+    intvec level_vector;
+    level_vector.data() = const_cast<std::uint64_t *>(&(this->level_vectors_[i_level * this->ndim()]));
+    level_vector.size() = this->ndim();
+    intvec level_shape = get_level_shape(level_vector);
+    // get index wrt full grid
+    intvec ndim_index_in_level = contiguous_to_ndim_idx(contiguous_index_in_level, level_shape);
+    intvec result(this->ndim());
+    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+        intvec full_grid_index = hiearchical_index(level_vector[i_dim], this->grid_vectors_[i_dim].size());
+        result[i_dim] = full_grid_index[ndim_index_in_level[i_dim]];
+    }
+    // for pointer of level_vector to nullptr to prevent double deallocation
+    level_vector.data() = nullptr;
     return result;
 }
 

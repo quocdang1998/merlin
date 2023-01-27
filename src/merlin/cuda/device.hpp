@@ -1,20 +1,13 @@
 // Copyright 2022 quocdang1998
-#ifndef MERLIN_CUDA_GPU_QUERY_HPP_
-#define MERLIN_CUDA_GPU_QUERY_HPP_
+#ifndef MERLIN_CUDA_DEVICE_HPP_
+#define MERLIN_CUDA_DEVICE_HPP_
 
 #include <cstdint>  // std::uint64_t, UINT64_MAX
-#include <map>  // std::map
 #include <string>  // std::string
 
+#include "merlin/cuda/declaration.hpp"  // merlin::cuda::Device
 #include "merlin/cuda_decorator.hpp"  // __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
-
-namespace merlin::cuda {
-class Device;  // GPU device
-class Context;  // CUDA runtime context
-class Stream;  // CUDA streams (queues of tasks)
-class Event;  // CUDA events (milestone in the stream)
-}  // namespace merlin::cuda
 
 namespace merlin {
 
@@ -55,6 +48,14 @@ class MERLIN_EXPORTS cuda::Device {
     }
     /// @}
 
+    /// @name Get members
+    /// @{
+    /** @brief Get reference to GPU ID.*/
+    __cuhostdev__ int & id(void) noexcept {return this->id_;}
+    /** @brief Get constant reference to GPU ID.*/
+    __cuhostdev__ constexpr const int & id(void) const noexcept {return this->id_;}
+    /// @}
+
     /// @name GPU query
     /// @{
     /** @brief Get current GPU.*/
@@ -62,12 +63,12 @@ class MERLIN_EXPORTS cuda::Device {
     /** @brief Get total number of CUDA capable GPU.*/
     __cuhostdev__ static int get_num_gpu(void);
     /** @brief Print GPU specifications.*/
-    void print_specification(void);
+    void print_specification(void) const;
     /** @brief Test functionality of GPU.
      *  @details This function tests if the installed CUDA is compatible with the GPU driver by perform an addition of
      *  two integers on GPU.
      */
-    bool test_gpu(void);
+    bool test_gpu(void) const;
     /// @}
 
     /// @name GPU action
@@ -82,24 +83,24 @@ class MERLIN_EXPORTS cuda::Device {
      *  @details Destroy all allocations and reset all state on the current device in the current process.
      */
     static void reset_all(void);
-    /** @brief Compare 2 GPU.*/
-    friend bool operator==(const cuda::Device & left, const cuda::Device & right) {return left.id_ == right.id_;}
-    /** @brief Compare 2 GPU.*/
-    friend bool operator!=(const cuda::Device & left, const cuda::Device & right) {return left.id_ != right.id_;}
     /// @}
 
-    /// @name Get members
+    /// @name Comparison
     /// @{
-    /** @brief Get reference to GPU ID.*/
-    __cuhostdev__ int & id(void) {return this->id_;}
-    /** @brief Get constant reference to GPU ID.*/
-    __cuhostdev__ const int & id(void) const {return this->id_;}
+    /** @brief Identical comparison operator.*/
+    friend bool constexpr operator==(const cuda::Device & left, const cuda::Device & right) noexcept {
+        return left.id_ == right.id_;
+    }
+    /** @brief Different comparison operator.*/
+    friend bool constexpr operator!=(const cuda::Device & left, const cuda::Device & right) noexcept {
+        return left.id_ != right.id_;
+    }
     /// @}
 
     /// @name Representation
     /// @{
     /** @brief String representation.*/
-    std::string repr(void);
+    std::string str(void) const;
     /// @}
 
     /// @name Destructor
@@ -131,4 +132,4 @@ MERLIN_EXPORTS bool test_all_gpu(void);
 
 }  // namespace merlin
 
-#endif  // MERLIN_CUDA_GPU_QUERY_HPP_
+#endif  // MERLIN_CUDA_DEVICE_HPP_

@@ -2,13 +2,16 @@
 #ifndef MERLIN_VECTOR_TPP_
 #define MERLIN_VECTOR_TPP_
 
+#include <sstream>  // std::ostringstream
+#include <type_traits>  // std::is_arithmetic_v, std::is_constructible_v, std::is_copy_assignable_v
+
 #include "merlin/logger.hpp"  // FAILURE
 
 namespace merlin {
 
 // Constructor from initializer list
 template <typename T>
-__cuhostdev__ Vector<T>::Vector(std::initializer_list<T> data) : size_(data.size()) {
+__cuhostdev__ Vector<T>::Vector(std::initializer_list<T> data) noexcept : size_(data.size()) {
     this->data_ = new T[data.size()];
     for (std::uint64_t i = 0; i < data.size(); i++) {
         this->data_[i] = data.begin()[i];
@@ -17,10 +20,16 @@ __cuhostdev__ Vector<T>::Vector(std::initializer_list<T> data) : size_(data.size
 
 // Constructor from size and fill-in value
 template <typename T>
-__cuhostdev__ Vector<T>::Vector(std::uint64_t size, T value) : size_(size) {
+__cuhostdev__ Vector<T>::Vector(std::uint64_t size, const T & value) : size_(size) {
+    static_assert(std::is_copy_constructible_v<T> || std::is_copy_assignable_v<T>,
+                  "Desired type is not copy constructible or copy assignable.\n");
     this->data_ = new T[size];
     for (std::uint64_t i = 0; i < size; i++) {
-        this->data_[i] = value;
+        if constexpr (std::is_copy_assignable_v<T>) {
+            this->data_[i] = value;
+        } else if constexpr (std::is_copy_constructible_v<T>) {
+            new (&(this->data_[i])) T(value); 
+        }
     }
 }
 
@@ -28,6 +37,7 @@ __cuhostdev__ Vector<T>::Vector(std::uint64_t size, T value) : size_(size) {
 template <typename T>
 template <typename Convertable>
 __cuhostdev__ Vector<T>::Vector(const Convertable * ptr_first, const Convertable * ptr_last) {
+    static_assert(std::is_constructible_v<T, Convertable>, "Destination type is not constructable from original type.\n");
     this->size_ = ptr_last - ptr_first;
     this->data_ = new T[this->size_];
     for (std::uint64_t i = 0; i < this->size_; i++) {
@@ -39,6 +49,7 @@ __cuhostdev__ Vector<T>::Vector(const Convertable * ptr_first, const Convertable
 template <typename T>
 template <typename Convertable>
 __cuhostdev__ Vector<T>::Vector(const Convertable * ptr_src, std::uint64_t size) : size_(size) {
+    static_assert(std::is_constructible_v<T, Convertable>, "Destination type is not constructable from original type.\n");
     this->data_ = new T[this->size_];
     for (std::uint64_t i = 0; i < this->size_; i++) {
         this->data_[i] = T(ptr_src[i]);
@@ -92,8 +103,9 @@ __cuhostdev__ Vector<T> & Vector<T>::operator=(Vector<T> && src) {
 
 // Copy data from CPU to a global memory on GPU
 template <typename T>
-void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr) {
+void * Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access this feature.\n");
+    return nullptr;
 }
 
 // Copy data from GPU to CPU
@@ -106,7 +118,7 @@ void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
 
 // Copy data from CPU to a global memory on GPU
 template <typename T>
-void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr) const {
+void * Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr) const {
     // initialize buffer to store data of the copy before cloning it to GPU
     Vector<T> copy_on_gpu;
     // copy data
@@ -117,6 +129,8 @@ void Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr) const {
     ::cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(Vector<T>), cudaMemcpyHostToDevice);
     // nullify data on copy to avoid deallocate memory on CPU
     copy_on_gpu.data_ = nullptr;
+    std::uintptr_t ptr_end = reinterpret_cast<std::uintptr_t>(data_ptr) + this->size_*sizeof(T);
+    return reinterpret_cast<void *>(ptr_end);
 }
 
 // Copy data from GPU to CPU
@@ -133,7 +147,7 @@ void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
 #ifdef __NVCC__
 // Copy to shared memory
 template <typename T>
-__cudevice__ void Vector<T>::copy_to_shared_mem(Vector<T> * share_ptr, void * data_ptr) {
+__cudevice__ void * Vector<T>::copy_to_shared_mem(Vector<T> * share_ptr, void * data_ptr) {
     bool check_zeroth_thread = (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
     if (check_zeroth_thread) {
         // copy size
@@ -145,8 +159,55 @@ __cudevice__ void Vector<T>::copy_to_shared_mem(Vector<T> * share_ptr, void * da
         }
     }
     __syncthreads();
+    std::uintptr_t ptr_end = reinterpret_cast<std::uint64_t>(data_ptr) + this->size_*sizeof(T);
+    return reinterpret_cast<void *>(ptr_end);
 }
 #endif
+
+// String representation for types printdable to std::ostream
+template <typename T>
+std::string Vector<T>::str(const char * sep) const {
+    std::ostringstream os;
+    for (std::uint64_t i = 0; i < this->size_; i++) {
+        if constexpr (std::is_arithmetic_v<T>) {
+            os << this->data_[i];
+        } else {
+            os << this->data_[i].str();
+        }
+        if (i != this->size_-1) {
+            os << sep;
+        }
+    }
+    return os.str();
+}
+
+// Identical comparison operator
+template <typename T>
+__cuhostdev__ bool operator==(const Vector<T> & vec_1, const Vector<T> & vec_2) noexcept {
+    if (vec_1.size_ != vec_2.size_) {
+        return false;
+    }
+    for (std::uint64_t i = 0; i < vec_1.size_; i++) {
+        if (vec_1.data_[i] != vec_2.data_[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Difference comparison operator
+template <typename T>
+__cuhostdev__ bool operator!=(const Vector<T> & vec_1, const Vector<T> & vec_2) noexcept {
+    if (vec_1.size_ != vec_2.size_) {
+        return true;
+    }
+    for (std::uint64_t i = 0; i < vec_1.size_; i++) {
+        if (vec_1.data_[i] != vec_2.data_[i]) {
+            return true;
+        }
+    }
+    return false;
+}
 
 // Destructor
 template <typename T>

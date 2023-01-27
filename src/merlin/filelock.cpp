@@ -2,6 +2,7 @@
 #include "merlin/filelock.hpp"
 
 #include <ios>  // std::ios_base::failure
+#include <sstream>  // std::ostringstream
 
 #include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
 #include "merlin/logger.hpp"  // FAILURE
@@ -209,5 +210,12 @@ bool FileLock::try_lock_shared(void) {
 }
 
 #endif  // __MERLIN_LINUX__
+
+// String representation
+std::string FileLock::str() const {
+    std::ostringstream os;
+    os << "<Filelock for file descriptor: " << this->file_descriptor << ">";
+    return os.str();
+}
 
 }  // namespace merlin

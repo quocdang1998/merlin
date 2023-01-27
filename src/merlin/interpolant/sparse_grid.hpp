@@ -11,15 +11,6 @@
 
 namespace merlin {
 
-/** @brief Get the level from a given valid size.*/
-__cuhostdev__ std::uint64_t get_level_from_size(std::uint64_t size) noexcept;
-
-/** @brief Index at a given level of a 1D grid.
- *  @param level Level to get index.
- *  @param size Size of 1D grid level.
- */
-__cuhostdev__ intvec hiearchical_index(std::uint64_t level, std::uint64_t size);
-
 /** @brief Sparse grid.
  *  @details A set of point in multi-dimensional space based on hierarchical basis. Here, the sparse grid is composed
  *  of disjointed union of many multi-dimensional Cartesian grids, each associated with a level vector (an array of
@@ -71,19 +62,21 @@ class MERLIN_EXPORTS interpolant::SparseGrid : interpolant::Grid {
     /** @brief Get number of Cartesian sub-grid.*/
     __cuhostdev__ std::uint64_t num_subgrid(void) const {return this->level_vectors_.size() / this->ndim();}
     /** @brief Number of points in the SparseGrid.*/
-    __cuhostdev__ std::uint64_t size(void);
+    __cuhostdev__ std::uint64_t size(void) const;
     /// @}
 
     /// @name Grid levels
     /// @{
     /** @brief Max level on each dimension.*/
-    __cuhostdev__ intvec max_levels(void);
+    __cuhostdev__ intvec max_levels(void) const;
     /** @brief Get Cartesian Grid corresponding to a given level vector.*/
-    interpolant::CartesianGrid get_cartesian_grid(const intvec & level_vector);
+    interpolant::CartesianGrid get_cartesian_grid(const intvec & level_vector) const;
     /// @}
 
     /// @name Iterator
     /// @{
+    /** @brief Index of point in grid given its contiguous order.*/
+    __cuhostdev__ intvec index_from_contiguous(std::uint64_t contiguous_index) const;
     /** @brief RegularGrid iterator.*/
     // using iterator = Iterator;
     /** @brief Begin iterator.*/
@@ -126,6 +119,9 @@ class MERLIN_EXPORTS interpolant::SparseGrid : interpolant::Grid {
     /** @brief Calculate and save a list of valid level vectors taken in the grid.*/
     void calc_level_vectors(void);
 };
+
+/** @brief Retrieve values of points in the sparse grid from a full Cartesian array of value.*/
+array::Array get_element_from_cartesian_array(const interpolant::SparseGrid & grid, const array::NdData & value);
 
 }  // namespace merlin
 

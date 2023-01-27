@@ -13,7 +13,8 @@ int main(void) {
 
     merlin::interpolant::CartesianGrid grid({{0.0, 1.0}, {0.0, 1.0, 2.0}});
     merlin::Vector<merlin::array::Slice> slices(ndim);
-    merlin::array::Array coeff = merlin::calc_lagrange_coeffs_cpu(&grid, &value, slices);
+    merlin::array::Array coeff(value.shape());
+    merlin::calc_lagrange_coeffs_cpu(&grid, &value, slices, &coeff);
 
     for (merlin::array::Array::iterator it = coeff.begin(); it != coeff.end(); ++it) {
         MESSAGE("Coefficient of index (%d, %d) : %f.\n", int(it.index()[0]), int(it.index()[1]), coeff.get(it.index()));

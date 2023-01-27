@@ -12,6 +12,9 @@ setup_cfg/config.py
 # Python __init__.py
 merlin/__init__.py
 
+# Ignore VC debug file
+*.pdb
+
 # Ignore folder starts with .
 .*
 !/.gitignore

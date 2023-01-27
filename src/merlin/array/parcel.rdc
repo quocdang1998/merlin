@@ -34,7 +34,7 @@ __cudevice__ float & array::Parcel::operator[](std::initializer_list<std::uint64
 }
 
 // Copy to shared memory
-__cudevice__ void array::Parcel::copy_to_shared_mem(array::Parcel * share_ptr, void * shape_strides_ptr) {
+__cudevice__ void * array::Parcel::copy_to_shared_mem(array::Parcel * share_ptr, void * shape_strides_ptr) {
     // copy meta data
     bool check_zeroth_thread = (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
     if (check_zeroth_thread) {
@@ -43,9 +43,9 @@ __cudevice__ void array::Parcel::copy_to_shared_mem(array::Parcel * share_ptr, v
     }
     __syncthreads();
     // copy shape and strides
-    this->shape_.copy_to_shared_mem(&(share_ptr->shape_), reinterpret_cast<std::uint64_t *>(shape_strides_ptr));
-    this->strides_.copy_to_shared_mem(&(share_ptr->strides_),
-                                      reinterpret_cast<std::uint64_t *>(shape_strides_ptr)+this->ndim_);
+    void * strides_data_ptr = this->shape_.copy_to_shared_mem(&(share_ptr->shape_), shape_strides_ptr);
+    void * result = this->strides_.copy_to_shared_mem(&(share_ptr->strides_), strides_data_ptr);
+    return result;
 }
 
 #endif  //  __NVCC__

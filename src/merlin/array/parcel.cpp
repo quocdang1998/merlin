@@ -48,8 +48,9 @@ array::Parcel & array::Parcel::operator=(array::Parcel && src) {
 }
 
 // Copy data to a pre-allocated memory
-void array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr) const {
+void * array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
+    return nullptr;
 }
 
 // Free old data

@@ -6,8 +6,10 @@ from libc.stdint cimport uint64_t, uintptr_t, UINT64_MAX
 from libcpp.string cimport string
 from libcpp.utility cimport move, pair
 
-include "gpu_query.pxd"
+include "device.pxd"
 include "context.pxd"
+include "stream.pxd"
 
-include "gpu_query.pyx"
+include "device.pyx"
 include "context.pyx"
+include "stream.pyx"

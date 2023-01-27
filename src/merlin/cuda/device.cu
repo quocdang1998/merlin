@@ -1,7 +1,6 @@
 // Copyright 2022 quocdang1998
-#include "merlin/cuda/gpu_query.hpp"
+#include "merlin/cuda/device.hpp"
 
-#include <cstdint>  // std::uintptr_t
 #include <cstdio>  // std::printf
 #include <map>  // std::map
 #include <sstream>  // std::ostringstream
@@ -57,7 +56,7 @@ __global__ static void add_2_int_on_gpu(int * p_a, int * p_b, int * p_result) {
 namespace merlin {
 
 // Print limit of device
-void cuda::Device::print_specification(void) {
+void cuda::Device::print_specification(void) const {
     if (this->id_ == -1) {
         WARNING("Device initialized without a valid id (id = %d).\n", this->id_);
     }
@@ -96,7 +95,7 @@ void cuda::Device::print_specification(void) {
 }
 
 // Test functionality of a GPU
-bool cuda::Device::test_gpu(void) {
+bool cuda::Device::test_gpu(void) const {
     // initialize
     int cpu_int[3] = {2, 4, 0};
     int * gpu_int;
@@ -145,7 +144,6 @@ void cuda::Device::set_as_current(void) const {
     cuda::Context current = cuda::Context::get_current();
     // set GPU to current context
     ::cudaSetDevice(this->id_);
-    Context::shared_attributes[current.get_context_ptr()].device = cuda::Device(this->id_);
 }
 
 // Get and set GPU limit
@@ -172,7 +170,7 @@ void cuda::Device::reset_all(void) {
 }
 
 // String representation
-std::string cuda::Device::repr(void) {
+std::string cuda::Device::str(void) const {
     char name[256];
     ::cuDeviceGetName(name, sizeof(name), this->id_);
     std::ostringstream os;
@@ -209,4 +207,4 @@ bool cuda::test_all_gpu(void) {
     return result;
 }
 
-}  // namespace merlin::cuda
+}  // namespace merlin

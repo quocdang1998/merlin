@@ -12,9 +12,10 @@ set(CMAKE_CXX_STANDARD 17)
 
 # options
 set(MERLIN_CUDA ON CACHE BOOL "Build library using CUDA")  # -DMERLIN_CUDA=OFF
+set(MERLIN_DEBUG OFF CACHE BOOL "Print stacktrace")  # -DMERLIN_DEBUG=ON
 set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
     CACHE INTERNAL "Type of the created library (static or shared/dynamic)")
-set(MERLIN_TEST OFF CACHE BOOL "Build test executables")  # -DMERLIN_TEST=ON
+set(MERLIN_TEST ON CACHE BOOL "Build test executables")  # -DMERLIN_TEST=ON
 
 # source list
 list(APPEND MERLIN_SRC_CPP
@@ -23,8 +24,10 @@ list(APPEND MERLIN_SRC_CPP
      array/parcel.cpp
      array/stock.cpp
      # src/autodiff.cpp
-     cuda/gpu_query.cpp
      cuda/context.cpp
+     cuda/device.cpp
+     cuda/event.cpp
+     cuda/stream.cpp
      filelock.cpp
      iterator.cpp
      interpolant/cartesian_grid.cpp
@@ -37,8 +40,9 @@ list(APPEND MERLIN_SRC_CPP
 list(APPEND MERLIN_SRC_CU
      array/parcel.cu
      array/array.cu
-     cuda/gpu_query.cu
      cuda/context.cu
+     cuda/device.cu
+     cuda/event.cu
      cuda/stream.cu
      interpolant/cartesian_grid.cu
      interpolant/interpolant.cu
@@ -49,7 +53,7 @@ list(APPEND MERLIN_SRC_RDC
      array/nddata.rdc
      array/parcel.rdc
      array/slice.rdc
-     cuda/gpu_query.rdc
+     cuda/device.rdc
      interpolant/cartesian_grid.rdc
      interpolant/sparse_grid.rdc
      logger.rdc
@@ -72,6 +76,11 @@ endif(MERLIN_CUDA)
 list(APPEND MERLIN_SRC ${MERLIN_SRC_CPP})
 if(MERLIN_CUDA)
     list(APPEND MERLIN_SRC ${MERLIN_SRC_CU})
+endif()
+
+# query build type
+if(MERLIN_DEBUG AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(FATAL_ERROR "Option debug is only available with build-type Debug")
 endif()
 
 # =============================================================================
@@ -135,7 +144,7 @@ set(MERLIN_LINKLIBRARY ${MERLIN_LINKLIBRARY} OpenMP::OpenMP_CXX)
 # library
 # =============================================================================
 
-# library kind
+#detect automaticfally library kind in AUTO mode
 if(MERLIN_LIBKIND MATCHES "AUTO")
     # auto: dynamic on Linux, static on Windows
     message(STATUS "Auto-decide the kind of library")
@@ -149,6 +158,7 @@ if(MERLIN_LIBKIND MATCHES "AUTO")
     endif(MSVC)
 endif()
 
+# library kind
 if(MERLIN_LIBKIND MATCHES "STATIC")
     # build static lib
     message(STATUS "Build static library")
@@ -165,6 +175,16 @@ else()
     message(FATAL_ERROR "Library build mode not found")
 endif()
 
+# add debug linkage option
+if(MERLIN_DEBUG)
+    if(UNIX)
+        set(MERLIN_LINKOPTION ${MERLIN_LINKOPTION} -rdynamic)
+    endif(UNIX)
+    if(MSVC)
+        set(MERLIN_LINKLIBRARY ${MERLIN_LINKLIBRARY} DbgHelp.lib)
+    endif(MSVC)
+endif(MERLIN_DEBUG)
+
 # set property for host-device static library
 if(MERLIN_CUDA_STATIC_LIB)
     set_property(TARGET libmerlincuda PROPERTY OUTPUT_NAME merlincuda)
@@ -180,7 +200,11 @@ if(MERLIN_CUDA_STATIC_LIB)
                                $<$<COMPILE_LANGUAGE:CUDA>: ${MERLIN_CUDA_OPTION} >)
         target_link_libraries(libmerlincuda PUBLIC ${CUDA_DRIVER_LIBRARY})
     endif(MERLIN_CUDA)
+    if(MERLIN_DEBUG)
+        target_compile_definitions(libmerlincuda PUBLIC __MERLIN_DEBUG__)
+    endif(MERLIN_DEBUG)
     target_link_libraries(libmerlincuda PUBLIC ${MERLIN_LINKLIBRARY})
+    target_link_options(libmerlincuda PUBLIC ${MERLIN_LINKOPTION})
 endif(MERLIN_CUDA_STATIC_LIB)
 
 # set property for main library
@@ -188,6 +212,7 @@ set_property(TARGET libmerlin PROPERTY OUTPUT_NAME merlin)
 set_property(TARGET libmerlin PROPERTY POSITION_INDEPENDENT_CODE 1)
 target_include_directories(libmerlin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(libmerlin PUBLIC ${MERLIN_LINKLIBRARY})
+target_link_options(libmerlin PUBLIC ${MERLIN_LINKOPTION})
 if(MERLIN_CUDA_STATIC_LIB)
     target_link_libraries(libmerlin PUBLIC libmerlincuda)
 endif(MERLIN_CUDA_STATIC_LIB)
@@ -204,6 +229,9 @@ if(MERLIN_CUDA)
         set_property(TARGET libmerlin PROPERTY CUDA_SEPARABLE_COMPILATION OFF)
     endif(MERLIN_CUDA_STATIC_LIB)
 endif(MERLIN_CUDA)
+if(MERLIN_DEBUG)
+    target_compile_definitions(libmerlin PUBLIC __MERLIN_DEBUG__)
+endif(MERLIN_DEBUG)
 
 # =============================================================================
 # external executable
@@ -277,6 +305,13 @@ if(MERLIN_CUDA)
 else()
     file(APPEND ${MERLIN_CONFIG} "MERLIN_CUDA = False\n")
 endif(MERLIN_CUDA)
+
+# Debug option
+if(MERLIN_DEBUG)
+    file(APPEND ${MERLIN_CONFIG} "MERLIN_DEBUG = True\n")
+else()
+    file(APPEND ${MERLIN_CONFIG} "MERLIN_DEBUG = False\n")
+endif(MERLIN_DEBUG)
 
 # Lib kind
 file(APPEND ${MERLIN_CONFIG} "MERLIN_LIBKIND = \"${MERLIN_LIBKIND}\"\n")

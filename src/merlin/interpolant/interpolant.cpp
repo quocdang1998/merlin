@@ -1,7 +1,7 @@
 // Copyright 2022 quocdang1998
 #include "merlin/interpolant/interpolant.hpp"
 
-#include <cinttypes>
+#include <algorithm>  // std::max
 #include <omp.h>  // pragma omp
 #include <utility>  // std::pair
 
@@ -85,15 +85,23 @@ float eval_lagrange_cpu(const interpolant::CartesianGrid * pgrid, const array::N
 }
 
 // Calculate lagrange coefficient with CPU parallelism
-array::Array calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid * pgrid, const array::Array * pvalue,
-                                      const Vector<array::Slice> & slices) {
+void calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid * pgrid, const array::Array * pvalue,
+                              const Vector<array::Slice> & slices, array::Array * presult) {
     // get information
     std::uint64_t value_size = pvalue->size();
     std::uint64_t ndim = pvalue->ndim();
-    array::Array result(pvalue->shape());
-    // loop over each point in the grid
+    // check shape of result is identical to shape of p value
+    if (presult->ndim() != pvalue->ndim()) {
+        FAILURE(std::invalid_argument, "Expected result array has the same n-dim as value array.\n");
+    }
+    for (std::uint64_t i_dim = 0; i_dim < ndim; ++i_dim) {
+        if (presult->shape()[i_dim] != pvalue->shape()[i_dim]) {
+            FAILURE(std::invalid_argument, "Expected result array has the same shape as value array.\n");
+        }
+    }
+    // loop over each point in the grid (i is signed since OpenMP requires)
     #pragma omp parallel for
-    for (std::uint64_t i = 0; i < value_size; i++) {
+    for (std::int64_t i = 0; i < value_size; i++) {
         intvec index_in_value_array = contiguous_to_ndim_idx(i, pvalue->shape());
         intvec index_in_grid(ndim);
         for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
@@ -109,7 +117,65 @@ array::Array calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid * pgrid, 
                                - pgrid->grid_vectors()[i_dim][i_node];
             }
         }
-        result.set(i, pvalue->get(index_in_value_array) / static_cast<float>(denominator));
+        presult->set(i, pvalue->get(index_in_value_array) / static_cast<float>(denominator));
+    }
+}
+
+static Vector<array::Slice> get_slice_from_level(const intvec & level, const intvec & max_level) {
+    Vector<array::Slice> result(level.size());
+    for (std::uint64_t i_dim = 0; i_dim < level.size(); i_dim++) {
+        // calculate the size of max_level
+        const std::uint64_t & max = max_level[i_dim];
+        std::uint64_t size = (max == 0) ? 1 : (1 << max) + 1;
+        // calculate start point and step
+        const std::uint64_t & lv = level[i_dim];
+        if (lv == 0) {
+            result[i_dim] = array::Slice({(size - 1) / 2});
+        } else if (lv == 1) {
+            result[i_dim].step() = size-1;
+        } else {
+            result[i_dim].step() = 1 << (max_level[i_dim] - level[i_dim] + 1);
+            result[i_dim].start() = result[i_dim].step() >> 1;
+        }
+    }
+    return result;
+}
+
+array::Array calc_lagrange_coeffs_cpu(const interpolant::SparseGrid * pgrid, const array::Array * pvalue) {
+    // check size of p_value
+    if (pvalue->ndim() != 1) {
+        FAILURE(std::runtime_error, "Invalid shpae of value array.\n");
+    }
+    if (pvalue->size() != pgrid->size()) {
+        FAILURE(std::invalid_argument, "Expected value array and grid having the same size.");
+    }
+    // loop over each level, updat maximum current level
+    std::uint64_t num_level = pgrid->level_vectors().size() / pgrid->ndim();
+    intvec max_current_level(pgrid->ndim(), 0);
+    interpolant::CartesianGrid current_cart_grid(pgrid->ndim());
+    array::Array result(pvalue->shape());
+    for (std::uint64_t i_level = 0; i_level < num_level; ++i_level) {
+        intvec level;
+        level.data() = const_cast<std::uint64_t *>(pgrid->level_vectors().data()) + i_level*pvalue->ndim();
+        level.size() = pvalue->ndim();
+        // update max current level
+        for (std::uint64_t i_dim = 0; i_dim < max_current_level.size(); i_dim++) {
+            max_current_level[i_dim] = std::max(max_current_level[i_dim], level[i_dim]);
+        }
+        // calculate union of cartesian grid
+        current_cart_grid = current_cart_grid + pgrid->get_cartesian_grid(level);
+        // get values of cart grid
+        array::Slice sub_slice(pgrid->sub_grid_start_index()[i_level], pgrid->sub_grid_start_index()[i_level+1], 1);
+        Vector<array::Slice> vec_slice({sub_slice});
+        array::Array level_value(*pvalue, Vector<array::Slice>({sub_slice}));
+        // get slices
+        Vector<array::Slice> level_slc = get_slice_from_level(level, max_current_level);
+        // get sub array of result
+        array::Array level_coeff(result, vec_slice);
+        // calculate coefficient
+        calc_lagrange_coeffs_cpu(&current_cart_grid, &level_value, level_slc, &level_coeff);
+        // neutralize level vector
+        level.data() = nullptr;
     }
     return result;
 }

@@ -52,11 +52,11 @@
  *  @param exception Name of the exception class (like ``std::runtime_error``, ``std::invalid_argument``, etc).
  *  @param fmt Formatted string (same syntax as ``std::printf``).
  */
-#define FAILURE(exception, fmt, ...) error_<exception>(__FUNCNAME__, fmt, ##__VA_ARGS__)
+#define FAILURE(exception, fmt, ...) _merlin_error_<exception>(__FUNCNAME__, fmt, ##__VA_ARGS__)
 
 // print log for FAILURE + throw exception
 template <class Exception = std::runtime_error>
-void error_(const char * func_name, const char * fmt, ...) {
+void _merlin_error_(const char * func_name, const char * fmt, ...) {
     // save formatted string to a buffer
     char buffer[1024];
     std::va_list args;
@@ -65,6 +65,7 @@ void error_(const char * func_name, const char * fmt, ...) {
     va_end(args);
     // print exception message and throw an exception object
     std::fprintf(stderr, "\033[1;31m[FAILURE]\033[0m [%s] %s", func_name, buffer);
+    _merlin_print_stacktrace_(2);  // skip this function and print_stacktrace function
     if constexpr(std::is_same<Exception, std::filesystem::filesystem_error>::value) {
         throw std::filesystem::filesystem_error(const_cast<char *>(buffer),
                                                 std::error_code(1, std::iostream_category()));
@@ -153,6 +154,6 @@ std::string throw_linux_last_error(void);
 // -------------
 
 /** @brief Print the stacktrace at the crash moment.*/
-// void print_stacktrace(void);
+void _merlin_print_stacktrace_(int skip = 1);
 
 #endif  // MERLIN_LOGGER_HPP_

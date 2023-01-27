@@ -15,8 +15,6 @@ void interpolant::CartesianGrid::copy_to_gpu(CartesianGrid * gpu_ptr, void * gri
     // shallow copy of grid vector
     copy_on_gpu.grid_vectors_.data() = reinterpret_cast<floatvec *>(grid_vector_data_ptr);
     copy_on_gpu.grid_vectors_.size() = this->ndim();
-    // copy temporary object to GPU
-    ::cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(interpolant::CartesianGrid), cudaMemcpyHostToDevice);
     // copy data of each grid vector
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(grid_vector_data_ptr) + this->ndim()*sizeof(floatvec);
     for (int i = 0; i < this->ndim(); i++) {
@@ -24,7 +22,9 @@ void interpolant::CartesianGrid::copy_to_gpu(CartesianGrid * gpu_ptr, void * gri
         data_ptr += this->grid_vectors_[i].size() * sizeof(float);
     }
     // copy of grid shape
-    // this->grid_shape_.copy_to_gpu(&(gpu_ptr->grid_shape_), reinterpret_cast<std::uint64_t *>(data_ptr));
+    this->grid_shape_.copy_to_gpu(&(copy_on_gpu.grid_shape_), reinterpret_cast<std::uint64_t *>(data_ptr));
+    // copy temporary object to GPU
+    ::cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(interpolant::CartesianGrid), cudaMemcpyHostToDevice);
     // nullify data pointer to avoid free data
     copy_on_gpu.grid_vectors_.data() = nullptr;
 }

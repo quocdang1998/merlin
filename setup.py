@@ -20,7 +20,7 @@ from setup_cfg import build_ext, ext_options
 
 # extensions
 extensions = [
-    Extension("merlin.device", ["merlin/device/core.pyx"],
+    Extension("merlin.cuda", ["merlin/cuda/core.pyx"],
               language="c++", **ext_options)
 ]
 

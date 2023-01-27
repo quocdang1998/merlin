@@ -25,6 +25,8 @@ class MERLIN_EXPORTS interpolant::CartesianGrid : public interpolant::Grid {
     CartesianGrid(std::initializer_list<floatvec> grid_vectors);
     /** @brief Constructor from a vector of values.*/
     CartesianGrid(const Vector<floatvec> & grid_vectors);
+    /** @brief Constructor from the number of dimension.*/
+    CartesianGrid(std::uint64_t ndim);
     /// @}
 
     /// @name Copy and Move
@@ -50,7 +52,7 @@ class MERLIN_EXPORTS interpolant::CartesianGrid : public interpolant::Grid {
     /** @brief Get grid vectors.*/
     __cuhostdev__ const Vector<floatvec> & grid_vectors(void) const {return this->grid_vectors_;}
     /** @brief Shape of the grid.*/
-    const intvec & grid_shape(void) const {return this->grid_shape_;}
+    __cuhostdev__ const intvec & grid_shape(void) const {return this->grid_shape_;}
     /** @brief Full tensor of each point in the CartesianGrid in form of 2D table.*/
     array::Array grid_points(void);
     /** @brief Number of dimension of the CartesianGrid.*/
@@ -99,6 +101,10 @@ class MERLIN_EXPORTS interpolant::CartesianGrid : public interpolant::Grid {
     __cudevice__ void copy_to_shared_mem(interpolant::CartesianGrid * share_ptr, void * grid_vector_data_ptr);
     #endif  // __NVCC__
     /// @}
+
+    /** @brief Union of 2 Cartesian grid.*/
+    friend interpolant::CartesianGrid operator+(const interpolant::CartesianGrid & grid_1,
+                                                const interpolant::CartesianGrid & grid_2);
 
     /// @name Destructor
     /// @{

@@ -5,7 +5,7 @@
 
 #include "merlin/array/copy.hpp"  // merlin::array::array_copy
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/cuda/gpu_query.hpp"  // merlin::cuda::Device
+#include "merlin/cuda/device.hpp"  // merlin::cuda::Device
 #include "merlin/logger.hpp"  // FAILURE
 
 namespace merlin {
@@ -24,7 +24,7 @@ void array::Array::sync_from_gpu(const array::Parcel & gpu_array, const cuda::St
                 gpu_array.device(), stream.get_gpu());
     }
     // cast stream
-    cudaStream_t copy_stream = reinterpret_cast<cudaStream_t>(stream.stream());
+    cudaStream_t copy_stream = reinterpret_cast<cudaStream_t>(stream.get_stream_ptr());
     // create copy function
     auto copy_func = std::bind(cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                                cudaMemcpyDeviceToHost, copy_stream);

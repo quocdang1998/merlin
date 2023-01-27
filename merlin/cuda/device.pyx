@@ -26,7 +26,7 @@ cdef class Device:
             raise ValueError("Invalid keywords: " + ", ".join(k for k in kwargs.keys()))
 
     def __repr__(self):
-        return PyUnicode_FromString(self.core.repr().c_str())
+        return PyUnicode_FromString(self.core.str().c_str())
 
     def assign(self, uintptr_t ptr):
         """assign(self, ptr)
@@ -74,7 +74,7 @@ cdef class Device:
 
         Returns
         -------
-        ``merlin.device.Device``
+        ``merlin.cuda.Device``
             Current GPU.
         """
         result = Device()

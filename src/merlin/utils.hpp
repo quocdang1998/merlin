@@ -42,6 +42,26 @@ __cuhostdev__ std::uint64_t ndim_to_contiguous_idx(const intvec & index, const i
  */
 __cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape);
 
+// Sparse Grid
+// -----------
+
+/** @brief Get the level from a given valid size of a 1D grid.*/
+__cuhostdev__ std::uint64_t get_level_from_valid_size(std::uint64_t size) noexcept;
+
+/** @brief Get size of a 1D grid given its max level.*/
+__cuhostdev__ constexpr std::uint64_t get_size_from_level(std::uint64_t level) noexcept {
+    return (level == 0) ? 1 : ((1 << level) + 1);
+}
+
+/** @brief Index of nodes belonging to a level of a 1D grid.
+ *  @param level Level to get index.
+ *  @param size Size of 1D grid level.
+ */
+__cuhostdev__ intvec hiearchical_index(std::uint64_t level, std::uint64_t size);
+
+/** @brief Get shape of Cartesian subgrid corresponding to a level vector.*/
+__cuhostdev__ intvec get_level_shape(const intvec & level_vector);
+
 }  // namespace merlin
 
 #endif  // MERLIN_UTILS_HPP_

@@ -1,5 +1,5 @@
 // Copyright 2022 quocdang1998
-#include "merlin/cuda/gpu_query.hpp"
+#include "merlin/cuda/device.hpp"
 
 #include "merlin/logger.hpp"  // FAILURE, cuda_compile_error
 
@@ -12,12 +12,12 @@ namespace merlin {
 #ifndef __MERLIN_CUDA__
 
 // Print limit of device
-void cuda::Device::print_specification(void) {
+void cuda::Device::print_specification(void) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
 }
 
 // Test functionality of a GPU
-bool cuda::Device::test_gpu(void) {
+bool cuda::Device::test_gpu(void) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
     return false;
 }
@@ -39,7 +39,7 @@ void cuda::Device::reset_all(void) {
 }
 
 // String representation
-std::string cuda::Device::repr(void) {
+std::string cuda::Device::str(void) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
     return "";
 }
@@ -57,4 +57,4 @@ bool cuda::test_all_gpu(void) {
 
 #endif  // __MERLIN_CUDA__
 
-}  // namespace merlin::cuda
+}  // namespace merlin

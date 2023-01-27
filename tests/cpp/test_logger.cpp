@@ -1,5 +1,20 @@
 #include "merlin/logger.hpp"
 
+#include <iostream>
+
+void foo3 (void) {
+    _merlin_print_stacktrace_();
+}
+
+void foo2 (int i = 1) {
+    foo3();
+}
+
+void foo1 (void) {
+    MESSAGE("Print stacktrace from foo1.\n");
+    foo2();
+}
+
 void foo (void) {
     MESSAGE("Status message %d.\n", 1);
 }
@@ -15,4 +30,5 @@ int main (void) {
     try {
         FAILURE(cuda_compile_error, "CUDA compile error.\n");
     } catch (std::exception & e) {}
+    foo1();
 }
