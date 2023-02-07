@@ -86,7 +86,9 @@ C++ wrapper classes for CUDA runtime API and CUDA driver API:
 
    merlin::cuda::Device
    merlin::cuda::Context
+   merlin::cuda::Event
    merlin::cuda::Stream
+   merlin::cuda::record_event
 
 GPU query
 ^^^^^^^^^
@@ -113,14 +115,8 @@ Print and test the compatibility of GPU and CUDA driver:
 Array API
 ---------
 
-Basic utils for Multi-dimensional array manipulation:
-
-.. doxysummary::
-   :toctree: generated
-
-   merlin::array::NdData
-   merlin::array::Slice
-   merlin::array::array_copy
+Multi-dimensional array
+^^^^^^^^^^^^^^^^^^^^^^^
 
 Classes represent multi-dimensional array on CPU, out-of-core array and GPU
 array:
@@ -128,9 +124,21 @@ array:
 .. doxysummary::
    :toctree: generated
 
+   merlin::array::NdData
    merlin::array::Array
    merlin::array::Parcel
    merlin::array::Stock
+
+Array manipulation
+^^^^^^^^^^^^^^^^^^
+
+Utils for array manipulation:
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::array::Slice
+   merlin::array::array_copy
 
 Grid API
 --------

@@ -21,11 +21,8 @@ void array::array_copy(array::NdData * dest, const array::NdData * src, CopyFunc
         FAILURE(std::invalid_argument, "Cannot copy array of different ndim (%u to %u).\n", src->ndim(), dest->ndim());
     }
     std::uint64_t ndim = src->ndim();
-    for (int i = 0; i < ndim; i++) {
-        if (dest->shape()[i] < src->shape()[i]) {
-            FAILURE(std::invalid_argument, "Expected shape of source %d less or equal destination %d (index %d).\n",
-                    src->shape()[i], dest->shape()[i], i);
-        }
+    if (dest->shape() != src->shape()) {
+        FAILURE(std::invalid_argument, "Expected shape of source equals shape of destination");
     }
     intvec shape(src->shape());
 
@@ -38,22 +35,22 @@ void array::array_copy(array::NdData * dest, const array::NdData * src, CopyFunc
     std::int64_t break_index = std::max(src_bridx, des_bridx);
 
     // copy each longest contiguous segment through the copy function
-    if (break_index == -1) {  // original tensor is perfectly contiguous
+    if (break_index == -1) {  // original arrays are perfectly contiguous
         copy(dest->data(), src->data(), longest_contiguous_segment);
     } else {  // memcpy each longest_contiguous_segment
         // initilize index vector
         intvec index(ndim, 0);
         while (true) {
             // calculate ptr to each segment
-            unsigned int src_leap = inner_prod(index, src->strides());
+            std::uint64_t src_leap = inner_prod(index, src->strides());
             std::uintptr_t src_ptr = reinterpret_cast<std::uintptr_t>(src->data()) + src_leap;
-            unsigned int des_leap = inner_prod(index, dest->strides());
+            std::uint64_t des_leap = inner_prod(index, dest->strides());
             std::uintptr_t des_ptr = reinterpret_cast<std::uintptr_t>(dest->data()) + des_leap;
             // copy the segment
-            copy(reinterpret_cast<float *>(des_ptr), reinterpret_cast<float *>(src_ptr), longest_contiguous_segment);
+            copy(reinterpret_cast<double *>(des_ptr), reinterpret_cast<double *>(src_ptr), longest_contiguous_segment);
             // increase index at break index by 1 and carry surplus if index value exceeded shape
             index[break_index] += 1;
-            int update_dim = break_index;
+            std::int64_t update_dim = break_index;
             while ((index[update_dim] == shape[update_dim]) && (update_dim > 0)) {
                 index[update_dim] = 0;
                 index[--update_dim] += 1;

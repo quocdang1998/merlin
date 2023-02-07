@@ -50,17 +50,7 @@ void cuda::Event::synchronize(void) const {
     }
 }
 
-// Record event on a stream
-void cuda::Event::record(const cuda::Stream & stream) {
-    stream.check_cuda_context();
-    this->check_cuda_context();
-    ::cudaError_t err_ = ::cudaEventRecord(reinterpret_cast<::cudaEvent_t>(this->event_),
-                                           reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr()));
-    if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Record event failed with message \"%s\".\n", ::cudaGetErrorName(err_));
-    }
-}
-
+// Get elapsed time between 2 events
 float cuda::operator-(const cuda::Event & ev_1, const cuda::Event & ev_2) {
     float result;
     ::cudaError_t err_ = ::cudaEventElapsedTime(&result, reinterpret_cast<::cudaEvent_t>(ev_1.event_),

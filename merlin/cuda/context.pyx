@@ -118,7 +118,7 @@ cdef class Context:
 
 def create_primary_context(Device gpu, ContextFlags flag):
     """
-    Retain the primary context associated to a GPU and set the flag to that context.
+    Retain the primary context associated to a GPU.
 
     Primary contexts are contexts shared with the CUDA driver API. There is a correspondance one-to-one between primary
     contexts and GPU.
@@ -128,4 +128,3 @@ def create_primary_context(Device gpu, ContextFlags flag):
     cdef CppContext * c_result = new CppContext(cpp_create_primary_context(dereference(gpu.core), flag))
     result.c_assign(c_result)
     return result
-

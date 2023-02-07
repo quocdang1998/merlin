@@ -70,6 +70,20 @@ class Vector {
     __cuhostdev__ Vector<T> & operator=(Vector<T> && src);
     /// @}
 
+    /// @name Direct assignement
+    /// @{
+    /** @brief Assign current vector as sub-vector.
+     *  @param ptr_src Pointer to first element.
+     *  @param size Size of the new vector.
+     */
+    __cuhostdev__ void assign(T * ptr_src, std::uint64_t size);
+    /** @brief Assign current vector as sub-vector.
+     *  @param ptr_first Pointer to first element.
+     *  @param ptr_last Pointer to last element.
+     */
+    __cuhostdev__ void assign(T * ptr_first, T * ptr_last);
+    /// @}
+
     /// @name Get members
     /// @{
     /** @brief Get reference to pointer of data.*/
@@ -82,10 +96,14 @@ class Vector {
     __cuhostdev__ constexpr const std::uint64_t & size(void) const {return this->size_;}
     /** @brief Begin iterator.*/
     constexpr T * begin(void) {return this->data_;}
+    /** @brief Begin iterator.*/
+    constexpr const T * begin(void) const {return this->data_;}
     /** @brief Constant begin iterator.*/
     constexpr const T * cbegin(void) const {return this->data_;}
     /** @brief End iterator.*/
     constexpr T * end(void) {return &this->data_[this->size_];}
+    /** @brief End iterator.*/
+    constexpr const T * end(void) const {return &this->data_[this->size_];}
     /** @brief Constant begin iterator.*/
     constexpr const T * cend(void) const {return &this->data_[this->size_];}
     /// @}
@@ -153,15 +171,14 @@ class Vector {
     T * data_ = nullptr;
     /** @brief Size of data.*/
     std::uint64_t size_ = 0;
+    /** @brief Data is aasigned version of a bigger data.*/
+    bool assigned_ = false;
 };
 
 /** @brief Vector of unsigned integer values.
  *  @details This class is reserved for storing array indices, array shape and array strides.
  */
 using intvec = Vector<std::uint64_t>;
-
-/** @brief Vector of simple precision values.*/
-using floatvec = Vector<float>;
 
 }  // namespace merlin
 

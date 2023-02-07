@@ -6,7 +6,6 @@
 #include <mutex>  // std::mutex
 
 #include "merlin/array/nddata.hpp"  // merlin::array::Array, merlin::array::NdData
-#include "merlin/array/slice.hpp"  // merlin::array::Slice
 #include "merlin/cuda_decorator.hpp"  // __cudevice__, __cuhostdev__
 #include "merlin/cuda/device.hpp"  // merlin::cuda::Device
 #include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
@@ -22,15 +21,13 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
     /// @{
     /** @brief Default constructor (do nothing).*/
     __cuhostdev__ Parcel(void) {}
-    /** @brief Construct array from CPU array.*/
-    Parcel(const array::Array & cpu_array, const cuda::Stream & stream = cuda::Stream());
+    /** @brief Construct a contiguous array from shape on GPU.*/
+    Parcel(const intvec & shape);
     /** @brief Constructor from a slice.
      *  @param whole merlin::array::NdData of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    Parcel(const array::Parcel & whole, const Vector<array::Slice> & slices);
-    /** @brief Construct a contiguous array from shape on GPU.*/
-    Parcel(const intvec & shape);
+    __cuhostdev__ Parcel(const array::Parcel & whole, const Vector<array::Slice> & slices);
     /// @}
 
     /// @name Copy and Move
@@ -47,10 +44,8 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
 
     /// @name Get members
     /// @{
-    /** @brief Get reference to ID of device containing data.*/
-    cuda::Device & device(void) {return this->device_;}
     /** @brief Get constant reference to ID of device containing data of a constant instance.*/
-    const cuda::Device & device(void) const {return this->device_;}
+    constexpr const cuda::Device & device(void) const noexcept {return this->device_;}
     /// @}
 
     /// @name Atributes
@@ -59,24 +54,26 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
     /** @brief Get element at a given C-contiguous index.
      *  @param index A C-contiguous index.
      */
-    __cudevice__ float & operator[](std::uint64_t index);
-    /** @brief Get element at a given multi-dimensional index.
-     *  @param index A Nd index.
-     */
-    __cudevice__ float & operator[](std::initializer_list<std::uint64_t> index);
+    __cudevice__ double & operator[](std::uint64_t index);
     #endif  // __NVCC__
     /// @}
 
     /// @name Get and set element
     /// @{
     /** @brief Get value of element at a n-dim index.*/
-    float get(const intvec & index) const;
+    double get(const intvec & index) const;
     /** @brief Get value of element at a C-contiguous index.*/
-    float get(std::uint64_t index) const;
+    double get(std::uint64_t index) const;
     /** @brief Set value of element at a n-dim index.*/
-    void set(const intvec index, float value);
+    void set(const intvec index, double value);
     /** @brief Set value of element at a C-contiguous index.*/
-    void set(std::uint64_t index, float value);
+    void set(std::uint64_t index, double value);
+    /// @}
+
+    /// @name Transfer data to GPU
+    /// @{
+    /** @brief Transfer data to GPU from CPU array.*/
+    void transfer_data_to_gpu(const array::Array & cpu_array, const cuda::Stream & stream = cuda::Stream());
     /// @}
 
     /// @name GPU related features
@@ -100,12 +97,6 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
     __cudevice__ void * copy_to_shared_mem(array::Parcel * share_ptr, void * shape_strides_ptr);
     #endif  // __NVCC__
 
-    /// @name Utils
-    /// @{
-    /** @brief Free current data hold by the object.*/
-    void free_current_data(void);
-    /// @}
-
     /// @name Destructor
     /// @{
     /** @brief Destructor.*/
@@ -113,14 +104,16 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
     /// @}
 
   protected:
-    /** @brief Decision to delete Array::data_ at destruction or not.*/
-    bool force_free = true;
     /** @brief Device containing data of Parcel.*/
     cuda::Device device_;
     /** @brief Mutex lock at destruction time.*/
     static std::mutex mutex_;
+
+  private:
+    /** @brief Free current data hold by the object.*/
+    void free_current_data(void);
 };
 
-}  // namespace merlin::array
+}  // namespace merlin
 
 #endif  // MERLIN_ARRAY_PARCEL_HPP_

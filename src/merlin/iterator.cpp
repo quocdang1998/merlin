@@ -41,7 +41,7 @@ Iterator & Iterator::operator++(void) {
 void Iterator::update(void) {
     // detect dimensions having index bigger than dim
     std::uint64_t current_dim = this->index_.size();
-    for (int i = this->index_.size() - 1; i >= 0; i--) {
+    for (std::int64_t i = this->index_.size() - 1; i >= 0; i--) {
         if (this->index_[i] >= this->shape_[i]) {
             current_dim = i;
             break;

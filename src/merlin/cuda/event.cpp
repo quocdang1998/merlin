@@ -37,11 +37,6 @@ void cuda::Event::synchronize(void) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for event management.\n");
 }
 
-// Record event on a stream
-void cuda::Event::record(const cuda::Stream & stream) {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for event management.\n");
-}
-
 float cuda::operator-(const cuda::Event & ev_1, const cuda::Event & ev_2) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for event management.\n");
     return 0.0;

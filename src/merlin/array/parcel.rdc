@@ -11,25 +11,21 @@ namespace merlin {
 // Parcel
 // --------------------------------------------------------------------------------------------------------------------
 
+// Constructor from a slice
+__cuhostdev__ array::Parcel::Parcel(const array::Parcel & whole, const Vector<array::Slice> & slices) :
+array::NdData(whole, slices) {
+    this->device_ = whole.device_;
+}
+
 #ifdef __NVCC__
 
 // Get element at a given C-contiguous index
-__cudevice__ float & array::Parcel::operator[](std::uint64_t index) {
+__cudevice__ double & array::Parcel::operator[](std::uint64_t index) {
     // calculate index vector
     intvec index_ = contiguous_to_ndim_idx(index, this->shape_);
     // calculate strides
     std::uint64_t strides = inner_prod(index_, this->strides_);
-    float * element_ptr = reinterpret_cast<float *>(reinterpret_cast<std::uintptr_t>(this->data_) + strides);
-    return *element_ptr;
-}
-
-// Get element at a given Nd index
-__cudevice__ float & array::Parcel::operator[](std::initializer_list<std::uint64_t> index) {
-    // initialize index vector
-    intvec index_(index);
-    // calculate strides
-    std::uint64_t strides = inner_prod(index_, this->strides_);
-    float * element_ptr = reinterpret_cast<float *>(reinterpret_cast<std::uintptr_t>(this->data_) + strides);
+    double * element_ptr = reinterpret_cast<double *>(reinterpret_cast<std::uintptr_t>(this->data_) + strides);
     return *element_ptr;
 }
 

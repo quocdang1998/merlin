@@ -7,7 +7,7 @@
 
 #include "merlin/cuda/context.hpp"  // merlin::cuda::Context
 #include "merlin/cuda/device.hpp"  // merlin::cuda::Device
-#include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
+// #include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
 
 namespace merlin {
 
@@ -20,7 +20,7 @@ class MERLIN_EXPORTS cuda::Event {
     enum class Category : unsigned int {
         /** Default event.*/
         Default = 0x00,
-        /** Event meant to be synchronize with CPU (process on CPU bloacked until the event occurs).*/
+        /** Event meant to be synchronize with CPU (process on CPU blocked until the event occurs).*/
         BlockingSync = 0x01,
         /** Event not recording time data.*/
         DisableTiming = 0x02,
@@ -85,13 +85,10 @@ class MERLIN_EXPORTS cuda::Event {
     /// @name Operations
     /// @{
     /** @brief Synchronize the event.
-     *  @details Block the CPUI process until the event occurs.
+     *  @details Block the CPU process until the event occurs.
      */
     void synchronize(void) const;
-    /** @brief Record (register) an event on CUDA stream.
-     *  @param stream CUDA stream on which the event is recorded (default value is the null stream).
-     */
-    void record(const cuda::Stream & stream = cuda::Stream());
+
     friend float operator-(const cuda::Event & ev_1, const cuda::Event & ev_2);
     /// @}
 
@@ -120,7 +117,7 @@ class MERLIN_EXPORTS cuda::Event {
 
 namespace cuda {
 
-/** @brief Calculate elapsed time (in millisecond).*/
+/** @brief Calculate elapsed time (in millisecond) between 2 events.*/
 float operator-(const cuda::Event & ev_1, const cuda::Event & ev_2);
 
 }  // namespace cuda

@@ -83,10 +83,10 @@ __cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & 
     intvec index_(shape.size());
     std::uint64_t cum_prod = 1;
     if (shape.size() == 0) {
-        CUHDERR(std::invalid_argument, "Size of shape vector is 0.\n");
+        return index_;  // empty index vector
     }
     index_[shape.size()-1] = index % shape[shape.size()-1];
-    for (int i = shape.size()-2; i >= 0; i--) {
+    for (std::int64_t i = shape.size()-2; i >= 0; i--) {
         cum_prod = cum_prod * shape[i+1];
         index_[i] = (index / cum_prod) % shape[i];
     }
@@ -101,10 +101,23 @@ __cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & 
 __cuhostdev__ std::uint64_t get_level_from_valid_size(std::uint64_t size) noexcept {
     size -= 1;
     std::uint64_t level = 0;
-    while(size >>= 1) {
+    while (size >>= 1) {
         ++level;
     }
     return level;
+}
+
+// Get size of a sub-grid given its level vector
+__cuhostdev__ std::uint64_t calc_subgrid_size(const intvec & level_vector) noexcept {
+    std::uint64_t subgrid_size = 1;
+    for (std::uint64_t i_dim = 0; i_dim < level_vector.size(); i_dim++) {
+        const std::uint64_t & dim_level = level_vector[i_dim];
+        if (dim_level == 0) {
+            continue;
+        }
+        subgrid_size *= ((dim_level == 1) ? 2 : (1 << (dim_level-1)));
+    }
+    return subgrid_size;
 }
 
 // Get index of nodes in a given level of a 1D grid

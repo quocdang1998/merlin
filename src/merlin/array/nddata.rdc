@@ -1,16 +1,40 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/nddata.hpp"
 
+#include "merlin/array/slice.hpp"  // merlin::array::Slice
+
 namespace merlin {
 
 // --------------------------------------------------------------------------------------------------------------------
 // NdData
 // --------------------------------------------------------------------------------------------------------------------
 
+// Constructor from a slice
+__cuhostdev__ array::NdData::NdData(const array::NdData & whole, const Vector<array::Slice> & slices) {
+    // check size
+    if (slices.size() != whole.ndim_) {
+        CUHDERR(std::invalid_argument, "Dimension of Slices and NdData not compatible (expected %u, got %u).\n",
+                static_cast<unsigned int>(whole.ndim_), static_cast<unsigned int>(slices.size()));
+    }
+    // create result
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(whole.data_);
+    this->ndim_ = whole.ndim_;
+    this->shape_ = intvec(whole.ndim_);
+    this->strides_ = intvec(whole.ndim_);
+    for (std::uint64_t i_dim = 0; i_dim < whole.ndim_; i_dim++) {
+        auto [offset, shape, stride] = slices[i_dim].slice_on(whole.shape_[i_dim], whole.strides_[i_dim]);
+        data_ptr += offset;
+        this->shape_[i_dim] = shape;
+        this->strides_[i_dim] = stride;
+    }
+    this->data_ = reinterpret_cast<double *>(data_ptr);
+    this->release_ = false;
+}
+
 // Number of elements
-__cuhostdev__ std::uint64_t array::NdData::size(void) const {
+__cuhostdev__ std::uint64_t array::NdData::size(void) const noexcept {
     std::uint64_t size = 1;
-    for (int i = 0; i < this->ndim_; i++) {
+    for (std::uint64_t i = 0; i < this->ndim_; i++) {
         size *= this->shape_[i];
     }
     return size;

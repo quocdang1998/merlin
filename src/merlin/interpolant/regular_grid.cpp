@@ -2,10 +2,12 @@
 #include "merlin/interpolant/regular_grid.hpp"
 
 #include <cstring>  // std::memcpy
+#include <cinttypes>
 #include <numeric>  // std::iota
 #include <utility>  // std::move
 
 #include "merlin/array/copy.hpp"  // merlin::array::array_copy
+#include "merlin/array/slice.hpp"  // merlin::array:Slice
 #include "merlin/logger.hpp"  // FAILURE
 
 namespace merlin {
@@ -38,15 +40,17 @@ interpolant::RegularGrid::RegularGrid(const array::Array & points) {
         capacity <<= 1;
     }
     // copy data from old array to new array
-    this->points_ = new array::Array(intvec({capacity, points.ndim()}));
-    array_copy(this->points_, &points, std::memcpy);
+    array::Array * points_array_ptr;
+    this->points_ = points_array_ptr = new array::Array(intvec({capacity, points.ndim()}));
+    array::Array temporary(*points_array_ptr, {array::Slice(0, this->npoint_), array::Slice()});
+    array_copy(this->points_, &temporary, std::memcpy);
 }
 
 // Copy constructor
 interpolant::RegularGrid::RegularGrid(const interpolant::RegularGrid & src) : npoint_(src.npoint_) {
     // copy data from old array to new array
     this->points_ = new array::Array(intvec({src.capacity(), src.ndim()}));
-    std::memcpy(this->points_->data(), src.points_->data(), sizeof(float)*src.capacity()*src.ndim());
+    std::memcpy(this->points_->data(), src.points_->data(), sizeof(double)*src.capacity()*src.ndim());
 }
 
 // Copy assignment
@@ -54,7 +58,7 @@ interpolant::RegularGrid & interpolant::RegularGrid::operator=(const interpolant
     this->npoint_ = src.npoint_;
     // copy data from old array to new array
     this->points_ = new array::Array(intvec({src.capacity(), src.ndim()}));
-    std::memcpy(this->points_->data(), src.points_->data(), sizeof(float)*src.capacity()*src.ndim());
+    std::memcpy(this->points_->data(), src.points_->data(), sizeof(double)*src.capacity()*src.ndim());
     return *this;
 }
 
@@ -73,32 +77,32 @@ interpolant::RegularGrid & interpolant::RegularGrid::operator=(interpolant::Regu
 }
 
 // Get reference Array to a point
-array::Array interpolant::RegularGrid::operator[](unsigned int index) {
-    array::Array & points = *(static_cast<array::Array *>(this->points_));
-    float * target_ptr = &(points[{index, 0}]);
-    std::uint64_t shape = this->points_->ndim();
-    std::uint64_t strides = sizeof(float);
-    return array::Array(target_ptr, 1, &shape, &strides, false);
+Vector<double> interpolant::RegularGrid::operator[](std::uint64_t index) {
+    array::Array & points = *(dynamic_cast<array::Array *>(this->points_));
+    Vector<double> result;
+    result.assign(&(points[{index, 0}]), this->ndim());
+    return result;
 }
 
 // Begin iterator
 interpolant::RegularGrid::iterator interpolant::RegularGrid::begin(void) {
-    this->begin_ = intvec(2, 0);
-    this->end_ = intvec(2, 0);
-    this->end_[0] = this->npoint_;
-    return interpolant::RegularGrid::iterator(this->begin_, this->points_->shape());
+    intvec index(2, 0);
+    this->begin_ = interpolant::RegularGrid::iterator(index, this->points_->shape());
+    index[0] = this->npoint_;
+    this->end_ = interpolant::RegularGrid::iterator(index, this->points_->shape());
+    return this->begin_;
 }
 
 // End iterator
 interpolant::RegularGrid::iterator interpolant::RegularGrid::end(void) {
-    return interpolant::RegularGrid::iterator(this->end_, this->points_->shape());
+    return this->end_;
 }
 
 // Append a point at the end of the grid
-void interpolant::RegularGrid::push_back(Vector<float> && point) {
+void interpolant::RegularGrid::push_back(Vector<double> && point) {
     // check size of point
     if (point.size() != this->ndim()) {
-        FAILURE(std::invalid_argument, "Cannot add point of dimension %d to a grid of dimension %d.",
+        FAILURE(std::invalid_argument, "Cannot add point of dimension %" PRIu64 " to a grid of dimension %" PRIu64 ".",
                 point.size(), this->ndim());
     }
     // add point to grid
@@ -107,13 +111,13 @@ void interpolant::RegularGrid::push_back(Vector<float> && point) {
         // reallocate data
         array::Array * new_location = new array::Array(intvec({2*this->capacity(), this->ndim()}));
         // copy data from old location to new location
-        std::memcpy(new_location->data(), this->points_->data(), sizeof(float)*this->capacity()*this->ndim());
+        std::memcpy(new_location->data(), this->points_->data(), sizeof(double)*this->capacity()*this->ndim());
         delete this->points_;
         this->points_ = new_location;
     }
     array::Array & points = *(static_cast<array::Array *>(this->points_));
-    float * lastitem_ptr = &(points[{this->npoint_-1, 0}]);
-    std::memcpy(lastitem_ptr, point.data(), sizeof(float)*this->ndim());
+    double * lastitem_ptr = &(points[{this->npoint_-1, 0}]);
+    std::memcpy(lastitem_ptr, point.data(), sizeof(double)*this->ndim());
 }
 
 // Remove a point at the end of the grid
@@ -123,13 +127,13 @@ void interpolant::RegularGrid::pop_back(void) {
         // reallocate data
         array::Array * new_location = new array::Array(intvec({this->capacity()/2, this->ndim()}));
         // copy data from old location to new location
-        std::memcpy(new_location->data(), this->points_->data(), sizeof(float)*(this->capacity()/2)*this->ndim());
+        std::memcpy(new_location->data(), this->points_->data(), sizeof(double)*(this->capacity()/2)*this->ndim());
         delete this->points_;
         this->points_ = new_location;
     } else {
         array::Array & points = *(static_cast<array::Array *>(this->points_));
-        float * lastitem_ptr = &(points[{this->npoint_, 0}]);
-        std::memset(lastitem_ptr, 0, sizeof(float)*this->ndim());
+        double * lastitem_ptr = &(points[{this->npoint_, 0}]);
+        std::memset(lastitem_ptr, 0, sizeof(double)*this->ndim());
     }
 }
 

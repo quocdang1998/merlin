@@ -18,6 +18,8 @@ namespace merlin {
 /** @brief Abstract class representing a CUDA context.
  *  @details CUDA associated to each CPU process a stack of context, each of which is bounded to a GPU. All CUDA
  *  operations are performed inside the context at the top of the stack.
+ *  @note This API is highly volatile. At the beginning a default context has already created. Creation of custom
+ *  contexts is highly unrecommended.
  */
 class MERLIN_EXPORTS cuda::Context {
   public:

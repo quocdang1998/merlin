@@ -109,7 +109,7 @@ class MERLIN_EXPORTS cuda::Device {
     __cuhostdev__ ~Device(void);
     /// @}
 
-  private:
+  protected:
     /** @brief ID of device.*/
     int id_ = -1;
 };

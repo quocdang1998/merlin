@@ -47,6 +47,7 @@ static inline std::tuple<std::uintptr_t, bool, int> get_current_context_ptr(void
         }
     }
     // a dummy context initialized (return nullptr)
+    MESSAGE("Context constructor called.\n");
     return {reinterpret_cast<std::uintptr_t>(current_ctx), false, -1};
 }
 
@@ -90,7 +91,7 @@ bool cuda::Context::is_current(void) {
 // Push the context to the stack
 void cuda::Context::push_current(void) {
     if (this->is_current()) {
-        FAILURE(cuda_runtime_error, "The current context is being attached to the CPU process\n");
+        FAILURE(cuda_runtime_error, "The current context is being attached to the CPU process.\n");
     }
     ::CUcontext ctx = reinterpret_cast<::CUcontext>(this->context_);
     cudaError_t err_ = static_cast<cudaError_t>(::cuCtxPushCurrent(ctx));
@@ -103,7 +104,7 @@ void cuda::Context::push_current(void) {
 // Pop the context out of the stack
 cuda::Context & cuda::Context::pop_current(void) {
     if (!(this->is_current())) {
-        FAILURE(cuda_runtime_error, "The current context is not being attached to any processes\n");
+        FAILURE(cuda_runtime_error, "The current context is not being attached to any processes.\n");
     }
     ::CUcontext ctx = reinterpret_cast<::CUcontext>(this->context_);
     cudaError_t err_ = static_cast<cudaError_t>(::cuCtxPopCurrent(&ctx));

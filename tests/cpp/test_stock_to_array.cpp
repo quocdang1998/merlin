@@ -20,22 +20,25 @@ int main(void) {
     // [1.0, 5.0, 9.0 ]
     // [2.0, 6.0, 10.0]
 
-    float A[10] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
+    double A[10] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
     std::uint64_t ndim = 2;
     std::uint64_t dims[2] = {3, 2};
-    std::uint64_t strides[2] = {2*(dims[1] * sizeof(float)), sizeof(float)};
-    merlin::array::Array Ar(A, ndim, dims, strides);
-    Ar.export_to_file("temp.txt");
+    std::uint64_t strides[2] = {2*(dims[1] * sizeof(double)), sizeof(double)};
+    merlin::array::Array Ar(A, ndim, dims, strides, false);
+    merlin::array::Stock Stk("temp.txt", Ar.shape());
+    Stk.record_data_to_file(Ar);
 
     std::mutex m;
     #pragma omp parallel for
     for (int i = 0; i < 10; i++) {
-        merlin::array::Stock S("temp.txt", 'r');
-        merlin::array::Array a = S.to_array();
+        merlin::array::Stock S("temp.txt");
+        merlin::array::Array Ar_read(S.shape());
+        Ar_read.extract_data_from_file(S);
         m.lock();
-        MESSAGE("From thread %d\nNdim: %" PRIu64 ".\nDims: %" PRIu64 " %" PRIu64 ".\n", omp_get_thread_num(), a.ndim(), a.shape()[0], a.shape()[1]);
-        for (merlin::array::Array::iterator it = a.begin(); it != a.end(); ++it) {
-            std::printf("%f ", a[it.index()]);
+        MESSAGE("From thread %d\nNdim: %" PRIu64 ".\nDims: %" PRIu64 " %" PRIu64 ".\n", omp_get_thread_num(),
+                Ar_read.ndim(), Ar_read.shape()[0], Ar_read.shape()[1]);
+        for (merlin::array::Array::iterator it = Ar_read.begin(); it != Ar_read.end(); ++it) {
+            std::printf("%.1f ", Ar_read[it.index()]);
         }
         std::printf("\n");
         m.unlock();

@@ -8,8 +8,10 @@ from libcpp.utility cimport move, pair
 
 include "device.pxd"
 include "context.pxd"
+include "event.pxd"
 include "stream.pxd"
 
 include "device.pyx"
 include "context.pyx"
+include "event.pyx"
 include "stream.pyx"

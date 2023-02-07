@@ -26,3 +26,5 @@ cdef extern from "merlin/cuda/stream.hpp":
         void check_cuda_context() except +
         void synchronize() except +
         string str() except +
+
+    cdef void cpp_record_event "merlin::cuda::record_event" (const CppEvent & event, const CppStream & stream)

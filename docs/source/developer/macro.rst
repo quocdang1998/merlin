@@ -8,13 +8,63 @@ the source code during the pre-processing step of the compiler. As a result, the
 same file can be compiled without errors regardless of the compilation
 configuration, thus avoiding multiple similar copies of the same source.
 
-Here are some macros defined by this package during the compilation:
+Here are some macros defined by this package during the compilation.
+
+OS-dependant macros
+^^^^^^^^^^^^^^^^^^^
+
+.. envvar:: __MERLIN_WINDOWS__
+
+   :Condition: Defined when the package is compiled on Windows and the compiler
+      is MSVC.
+   :Source: ``src/platform.hpp``.
+   :Usage: Wrapping around included header files and function definitions for
+      Windows.
+
+   .. code-block:: cpp
+
+      // include "windows.h" only if the OS is Windows
+      #ifdef __MERLIN_WINDOWS__
+      #include <windows.h>
+      #endif // __MERLIN_WINDOWS__
+
+      void foo(void) {
+         #ifdef __MERLIN_WINDOWS__
+         preprocessing_step_only_on_windows();  // Executed only on Windows
+         #endif // __MERLIN_WINDOWS__
+      }
+
+.. envvar:: __MERLIN_LINUX__
+
+   :Condition: Defined when the package is compiled on Linux and the compiler
+      is GNU ``g++``.
+   :Source: ``src/platform.hpp``.
+   :Usage: Wrapping around included header files and function definitions for
+      Linux.
+
+   .. code-block:: cpp
+
+      // include "unistd.h" only if the OS is Linux
+      #ifdef __MERLIN_LINUX__
+      #include <unistd.h>
+      #endif // __MERLIN_LINUX__
+
+      void foo(void) {
+         #ifdef __MERLIN_LINUX__
+         preprocessing_step_only_on_linux();  // Executed only on Linux
+         #endif // __MERLIN_LINUX__
+      }
+
+CUDA-dependant macros
+^^^^^^^^^^^^^^^^^^^^^
 
 .. envvar:: __MERLIN_CUDA__
 
    :Condition: Defined when :envvar:`MERLIN_CUDA` is ``ON``.
-   :Usage: Wrapping around definition of a host function depending on the CUDA
-      option, or a class members visible only in CUDA configuration.
+   :Source: ``CMakeLists.txt``.
+   :Usage: Wrapping around definition of a host function in ``cpp`` source that
+      depends on the CUDA option, or a class members visible only in CUDA
+      configuration.
 
    .. code-block:: cpp
 
@@ -37,7 +87,7 @@ Here are some macros defined by this package during the compilation:
       }
       #endif  // __MERLIN_CUDA__
 
-      // foo.cu
+      // foo.cu (another implementation when CUDA option enabled)
       void foo(void) {
           cuda_function();
       }
@@ -45,6 +95,7 @@ Here are some macros defined by this package during the compilation:
 .. envvar:: __NVCC__
 
    :Condition: Defined when the compiler is CUDA ``nvcc``.
+   :Source: Native with ``nvcc`` compiler.
    :Usage: Wrapping around declaration or definition of inlined device
       functions in header, or template of device function in template.
 
@@ -71,6 +122,7 @@ Here are some macros defined by this package during the compilation:
 
    :Condition: Defined when the compiler is CUDA ``nvcc`` inside a
       ``__device__`` function.
+   :Source: Native with ``nvcc`` compiler.
    :Usage: Inside a ``__host__ __device__`` function definition with different
       implementation on CPU and GPU.
 
@@ -84,3 +136,35 @@ Here are some macros defined by this package during the compilation:
          gpu_function();
          #endif  // __CUDA_ARCH__
       }
+
+Library kind dependant macros
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. envvar:: __MERLIN_BUILT_AS_STATIC__
+
+   :Condition: Defined at compilation of static library.
+   :Source: ``CMakeLists.txt``.
+
+.. envvar:: LIBMERLIN_STATIC
+
+   :Condition: Defined at compilation of ``libmerlincuda``.
+   :Source: ``CMakeLists.txt``.
+
+.. envvar:: MERLIN_EXPORTS
+
+   :Condition: Defined at compilation of dynamic library ``libmerlin`` on
+      Windows.
+   :Source: ``exports.hpp``.
+   :Usage: Append before functions and classes that are linked dynamically with
+      the dynamic library ``merlin.dll``.
+   :Note: This function with expands to empty (empty macro) when compiling on
+      Linux, or when compiling static library (:envvar:`MERLIN_LIBKIND` is
+      ``STATIC``).
+
+Other macros
+^^^^^^^^^^^^
+
+.. envvar:: __MERLIN_DEBUG__
+
+   :Condition: Defined when compiling in debug mode.
+   :Source: ``CMakeLists.txt``.

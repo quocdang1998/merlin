@@ -4,6 +4,7 @@
 #include <cuda.h>  // ::cuStreamGetCtx, ::CUcontext, ::CUstream
 
 #include "merlin/cuda/context.hpp"  // merlin::cuda::Context
+#include "merlin/cuda/event.hpp"  // merlin::cuda::Event
 #include "merlin/logger.hpp"  // cuda_runtime_error, FAILURE, WARNING
 
 namespace merlin {
@@ -108,6 +109,17 @@ cuda::Stream::~Stream(void) {
         if (err_ != cudaSuccess) {
             FAILURE(cuda_runtime_error, "cudaStreamDestroy failed with message \"%s\".\n", ::cudaGetErrorName(err_));
         }
+    }
+}
+
+// Record event on a stream
+void cuda::record_event(const cuda::Event & event, const cuda::Stream & stream) {
+    stream.check_cuda_context();
+    event.check_cuda_context();
+    ::cudaError_t err_ = ::cudaEventRecord(reinterpret_cast<::cudaEvent_t>(event.get_event_ptr()),
+                                           reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr()));
+    if (err_ != 0) {
+        FAILURE(cuda_runtime_error, "Record event failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
 }
 

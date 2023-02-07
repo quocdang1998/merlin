@@ -71,6 +71,11 @@ void cuda::Stream::synchronize(void) const {
 // Destructor
 cuda::Stream::~Stream(void) {}
 
+// Record event on a stream
+void cuda::record_event(const cuda::Event & event, const cuda::Stream & stream) {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for event management.\n");
+}
+
 #endif  // __MERLIN_CUDA__
 
 }  // namespace merlin

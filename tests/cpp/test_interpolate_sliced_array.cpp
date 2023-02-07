@@ -1,5 +1,6 @@
 #include "merlin/array/array.hpp"
-#include "merlin/interpolant/interpolant.hpp"
+#include "merlin/array/slice.hpp"
+#include "merlin/interpolant/lagrange.hpp"
 #include "merlin/interpolant/cartesian_grid.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/vector.hpp"
@@ -8,10 +9,10 @@
 
 int main(void) {
     // whole array
-    float data[6] = {1.0, 3.0, 5.0, 2.0, 4.0, 6.0};
+    double data[6] = {1.0, 3.0, 5.0, 2.0, 4.0, 6.0};
     std::uint64_t ndim = 2;
     std::uint64_t dims[2] = {2, 3};
-    std::uint64_t strides[2] = {dims[1] * sizeof(float), sizeof(float)};
+    std::uint64_t strides[2] = {dims[1] * sizeof(double), sizeof(double)};
     merlin::array::Array value(data, ndim, dims, strides);
     // sub-array 1
     merlin::Vector<merlin::array::Slice> slice_1({{0}, {}});
@@ -37,7 +38,7 @@ int main(void) {
     merlin::array::Array coeff(value.shape());
     // coeff 1
     merlin::array::Array coeff_1(coeff, slice_1);
-    merlin::calc_lagrange_coeffs_cpu(&grid, &value_1, slice_1, &coeff_1);
+    merlin::interpolant::calc_lagrange_coeffs_cpu(grid, value_1, slice_1, coeff_1);
     MESSAGE("Element of coeff 1 : ");
     for (std::uint64_t i = 0; i < coeff_1.size(); i++) {
         std::printf("%.1f ", coeff_1.get(i));
@@ -46,7 +47,7 @@ int main(void) {
     MESSAGE("Theorical calculated values (C-contiguous order): -1/2 3 -5/2.\n");
     // coeff 2
     merlin::array::Array coeff_2(coeff, slice_2);
-    merlin::calc_lagrange_coeffs_cpu(&grid, &value_2, slice_2, &coeff_2);
+    merlin::interpolant::calc_lagrange_coeffs_cpu(grid, value_2, slice_2, coeff_2);
     MESSAGE("Element of coeff 2 : ");
     for (std::uint64_t i = 0; i < coeff_2.size(); i++) {
         std::printf("%.1f ", coeff_2.get(i));

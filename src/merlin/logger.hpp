@@ -22,6 +22,12 @@
     #define __FUNCNAME__ __PRETTY_FUNCTION__
 #endif
 
+// Stack tracing
+// -------------
+
+/** @brief Print the stacktrace at the crash moment.*/
+void _merlin_print_stacktrace_(int skip = 1);
+
 // Log MESSAGE, WARNING and FAILURE for CPU
 // ----------------------------------------
 
@@ -149,11 +155,5 @@ std::string throw_linux_last_error(void);
  */
 #define CUHDERR(exception, fmt, ...) FAILURE(exception, fmt, ##__VA_ARGS__)
 #endif  // __CUDA_ARCH__
-
-// Stack tracing
-// -------------
-
-/** @brief Print the stacktrace at the crash moment.*/
-void _merlin_print_stacktrace_(int skip = 1);
 
 #endif  // MERLIN_LOGGER_HPP_

@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include "merlin/array/array.hpp"
+#include "merlin/cuda/context.hpp"
 #include "merlin/logger.hpp"
 
 __global__ void print_element(merlin::array::Parcel * parcel_ptr) {
@@ -18,19 +19,20 @@ __global__ void print_element_from_shared_memory(merlin::array::Parcel * parcel_
 
 int main(void) {
     // initialize an tensor
-    float A_data[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    double A_data[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     std::uint64_t dims[2] = {2, 3};
-    std::uint64_t strides[2] = {5*sizeof(float), 2*sizeof(float)};
+    std::uint64_t strides[2] = {5*sizeof(double), 2*sizeof(double)};
     merlin::array::Array A(A_data, 2, dims, strides, false);
 
     // copy data to GPU and print each element of the tensor
     MESSAGE("Initialize Parcel object with elements: 1.0 3.0 5.0 6.0 8.0 10.0.\n");
-    merlin::array::Parcel B(A);
+    merlin::cuda::Stream s(merlin::cuda::Stream::Setting::Default);
+    merlin::array::Parcel B(A, s);
     merlin::array::Parcel * B_gpu;
     cudaMalloc(&B_gpu, B.malloc_size());
     B.copy_to_gpu(B_gpu, B_gpu+1);
     print_element<<<1,B.size()>>>(B_gpu);
     print_element_from_shared_memory<<<1,B.size(),B.malloc_size()>>>(B_gpu);
+    cudaDeviceSynchronize();
     cudaFree(B_gpu);
-    cudaDeviceReset();
 }

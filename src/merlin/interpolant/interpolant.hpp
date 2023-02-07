@@ -2,37 +2,61 @@
 #ifndef MERLIN_INTERPOLANT_INTERPOLANT_HPP_
 #define MERLIN_INTERPOLANT_INTERPOLANT_HPP_
 
-#include "merlin/array/nddata.hpp"  // merlin::array::NdData
-#include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/interpolant/grid.hpp"  // merlin::CartesianGrid
-#include "merlin/vector.hpp"  // merlin::floatvec, merlin::Vector
+#include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Slice
+#include "merlin/interpolant/grid.hpp"  // merlin::interpolant::CartesianGrid
+#include "merlin/vector.hpp"  // merlin::Vector
 
 namespace merlin::interpolant {
-class CartesianInterpolant;
-class LagrangianInterpolant;
+class PolynomialInterpolant;
+class CartesianInterpolant;  // interpolant on a cartesian grid
 }  // namespace merlin::interpolant
 
 namespace merlin {
 
-class interpolant::CartesianInterpolant {
+/** @brief Basic interpolant class.*/
+class interpolant::PolynomialInterpolant {
   public:
-    /** @brief Method to choose.*/
-    enum class Method {
+    /** @brief Interpolant method.*/
+    enum class Method : unsigned int {
         Lagrange,
         Newton
     };
+    /** @brief Processor.*/
+    enum class Processor : unsigned int {
+        Cpu,
+        Gpu
+    };
 
-    CartesianInterpolant(const interpolant::CartesianGrid & grid, const array::NdData & value,
-                         array::NdData & coeff, interpolant::CartesianInterpolant::Method method);
-    ~CartesianInterpolant(void);
+    PolynomialInterpolant(void) {}
+    virtual double operator()(const Vector<double> & point) {return 0.0;}
+    virtual ~PolynomialInterpolant(void) {}
+};
 
-    float operator()(const floatvec & x) {return 0.0;}
+class interpolant::CartesianInterpolant : public interpolant::PolynomialInterpolant {
+  public:
+    /** @brief Default constructor.*/
+    CartesianInterpolant(void) {}
+    /** @brief Contructor from grid and value.
+     *  @param grid Full Cartesian grid.
+     *  @param value Values of function to interpolate at points on the grid. The array may contains all points in the
+     *  grid, or just part of it. In the second case, the argument ``slices`` will indicate how that part was sliced.
+     *  @param slices Slices indicating on which point of the grid the value array is on.
+     *  @param method Method of interpoaltion to choose from.
+     */
+    CartesianInterpolant(const CartesianGrid & grid, const array::Array & value, const Vector<array::Slice> & slices,
+                         interpolant::PolynomialInterpolant::Method method);
+
+    /** @brief Default destructor.*/
+    ~CartesianInterpolant(void) {}
 
   protected:
-    const interpolant::CartesianGrid * pgrid_ = nullptr;
-    const array::NdData * pvalue_ = nullptr;
-    array::NdData * pcoeff_ = nullptr;
+    /** @brief Grid.*/
+    interpolant::CartesianGrid grid_;
+    /** @brief Interpolation coefficient.*/
+    array::Array coeff_;
 };
+
+
 
 float eval_lagrange_cpu(const interpolant::CartesianGrid * pgrid, const array::NdData * pcoeff,
                         const merlin::floatvec & x);

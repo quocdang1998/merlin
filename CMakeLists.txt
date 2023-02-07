@@ -22,6 +22,7 @@ list(APPEND MERLIN_SRC_CPP
      array/nddata.cpp
      array/array.cpp
      array/parcel.cpp
+     array/slice.cpp
      array/stock.cpp
      # src/autodiff.cpp
      cuda/context.cpp
@@ -32,20 +33,21 @@ list(APPEND MERLIN_SRC_CPP
      iterator.cpp
      interpolant/cartesian_grid.cpp
      interpolant/grid.cpp
+     interpolant/lagrange.cpp
      interpolant/regular_grid.cpp
      interpolant/sparse_grid.cpp
-     interpolant/interpolant.cpp
+     # interpolant/interpolant.cpp
      settings.cpp
 )
 list(APPEND MERLIN_SRC_CU
-     array/parcel.cu
      array/array.cu
+     array/parcel.cu
      cuda/context.cu
      cuda/device.cu
      cuda/event.cu
      cuda/stream.cu
      interpolant/cartesian_grid.cu
-     interpolant/interpolant.cu
+     # interpolant/interpolant.cu
 )
 list(APPEND MERLIN_SRC_RDC
      array/array.rdc
@@ -81,6 +83,8 @@ endif()
 # query build type
 if(MERLIN_DEBUG AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(FATAL_ERROR "Option debug is only available with build-type Debug")
+else()
+    message(STATUS "Compile library in debug mode.")
 endif()
 
 # =============================================================================

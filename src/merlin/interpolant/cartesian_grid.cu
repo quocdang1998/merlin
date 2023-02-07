@@ -9,24 +9,24 @@ namespace merlin {
 // CartesianGrid
 // --------------------------------------------------------------------------------------------------------------------
 
-void interpolant::CartesianGrid::copy_to_gpu(CartesianGrid * gpu_ptr, void * grid_vector_data_ptr) const {
+void * interpolant::CartesianGrid::copy_to_gpu(interpolant::CartesianGrid * gpu_ptr,
+                                               void * grid_vector_data_ptr) const {
     // initialize buffer to store data of the copy before cloning it to GPU
     interpolant::CartesianGrid copy_on_gpu;
     // shallow copy of grid vector
-    copy_on_gpu.grid_vectors_.data() = reinterpret_cast<floatvec *>(grid_vector_data_ptr);
+    copy_on_gpu.grid_vectors_.data() = reinterpret_cast<Vector<double> *>(grid_vector_data_ptr);
     copy_on_gpu.grid_vectors_.size() = this->ndim();
     // copy data of each grid vector
-    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(grid_vector_data_ptr) + this->ndim()*sizeof(floatvec);
-    for (int i = 0; i < this->ndim(); i++) {
-        this->grid_vectors_[i].copy_to_gpu(&(copy_on_gpu.grid_vectors_[i]), reinterpret_cast<float *>(data_ptr));
-        data_ptr += this->grid_vectors_[i].size() * sizeof(float);
+    std::uintptr_t dptr = reinterpret_cast<std::uintptr_t>(grid_vector_data_ptr) + this->ndim()*sizeof(Vector<double>);
+    void * data_ptr = reinterpret_cast<void *>(dptr);
+    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+        data_ptr = this->grid_vectors_[i_dim].copy_to_gpu(&(copy_on_gpu.grid_vectors_[i_dim]), data_ptr);
     }
-    // copy of grid shape
-    this->grid_shape_.copy_to_gpu(&(copy_on_gpu.grid_shape_), reinterpret_cast<std::uint64_t *>(data_ptr));
     // copy temporary object to GPU
-    ::cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(interpolant::CartesianGrid), cudaMemcpyHostToDevice);
+    ::cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(interpolant::CartesianGrid), ::cudaMemcpyHostToDevice);
     // nullify data pointer to avoid free data
     copy_on_gpu.grid_vectors_.data() = nullptr;
+    return data_ptr;
 }
 
 }  // namespace merlin

@@ -7,6 +7,7 @@
 #include <string>  // std::string
 #include <utility>  // std::exchange
 
+#include "merlin/cuda/declaration.hpp"  // merlin::cuda::Event
 #include "merlin/cuda/device.hpp"  // merlin::cuda::Device
 
 namespace merlin::cuda {
@@ -135,6 +136,16 @@ class MERLIN_EXPORTS cuda::Stream {
     /** @brief GPU associated to the stream.*/
     cuda::Device device_;
 };
+
+namespace cuda {
+
+/** @brief Record (register) an event on CUDA stream.
+ *  @param event CUDA event to be recorded.
+ *  @param stream CUDA stream on which the event is recorded (default value is the null stream).
+ */
+void record_event(const cuda::Event & event, const cuda::Stream & stream = cuda::Stream());
+
+}  // namespace cuda
 
 }  // namespace merlin
 

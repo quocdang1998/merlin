@@ -1,17 +1,47 @@
 // Copyright 2022 quocdang1998
 #include "merlin/interpolant/cartesian_grid.hpp"
 
+#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx
+
 namespace merlin {
 
 // --------------------------------------------------------------------------------------------------------------------
 // CartesianGrid
 // --------------------------------------------------------------------------------------------------------------------
 
+// Get shape of the grid
+__cuhostdev__ intvec interpolant::CartesianGrid::get_grid_shape(void) const noexcept {
+    intvec result(this->ndim());
+    for (std::uint64_t i = 0; i < this->ndim(); i++) {
+        result[i] = this->grid_vectors_[i].size();
+    }
+    return result;
+}
+
 // Get total number of points
 __cuhostdev__ std::uint64_t interpolant::CartesianGrid::size(void) const {
     std::uint64_t result = 1;
-    for (int i = 0; i < this->grid_vectors_.size(); i++) {
+    for (std::uint64_t i = 0; i < this->grid_vectors_.size(); i++) {
         result *= this->grid_vectors_[i].size();
+    }
+    return result;
+}
+
+// Get element at a C-contiguous index
+__cuhostdev__ Vector<double> interpolant::CartesianGrid::operator[](std::uint64_t index) const noexcept {
+    intvec nd_index = contiguous_to_ndim_idx(index, this->get_grid_shape());
+    Vector<double> result(this->ndim(), 0);
+    for (std::uint64_t i = 0; i < result.size(); i++) {
+        result[i] = this->grid_vectors_[i][nd_index[i]];
+    }
+    return result;
+}
+
+// Get element at a multi-dimensional index
+__cuhostdev__ Vector<double> interpolant::CartesianGrid::operator[](const intvec & index) const noexcept {
+    Vector<double> result(this->ndim(), 0);
+    for (std::uint64_t i = 0; i < result.size(); i++) {
+        result[i] = this->grid_vectors_[i][index[i]];
     }
     return result;
 }
@@ -19,22 +49,22 @@ __cuhostdev__ std::uint64_t interpolant::CartesianGrid::size(void) const {
 #ifdef __NVCC__
 
 // Copy to shared memory
-__cudevice__ void interpolant::CartesianGrid::copy_to_shared_mem(interpolant::CartesianGrid * share_ptr,
-                                                                 void * grid_vector_data_ptr) {
+__cudevice__ void * interpolant::CartesianGrid::copy_to_shared_mem(interpolant::CartesianGrid * share_ptr,
+                                                                   void * grid_vector_data_ptr) {
     // shallow copy of grid vector
     bool check_zeroth_thread = (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
     if (check_zeroth_thread) {
-        share_ptr->grid_vectors_.data() = reinterpret_cast<floatvec *>(grid_vector_data_ptr);
+        share_ptr->grid_vectors_.data() = reinterpret_cast<Vector<double> *>(grid_vector_data_ptr);
         share_ptr->grid_vectors_.size() = this->ndim();
     }
     __syncthreads();
     // copy data of each grid vector
-    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(grid_vector_data_ptr) + this->ndim()*sizeof(floatvec);
-    for (int i = 0; i < this->ndim(); i++) {
-        this->grid_vectors_[i].copy_to_shared_mem(&(share_ptr->grid_vectors_[i]), reinterpret_cast<float *>(data_ptr));
-        data_ptr += this->grid_vectors_[i].size() * sizeof(float);
+    std::uintptr_t dptr = reinterpret_cast<std::uintptr_t>(grid_vector_data_ptr) + this->ndim()*sizeof(Vector<double>);
+    void * data_ptr = reinterpret_cast<void *>(dptr);
+    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+        data_ptr = this->grid_vectors_[i_dim].copy_to_shared_mem(&(share_ptr->grid_vectors_[i_dim]), data_ptr);
     }
-    // this->grid_shape_.copy_to_shared_mem(&(share_ptr->grid_shape_), reinterpret_cast<std::uint64_t *>(data_ptr));
+    return data_ptr;
 }
 
 #endif  // __NVCC__

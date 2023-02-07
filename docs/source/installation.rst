@@ -140,6 +140,19 @@ CMake build options
    :Value: ``ON``, ``OFF``
    :Default: ``ON``
 
+.. envvar:: MERLIN_DEBUG
+
+   Build Merlin library in debug mode. This mode allows backtracing the called
+   stack and printing symbolic names of functions in the stack to the standard
+   error everytime an exception is thrown.
+
+   This option is valid only if the variable |CMAKE_BUILD_TYPE|_ is
+   ``"Debug"``.
+
+   :Type: ``BOOL``
+   :Value: ``ON``, ``OFF``
+   :Default: ``OFF``
+
 .. envvar:: MERLIN_LIBKIND
 
    Specify the kind of compiled CUDA and C++ library.
@@ -158,6 +171,8 @@ CMake build options
    :Value: ``ON``, ``OFF``
    :Default: ``OFF``
 
+.. |CMAKE_BUILD_TYPE| replace:: ``CMAKE_BUILD_TYPE``
+.. _CMAKE_BUILD_TYPE: https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html
 
 Build documentation
 -------------------

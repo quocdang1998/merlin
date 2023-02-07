@@ -28,7 +28,7 @@ __cuhostdev__ Vector<T>::Vector(std::uint64_t size, const T & value) : size_(siz
         if constexpr (std::is_copy_assignable_v<T>) {
             this->data_[i] = value;
         } else if constexpr (std::is_copy_constructible_v<T>) {
-            new (&(this->data_[i])) T(value); 
+            new (&(this->data_[i])) T(value);
         }
     }
 }
@@ -37,7 +37,7 @@ __cuhostdev__ Vector<T>::Vector(std::uint64_t size, const T & value) : size_(siz
 template <typename T>
 template <typename Convertable>
 __cuhostdev__ Vector<T>::Vector(const Convertable * ptr_first, const Convertable * ptr_last) {
-    static_assert(std::is_constructible_v<T, Convertable>, "Destination type is not constructable from original type.\n");
+    static_assert(std::is_constructible_v<T, Convertable>, "Object is not constructable from original type.\n");
     this->size_ = ptr_last - ptr_first;
     this->data_ = new T[this->size_];
     for (std::uint64_t i = 0; i < this->size_; i++) {
@@ -49,7 +49,7 @@ __cuhostdev__ Vector<T>::Vector(const Convertable * ptr_first, const Convertable
 template <typename T>
 template <typename Convertable>
 __cuhostdev__ Vector<T>::Vector(const Convertable * ptr_src, std::uint64_t size) : size_(size) {
-    static_assert(std::is_constructible_v<T, Convertable>, "Destination type is not constructable from original type.\n");
+    static_assert(std::is_constructible_v<T, Convertable>, "Object is not constructable from original type.\n");
     this->data_ = new T[this->size_];
     for (std::uint64_t i = 0; i < this->size_; i++) {
         this->data_[i] = T(ptr_src[i]);
@@ -83,7 +83,7 @@ __cuhostdev__ Vector<T> & Vector<T>::operator=(const Vector<T> & src) {
 
 // Move constructor
 template <typename T>
-__cuhostdev__ Vector<T>::Vector(Vector<T> && src) : size_(src.size_), data_(src.data_) {
+__cuhostdev__ Vector<T>::Vector(Vector<T> && src) : size_(src.size_), data_(src.data_), assigned_(src.assigned_) {
     src.data_ = nullptr;
 }
 
@@ -95,8 +95,25 @@ __cuhostdev__ Vector<T> & Vector<T>::operator=(Vector<T> && src) {
     }
     this->size_ = src.size_;
     this->data_ = src.data_;
+    this->assigned_ = src.assigned_;
     src.data_ = nullptr;
     return *this;
+}
+
+// Assign current vector as sub-vector
+template <typename T>
+__cuhostdev__ void Vector<T>::assign(T * ptr_src, std::uint64_t size) {
+    this->data_ = ptr_src;
+    this->size_ = size;
+    this->assigned_ = true;
+}
+
+// Assign current vector as sub-vector
+template <typename T>
+__cuhostdev__ void Vector<T>::assign(T * ptr_first, T * ptr_last) {
+    this->data_ = ptr_first;
+    this->size_ = (ptr_last - ptr_first);
+    this->assigned_ = true;
 }
 
 #ifndef __MERLIN_CUDA__
@@ -212,7 +229,7 @@ __cuhostdev__ bool operator!=(const Vector<T> & vec_1, const Vector<T> & vec_2) 
 // Destructor
 template <typename T>
 __cuhostdev__ Vector<T>::~Vector(void) {
-    if (this->data_ != nullptr) {
+    if ((!this->assigned_) && (this->data_ != nullptr)) {
         delete[] this->data_;
     }
 }

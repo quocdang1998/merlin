@@ -49,4 +49,4 @@ __cuhostdev__ int cuda::Device::get_num_gpu(void) {
 // Destructor
 __cuhostdev__ cuda::Device::~Device(void) {}
 
-}  // namespace merlin::cuda
+}  // namespace merlin

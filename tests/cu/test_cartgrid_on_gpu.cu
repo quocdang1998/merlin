@@ -27,9 +27,9 @@ __global__ void print_grid(merlin::interpolant::CartesianGrid * grid_ptr) {
 }
 
 int main(void) {
-    merlin::floatvec v1 = {0.1, 0.2, 0.3};
-    merlin::floatvec v2 = {1.0, 2.0, 3.0, 4.0};
-    merlin::floatvec v3 = {0.0, 0.25};
+    merlin::Vector<double> v1 = {0.1, 0.2, 0.3};
+    merlin::Vector<double> v2 = {1.0, 2.0, 3.0, 4.0};
+    merlin::Vector<double> v3 = {0.0, 0.25};
     merlin::interpolant::CartesianGrid cart_gr = {v1, v2, v3};
 
     merlin::interpolant::CartesianGrid * gpu_gr;

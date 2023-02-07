@@ -32,9 +32,10 @@ Manage CUDA Context
 
    merlin.cuda.Context
    merlin.cuda.ContextFlags
+   merlin.cuda.create_primary_context
 
-CUDA Stream
-^^^^^^^^^^^
+CUDA Stream and Event
+^^^^^^^^^^^^^^^^^^^^^
 
 .. autosummary::
    :toctree: generated
@@ -43,3 +44,6 @@ CUDA Stream
 
    merlin.cuda.Stream
    merlin.cuda.StreamSetting
+   merlin.cuda.Event
+   merlin.cuda.EventCategory
+   merlin.cuda.record_event

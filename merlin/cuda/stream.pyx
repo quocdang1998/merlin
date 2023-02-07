@@ -11,7 +11,7 @@ cdef class Stream:
 
         Parameters
         ----------
-        setting: merlin.device.StreamSetting
+        setting: merlin.cuda.StreamSetting
             Mode of the stream.
         priority: int
             Priority of the stream. The smaller value, the higher priority.
@@ -117,3 +117,16 @@ cdef class Stream:
 
     def __dealloc__(self):
         del self.core
+
+def record_event(Event event, Stream stream = Stream()):
+    """
+    Record (register) an event on CUDA stream.
+
+    Parameters
+    ----------
+    event: merlin.cuda.Event
+        CUDA event to be recorded.
+    stream: merlin.cuda.Stream
+        CUDA stream on which the event is recorded (default value is the null stream).
+    """
+    cpp_record_event(dereference(event.core), dereference(stream.core))

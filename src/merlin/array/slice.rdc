@@ -12,22 +12,32 @@ namespace merlin {
 // Slice
 // --------------------------------------------------------------------------------------------------------------------
 
+// Check validity of input values
+__cuhostdev__ void array::Slice::check_validity(void) const {
+    if (this->step_ == 0) {
+        CUHDERR(std::invalid_argument, "Slice step cannot be zero.\n");
+    }
+    if (this->stop_ < this->start_) {
+        CUHDERR(std::invalid_argument, "Stop index %" PRIu64 " must be greater than start index %" PRIu64 ".\n",
+                this->stop_, this->start_);
+    }
+}
+
 // Member constructor
-__cuhostdev__ array::Slice::Slice(std::uint64_t start, std::int64_t stop, std::int64_t step) :
+__cuhostdev__ array::Slice::Slice(std::uint64_t start, std::uint64_t stop, std::uint64_t step) :
 start_(start), stop_(stop), step_(step) {
     this->check_validity();
 }
 
 // Constructor from initializer list
-__cuhostdev__ array::Slice::Slice(std::initializer_list<std::int64_t> list) {
-    const std::int64_t * list_data = list.begin();
+__cuhostdev__ array::Slice::Slice(std::initializer_list<std::uint64_t> list) {
+    const std::uint64_t * list_data = list.begin();
     switch (list.size()) {
     case 0:  // empty = get all element
         break;
     case 1:  // 1 element = get 1 element
         this->start_ = list_data[0];
-        this->stop_ = list_data[0];
-        this->step_ = 0;
+        this->stop_ = list_data[0] + 1;
         break;
     case 2:  // 2 element = {start, stop}
         this->start_ = list_data[0];
@@ -41,68 +51,31 @@ __cuhostdev__ array::Slice::Slice(std::initializer_list<std::int64_t> list) {
         this->check_validity();
         break;
     default:
-        CUHDERR(std::invalid_argument, "Expected intializer list with size at most 3, got %d.\n",
-                static_cast<int>(list.size()));
+        CUHDERR(std::invalid_argument, "Expected intializer list with size at most 3, got %u.\n",
+                static_cast<unsigned int>(list.size()));
         break;
     }
 }
-
-// Check validity of input values
-__cuhostdev__ void array::Slice::check_validity(void) const {
-    if ((this->step_ > 0) && (this->stop_ <= this->start_)) {
-        CUHDERR(std::invalid_argument, "Stop index %" PRId64 " must be greater than start index %" PRIu64 ".\n",
-                this->stop_, this->start_);
-    } else if ((this->step_ < 0) && (this->stop_ >= this->start_)) {
-        CUHDERR(std::invalid_argument, "Stop index %" PRId64 " must be smaller than start index %" PRIu64 ".\n",
-                this->stop_, this->start_);
-    } else if ((this->step_ == 0) && (this->stop_ != this->start_)) {
-        CUHDERR(std::invalid_argument, "Stop index %" PRId64 " must be equal to start index %" PRIu64 ".\n",
-                this->stop_, this->start_);
-    }
-}
-
-// Check range validity of Slice
-__cuhostdev__ bool array::Slice::in_range(std::int64_t lower, std::int64_t upper) const {
-    bool start_check = (this->start_ >= lower) && (this->start_ <= upper);
-    bool stop_check;
-    if ((this->stop_ == INT64_MAX) || (this->stop_ == INT64_MIN)) {
-        stop_check = true;
-    } else {
-        stop_check = (this->stop_ >= lower) && (this->stop_ <= upper);
-    }
-    return start_check && stop_check;
-}
-
 // Calculate offset, new shape and stride
-__cuhostdev__ triplet_uint64 array::Slice::slice_on(std::uint64_t shp, std::uint64_t strd) const {
+__cuhostdev__ std::array<std::uint64_t, 3> array::Slice::slice_on(std::uint64_t shape, std::uint64_t stride) const {
     // check range
-    if (!this->in_range(0, shp)) {
-        CUHDERR(std::invalid_argument, "Index of Slice out of range.\n");
+    if (this->start_ >= shape) {
+        CUHDERR(std::invalid_argument, "Expected start index smaller than %" PRIu64 ", got %" PRIu64 ".\n",
+                shape, this->start_);
     }
-    // initialize results
-    std::uint64_t offset = 0, new_shp = shp, new_strd = strd;
-    // positive step
-    if (this->step_ > 0) {
-        std::int64_t stop = (this->stop_ == INT64_MAX) ? shp : this->stop_;
-        new_shp = std::ceil(static_cast<double>(stop - this->start_) / static_cast<double>(this->step_));
-        offset = this->start_ * strd;
-        new_strd = this->step_ * strd;
-    } else if (this->step_ < 0) {
-        std::int64_t stop = (this->stop_ == INT64_MIN) ? -1 : this->stop_;
-        new_shp = std::ceil(static_cast<double>(stop - this->start_) / static_cast<double>(this->step_));
-        std::uint64_t new_start = this->start_ + (new_shp-1)*this->step_;
-        offset = new_start * strd;
-        new_strd = -(this->step_) * strd;
-    } else {
-        offset = this->start_ * strd;
-        new_shp = 1;
+    if ((this->stop_ > shape) && (this->stop_ != UINT64_MAX)) {
+        CUHDERR(std::invalid_argument, "Expected stop index smaller or equal to %" PRIu64 ", got %" PRIu64 ".\n",
+                shape, this->stop_);
     }
+    // shrink the stop if out of range
+    std::uint64_t stop = (this->stop_ == UINT64_MAX) ? shape : this->stop_;
+    std::uint64_t new_shp = std::ceil(static_cast<double>(stop - this->start_) / static_cast<double>(this->step_));
+    std::uint64_t offset = this->start_ * stride;
+    std::uint64_t new_strd = this->step_ * stride;
     return {offset, new_shp, new_strd};
 }
 
-// Get index in whole array given index in a sliced array
-__cuhostdev__ std::uint64_t array::Slice::get_index_in_whole_array(std::uint64_t index_sliced_array) const {
-    return this->start_ + (this->step_ * index_sliced_array);
-}
+// Destructor
+__cuhostdev__ array::Slice::~Slice(void) {}
 
 }  // namespace merlin
