@@ -46,6 +46,12 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
+# List of custom sections to include for napoleon
+napoleon_custom_sections = [
+    ("Shape constructor", "Parameters"),
+    ("Numpy constructor", "Parameters")
+]
+
 # Doxygen generated XML files
 breathe_projects = { "merlin": os.path.abspath("./xml") }
 breathe_default_project = "merlin"

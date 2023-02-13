@@ -1,5 +1,8 @@
 # Copyright 2022 quocdang1998
 
+from libc.stdint cimport uint64_t
+from libcpp.string cimport string
+
 cdef extern from "merlin/cuda/device.hpp":
 
     cpdef enum class DeviceLimit "merlin::cuda::Device::Limit":

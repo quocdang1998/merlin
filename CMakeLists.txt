@@ -83,8 +83,10 @@ endif()
 # query build type
 if(MERLIN_DEBUG AND NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(FATAL_ERROR "Option debug is only available with build-type Debug")
-else()
+elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(STATUS "Compile library in debug mode.")
+else()
+    message(STATUS "Compile library in release mode.")
 endif()
 
 # =============================================================================

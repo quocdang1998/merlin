@@ -83,7 +83,7 @@ __cuhostdev__ Vector<T> & Vector<T>::operator=(const Vector<T> & src) {
 
 // Move constructor
 template <typename T>
-__cuhostdev__ Vector<T>::Vector(Vector<T> && src) : size_(src.size_), data_(src.data_), assigned_(src.assigned_) {
+__cuhostdev__ Vector<T>::Vector(Vector<T> && src) : data_(src.data_), size_(src.size_), assigned_(src.assigned_) {
     src.data_ = nullptr;
 }
 

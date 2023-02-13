@@ -1,5 +1,12 @@
 # Copyright 2022 quocdang1998
 
+from libc.stdint cimport uintptr_t
+from libcpp.string cimport string
+
+from merlin.cuda.device cimport CppDevice
+from merlin.cuda.context cimport CppContext
+from merlin.cuda.event cimport CppEvent
+
 cdef extern from "merlin/cuda/stream.hpp":
 
     cpdef enum class StreamSetting "merlin::cuda::Stream::Setting":

@@ -1,5 +1,10 @@
 # Copyright 2022 quocdang1998
 
+from libc.stdint cimport uint64_t, uintptr_t
+from libcpp.string cimport string
+
+from merlin.cuda.device cimport CppDevice
+
 cdef extern from "merlin/cuda/context.hpp":
 
     cpdef enum class ContextFlags "merlin::cuda::Context::Flags":
