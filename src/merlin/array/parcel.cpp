@@ -15,16 +15,6 @@ std::mutex array::Parcel::mutex_;
 
 #ifndef __MERLIN_CUDA__
 
-// Constructor from CPU array
-array::Parcel::Parcel(const array::Array & cpu_array, const cuda::Stream & stream) {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
-}
-
-// Constructor from a slice
-array::Parcel::Parcel(const array::Parcel & whole, const Vector<array::Slice> & slices) {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
-}
-
 // Copy constructor
 array::Parcel::Parcel(const array::Parcel & src) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");

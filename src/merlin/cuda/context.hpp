@@ -2,9 +2,9 @@
 #ifndef MERLIN_CUDA_CONTEXT_HPP_
 #define MERLIN_CUDA_CONTEXT_HPP_
 
+#include <atomic>  // std::atomic_uint64_t
 #include <cstdint>  // std::uintptr_t
 #include <map>  // std::map
-#include <mutex>  // std::mutex
 #include <string>  // std::string
 #include <utility>  // std::exchange, std::pair
 #include <vector>  // std::vector
@@ -51,16 +51,12 @@ class MERLIN_EXPORTS cuda::Context {
     /// @{
     /** @brief Copy constructor.*/
     Context(const cuda::Context & src) : context_(src.context_) {
-        cuda::Context::mutex_.lock();
         cuda::Context::attribute_[src.context_].reference_count += 1;
-        cuda::Context::mutex_.unlock();
     }
     /** @brief Copy assignment (deleted).*/
     cuda::Context & operator=(const cuda::Context & src) {
         this->context_ = src.context_;
-        cuda::Context::mutex_.lock();
         cuda::Context::attribute_[src.context_].reference_count += 1;
-        cuda::Context::mutex_.unlock();
         return *this;
     }
     /** @brief Move constructor.*/
@@ -109,12 +105,12 @@ class MERLIN_EXPORTS cuda::Context {
 
     /// @name Primary context
     /// @{
-    friend cuda::Context create_primary_context(const cuda::Device & gpu, cuda::Context::Flags flag);
+    MERLIN_EXPORTS friend cuda::Context create_primary_context(const cuda::Device & gpu, cuda::Context::Flags flag);
     /// @}
 
     /// @name Default context
     /// @{
-    friend cuda::Context initialize_context(void);
+    MERLIN_EXPORTS friend cuda::Context initialize_context(void);
     /// @}
 
     /// @name Comparison
@@ -144,16 +140,25 @@ class MERLIN_EXPORTS cuda::Context {
   protected:
     /** @brief Pointer to ``CUctx_st`` object.*/
     std::uintptr_t context_ = 0;
-    /** @brief Mutex lock for updating static attributes.*/
-    static std::mutex mutex_;
 
   private:
     /** @brief Attributes of the context.*/
     struct Attribute {
+        Attribute(void) = default;
+        Attribute(const std::atomic_uint64_t & ref_count, bool primariness, int gpu_id);
+        Attribute(const cuda::Context::Attribute & src) : reference_count(src.reference_count.load()), is_primary(src.is_primary), gpu(src.gpu) {}
+        cuda::Context::Attribute & operator=(const cuda::Context::Attribute & src) {
+            this->reference_count.store(src.reference_count.load());
+            this->is_primary = src.is_primary;
+            this->gpu = src.gpu;
+            return *this;
+        }
+        ~Attribute(void) = default;
+
         /** @brief Reference count of the current context.
          *  @details Number of instances representing the same context.
          */
-        std::uint64_t reference_count;
+        std::atomic_uint64_t reference_count;
         /** @brief The current context is a primary context.
          *  @details Context is shared between CUDA runtime API and CUDA driver API.
          */

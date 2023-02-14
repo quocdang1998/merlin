@@ -1,17 +1,42 @@
 // Copyright 2022 quocdang1998
 #include "merlin/interpolant/cartesian_grid.hpp"
 
-#include <algorithm>  // std::is_sorted, std::inplace_merge
+#include <algorithm>  // std::find
 #include <cinttypes>  // PRIu64
 #include <cstring>  // std::memcpy
 #include <numeric>  // std::iota
 #include <sstream>  // std::ostringstream
 #include <utility>  // std::move
+#include <vector>  // std::vector
 
 #include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides
 #include "merlin/logger.hpp"  // FAILURE
 
 namespace merlin {
+
+// --------------------------------------------------------------------------------------------------------------------
+// Check utils
+// --------------------------------------------------------------------------------------------------------------------
+
+// Get sorted index
+static std::vector<std::uint64_t> sorted_index(const Vector<double> & input) {
+    std::vector<std::uint64_t> result(input.size());
+    std::iota(result.begin(), result.end(), 0);
+    std::stable_sort(result.begin(), result.end(),
+                     [&input] (std::uint64_t i1, std::uint64_t i2) {return input[i1] < input[i2];});
+    return result;
+}
+
+// Check for duplicated element in a vector
+static bool has_duplicated_element(const Vector<double> & input) {
+    std::vector<std::uint64_t> sorted_idx = sorted_index(input);
+    for (std::uint64_t i = 1; i < sorted_idx.size(); i++) {
+        if (input[sorted_idx[i]] == input[sorted_idx[i-1]]) {
+            return true;
+        }
+    }
+    return false;
+}
 
 // --------------------------------------------------------------------------------------------------------------------
 // CartesianGrid
@@ -21,9 +46,8 @@ namespace merlin {
 interpolant::CartesianGrid::CartesianGrid(std::initializer_list<Vector<double>> grid_vectors) :
 grid_vectors_(grid_vectors) {
     for (std::uint64_t i = 0; i < this->ndim(); i++) {
-        if (!std::is_sorted(this->grid_vectors_[i].begin(), this->grid_vectors_[i].end())) {
-            FAILURE(std::invalid_argument, "Expected vector entries in increasing order, fail at index %" PRIu64 ".\n",
-                    i);
+        if (has_duplicated_element(this->grid_vectors_[i])) {
+            FAILURE(std::invalid_argument, "Found duplicated element at dimension %" PRIu64 ".\n", i);
         }
     }
 }
@@ -31,9 +55,17 @@ grid_vectors_(grid_vectors) {
 // Construct from a vector of values
 interpolant::CartesianGrid::CartesianGrid(const Vector<Vector<double>> & grid_vectors) : grid_vectors_(grid_vectors) {
     for (std::uint64_t i = 0; i < this->ndim(); i++) {
-        if (!std::is_sorted(this->grid_vectors_[i].begin(), this->grid_vectors_[i].end())) {
-            FAILURE(std::invalid_argument, "Expected vector entries in increasing order, fail at index %" PRIu64 ".\n",
-                    i);
+        if (has_duplicated_element(this->grid_vectors_[i])) {
+            FAILURE(std::invalid_argument, "Found duplicated element at dimension %" PRIu64 ".\n", i);
+        }
+    }
+}
+
+// Constructor from an r-value reference to a vector of values
+interpolant::CartesianGrid::CartesianGrid(Vector<Vector<double>> && grid_vectors) : grid_vectors_(grid_vectors) {
+    for (std::uint64_t i = 0; i < this->ndim(); i++) {
+        if (has_duplicated_element(this->grid_vectors_[i])) {
+            FAILURE(std::invalid_argument, "Found duplicated element at dimension %" PRIu64 ".\n", i);
         }
     }
 }
@@ -47,11 +79,11 @@ array::Array interpolant::CartesianGrid::grid_points(void) const {
     intvec shape_ = this->get_grid_shape();
     for (std::uint64_t i_point = 0; i_point < npoint; i_point++) {
         intvec index_ = contiguous_to_ndim_idx(i_point, shape_);
-        Vector<double> value_(this->ndim());
+        Vector<double> value_;
+        value_.assign(&(result[{i_point, 0}]), this->ndim());
         for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
             value_[i_dim] = this->grid_vectors_[i_dim][index_[i_dim]];
         }
-        std::memcpy(&(result[{static_cast<std::uint64_t>(i_point), 0}]), value_.data(), sizeof(double)*this->ndim());
     }
     return result;
 }
@@ -99,28 +131,17 @@ interpolant::CartesianGrid & interpolant::CartesianGrid::operator+=(const interp
     // unify 2 grid on each dimension
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
         std::uint64_t dim_1 = this->grid_vectors_[i_dim].size(), dim_2 = grid.grid_vectors_[i_dim].size();
-        // sort 2 sorted array
-        Vector<double> buffer(dim_1 + dim_2);
-        std::memcpy(buffer.data(), this->grid_vectors_[i_dim].data(), dim_1*sizeof(double));
-        std::memcpy(buffer.data() + dim_1, grid.grid_vectors_[i_dim].data(), dim_2*sizeof(double));
-        std::inplace_merge(buffer.data(), buffer.data() + dim_1, buffer.data() + dim_1 + dim_2);
-        // squeeze the buffer
-        std::uint64_t squeezed_size = buffer.size();
-        for (std::uint64_t i_node = 1; i_node < buffer.size(); i_node++) {
-            if (buffer[i_node] == buffer[i_node-1]) {
-                --squeezed_size;
+        // push_back if not duplicated
+        const Vector<double> & this_grid_vector = this->grid_vectors_[i_dim];
+        const Vector<double> & other_grid_vector =grid.grid_vectors_[i_dim];
+        std::vector<double> buffer(this_grid_vector.begin(), this_grid_vector.end());
+        for (const double & node : other_grid_vector) {
+            if (std::find(this_grid_vector.begin(), this_grid_vector.end(), node) == this_grid_vector.end()) {
+                buffer.push_back(node);
             }
         }
         // record to this instance
-        this->grid_vectors_[i_dim] = Vector<double>(squeezed_size);
-        this->grid_vectors_[i_dim][0] = buffer[0];
-        for (std::uint64_t i_buffer = 1, i_squeezed = 1; i_buffer < buffer.size(); i_buffer++) {
-            if (buffer[i_buffer] == buffer[i_buffer-1]) {
-                continue;
-            }
-            this->grid_vectors_[i_dim][i_squeezed] = buffer[i_buffer];
-            i_squeezed++;
-        }
+        this->grid_vectors_[i_dim] = Vector<double>(buffer.data(), buffer.size());
     }
     return *this;
 }

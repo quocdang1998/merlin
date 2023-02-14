@@ -79,13 +79,13 @@ class MERLIN_EXPORTS array::NdData {
     /// @name Get and set element
     /// @{
     /** @brief Get value of element at a n-dim index.*/
-    virtual double get(const intvec & index) const {return 0.0;}
+    virtual double get(const intvec & index) const;
     /** @brief Get value of element at a C-contiguous index.*/
-    virtual double get(std::uint64_t index) const {return 0.0;}
+    virtual double get(std::uint64_t index) const;
     /** @brief Set value of element at a n-dim index.*/
-    virtual void set(const intvec index, double value) {}
+    virtual void set(const intvec index, double value);
     /** @brief Set value of element at a C-contiguous index.*/
-    virtual void set(std::uint64_t index, double value) {}
+    virtual void set(std::uint64_t index, double value);
     /// @}
 
     /// @name Partite data
@@ -101,7 +101,7 @@ class MERLIN_EXPORTS array::NdData {
     /// @name Destructor
     /// @{
     /** @brief Default destructor.*/
-    virtual ~NdData(void) {}
+    virtual ~NdData(void);
     /// @}
 
   protected:

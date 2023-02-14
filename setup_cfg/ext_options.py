@@ -2,6 +2,8 @@ import os
 import sys
 import glob
 
+import numpy as np
+
 from .config import *
 
 def get_extension_options():
@@ -11,6 +13,7 @@ def get_extension_options():
 
     # include directory
     ext_options["include_dirs"] = [os.path.join(module_dir, "src")]
+    ext_options["include_dirs"] += [np.get_include()]
 
     # compile macros
     numpy_macro = ("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")

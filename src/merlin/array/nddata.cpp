@@ -35,6 +35,18 @@ array::NdData::NdData(const intvec & shape) : ndim_(shape.size()), shape_(shape)
     this->strides_ = array::contiguous_strides(shape, sizeof(double));
 }
 
+// Get value of element at a n-dim index
+double array::NdData::get(const intvec & index) const {return 0.0;}
+
+// Get value of element at a C-contiguous index.
+double array::NdData::get(std::uint64_t index) const {return 0.0;}
+
+// Set value of element at a n-dim index.
+void array::NdData::set(const intvec index, double value) {}
+
+// Set value of element at a C-contiguous index.
+void array::NdData::set(std::uint64_t index, double value) {}
+
 // Partite an array into multiple parts
 Vector<Vector<array::Slice>> array::NdData::partite(std::uint64_t max_memory) {
     // if memory fit in, skip
@@ -65,5 +77,8 @@ Vector<Vector<array::Slice>> array::NdData::partite(std::uint64_t max_memory) {
     }
     return result;
 }
+
+// Destructor
+array::NdData::~NdData(void) {}
 
 }  // namespace merlin

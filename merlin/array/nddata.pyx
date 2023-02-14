@@ -55,22 +55,27 @@ cdef class _NdData:
         """
         return <uintptr_t>(self.core)
 
+    @property
     def data(self):
         """Get pointer to data."""
         return <uintptr_t>(self.core.data())
 
+    @property
     def ndim(self):
         """Get number of dimension."""
         return self.core.ndim()
 
+    @property
     def shape(self):
         """Get shape of array."""
         return tuple_from_intvec(self.core.shape())
 
+    @property
     def strides(self):
         """Get strides of array."""
         return tuple_from_intvec(self.core.strides())
 
+    @property
     def size(self):
         """Get number of elements in array."""
         return self.core.size()

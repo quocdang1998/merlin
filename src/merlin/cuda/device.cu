@@ -10,6 +10,8 @@
 #include "merlin/cuda/context.hpp"  // merlin::cuda::Context
 #include "merlin/logger.hpp"  // WARNING, FAILURE, cuda_runtime_error
 
+namespace merlin {
+
 // --------------------------------------------------------------------------------------------------------------------
 // Get GPU core
 // --------------------------------------------------------------------------------------------------------------------
@@ -52,8 +54,6 @@ __global__ static void add_2_int_on_gpu(int * p_a, int * p_b, int * p_result) {
 // --------------------------------------------------------------------------------------------------------------------
 // Device
 // --------------------------------------------------------------------------------------------------------------------
-
-namespace merlin {
 
 // Print limit of device
 void cuda::Device::print_specification(void) const {
@@ -140,8 +140,6 @@ bool cuda::Device::test_gpu(void) const {
 
 // Set as current GPU
 void cuda::Device::set_as_current(void) const {
-    // query the current context
-    cuda::Context current = cuda::Context::get_current();
     // set GPU to current context
     ::cudaSetDevice(this->id_);
 }

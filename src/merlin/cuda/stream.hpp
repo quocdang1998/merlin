@@ -143,7 +143,7 @@ namespace cuda {
  *  @param event CUDA event to be recorded.
  *  @param stream CUDA stream on which the event is recorded (default value is the null stream).
  */
-void record_event(const cuda::Event & event, const cuda::Stream & stream = cuda::Stream());
+MERLIN_EXPORTS void record_event(const cuda::Event & event, const cuda::Stream & stream = cuda::Stream());
 
 }  // namespace cuda
 

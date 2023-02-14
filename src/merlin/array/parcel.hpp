@@ -45,7 +45,7 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
     /// @name Get members
     /// @{
     /** @brief Get constant reference to ID of device containing data of a constant instance.*/
-    constexpr const cuda::Device & device(void) const noexcept {return this->device_;}
+    __cuhostdev__ constexpr const cuda::Device & device(void) const noexcept {return this->device_;}
     /// @}
 
     /// @name Atributes

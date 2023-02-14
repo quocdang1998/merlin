@@ -60,7 +60,6 @@ doxygen_xml = [breathe_projects[breathe_default_project]]
 # Sphinx-panel settings
 panels_add_fontawesome_latex = True
 
-
 # -- Pygments style ----------------------------------------------------------
 
 pygments_style = 'rainbow_dash'

@@ -1,9 +1,9 @@
-﻿merlin.cuda.Stream
+﻿merlin.array.Array
 ==================
 
-.. currentmodule:: merlin.cuda
+.. currentmodule:: merlin.array
 
-.. autoclass:: Stream
+.. autoclass:: Array
    :members:
    :special-members: __init__
    :inherited-members:

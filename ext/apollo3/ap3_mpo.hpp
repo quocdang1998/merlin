@@ -24,7 +24,7 @@ class Ap3HomogXS {
 
     ~Ap3HomogXS(void) = default;
 
-  private:
+  protected:
     /** @brief Isotope.*/
     std::string isotope_;
     /** @brief Reaction name.*/
@@ -32,11 +32,14 @@ class Ap3HomogXS {
     /** @brief Energy group.*/
     unsigned int energy_group_;
     /** @brief Parameters.*/
-    std::map<std::string, merlin::floatvec> state_param_;
+    std::map<std::string, merlin::Vector<double>> state_param_;
     /** @brief Data to be serialized.*/
     merlin::array::Array data_;
     /** @brief File stream to the exported dataset.*/
     std::fstream file_;
+
+  private:
+    void check_input(void);
 };
 
 #endif  // AP3_MPO_HPP_

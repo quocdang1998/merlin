@@ -139,11 +139,11 @@ void * Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr) const {
     // initialize buffer to store data of the copy before cloning it to GPU
     Vector<T> copy_on_gpu;
     // copy data
-    ::cudaMemcpy(data_ptr, this->data_, this->size_*sizeof(T), cudaMemcpyHostToDevice);
+    ::cudaMemcpy(data_ptr, this->data_, this->size_*sizeof(T), ::cudaMemcpyHostToDevice);
     // copy metadata
     copy_on_gpu.data_ = reinterpret_cast<T *>(data_ptr);
     copy_on_gpu.size_ = this->size_;
-    ::cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(Vector<T>), cudaMemcpyHostToDevice);
+    ::cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(Vector<T>), ::cudaMemcpyHostToDevice);
     // nullify data on copy to avoid deallocate memory on CPU
     copy_on_gpu.data_ = nullptr;
     std::uintptr_t ptr_end = reinterpret_cast<std::uintptr_t>(data_ptr) + this->size_*sizeof(T);

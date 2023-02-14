@@ -9,6 +9,15 @@ namespace merlin {
 // Device
 // --------------------------------------------------------------------------------------------------------------------
 
+// Default constructor
+__cuhostdev__ cuda::Device::Device(void) {}
+
+// Copy assignment
+__cuhostdev__ cuda::Device & cuda::Device::operator=(const cuda::Device & src) {
+    this->id_ = src.id_;
+    return *this;
+}
+
 // Construct a device from its ID
 __cuhostdev__ cuda::Device::Device(int id) {
     #ifdef __MERLIN_CUDA__
@@ -35,7 +44,7 @@ __cuhostdev__ cuda::Device cuda::Device::get_current_gpu(void) {
 }
 
 // Get total number of GPU
-__cuhostdev__ int cuda::Device::get_num_gpu(void) {
+__cuhostdev__ std::uint64_t cuda::Device::get_num_gpu(void) {
     #ifdef __MERLIN_CUDA__
     int count;
     ::cudaGetDeviceCount(&count);

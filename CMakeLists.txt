@@ -29,15 +29,16 @@ list(APPEND MERLIN_SRC_CPP
      cuda/device.cpp
      cuda/event.cpp
      cuda/stream.cpp
+     env.cpp
      filelock.cpp
      iterator.cpp
      interpolant/cartesian_grid.cpp
      interpolant/grid.cpp
-     interpolant/lagrange.cpp
+     # interpolant/lagrange.cpp
+     interpolant/newton.cpp
      interpolant/regular_grid.cpp
-     interpolant/sparse_grid.cpp
+     # interpolant/sparse_grid.cpp
      # interpolant/interpolant.cpp
-     settings.cpp
 )
 list(APPEND MERLIN_SRC_CU
      array/array.cu
@@ -57,7 +58,7 @@ list(APPEND MERLIN_SRC_RDC
      array/slice.rdc
      cuda/device.rdc
      interpolant/cartesian_grid.rdc
-     interpolant/sparse_grid.rdc
+     # interpolant/sparse_grid.rdc
      logger.rdc
      utils.rdc
 )

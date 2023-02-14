@@ -6,11 +6,14 @@
 #include <cinttypes>  // PRIu64
 #include <numeric>  // std::iota
 #include <sstream>  // std::ostringstream
+#include <utility>  // std::move
 #include <vector>  // std::vector
 
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
 #include "merlin/logger.hpp"  // FAILURE
 #include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::calc_subgrid_index
+
+namespace merlin {
 
 // --------------------------------------------------------------------------------------------------------------------
 // Utils
@@ -22,8 +25,8 @@ static inline bool is_valid_size(std::uint64_t size) {
 }
 
 // Check the validity of a set of grid vector
-static inline void check_validity(const merlin::Vector<merlin::Vector<double>> & grid_vectors) {
-    const merlin::Vector<double> * data = grid_vectors.cbegin();
+static inline void check_validity(const Vector<Vector<double>> & grid_vectors) {
+    const Vector<double> * data = grid_vectors.cbegin();
     for (std::uint64_t i = 0; i < grid_vectors.size(); i++) {
         // check size
         if (!is_valid_size(data[i].size())) {
@@ -41,8 +44,6 @@ static inline void check_validity(const merlin::Vector<merlin::Vector<double>> &
 // SparseGrid
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace merlin {
-
 // Constructor isotropic grid from grid vectors
 interpolant::SparseGrid::SparseGrid(std::initializer_list<Vector<double>> grid_vectors) : grid_vectors_(grid_vectors) {
     // check validity
@@ -58,8 +59,7 @@ interpolant::SparseGrid::SparseGrid(std::initializer_list<Vector<double>> grid_v
     this->sub_grid_start_index_ = intvec(num_subgrid+1, 0);
     for (std::uint64_t i_subgrid = 0; i_subgrid < num_subgrid; i_subgrid++) {
         intvec subgrid_index = contiguous_to_ndim_idx(i_subgrid, maxlevel);
-        intvec dummy_level;
-        dummy_level.assign(&(this->level_index_[i_subgrid*this->ndim()]), this->ndim());
+        intvec dummy_level = this->level_index(i_subgrid);
         for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
             dummy_level[i_dim] = subgrid_index[i_dim];
         }
@@ -100,8 +100,7 @@ interpolant::SparseGrid::SparseGrid(std::initializer_list<Vector<double>> grid_v
     this->level_index_ = intvec(level_vector_storage.size()*this->ndim(), 0);
     this->sub_grid_start_index_ = intvec(level_vector_storage.size()+1, 0);
     for (const std::uint64_t & i_subgrid : sorted_index) {
-        intvec dummy_level;
-        dummy_level.assign(&(this->level_index_[i_subgrid*this->ndim()]), this->ndim());
+        intvec dummy_level = this->level_index(i_subgrid);
         for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
             dummy_level[i_dim] = level_vector_storage[i_subgrid][i_dim];
         }
@@ -131,39 +130,13 @@ interpolant::SparseGrid::SparseGrid(std::initializer_list<Vector<double>> grid_v
     this->level_index_ = intvec(level_vectors.size()*this->ndim(), 0);
     this->sub_grid_start_index_ = intvec(level_vectors.size()+1, 0);
     for (std::uint64_t i_level = 0; i_level < level_vectors.size(); i_level++) {
-        intvec dummy_level;
-        dummy_level.assign(&(this->level_index_[i_level*this->ndim()]), this->ndim());
+        intvec dummy_level = this->level_index(i_level);
         for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
             dummy_level[i_dim] = level_vectors[i_level][i_dim];
         }
         std::uint64_t subgrid_size = calc_subgrid_size(dummy_level);
         this->sub_grid_start_index_[i_level+1] = this->sub_grid_start_index_[i_level] + subgrid_size;
     }
-}
-
-// Get Cartesian Grid corresponding to a given level vector
-interpolant::CartesianGrid interpolant::SparseGrid::get_cartesian_grid(const intvec & level_vector) const {
-    // check for valid level vector
-    intvec maxlevel = this->max_levels();
-    if (level_vector.size() != this->ndim()) {
-        FAILURE(std::invalid_argument, "Expected level vector of size %" PRIu64 ", got %" PRIu64 ".\n");
-    }
-    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
-        if (level_vector[i_dim] > maxlevel[i_dim]) {
-            FAILURE(std::invalid_argument, "Expected level index smaller or equal to max level.\n");
-        }
-    }
-    // initialize cartesian grid vector
-    Vector<Vector<double>> cart_grid_vectors(this->ndim());
-    for (std::uint64_t i = 0; i < this->ndim(); i++) {
-        intvec dim_index = hiearchical_index(level_vector[i], this->grid_vectors_[i].size());
-        Vector<double> points(dim_index.size());
-        for (std::uint64_t j = 0; j < points.size(); j++) {
-            points[j] = this->grid_vectors_[i][dim_index[j]];
-        }
-        cart_grid_vectors[i] = points;
-    }
-    return interpolant::CartesianGrid(cart_grid_vectors);
 }
 
 // Representation

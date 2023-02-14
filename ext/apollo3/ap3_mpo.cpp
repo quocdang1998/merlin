@@ -112,3 +112,15 @@ Ap3HomogXS::Ap3HomogXS(const std::string & filename, const std::string & isotope
     mpofile.close();
 }
 
+// Check if MPOfile exist, and check if isotope, reaction and energy appear in the file
+void Ap3HomogXS::check_input(void) {
+    if (this->isotope_.empty()) {
+        FAILURE(std::invalid_argument, "Isotope cannot be empty.\n");
+    }
+    if (this->reaction_.empty()) {
+        FAILURE(std::invalid_argument, "Reaction cannot be empty.\n");
+    }
+    // open file
+    H5::H5File mpofile(filename.c_str(), H5F_ACC_RDONLY);
+    H5::Group root = mpofile.openGroup("/");
+}

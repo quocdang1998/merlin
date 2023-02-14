@@ -2,6 +2,7 @@
 #include "merlin/cuda/context.hpp"
 
 #include <tuple>  // std::get, std::tuple
+#include <utility>  // std::pair
 
 #include <cuda.h>  // ::cuCtxCreate, ::cuCtxDestroy, ::cuCtxGetCurrent, ::cuCtxGetDevice, ::cuCtxGetFlags,
                    // ::cuCtxPushCurrent, ::cuCtxPopCurrent, ::cuCtxSynchronize, ::CUcontext,
@@ -47,7 +48,6 @@ static inline std::tuple<std::uintptr_t, bool, int> get_current_context_ptr(void
         }
     }
     // a dummy context initialized (return nullptr)
-    MESSAGE("Context constructor called.\n");
     return {reinterpret_cast<std::uintptr_t>(current_ctx), false, -1};
 }
 
@@ -65,22 +65,19 @@ cuda::Context::Context(const cuda::Device & gpu, cuda::Context::Flags flag) {
     }
     this->context_ = reinterpret_cast<std::uintptr_t>(ctx);
     // Increase reference count and initialize attached flag
-    cuda::Context::mutex_.lock();
-    auto [it_current, success] = cuda::Context::attribute_.insert({this->context_, {1, false, -1}});
+    auto [it_current, success] = cuda::Context::attribute_.insert(std::pair(this->context_, cuda::Context::Attribute(std::atomic_uint64_t(1), false, -1)));
+    // {std::atomic_uint64_t(1), false, -1}
     if (!success) {
         FAILURE(cuda_runtime_error, "Create context failed because the context has already exist.\n");
     }
-    cuda::Context::mutex_.unlock();
 }
 
 // Constructor from context pointer (to be improved for the case of primary context)
 cuda::Context::Context(std::uintptr_t context_ptr) : context_(context_ptr) {
-    cuda::Context::mutex_.lock();
     if (cuda::Context::attribute_.find(context_ptr) == cuda::Context::attribute_.end()) {
-        cuda::Context::attribute_[context_ptr] = {0, false, -1};
+        cuda::Context::attribute_[context_ptr] = {std::atomic_uint64_t(0), false, -1};
     }
     cuda::Context::attribute_[context_ptr].reference_count += 1;
-    cuda::Context::mutex_.unlock();
 }
 
 // Check if the context is the top of context stack
@@ -120,7 +117,6 @@ cuda::Context cuda::Context::get_current(void) {
     cuda::Context result;
     auto [p_ctx, primarity, gpu_id] = get_current_context_ptr();
     result.context_ = p_ctx;
-    cuda::Context::mutex_.lock();
     if (cuda::Context::attribute_.find(result.context_) == cuda::Context::attribute_.end()) {
         cuda::Context::attribute_[result.context_].reference_count = 1;
         if (primarity) {
@@ -129,7 +125,6 @@ cuda::Context cuda::Context::get_current(void) {
         }
     }
     cuda::Context::attribute_[result.context_].reference_count += 1;
-    cuda::Context::mutex_.unlock();
     return result;
 }
 
@@ -168,9 +163,7 @@ void cuda::Context::synchronize(void) {
 cuda::Context::~Context(void) {
     // free if the context is not a primary context and reference count goes to zero
     if (this->context_ != 0) {
-        cuda::Context::mutex_.lock();
         cuda::Context::attribute_[this->context_].reference_count -= 1;
-        cuda::Context::mutex_.unlock();
         if (cuda::Context::attribute_[this->context_].reference_count == 0) {
             if (this->is_primary()) {
                 ::cuDevicePrimaryCtxRelease(cuda::Context::attribute_[this->context_].gpu);
@@ -191,12 +184,10 @@ cuda::Context cuda::create_primary_context(const cuda::Device & gpu, cuda::Conte
     cuda::Context result;
     cudaError_t err_;
     // find already initialized context
-    cuda::Context::mutex_.lock();
     for (auto & [ctx_ptr, attribute] : cuda::Context::attribute_) {
         if (attribute.gpu == gpu.id()) {
             result.context_ = ctx_ptr;
             attribute.reference_count += 1;
-            cuda::Context::mutex_.unlock();
             err_ = static_cast<cudaError_t>(::cuDevicePrimaryCtxSetFlags(gpu.id(), static_cast<unsigned int>(flag)));
             if (err_ != 0) {
                 FAILURE(cuda_runtime_error, "Set flag to primary context for GPU %d failed with message \"%s\".\n",
@@ -214,7 +205,6 @@ cuda::Context cuda::create_primary_context(const cuda::Device & gpu, cuda::Conte
     }
     result.context_ = reinterpret_cast<std::uintptr_t>(ctx);
     cuda::Context::attribute_.insert({result.context_, {1, true, gpu.id()}});
-    cuda::Context::mutex_.unlock();
     err_ = static_cast<cudaError_t>(::cuDevicePrimaryCtxSetFlags(gpu.id(), static_cast<unsigned int>(flag)));
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Set flag to primary context for GPU %d failed with message \"%s\".\n", gpu.id(),
@@ -225,6 +215,7 @@ cuda::Context cuda::create_primary_context(const cuda::Device & gpu, cuda::Conte
 
 // Initialize a default context
 cuda::Context cuda::initialize_context(void) {
+/*
     // check for number of GPU
     int num_gpu = cuda::Device::get_num_gpu();
     if (num_gpu == 0) {
@@ -245,13 +236,13 @@ cuda::Context cuda::initialize_context(void) {
     // initialized case (return success)
     cuda::Context result;
     result.context_ = reinterpret_cast<std::uint64_t>(current_ctx);
-    cuda::Context::mutex_.lock();
     if (cuda::Context::attribute_.find(result.context_) == cuda::Context::attribute_.end()) {
         cuda::Context::attribute_[result.context_] = {1, false, -1};
     }
     cuda::Context::attribute_[result.context_].reference_count += 1;
-    cuda::Context::mutex_.unlock();
     return result;
+*/
+    return cuda::Context();
 }
 
 }  // namespace merlin

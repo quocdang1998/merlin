@@ -5,6 +5,7 @@
 #include <cstdio>  // std::fread, std::fseek
 #include <cstring>  // std::memcpy
 #include <fstream>  // std::ofstream
+#include <functional>  // std::bind, std::placeholders
 #include <ios>  // std::ios_base::failure
 #include <mutex>  // std::mutex
 #include <utility>  // std::move
@@ -30,6 +31,8 @@ static inline void read_from_file(double * dest, std::FILE * file, double * src,
 }
 
 namespace merlin {
+
+// std::uint64_t settings::cpu_mem_limit = static_cast<std::uint64_t>(20) << 30;
 
 // --------------------------------------------------------------------------------------------------------------------
 // Array

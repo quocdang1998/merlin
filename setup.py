@@ -29,9 +29,8 @@ extensions = [
 # build extensions and install
 if __name__ == "__main__":
     setup(name="merlin",
-        version="1.0.0",
-        ext_modules=cythonize(extensions, language_level="3str",
-                              include_path=[os.path.abspath("./")],
-                              nthreads=os.cpu_count(), annotate=False),
-        cmdclass={"build_ext": build_ext}
-    )
+          version="1.0.0",
+          ext_modules=cythonize(extensions, language_level="3str",
+                                include_path=[os.path.abspath("./")],
+                                nthreads=os.cpu_count(), annotate=False),
+          cmdclass={"build_ext": build_ext})

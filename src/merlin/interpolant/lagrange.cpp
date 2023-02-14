@@ -11,6 +11,7 @@
 #include "merlin/logger.hpp"  // CUHDERR
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
 #include "merlin/interpolant/sparse_grid.hpp"  // merlin::interpolant::SparseGrid
+                                               // merlin::interpolant::get_cartesian_grid
 #include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::get_level_from_valid_size,
                              // merlin::get_level_shape
 #include "merlin/vector.hpp"  // merlin::Vector
@@ -59,7 +60,7 @@ void interpolant::calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & gr
     intvec grid_shape = grid.get_grid_shape();
     // parallel loop calculation
     #pragma omp parallel for
-    for (std::uint64_t i = 0; i < value_size; i++) {
+    for (std::int64_t i = 0; i < value_size; i++) {
         intvec index_in_value_array = contiguous_to_ndim_idx(i, value.shape());
         // calculate index wrt. the full grid
         intvec index_in_grid(ndim);
@@ -96,7 +97,7 @@ void interpolant::calc_lagrange_coeffs_cpu(const interpolant::SparseGrid & grid,
         intvec level_index = grid.level_index(i_level);
         accumulate_level(accumulated_max_level, level_index);
         // calculate coefficient on cartesian grid of that level
-        accumulated_cart_grid += grid.get_cartesian_grid(level_index);
+        accumulated_cart_grid += interpolant::get_cartesian_grid(grid, i_level);
         // get slice of value array wrt. the accumulated grid
         Vector<array::Slice> sub_slice = get_slice_from_level(level_index, accumulated_max_level);
         // reshape the coefficient sub-array

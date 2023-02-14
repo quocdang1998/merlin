@@ -22,7 +22,7 @@ void array::array_copy(array::NdData * dest, const array::NdData * src, CopyFunc
     }
     std::uint64_t ndim = src->ndim();
     if (dest->shape() != src->shape()) {
-        FAILURE(std::invalid_argument, "Expected shape of source equals shape of destination");
+        FAILURE(std::invalid_argument, "Expected shape of source equals shape of destination.\n");
     }
     intvec shape(src->shape());
 

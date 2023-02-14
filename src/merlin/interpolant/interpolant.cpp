@@ -11,6 +11,7 @@
 #include "merlin/array/slice.hpp"  // merlin::array::Slice
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CatesianGrid
 #include "merlin/interpolant/sparse_grid.hpp"  // merlin::interpolant::SparseGrid
+                                               // merlin::interpolant::get_cartesian_grid
 #include "merlin/logger.hpp"  // FAILURE
 #include "merlin/vector.hpp"  // merlin::floatvec, merlin::intvec
 
@@ -62,7 +63,7 @@ array::Array calc_lagrange_coeffs_cpu(const interpolant::SparseGrid * pgrid, con
             max_current_level[i_dim] = std::max(max_current_level[i_dim], level[i_dim]);
         }
         // calculate union of cartesian grid
-        current_cart_grid = current_cart_grid + pgrid->get_cartesian_grid(level);
+        current_cart_grid += interpolant::get_cartesian_grid(*p_grid, i_level);
         // get values of cart grid
         array::Slice sub_slice(pgrid->sub_grid_start_index()[i_level], pgrid->sub_grid_start_index()[i_level+1], 1);
         Vector<array::Slice> vec_slice({sub_slice});

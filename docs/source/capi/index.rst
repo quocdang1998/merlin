@@ -149,4 +149,5 @@ Grid API
    merlin::interpolant::Grid
    merlin::interpolant::RegularGrid
    merlin::interpolant::CartesianGrid
+   merlin::interpolant::SparseGrid
 

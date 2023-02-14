@@ -14,6 +14,24 @@
 
 namespace merlin {
 
+// Memory allocation limit
+// -----------------------
+
+namespace settings {
+
+/** @brief Map from GPU ID to is details.*/
+// MERLIN_EXPORTS extern std::map<int, Device *> gpu_map;
+
+/** @brief Memory limit of a process for allocating ``merlin::array::Array``.
+ *  @details Default value: 20GB.
+ */
+extern std::uint64_t cpu_mem_limit;
+
+}  // namespace settings
+
+// Allocate non-pageable memory
+// ----------------------------
+
 /** @brief Allocate non pageable memory.
  *  @param size Number of element in the allocated array.
  */
@@ -21,6 +39,9 @@ double * allocate_memory(std::uint64_t size);
 
 /** @brief Free array allocated in non pageable memory.*/
 void free_memory(double * ptr, std::uint64_t size);
+
+// Array class
+// -----------
 
 /** @brief Multi-dimensional array on CPU.*/
 class MERLIN_EXPORTS array::Array : public array::NdData {

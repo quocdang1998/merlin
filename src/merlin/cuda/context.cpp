@@ -8,11 +8,15 @@
 namespace merlin {
 
 // --------------------------------------------------------------------------------------------------------------------
-// Context
+// Constructor of context attribute
 // --------------------------------------------------------------------------------------------------------------------
 
-// Mutex lock for updating static attributes
-std::mutex cuda::Context::mutex_;
+cuda::Context::Attribute::Attribute(const std::atomic_uint64_t & ref_count, bool primariness, int gpu_id) :
+reference_count(ref_count.load()), is_primary(primariness), gpu(gpu_id) {}
+
+// --------------------------------------------------------------------------------------------------------------------
+// Context
+// --------------------------------------------------------------------------------------------------------------------
 
 // Attributes of instances
 std::map<std::uintptr_t, cuda::Context::Attribute> cuda::Context::attribute_;
