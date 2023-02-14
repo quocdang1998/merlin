@@ -24,4 +24,7 @@ PREDEFINED             = "__cuhost__=__host__" \
                          "__cuhostdev__=__host__ __device__" \
                          "__NVCC__=1" \
                          "MERLIN_EXPORTS=1" \
+                         "MERLINSHARED_EXPORTS=1" \
+                         "MERLIN_HOSTDEV_EXPORTS=1" \
+                         "MERLIN_NO_EXPORT=1" \
                          "MERLIN_DEPRECATED=1"

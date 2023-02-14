@@ -22,4 +22,7 @@ int main(void) {
     for (std::uint64_t i = 0; i < coeff.shape()[0]; i++) {
         MESSAGE("Coefficient %" PRIu64 " %.5f.\n", i, coeff.get(i));
     }
+
+    double f_x = merlin::interpolant::eval_lagrange_cpu(grid, coeff, {1.0, 1.0});
+    MESSAGE("Value calculated at (0.0, 2.0) is %.6f.\n", f_x);
 }

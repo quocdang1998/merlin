@@ -145,10 +145,13 @@ Library kind dependant macros
    :Condition: Defined at compilation of static library.
    :Source: ``CMakeLists.txt``.
 
-.. envvar:: LIBMERLIN_STATIC
+.. envvar:: __LIBMERLINCUDA__
 
    :Condition: Defined at compilation of ``libmerlincuda``.
    :Source: ``CMakeLists.txt``.
+
+Export macros for dynamic library on Windows
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. envvar:: MERLIN_EXPORTS
 
@@ -157,9 +160,30 @@ Library kind dependant macros
    :Source: ``exports.hpp``.
    :Usage: Append before functions and classes that are linked dynamically with
       the dynamic library ``merlin.dll``.
-   :Note: This function with expands to empty (empty macro) when compiling on
-      Linux, or when compiling static library (:envvar:`MERLIN_LIBKIND` is
-      ``STATIC``).
+   :Note: This macro with expands to empty when compiling on Linux, or when
+      compiling static library (:envvar:`MERLIN_LIBKIND` is ``STATIC``).
+
+.. envvar:: MERLINSHARED_EXPORTS
+
+   :Condition: Defined at compilation of dynamic library ``libmerlinshared`` on
+      Windows.
+   :Source: ``exports.hpp``.
+   :Usage: Append before functions and classes that are linked dynamically with
+      the dynamic library ``merlinshared.dll``.
+   :Note: Similar to :envvar:`MERLIN_EXPORTS`, this macro with expands to empty
+      when compiling on Linux, or when compiling static library.
+
+
+
+.. envvar:: MERLIN_HOSTDEV_EXPORT
+
+   :Condition: Defined at compilation of dynamic library ``libmerlin`` on
+      Windows with CUDA option.
+   :Source: ``exports.hpp``.
+   :Usage: Append before ``__host__ __device__`` functions that are linked
+      dynamically with the dynamic library ``merlin.dll``.
+   :Note: By default, exporting class methods should use
+      :envvar:`MERLIN_EXPORTS`. This macro should be used with functions only.
 
 Other macros
 ^^^^^^^^^^^^

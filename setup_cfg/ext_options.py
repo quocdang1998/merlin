@@ -2,6 +2,8 @@ import os
 import sys
 import glob
 
+import numpy as np
+
 from .config import *
 
 def get_extension_options():
@@ -11,6 +13,7 @@ def get_extension_options():
 
     # include directory
     ext_options["include_dirs"] = [os.path.join(module_dir, "src")]
+    ext_options["include_dirs"] += [np.get_include()]
 
     # compile macros
     numpy_macro = ("NPY_NO_DEPRECATED_API", "NPY_1_7_API_VERSION")
@@ -25,9 +28,8 @@ def get_extension_options():
         ext_options["extra_compile_args"] = ["-std=c++17",
                                              "-Wno-unused-but-set-variable"]
     elif sys.platform == "win32":
-        ext_options["extra_compile_args"] = ["-std:c++17"]
-        if MERLIN_LIBKIND == "SHARED":
-            ext_options["extra_compile_args"] += ["/wd4251", "/wd4551"]
+        ext_options["extra_compile_args"] = ["-std:c++17",
+                                             "/wd4251", "/wd4551"]
 
     # dependancies
     depends = glob.glob(os.path.join(module_dir, "setup_cfg", "*.py"))
@@ -46,8 +48,9 @@ def get_extension_options():
 
     # link librairies
     ext_options["libraries"] = ["merlin"]
-    if MERLIN_LIBKIND == "SHARED":
+    if MERLIN_LIBKIND == "SHARED" and MERLIN_CUDA:
         ext_options["libraries"] += ["merlincuda"]
+    ext_options["libraries"] += ["merlinshared"]
     if MERLIN_CUDA:
         ext_options["libraries"] += ["cudart_static", "cudadevrt", "cuda"]
     if MERLIN_DEBUG and (sys.platform == "win32"):
@@ -59,7 +62,7 @@ def get_extension_options():
         ext_options["library_dirs"] += [CUDALIB]
 
     # runtime library
-    if (sys.platform == "linux") and (MERLIN_LIBKIND == "SHARED"):
+    if (sys.platform == "linux"):
         rt_dir = os.path.join(module_dir, "build")
         ext_options["runtime_library_dirs"] = [rt_dir]
         if MERLIN_CUDA:

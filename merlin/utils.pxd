@@ -11,4 +11,3 @@ cdef extern from "merlin/utils.hpp":
     uint64_t cpp_inner_prod(const CppIntvec & v1, const CppIntvec & v2) except +
     uint64_t cpp_ndim_to_contiguous_idx(const CppIntvec & index, const CppIntvec & shape) except +
     CppIntvec cpp_contiguous_to_ndim_idx(uint64_t index, const CppIntvec & shape) except +
-

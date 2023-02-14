@@ -97,16 +97,6 @@ __cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & 
 // Sparse Grid
 // --------------------------------------------------------------------------------------------------------------------
 
-// Get the level from a given valid size
-__cuhostdev__ std::uint64_t get_level_from_valid_size(std::uint64_t size) noexcept {
-    size -= 1;
-    std::uint64_t level = 0;
-    while (size >>= 1) {
-        ++level;
-    }
-    return level;
-}
-
 // Get size of a sub-grid given its level vector
 __cuhostdev__ std::uint64_t calc_subgrid_size(const intvec & level_vector) noexcept {
     std::uint64_t subgrid_size = 1;
@@ -118,28 +108,6 @@ __cuhostdev__ std::uint64_t calc_subgrid_size(const intvec & level_vector) noexc
         subgrid_size *= ((dim_level == 1) ? 2 : (1 << (dim_level-1)));
     }
     return subgrid_size;
-}
-
-// Get index of nodes in a given level of a 1D grid
-__cuhostdev__ intvec hiearchical_index(std::uint64_t level, std::uint64_t size) {
-    // check level validity
-    std::uint64_t max_level = get_level_from_valid_size(size);
-    if (level > max_level) {
-        CUHDERR(std::invalid_argument, "Expected level less than %" PRIu64 ", got %" PRIu64 ".\n", max_level, level);
-    }
-    // trivial cases
-    if (level == 0) {
-        return intvec{(size - 1) / 2};
-    } else if (level == 1) {
-        return intvec{0, (size - 1)};
-    }
-    // normal cases: calculate the jump and loop over each odd number
-    std::uint64_t jump = 1 << (max_level - level);
-    intvec indices(1 << (level - 1));
-    for (std::uint64_t i_node = 0; i_node < indices.size(); i_node++) {
-        indices[i_node] = jump * (2*i_node + 1);
-    }
-    return indices;
 }
 
 // Get shape of Cartesian subgrid
@@ -156,5 +124,23 @@ __cuhostdev__ intvec get_level_shape(const intvec & level_vector) {
     }
     return grid_shape;
 }
+
+
+
+
+
+// Get the level from a given valid size of a 1D grid
+/*
+__cuhostdev__ static inline std::uint64_t get_level_from_valid_size(std::uint64_t size) noexcept {
+    size -= 1;
+    std::uint64_t level = 0;
+    while (size >>= 1) {
+        ++level;
+    }
+    return level;
+}
+*/
+
+
 
 }  // namespace merlin

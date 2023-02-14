@@ -3,9 +3,9 @@
 
 #include <cinttypes>  // PRIu64
 
+#include "merlin/env.hpp"  // merlin::Environment
 #include "merlin/logger.hpp"  // FAILURE, throw_linux_last_error, throw_windows_last_error
 #include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
-#include "merlin/settings.hpp"  // merlin::setting::cpu_mem_limit
 
 #if defined(__MERLIN_WINDOWS__)
 #include <windows.h>  // GetLastError, VirtualAlloc, VirtualFree, VirtualLock, VirtualUnlock
@@ -23,9 +23,9 @@ namespace merlin {
 // Allocate non pageable memory
 double * allocate_memory(std::uint64_t size) {
     double * result = nullptr;
-    if (settings::cpu_mem_limit < size*sizeof(double)) {
+    if (Environment::cpu_mem_limit < size*sizeof(double)) {
         FAILURE(std::out_of_range, "Cannot allocate array with size bigger than limit (memory available %" PRIu64
-                ", allocation demands %" PRIu64 ".\n", settings::cpu_mem_limit, size*sizeof(double));
+                ", allocation demands %" PRIu64 ".\n", Environment::cpu_mem_limit, size*sizeof(double));
     }
     #ifndef __MERLIN_CUDA__
         #if defined(__MERLIN_WINDOWS__)
@@ -61,7 +61,7 @@ double * allocate_memory(std::uint64_t size) {
                 ::cudaGetErrorName(err_));
     }
     #endif  // __MERLIN_CUDA__
-    settings::cpu_mem_limit -= size * sizeof(double);
+    Environment::cpu_mem_limit -= size * sizeof(double);
     return result;
 }
 
@@ -90,7 +90,7 @@ void free_memory(double * ptr, std::uint64_t size) {
                 ::cudaGetErrorName(err_));
     }
     #endif  // __MERLIN_CUDA__
-    settings::cpu_mem_limit += size * sizeof(double);
+    Environment::cpu_mem_limit += size * sizeof(double);
 }
 
 }  // namespace merlin

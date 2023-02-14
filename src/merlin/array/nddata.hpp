@@ -4,7 +4,7 @@
 
 #include <cstddef>  // nullptr
 #include <cstdint>  // std::int64_t, std::uint64_t, std::uintptr_t
-#include <utility>  // std::pair
+#include <string>  // std::string
 
 #include "merlin/array/declaration.hpp"  // merlin::array::NdData, merlin::array::Slice
 #include "merlin/cuda_decorator.hpp"  // __cuhost__, __cuhostdev__
@@ -24,19 +24,10 @@ class MERLIN_EXPORTS array::NdData {
     /** @brief Constructor from data pointer and meta-data.
      *  @details This constructor is used to construct explicitly an NdData in C++ interface.
      *  @param data Pointer to data.
-     *  @param ndim Number of dimension.
      *  @param shape Shape vector.
      *  @param strides Strides vector.
      */
-    NdData(double * data, std::uint64_t ndim, const intvec & shape, const intvec & strides);
-    /** @brief Constructor from data pointer and meta-data pointers.
-     *  @details This constructor is designed for initializing object from Numpy np.array.
-     *  @param data Pointer to data.
-     *  @param ndim Number of dimension.
-     *  @param shape Pointer to shape vector.
-     *  @param strides Pointer to strides vector.
-     */
-    NdData(double * data, std::uint64_t ndim, const std::uint64_t * shape, const std::uint64_t * strides);
+    NdData(double * data, const intvec & shape, const intvec & strides);
     /** @brief Constructor from shape vector.*/
     NdData(const intvec & shape);
     /** @brief Constructor from a slice.
@@ -79,13 +70,13 @@ class MERLIN_EXPORTS array::NdData {
     /// @name Get and set element
     /// @{
     /** @brief Get value of element at a n-dim index.*/
-    virtual double get(const intvec & index) const {return 0.0;}
+    virtual double get(const intvec & index) const;
     /** @brief Get value of element at a C-contiguous index.*/
-    virtual double get(std::uint64_t index) const {return 0.0;}
+    virtual double get(std::uint64_t index) const;
     /** @brief Set value of element at a n-dim index.*/
-    virtual void set(const intvec index, double value) {}
+    virtual void set(const intvec index, double value);
     /** @brief Set value of element at a C-contiguous index.*/
-    virtual void set(std::uint64_t index, double value) {}
+    virtual void set(std::uint64_t index, double value);
     /// @}
 
     /// @name Partite data
@@ -98,10 +89,29 @@ class MERLIN_EXPORTS array::NdData {
     Vector<Vector<array::Slice>> partite(std::uint64_t max_memory);
     /// @}
 
+    /// @name Operations
+    /// @{
+    /** @brief Reshape the dataset.
+     *  @param new_shape New shape.
+     */
+    void reshape(const intvec & new_shape);
+    /** @brief Collapse dimensions with size 1.
+     *  @param from_first If ``True``, erase from the left most dimension (slowest index in C). Otherwise erase from
+     *  the right most diemansion.
+     */
+    void collapse(bool from_first = true);
+    /// @}
+
+    /// @name Representation
+    /// @{
+    /** @brief String representation.*/
+    std::string str(bool first_call = true) const;
+    /// @}
+
     /// @name Destructor
     /// @{
     /** @brief Default destructor.*/
-    virtual ~NdData(void) {}
+    virtual ~NdData(void);
     /// @}
 
   protected:
@@ -120,6 +130,13 @@ class MERLIN_EXPORTS array::NdData {
     /** @brief Release memory in destructor.*/
     bool release_ = false;
 };
+
+namespace array {
+
+/** @brief Slice current array to a new array with the same polymorphic type.*/
+array::NdData * slice_on(const array::NdData & original, const Vector<array::Slice> & slices);
+
+}
 
 }  // namespace merlin
 

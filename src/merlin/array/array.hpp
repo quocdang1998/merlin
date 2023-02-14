@@ -14,6 +14,9 @@
 
 namespace merlin {
 
+// Allocate non-pageable memory
+// ----------------------------
+
 /** @brief Allocate non pageable memory.
  *  @param size Number of element in the allocated array.
  */
@@ -21,6 +24,9 @@ double * allocate_memory(std::uint64_t size);
 
 /** @brief Free array allocated in non pageable memory.*/
 void free_memory(double * ptr, std::uint64_t size);
+
+// Array class
+// -----------
 
 /** @brief Multi-dimensional array on CPU.*/
 class MERLIN_EXPORTS array::Array : public array::NdData {
@@ -46,8 +52,7 @@ class MERLIN_EXPORTS array::Array : public array::NdData {
      *  @note The original memory tied to the pointer will not be freed at destruction. But if copy is true, the
         copied tensor is automatically deallocated inside the destructor.
      */
-    Array(double * data, std::uint64_t ndim,
-          const std::uint64_t * shape, const std::uint64_t * strides, bool copy = false);
+    Array(double * data, const intvec & shape, const intvec & strides, bool copy = false);
     /** @brief Constructor from a slice.
      *  @param whole merlin::array::Array of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
@@ -102,7 +107,7 @@ class MERLIN_EXPORTS array::Array : public array::NdData {
     /// @name Transfer data
     /// @{
     /** @brief Copy data from GPU array.*/
-    void clone_data_from_gpu(const array::Parcel & gpu_array, const cuda::Stream & stream = cuda::Stream());
+    void clone_data_from_gpu(const array::Parcel & src, const cuda::Stream & stream = cuda::Stream());
     /** @brief Export data to a file.
      *  @param src Exported array.
      */

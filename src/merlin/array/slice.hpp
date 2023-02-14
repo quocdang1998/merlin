@@ -8,6 +8,7 @@
 #include <string>  // std::string
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Slice
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/cuda_decorator.hpp"  // __cuhostdev__
 
 namespace merlin {
@@ -97,7 +98,7 @@ class array::Slice {
     /// @name Representation
     /// @{
     /** @brief String representation.*/
-    std::string str(void) const;
+    MERLIN_EXPORTS std::string str(void) const;
     /// @}
 
     /// @name Destructor

@@ -47,3 +47,13 @@ CUDA Stream and Event
    merlin.cuda.Event
    merlin.cuda.EventCategory
    merlin.cuda.record_event
+
+Multi-dimensional array
+-----------------------
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.array.Array

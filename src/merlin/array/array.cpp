@@ -5,6 +5,7 @@
 #include <cstdio>  // std::fread, std::fseek
 #include <cstring>  // std::memcpy
 #include <fstream>  // std::ofstream
+#include <functional>  // std::bind, std::placeholders
 #include <ios>  // std::ios_base::failure
 #include <mutex>  // std::mutex
 #include <utility>  // std::move
@@ -67,10 +68,9 @@ array::Array::Array(const intvec & shape) : array::NdData(shape) {
 }
 
 // Construct Array from Numpy array
-array::Array::Array(double * data, std::uint64_t ndim,
-                    const std::uint64_t * shape, const std::uint64_t * strides, bool copy) {
-    this->ndim_ = ndim;
-    this->shape_ = intvec(shape, shape + ndim);
+array::Array::Array(double * data, const intvec & shape, const intvec & strides, bool copy) {
+    this->shape_ = shape;
+    this->ndim_ = shape.size();
     this->release_ = copy;
     // copy / assign data
     if (copy) {  // copy data
@@ -79,10 +79,10 @@ array::Array::Array(double * data, std::uint64_t ndim,
         // reform the stride tensor (force into C shape)
         this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
         // copy data from old tensor to new tensor (optimized with memcpy)
-        array::NdData src(data, ndim, shape, strides);
+        array::NdData src(data, shape, strides);
         array::array_copy(dynamic_cast<array::NdData *>(this), &src, std::memcpy);
     } else {
-        this->strides_ = intvec(strides, strides + ndim);
+        this->strides_ = strides;
         this->data_ = data;
     }
     this->initialize_iterator();
@@ -182,7 +182,7 @@ void array::Array::set(std::uint64_t index, double value) {
 
 // Copy data from GPU array
 #ifndef __MERLIN_CUDA__
-void clone_data_from_gpu(const array::Parcel & gpu_array, const cuda::Stream & stream) {
+void array::Array::clone_data_from_gpu(const array::Parcel & src, const cuda::Stream & stream) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 #endif  // __MERLIN_CUDA__

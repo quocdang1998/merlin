@@ -3,6 +3,8 @@
 from libc.stdint cimport uint64_t
 from libcpp.string cimport string
 
+cimport numpy as np
+
 cdef extern from "merlin/vector.hpp":
 
     cdef cppclass CppVector "merlin::Vector" [T, Convertable=*]:
@@ -32,12 +34,16 @@ cdef extern from "merlin/vector.hpp":
     bint operator==[T](const CppVector[T] & vec_1, const CppVector[T] & vec_2)
     bint operator!=[T](const CppVector[T] & vec_1, const CppVector[T] & vec_2)
 
-    ctypedef CppVector[uint64_t] CppIntvec "merlin::intvec"
+    ctypedef CppVector[uint64_t, np.npy_intp] CppIntvec "merlin::intvec"
+
 
 cdef inline CppIntvec intvec_from_tuple(tuple values):
     cdef CppIntvec result = CppIntvec(len(values), 0)
     for i in range(len(values)):
+        if values[i] < 0:
+            raise ValueError("Expected non-negative tuple of integers.")
         result[i] = <uint64_t>(values[i])
+    return result
 
 cdef inline tuple tuple_from_intvec(const CppIntvec & values):
     cdef list result = []

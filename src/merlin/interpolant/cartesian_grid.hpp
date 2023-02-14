@@ -22,10 +22,10 @@ class MERLIN_EXPORTS interpolant::CartesianGrid : public interpolant::Grid {
     /// @{
     /** @brief Default constructor.*/
     CartesianGrid(void) = default;
-    /** @brief Constructor from a list of vector of values.*/
-    CartesianGrid(std::initializer_list<Vector<double>> grid_vectors);
     /** @brief Constructor from a vector of values.*/
     CartesianGrid(const Vector<Vector<double>> & grid_vectors);
+    /** @brief Constructor from an r-value reference to a vector of values.*/
+    CartesianGrid(Vector<Vector<double>> && grid_vectors);
     /** @brief Constructor from the number of dimension.*/
     CartesianGrid(std::uint64_t ndim) : grid_vectors_(ndim) {}
     /// @}

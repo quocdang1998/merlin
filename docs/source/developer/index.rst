@@ -17,7 +17,7 @@ For more specific information, consult the sections below:
 
 .. table::
    :class: longtable
-   :widths: 10 90
+   :widths: 30 70
 
    ============================= ========================================================
    :doc:`compilation`            The way Cmake configure the compilation of the package.

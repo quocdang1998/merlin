@@ -110,7 +110,7 @@ cdef class Stream:
         self.core.check_cuda_context()
 
     def synchronize(self):
-        """synchonize(self)
+        """synchronize(self)
         Pause the CPU process until all operations on the stream has finished.
         """
         self.core.synchronize()
@@ -119,7 +119,7 @@ cdef class Stream:
         del self.core
 
 def record_event(Event event, Stream stream = Stream()):
-    """
+    """record_event(event, stream = Stream())
     Record (register) an event on CUDA stream.
 
     Parameters

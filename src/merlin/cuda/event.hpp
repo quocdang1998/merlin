@@ -7,7 +7,7 @@
 
 #include "merlin/cuda/context.hpp"  // merlin::cuda::Context
 #include "merlin/cuda/device.hpp"  // merlin::cuda::Device
-// #include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS
 
 namespace merlin {
 
@@ -89,7 +89,7 @@ class MERLIN_EXPORTS cuda::Event {
      */
     void synchronize(void) const;
 
-    friend float operator-(const cuda::Event & ev_1, const cuda::Event & ev_2);
+    MERLIN_EXPORTS friend float operator-(const cuda::Event & ev_1, const cuda::Event & ev_2);
     /// @}
 
     /// @name Representation
@@ -105,7 +105,7 @@ class MERLIN_EXPORTS cuda::Event {
     /// @}
 
   protected:
-    /** @brief Pointer to ``CUstream_st`` object.*/
+    /** @brief Pointer to ``CUevent_st`` object.*/
     std::uintptr_t event_ = 0;
     /** @brief Creation flag of the event.*/
     Category category_;
@@ -118,7 +118,7 @@ class MERLIN_EXPORTS cuda::Event {
 namespace cuda {
 
 /** @brief Calculate elapsed time (in millisecond) between 2 events.*/
-float operator-(const cuda::Event & ev_1, const cuda::Event & ev_2);
+MERLIN_EXPORTS float operator-(const cuda::Event & ev_1, const cuda::Event & ev_2);
 
 }  // namespace cuda
 

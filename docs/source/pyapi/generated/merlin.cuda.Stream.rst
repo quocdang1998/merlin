@@ -6,3 +6,4 @@
 .. autoclass:: Stream
    :members:
    :special-members: __init__
+   :inherited-members:

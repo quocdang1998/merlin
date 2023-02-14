@@ -38,13 +38,13 @@ chosen by user:
 
          g++ -c foo.cpp  # or "nvcc -c foo.cu" for CUDA applications
          nvcc -shared -dlink -o device_code.o foo.o libmerlin.a
-         g++ -o foo.exe foo.o device_code.o libmerlin.a
+         g++ -o foo.exe foo.o device_code.o libmerlin.a libmerlinshared.so
 
       .. code-tab:: powershell
 
          cl -c foo.cpp  # or "nvcc -c foo.cu" for CUDA applications
          nvcc -shared -dlink -o device_code.obj foo.obj merlin.lib
-         link /out:foo.exe foo.obj device_code.obj merlin.lib
+         link /out:foo.exe foo.obj device_code.obj merlin.lib merlinshared.lib
 
       .. code-tab:: cmake
 
@@ -75,19 +75,19 @@ chosen by user:
 
          g++ -c foo.cpp  # or "nvcc -c foo.cu" for CUDA applications
          nvcc -shared -dlink -o device_code.o foo.o libmerlin.a
-         g++ -o foo.exe foo.o device_code.o libmerlin.so libmerlincuda.a
+         g++ -o foo.exe foo.o device_code.o libmerlin.so libmerlincuda.a libmerlinshared.so
 
       .. code-tab:: powershell
 
          cl -c foo.cpp  # or "nvcc -c foo.cu" for CUDA applications
          nvcc -shared -dlink -o device_code.obj foo.obj merlin.lib
-         link /out:foo.exe foo.obj device_code.obj merlin.lib merlincuda.lib
+         link /out:foo.exe foo.obj device_code.obj merlin.lib merlincuda.lib merlinshared.lib
 
       .. code-tab:: cmake
 
          add_executable(foo foo.cpp)  # or "add_executable(foo foo.cu)"
          set_property(TARGET foo PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-         target_link_libraries(foo libmerlin libmerlincuda)
+         target_link_libraries(foo libmerlin)
 
 Although the compilation with Cmake supports both the compilation of static
 library and dynamic library, it is recommended to use dynamic library on

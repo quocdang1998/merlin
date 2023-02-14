@@ -31,7 +31,7 @@ class MERLIN_EXPORTS cuda::Device {
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
-    __cuhostdev__ Device(void) {}
+    __cuhostdev__ Device(void);
     /** @brief Constructor from GPU ID.*/
     __cuhostdev__ Device(int id);
     /// @}
@@ -42,10 +42,7 @@ class MERLIN_EXPORTS cuda::Device {
     /** @brief Copy constructor.*/
     __cuhostdev__ Device(const cuda::Device & src) {this->id_ = src.id_;}
     /** @brief Copy assignment.*/
-    __cuhostdev__ cuda::Device & operator=(const cuda::Device & src) {
-        this->id_ = src.id_;
-        return *this;
-    }
+    __cuhostdev__ cuda::Device & operator=(const cuda::Device & src);
     /// @}
 
     /// @name Get members
@@ -61,7 +58,7 @@ class MERLIN_EXPORTS cuda::Device {
     /** @brief Get current GPU.*/
     __cuhostdev__ static cuda::Device get_current_gpu(void);
     /** @brief Get total number of CUDA capable GPU.*/
-    __cuhostdev__ static int get_num_gpu(void);
+    __cuhostdev__ static std::uint64_t get_num_gpu(void);
     /** @brief Print GPU specifications.*/
     void print_specification(void) const;
     /** @brief Test functionality of GPU.

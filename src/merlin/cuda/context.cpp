@@ -4,6 +4,7 @@
 #include <sstream>  // std::ostringstream
 
 #include "merlin/cuda/device.hpp"  // merlin::cuda::Device
+#include "merlin/env.hpp"  // merlin::Environment
 
 namespace merlin {
 
@@ -11,11 +12,15 @@ namespace merlin {
 // Context
 // --------------------------------------------------------------------------------------------------------------------
 
-// Mutex lock for updating static attributes
-std::mutex cuda::Context::mutex_;
-
-// Attributes of instances
-std::map<std::uintptr_t, cuda::Context::Attribute> cuda::Context::attribute_;
+// Check if context is primary
+bool cuda::Context::is_primary(void) const {
+    for (const auto & [i_gpu, primary_context] : Environment::primary_contexts) {
+        if (this->context_ == primary_context) {
+            return true;
+        }
+    }
+    return false;
+}
 
 // String representation
 std::string cuda::Context::str(void) {
@@ -24,9 +29,6 @@ std::string cuda::Context::str(void) {
        << ", reference count " << this->get_reference_count() << ">";
     return os.str();
 }
-
-// Default context
-cuda::Context default_context = cuda::initialize_context();
 
 #ifndef __MERLIN_CUDA__
 
@@ -81,11 +83,6 @@ cuda::Context::~Context(void) {}
 // Create a primary context attached to a GPU
 cuda::Context cuda::create_primary_context(const cuda::Device & gpu, cuda::Context::Flags flag) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
-    return cuda::Context();
-}
-
-// Initialize a default context
-cuda::Context cuda::initialize_context(void) {
     return cuda::Context();
 }
 

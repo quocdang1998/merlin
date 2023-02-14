@@ -47,7 +47,7 @@ class MERLIN_EXPORTS interpolant::RegularGrid : interpolant::Grid {
     /// @name Get members and attributes
     /// @{
     /** @brief Get reference to array of grid points.*/
-    constexpr array::Array & grid_points(void) noexcept {return *(dynamic_cast<array::Array *>(this->points_));}
+    array::Array & grid_points(void) noexcept {return *(dynamic_cast<array::Array *>(this->points_));}
     /** @brief Get constant reference to array of grid points.*/
     const array::Array & grid_points(void) const noexcept {return *(dynamic_cast<array::Array *>(this->points_));}
     /** @brief Number of dimension of each point in the grid.*/

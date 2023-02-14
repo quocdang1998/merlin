@@ -12,7 +12,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../..'))
+sys.path.append(os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
@@ -59,7 +59,6 @@ doxygen_xml = [breathe_projects[breathe_default_project]]
 
 # Sphinx-panel settings
 panels_add_fontawesome_latex = True
-
 
 # -- Pygments style ----------------------------------------------------------
 
