@@ -2,10 +2,13 @@
 
 from libc.stdint cimport uint64_t
 
+from merlin.cuda.stream cimport CppStream
 from merlin.vector cimport CppVector, CppIntvec
 
 from merlin.array.nddata cimport CppNdData
+from merlin.array.parcel cimport CppParcel
 from merlin.array.slice cimport CppSlice
+from merlin.array.stock cimport CppStock
 
 cdef extern from "merlin/array/array.hpp":
 
@@ -20,3 +23,6 @@ cdef extern from "merlin/array/array.hpp":
         CppArray & operator=(const CppArray & src)
 
         double & operator[](const CppIntvec & index)
+
+        void clone_data_from_gpu(const CppParcel & src, const CppStream & stream)
+        void extract_data_from_file(const CppStock & src)

@@ -8,6 +8,17 @@ C++ API
 Basic functionality
 -------------------
 
+Environment
+^^^^^^^^^^^
+
+Execution environment:
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::Environment
+   merlin::default_environment
+
 Printing log messages
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -100,17 +111,6 @@ Print and test the compatibility of GPU and CUDA driver:
 
    merlin::cuda::print_all_gpu_specification
    merlin::cuda::test_all_gpu
-
-Context management
-^^^^^^^^^^^^^^^^^^
-
-Print and test the compatibility of GPU and CUDA driver:
-
-.. doxysummary::
-   :toctree: generated
-
-   merlin::cuda::default_context
-   merlin::cuda::create_primary_context
 
 Array API
 ---------

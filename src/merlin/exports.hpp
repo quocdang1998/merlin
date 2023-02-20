@@ -4,7 +4,20 @@
 
 #include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
 
-#if defined(__MERLIN_BUILT_AS_STATIC__) || defined(LIBMERLIN_STATIC) || defined(__MERLIN_LINUX__)
+#if defined(__MERLIN_LINUX__)
+    #define MERLINSHARED_EXPORTS
+#else
+    // define MERLINSHARED_EXPORTS to export extern variables, classes and functions to WIndows DLL library
+    #ifndef MERLINSHARED_EXPORTS
+        #if defined(libmerlinshared_EXPORTS)
+            #define MERLINSHARED_EXPORTS __declspec(dllexport)
+        #else
+            #define MERLINSHARED_EXPORTS __declspec(dllimport)
+        #endif  // libmerlinshared_EXPORTS
+    #endif  // MERLINSHARED_EXPORTS
+#endif // __MERLIN_LINUX__
+
+#if defined(__MERLIN_BUILT_AS_STATIC__) || defined(__LIBMERLINCUDA__) || defined(__MERLIN_LINUX__)
     #define MERLIN_EXPORTS
     #define MERLIN_NO_EXPORT
 #else

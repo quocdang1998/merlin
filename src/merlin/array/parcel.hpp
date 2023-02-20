@@ -107,7 +107,7 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
     /** @brief Device containing data of Parcel.*/
     cuda::Device device_;
     /** @brief Mutex lock at destruction time.*/
-    static std::mutex mutex_;
+    static std::mutex & mutex_;
 
   private:
     /** @brief Free current data hold by the object.*/

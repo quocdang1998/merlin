@@ -105,7 +105,7 @@ class MERLIN_EXPORTS cuda::Event {
     /// @}
 
   protected:
-    /** @brief Pointer to ``CUstream_st`` object.*/
+    /** @brief Pointer to ``CUevent_st`` object.*/
     std::uintptr_t event_ = 0;
     /** @brief Creation flag of the event.*/
     Category category_;

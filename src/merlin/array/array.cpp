@@ -32,8 +32,6 @@ static inline void read_from_file(double * dest, std::FILE * file, double * src,
 
 namespace merlin {
 
-// std::uint64_t settings::cpu_mem_limit = static_cast<std::uint64_t>(20) << 30;
-
 // --------------------------------------------------------------------------------------------------------------------
 // Array
 // --------------------------------------------------------------------------------------------------------------------
@@ -185,7 +183,7 @@ void array::Array::set(std::uint64_t index, double value) {
 
 // Copy data from GPU array
 #ifndef __MERLIN_CUDA__
-void clone_data_from_gpu(const array::Parcel & gpu_array, const cuda::Stream & stream) {
+void array::Array::clone_data_from_gpu(const array::Parcel & src, const cuda::Stream & stream) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 #endif  // __MERLIN_CUDA__

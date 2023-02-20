@@ -40,6 +40,8 @@ cdef extern from "merlin/vector.hpp":
 cdef inline CppIntvec intvec_from_tuple(tuple values):
     cdef CppIntvec result = CppIntvec(len(values), 0)
     for i in range(len(values)):
+        if values[i] < 0:
+            raise ValueError("Expected non-negative tuple of integers.")
         result[i] = <uint64_t>(values[i])
     return result
 

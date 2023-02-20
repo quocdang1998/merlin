@@ -1,9 +1,5 @@
 # Copyright 2022 quocdang1998
 
-from merlin.cuda import Device, Stream
-from merlin.cuda.device cimport CppDevice
-from merlin.cuda.stream cimport CppStream
-
 cdef class Parcel(_NdData):
     """Multi-dimensional array on CPU."""
 

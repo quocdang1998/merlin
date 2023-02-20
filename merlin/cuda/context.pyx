@@ -62,6 +62,10 @@ cdef class Context:
         """
         return <uintptr_t>(self.core)
 
+    @property
+    def is_primary(self):
+        return self.core.is_primary()
+
     def push_current(self):
         """push_current(self)
         Push the context to the context stack.
@@ -117,12 +121,19 @@ cdef class Context:
         del self.core
 
 def create_primary_context(Device gpu, ContextFlags flag):
-    """
+    """create_primary_context(gpu, flag)
     Retain the primary context associated to a GPU.
 
     Primary contexts are contexts shared with the CUDA driver API. There is a correspondance one-to-one between primary
     contexts and GPU.
     If the primary context of the GPU has been retained, the function only change the flag of the context.
+
+    Parameters
+    ----------
+    gpu: merlin.cuda.Device
+        GPU associated to the primary context.
+    flag: merlin.cuda.ContextFlags
+        Flag to set to the primary context.
     """
     result = Context()
     cdef CppContext * c_result = new CppContext(cpp_create_primary_context(dereference(gpu.core), flag))

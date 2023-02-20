@@ -71,7 +71,9 @@ void _merlin_error_(const char * func_name, const char * fmt, ...) {
     va_end(args);
     // print exception message and throw an exception object
     std::fprintf(stderr, "\033[1;31m[FAILURE]\033[0m [%s] %s", func_name, buffer);
+    #if defined(__MERLIN_DEBUG__) && !defined(libmerlinshared_EXPORTS)
     _merlin_print_stacktrace_(2);  // skip this function and print_stacktrace function
+    #endif   // __MERLIN_DEBUG__ && !libmerlinshared_EXPORTS
     if constexpr(std::is_same<Exception, std::filesystem::filesystem_error>::value) {
         throw std::filesystem::filesystem_error(const_cast<char *>(buffer),
                                                 std::error_code(1, std::iostream_category()));

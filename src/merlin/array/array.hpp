@@ -14,21 +14,6 @@
 
 namespace merlin {
 
-// Memory allocation limit
-// -----------------------
-
-namespace settings {
-
-/** @brief Map from GPU ID to is details.*/
-// MERLIN_EXPORTS extern std::map<int, Device *> gpu_map;
-
-/** @brief Memory limit of a process for allocating ``merlin::array::Array``.
- *  @details Default value: 20GB.
- */
-extern std::uint64_t cpu_mem_limit;
-
-}  // namespace settings
-
 // Allocate non-pageable memory
 // ----------------------------
 
@@ -123,7 +108,7 @@ class MERLIN_EXPORTS array::Array : public array::NdData {
     /// @name Transfer data
     /// @{
     /** @brief Copy data from GPU array.*/
-    void clone_data_from_gpu(const array::Parcel & gpu_array, const cuda::Stream & stream = cuda::Stream());
+    void clone_data_from_gpu(const array::Parcel & src, const cuda::Stream & stream = cuda::Stream());
     /** @brief Export data to a file.
      *  @param src Exported array.
      */

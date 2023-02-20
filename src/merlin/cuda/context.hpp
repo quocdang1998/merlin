@@ -2,7 +2,6 @@
 #ifndef MERLIN_CUDA_CONTEXT_HPP_
 #define MERLIN_CUDA_CONTEXT_HPP_
 
-#include <atomic>  // std::atomic_uint64_t
 #include <cstdint>  // std::uintptr_t
 #include <map>  // std::map
 #include <string>  // std::string
@@ -10,6 +9,7 @@
 #include <vector>  // std::vector
 
 #include "merlin/cuda/declaration.hpp"  // merlin::cuda::Context, merlin::cuda::Device
+#include "merlin/env.hpp"  // merlin::Environment
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/logger.hpp"  // cuda_runtime_error, FAILURE
 
@@ -51,12 +51,12 @@ class MERLIN_EXPORTS cuda::Context {
     /// @{
     /** @brief Copy constructor.*/
     Context(const cuda::Context & src) : context_(src.context_) {
-        cuda::Context::attribute_[src.context_].reference_count += 1;
+        Environment::attribute[src.context_].reference_count += 1;
     }
     /** @brief Copy assignment (deleted).*/
     cuda::Context & operator=(const cuda::Context & src) {
         this->context_ = src.context_;
-        cuda::Context::attribute_[src.context_].reference_count += 1;
+        Environment::attribute[src.context_].reference_count += 1;
         return *this;
     }
     /** @brief Move constructor.*/
@@ -76,9 +76,9 @@ class MERLIN_EXPORTS cuda::Context {
     constexpr std::uintptr_t get_context_ptr(void) const noexcept {return this->context_;}
     /** @brief Get number of instances representing the context.*/
     std::uint64_t get_reference_count(void) const noexcept {
-        return cuda::Context::attribute_[this->context_].reference_count;
+        return Environment::attribute[this->context_].reference_count;
     }
-    bool is_primary(void) const noexcept {return cuda::Context::attribute_[this->context_].is_primary;}
+    bool is_primary(void) const;
     /// @}
 
     /// @name Manipulation of the context stack
@@ -108,11 +108,6 @@ class MERLIN_EXPORTS cuda::Context {
     MERLIN_EXPORTS friend cuda::Context create_primary_context(const cuda::Device & gpu, cuda::Context::Flags flag);
     /// @}
 
-    /// @name Default context
-    /// @{
-    MERLIN_EXPORTS friend cuda::Context initialize_context(void);
-    /// @}
-
     /// @name Comparison
     /// @{
     /** @brief Identical comparison operator.*/
@@ -140,36 +135,6 @@ class MERLIN_EXPORTS cuda::Context {
   protected:
     /** @brief Pointer to ``CUctx_st`` object.*/
     std::uintptr_t context_ = 0;
-
-  private:
-    /** @brief Attributes of the context.*/
-    struct Attribute {
-        Attribute(void) = default;
-        Attribute(const std::atomic_uint64_t & ref_count, bool primariness, int gpu_id);
-        Attribute(const cuda::Context::Attribute & src) : reference_count(src.reference_count.load()), is_primary(src.is_primary), gpu(src.gpu) {}
-        cuda::Context::Attribute & operator=(const cuda::Context::Attribute & src) {
-            this->reference_count.store(src.reference_count.load());
-            this->is_primary = src.is_primary;
-            this->gpu = src.gpu;
-            return *this;
-        }
-        ~Attribute(void) = default;
-
-        /** @brief Reference count of the current context.
-         *  @details Number of instances representing the same context.
-         */
-        std::atomic_uint64_t reference_count;
-        /** @brief The current context is a primary context.
-         *  @details Context is shared between CUDA runtime API and CUDA driver API.
-         */
-        bool is_primary = false;
-        /** @brief GPU of the current context.
-         *  @details GPU device binded to the primary context.
-         */
-        int gpu;
-    };
-    /** @brief Map from context pointers to their attributes.*/
-    static std::map<std::uintptr_t, cuda::Context::Attribute> attribute_;
 };
 
 namespace cuda {
@@ -180,14 +145,6 @@ namespace cuda {
  */
 MERLIN_EXPORTS cuda::Context create_primary_context(const cuda::Device & gpu,
                                                     cuda::Context::Flags flag = cuda::Context::Flags::AutoSchedule);
-
-/** @brief Initialize default context.
- *  Initialize a default regular context if not initialized.
- */
-MERLIN_EXPORTS cuda::Context initialize_context(void);
-
-/** @brief Default context.*/
-MERLIN_EXPORTS extern cuda::Context default_context;
 
 }  // namespace cuda
 

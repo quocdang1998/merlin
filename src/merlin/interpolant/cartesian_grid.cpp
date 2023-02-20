@@ -165,7 +165,7 @@ __cuhostdev__ interpolant::CartesianGrid::~CartesianGrid(void) {}
 
 // Union of 2 Cartesian grid
 interpolant::CartesianGrid interpolant::operator+(const interpolant::CartesianGrid & grid_1,
-                                     const interpolant::CartesianGrid & grid_2) {
+                                                  const interpolant::CartesianGrid & grid_2) {
     interpolant::CartesianGrid result(grid_1);
     return result += grid_2;
 }

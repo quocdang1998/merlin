@@ -2,6 +2,7 @@
 #include "merlin/array/parcel.hpp"
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
+#include "merlin/env.hpp"  // merlin::Environment
 #include "merlin/logger.hpp"  // FAILURE, cuda_compile_error
 
 namespace merlin {
@@ -11,7 +12,7 @@ namespace merlin {
 // --------------------------------------------------------------------------------------------------------------------
 
 // Initialize mutex
-std::mutex array::Parcel::mutex_;
+std::mutex & array::Parcel::mutex_ = Environment::mutex;
 
 #ifndef __MERLIN_CUDA__
 
@@ -35,6 +36,33 @@ array::Parcel::Parcel(array::Parcel && src) {
 array::Parcel & array::Parcel::operator=(array::Parcel && src) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
     return *this;
+}
+
+// Get value of element at a n-dim index
+double array::Parcel::get(const intvec & index) const {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
+    return 0;
+}
+
+// Get value of element at a C-contiguous index
+double array::Parcel::get(std::uint64_t index) const {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
+    return 0;
+}
+
+// Set value of element at a n-dim index
+void array::Parcel::set(const intvec index, double value) {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
+}
+
+// Set value of element at a C-contiguous index
+void array::Parcel::set(std::uint64_t index, double value) {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
+}
+
+// Transfer data to GPU
+void array::Parcel::transfer_data_to_gpu(const array::Array & cpu_array, const cuda::Stream & stream) {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 
 // Copy data to a pre-allocated memory

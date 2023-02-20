@@ -137,13 +137,13 @@ cdef class Device:
         del self.core
 
 def print_all_gpu_specification():
-    """
+    """print_all_gpu_specification()
     Print specification of all detected GPUs.
     """
     cpp_print_all_gpu_specification()
 
 def test_all_gpu():
-    """
+    """test_all_gpu()
     Perform the test on all detected GPU.
     """
     return cpp_test_all_gpu()

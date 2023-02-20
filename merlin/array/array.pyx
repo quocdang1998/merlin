@@ -68,6 +68,26 @@ cdef class Array(_NdData):
             "version": 3
         }
 
+    def clone_data_from_gpu(self, Parcel src, object stream = Stream()):
+        """clone_data_from_gpu(self, src, stream = Stream())
+        Copy data from GPU array to CPU array.
+        """
+        if not isinstance(stream, Stream):
+            raise TypeError("Expected argument \"stream\" has type \"merlin.cuda.Stream\".")
+        cdef uintptr_t str_uintptr = stream.pointer()
+        cdef CppStream * stream_ptr = <CppStream *>(str_uintptr)
+        cdef CppParcel * src_ptr = <CppParcel *>(src.core)
+        cdef CppArray * dynamic_core = <CppArray *>(self.core)
+        dynamic_core.clone_data_from_gpu(dereference(src_ptr), dereference(stream_ptr))
+
+    def extract_data_from_file(self, Stock src):
+        """extract_data_from_file(self, src)
+        Read data from serialized file.
+        """
+        cdef CppStock * src_ptr = <CppStock *>(src.core)
+        cdef CppArray * dynamic_core = <CppArray *>(self.core)
+        dynamic_core.extract_data_from_file(dereference(src_ptr))
+
     def __dealloc__(self):
         if self.reference_array is not None:
             Py_DECREF(self.reference_array)
