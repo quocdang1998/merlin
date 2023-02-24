@@ -62,7 +62,7 @@ def get_extension_options():
         ext_options["library_dirs"] += [CUDALIB]
 
     # runtime library
-    if (sys.platform == "linux") and (MERLIN_LIBKIND == "SHARED"):
+    if (sys.platform == "linux"):
         rt_dir = os.path.join(module_dir, "build")
         ext_options["runtime_library_dirs"] = [rt_dir]
         if MERLIN_CUDA:

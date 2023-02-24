@@ -1,6 +1,6 @@
 // Copyright 2022 quocdang1998
-#ifndef AP3_XS_HPP_
-#define AP3_XS_HPP_
+#ifndef EXT_AP3_MPO_SRC_AP3_MPO_AP3_XS_HPP_
+#define EXT_AP3_MPO_SRC_AP3_MPO_AP3_XS_HPP_
 
 #include <list>  // std::list
 #include <string>  // std::string
@@ -64,4 +64,4 @@ class ext::ap3mpo::Ap3HomogXS {
 
 }  // namespace merlin
 
-#endif  // AP3_XS_HPP_
+#endif  // EXT_AP3_MPO_SRC_AP3_MPO_AP3_XS_HPP_

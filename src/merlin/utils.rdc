@@ -130,6 +130,7 @@ __cuhostdev__ intvec get_level_shape(const intvec & level_vector) {
 
 
 // Get the level from a given valid size of a 1D grid
+/*
 __cuhostdev__ static inline std::uint64_t get_level_from_valid_size(std::uint64_t size) noexcept {
     size -= 1;
     std::uint64_t level = 0;
@@ -138,7 +139,7 @@ __cuhostdev__ static inline std::uint64_t get_level_from_valid_size(std::uint64_
     }
     return level;
 }
-
+*/
 
 
 

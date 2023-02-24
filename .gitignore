@@ -23,6 +23,9 @@ merlin/__init__.py
 # Python cache
 __pycache__/
 
+# Setuptools egg info
+merlin.egg-info/
+
 # Doxygen generated files
 docs/source/html
 docs/source/latex

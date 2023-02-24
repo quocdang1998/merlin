@@ -51,7 +51,7 @@ std::vector<std::string> ext::ap3mpo::ls_groups(H5::Group * group, const char * 
     };
     // iterate over all group
     std::vector<std::string> result;
-    H5Literate(group->getId(), H5_INDEX_NAME, H5_ITER_NATIVE, NULL, get_name, (void *) & result);
+    H5Literate(group->getId(), H5_INDEX_NAME, H5_ITER_NATIVE, NULL, get_name, reinterpret_cast<void *>(&result));
     // remove if string not contains substring
     std::string s(substring);
     auto check_not_substring = [&s] (const std::string & name) {

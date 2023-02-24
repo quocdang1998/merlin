@@ -1,6 +1,6 @@
 // Copyright 2022 quocdang1998
-#ifndef DECLARATION_HPP_
-#define DECLARATION_HPP_
+#ifndef EXT_AP3_MPO_SRC_AP3_MPO_DECLARATION_HPP_
+#define EXT_AP3_MPO_SRC_AP3_MPO_DECLARATION_HPP_
 
 namespace merlin::ext::ap3mpo {
 struct Ap3Geometry;
@@ -11,4 +11,4 @@ struct Ap3Reaction;
 class Ap3HomogXS;
 }
 
-#endif  // DECLARATION_HPP_
+#endif  // EXT_AP3_MPO_SRC_AP3_MPO_DECLARATION_HPP_

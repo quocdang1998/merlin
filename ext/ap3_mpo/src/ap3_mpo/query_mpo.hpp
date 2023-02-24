@@ -1,6 +1,6 @@
 // Copyright 2022 quocdang1998
-#ifndef QUERY_MPO_HPP_
-#define QUERY_MPO_HPP_
+#ifndef EXT_AP3_MPO_SRC_AP3_MPO_QUERY_MPO_HPP_
+#define EXT_AP3_MPO_SRC_AP3_MPO_QUERY_MPO_HPP_
 
 #include <string>  // std::string
 
@@ -11,4 +11,4 @@ void query_mpo(const std::string & filename);
 
 }
 
-#endif  // QUERY_MPO_HPP_
+#endif  // EXT_AP3_MPO_SRC_AP3_MPO_QUERY_MPO_HPP_

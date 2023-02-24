@@ -1,6 +1,6 @@
 // Copyright 2022 quocdang1998
-#ifndef HDF5_UTILS_HPP_
-#define HDF5_UTILS_HPP_
+#ifndef EXT_AP3_MPO_SRC_AP3_MPO_HDF5_UTILS_HPP_
+#define EXT_AP3_MPO_SRC_AP3_MPO_HDF5_UTILS_HPP_
 
 #include <algorithm>  // std::transform
 #include <cctype>  // std::tolower
@@ -60,4 +60,4 @@ std::uint64_t find_element(const std::vector<ArrayType> & array, const Sample & 
 
 #include "hdf5_utils.tpp"
 
-#endif  // HDF5_UTILS_HPP_
+#endif  // EXT_AP3_MPO_SRC_AP3_MPO_HDF5_UTILS_HPP_

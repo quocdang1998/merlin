@@ -1,6 +1,6 @@
 // Copyright 2022 quocdang1998
-#ifndef PROPERTIES_HPP_
-#define PROPERTIES_HPP_
+#ifndef EXT_AP3_MPO_SRC_AP3_MPO_PROPERTIES_HPP_
+#define EXT_AP3_MPO_SRC_AP3_MPO_PROPERTIES_HPP_
 
 #include <cstdint>  // std::uint64_t
 #include <map>  // std::map
@@ -58,7 +58,7 @@ struct ext::ap3mpo::Ap3StateParam {
     ext::ap3mpo::Ap3StateParam & operator+=(ext::ap3mpo::Ap3StateParam & other);
 
     std::vector<std::string> param_names;
-    std::map<std::string,std::vector<double>> param_values;
+    std::map<std::string, std::vector<double>> param_values;
     std::vector<std::uint64_t> excluded_index;
 };
 
@@ -88,6 +88,6 @@ struct ext::ap3mpo::Ap3Reaction {
     std::uint64_t index;
 };
 
-}  // namespace merlin::ext::ap3mpo
+}  // namespace merlin
 
-#endif  // PROPERTIES_HPP_
+#endif  // EXT_AP3_MPO_SRC_AP3_MPO_PROPERTIES_HPP_

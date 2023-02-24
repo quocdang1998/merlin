@@ -133,7 +133,7 @@ interpolant::CartesianGrid & interpolant::CartesianGrid::operator+=(const interp
         std::uint64_t dim_1 = this->grid_vectors_[i_dim].size(), dim_2 = grid.grid_vectors_[i_dim].size();
         // push_back if not duplicated
         const Vector<double> & this_grid_vector = this->grid_vectors_[i_dim];
-        const Vector<double> & other_grid_vector =grid.grid_vectors_[i_dim];
+        const Vector<double> & other_grid_vector = grid.grid_vectors_[i_dim];
         std::vector<double> buffer(this_grid_vector.begin(), this_grid_vector.end());
         for (const double & node : other_grid_vector) {
             if (std::find(this_grid_vector.begin(), this_grid_vector.end(), node) == this_grid_vector.end()) {

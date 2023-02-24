@@ -52,4 +52,4 @@ void ext::ap3mpo::query_mpo(const std::string & filename) {
     std::printf("\n");
 }
 
-}
+}  // namespace merlin

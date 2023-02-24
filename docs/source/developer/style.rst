@@ -21,6 +21,8 @@ Besides the standard Google style rules, some additional rules are also applied:
 
    #. C++ header files, like ``iostream``, ``string``, ``tuple``, ``vector``.
 
+   #. CUDA driver library's header (``cuda.h``) and OpenMP's header (``omp.h``).
+
    #. External libraries' header files, like ``gsl/gsl_foo.h``, ``fmt/core.h``.
 
    #. Project's header files, like ``merlin/utils.hpp``, ``merlin/logger.hpp``.
@@ -39,19 +41,6 @@ Besides the standard Google style rules, some additional rules are also applied:
 
       #include "merlin/logger.hpp"  // MESSAGE, FAILURE
       #include "merlin/array/array.hpp"  // merlin::array::Array
-
-*  Declarations and definitions must be enclosed in namespace ``merlin``. The
-   use of ``using namspace`` is prohibited except in executable source file
-   (inside the ``main`` function).
-
-   .. code-block:: c++
-      :linenos:
-
-      namespace merlin {
-
-      // your code goes here
-
-      }  // namespace merlin
 
 *  Indent is 4 spaces by default (contrary to the default 2 spaces applied by
    Google's rules). Elements in between header guards, namespaces and macros

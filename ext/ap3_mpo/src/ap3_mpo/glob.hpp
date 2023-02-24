@@ -1,6 +1,6 @@
 // Copyright 2022 quocdang1998
-#ifndef GLOB_HPP_
-#define GLOB_HPP_
+#ifndef EXT_AP3_MPO_SRC_AP3_MPO_GLOB_HPP_
+#define EXT_AP3_MPO_SRC_AP3_MPO_GLOB_HPP_
 
 #include <string>  // std::string
 #include <vector>  // std::vector
@@ -12,4 +12,4 @@ std::vector<std::string> glob(const std::string & pattern);
 
 }  // namespace merlin::ext::ap3mpo
 
-#endif  // GLOB_HPP_
+#endif  // EXT_AP3_MPO_SRC_AP3_MPO_GLOB_HPP_

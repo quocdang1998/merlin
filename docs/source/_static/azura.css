@@ -70,7 +70,7 @@
     --literal-background:         hsl(var(--hue),  10%, 99%);  /* literal background */
     --codeblock-background:       hsl(var(--hue),  10%, 97%);  /* codeblock background */
 
-    --nav-title:                  hsl(var(--hue), 100%, 50%);  /* nav title */
+    --nav-title:                  hsl(var(--hue), 100%, 40%);  /* nav title */
     --nav-caption:                hsl(var(--hue),  97%, 61%);  /* nav caption */
     --nav-background:             hsl(var(--hue),  24%, 23%);  /* navigation bar color */
     --nav-l1:                     hsl(var(--hue),  79%, 95%);  /* link level 1 */
@@ -85,7 +85,7 @@
 
     --item-name:                  hsl(var(--hue), 100%, 40%);  /* item name */
     --attribute:                  hsl(var(--hls),  85%, 55%);  /* attribute */
-    --keyword:                    hsl(var(--hpl), 100%, 40%);  /* keyworks of code language */
+    --keyword:                    hsl(var(--hpl), 100%, 35%);  /* keyworks of code language */
     --inherited:                  hsl(var(--hpl),  59%, 47%);  /* interrnal reference to other classes */
     --type:                       hsl(var(--hmn),  53%, 55%);  /* type */
 
@@ -94,11 +94,6 @@
     --warning:                    hsl(var(--hrv), 100%, 50%);  /* warning title */
 
     --rtd-version:                hsl(var(--hue),  88%, 58%);  /* readthedocs version */
-
-    --sun-display:                none;  /* display of light mode icon */
-    --moon-display:               flex;  /* display of light mode icon */
-    --invert-color:               invert(0.0);  /* invert color of item */
-    --yinyang:                    black;  /* black and white */
 }
 
 /* ============================================================================
@@ -179,9 +174,7 @@ dl > dt.field-odd::after, dl > dt.field-even::after {
 }
 
 /* footer */
-.btn, .btn-neutral {
-    filter: var(--invert-color);
-}
+.btn, .btn-neutral {}
 
 /* ============================================================================
  NAVIGATION BAR + SEARCH RESULTS
@@ -210,6 +203,9 @@ dl > dt.field-odd::after, dl > dt.field-even::after {
 .wy-menu-vertical a:hover {
     font-weight: 700;
     background-color: var(--nav-l1-hover-background);
+}
+.wy-menu-vertical li.current a {
+    border-right:0px !important;
 }
 .wy-menu-vertical li.current > a, .wy-menu-vertical li.on a {
     font-weight: 700;
@@ -263,7 +259,7 @@ html.writer-html4 .rst-content dl:not(.docutils)>dt, html.writer-html5 .rst-cont
 }
 
 html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) .descclassname {
-    font-family: 'Fira Code', monospace;
+    font-family: 'Fira Code', monospace !important;
     font-size: 12px !important;
     font-variant-ligatures: none;
 }
@@ -280,14 +276,14 @@ html.writer-html4 .rst-content dl:not(.docutils) dl:not(.field-list) > dt, html.
 
 /* subitem hyperlink */
 html.writer-html4 .rst-content dl:not(.docutils) dl:not(.field-list) > dt .headerlink, html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) dl:not(.field-list) > dt .headerlink {
-    color: var(--yinyang);
+    color: black;
 }
 
 /* C++ DESCRIPTION */
 
 /* scope name + item name */
 html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) .descname, html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) .sig-name {
-    font-family: 'Fira Code', monospace;
+    font-family: 'Fira Code', monospace !important;
 }
 
 .sig.sig-object.cpp > .sig-name.descname > .n > * {
@@ -312,7 +308,7 @@ html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(
 
 /* C++ name and scope of other objects */
 .sig.sig-object.cpp > .p, .sig.sig-object.cpp > .o, .sig.sig-object.cpp > .headerlink {
-    color: var(--yinyang) !important;
+    color: black !important;
 }
 
 /* C++ build-in type */
@@ -349,7 +345,7 @@ html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(
 /* Python operator (':', '=', etc) */
 .sig.sig-object.py .p, .sig.sig-object.py .o {
     font-style: normal !important;
-    color: var(--yinyang) !important;
+    color: black !important;
 }
 
 /* Python default value */
@@ -372,6 +368,14 @@ html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(
     font-family: 'Fira Code', monospace;
     font-weight: 600;
     font-size: 12px !important;
+}
+
+/* DUMMY envvar */
+
+/* item box */
+html.writer-html4 .rst-content dl:not(.docutils) > dt, html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple) > dt {
+    background: var(--itembox-background);
+    border-top: 3px solid var(--itembox-topborder);
 }
 
 /* ============================================================================

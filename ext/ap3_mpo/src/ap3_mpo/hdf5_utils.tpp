@@ -31,7 +31,7 @@ std::pair<std::vector<T>, merlin::intvec> ext::ap3mpo::get_dset(H5::Group * grou
             FAILURE(std::runtime_error, "Incorrect integer type provided to the template.\n");
         }
     } else if constexpr (std::is_floating_point_v<T>) {
-        if (type_class != H5T_FLOAT ) {
+        if (type_class != H5T_FLOAT) {
             FAILURE(std::runtime_error, "Incorrect type provided to the template.\n");
         }
         if (sizeof(T) != element_size) {

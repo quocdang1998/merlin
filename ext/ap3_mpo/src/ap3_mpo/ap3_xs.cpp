@@ -186,7 +186,8 @@ void ext::ap3mpo::Ap3HomogXS::write_to_stock(const ext::ap3mpo::Ap3StateParam & 
                     this->pdata_->set(stock_index, zoneflux[zone_idx][i_group]);
                     break;
                 case 3:  // RR
-                    this->pdata_->set(stock_index, zoneflux[zone_idx][i_group] * concentration[zone_idx] * crossection[zone_idx][i_group]);
+                    double macro_xs = concentration[zone_idx] * crossection[zone_idx][i_group];
+                    this->pdata_->set(stock_index, zoneflux[zone_idx][i_group] * macro_xs);
                     break;
                 }
             }
