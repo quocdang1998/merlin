@@ -40,6 +40,38 @@ static inline void check_validity(const Vector<Vector<double>> & grid_vectors) {
     }
 }
 
+// Get the level from a given valid size of a 1D grid
+static std::uint64_t get_level_from_valid_size(std::uint64_t size) noexcept {
+    size -= 1;
+    std::uint64_t level = 0;
+    while (size >>= 1) {
+        ++level;
+    }
+    return level;
+}
+
+// Get index of nodes in a given level of a 1D grid
+static intvec hiearchical_index(std::uint64_t level, std::uint64_t size) {
+    // check level validity
+    std::uint64_t max_level = get_level_from_valid_size(size);
+    if (level > max_level) {
+        CUHDERR(std::invalid_argument, "Expected level less than %" PRIu64 ", got %" PRIu64 ".\n", max_level, level);
+    }
+    // trivial cases
+    if (level == 0) {
+        return intvec{(size - 1) / 2};
+    } else if (level == 1) {
+        return intvec{0, (size - 1)};
+    }
+    // normal cases: calculate the jump and loop over each odd number
+    std::uint64_t jump = 1 << (max_level - level);
+    intvec indices(1 << (level - 1));
+    for (std::uint64_t i_node = 0; i_node < indices.size(); i_node++) {
+        indices[i_node] = jump * (2*i_node + 1);
+    }
+    return indices;
+}
+
 // --------------------------------------------------------------------------------------------------------------------
 // SparseGrid
 // --------------------------------------------------------------------------------------------------------------------
@@ -139,6 +171,101 @@ interpolant::SparseGrid::SparseGrid(std::initializer_list<Vector<double>> grid_v
     }
 }
 
+// Copy constructor
+interpolant::SparseGrid::SparseGrid(const interpolant::SparseGrid & src) :
+grid_vectors_(src.grid_vectors_), level_index_(src.level_index_), sub_grid_start_index_(src.sub_grid_start_index_) {}
+
+// Copy assignment
+interpolant::SparseGrid & interpolant::SparseGrid::operator=(const interpolant::SparseGrid & src) {
+    this->grid_vectors_ = src.grid_vectors_;
+    this->level_index_ = src.level_index_;
+    this->sub_grid_start_index_ = src.sub_grid_start_index_;
+    return *this;
+}
+
+// Move constructor
+interpolant::SparseGrid::SparseGrid(interpolant::SparseGrid && src) :
+grid_vectors_(src.grid_vectors_), level_index_(src.level_index_), sub_grid_start_index_(src.sub_grid_start_index_) {}
+
+// Move assignment
+interpolant::SparseGrid & interpolant::SparseGrid::operator=(interpolant::SparseGrid && src) {
+    this->grid_vectors_ = src.grid_vectors_;
+    this->level_index_ = src.level_index_;
+    this->sub_grid_start_index_ = src.sub_grid_start_index_;
+    return *this;
+}
+
+// Get shape of the grid
+intvec interpolant::SparseGrid::get_grid_shape(void) const noexcept {
+    intvec grid_shape(this->ndim());
+    for (std::uint64_t i_dim = 0; i_dim < grid_shape.size(); i_dim++) {
+        grid_shape[i_dim] = this->grid_vectors_[i_dim].size();
+    }
+    return grid_shape;
+}
+
+// --------------------------------------------------------------------------------------------------------------------
+// SparseGrid levels
+// --------------------------------------------------------------------------------------------------------------------
+
+// Max level per dimension
+intvec interpolant::SparseGrid::max_levels(void) const {
+    intvec result(this->ndim(), 0);
+    for (std::uint64_t i = 0; i < result.size(); i++) {
+        result[i] = get_level_from_valid_size(this->grid_vectors_[i].size());
+    }
+    return result;
+}
+
+// Number of points in grid
+std::uint64_t interpolant::SparseGrid::size(void) const {
+    std::uint64_t num_level = this->num_level();
+    std::uint64_t result = 0;
+    for (std::uint64_t i_level = 0; i_level < num_level; i_level++) {
+        intvec dummy_level;
+        dummy_level.assign(const_cast<std::uint64_t *>(&(this->level_index_[i_level*this->ndim()])), this->ndim());
+        std::uint64_t subgrid_size = calc_subgrid_size(dummy_level);
+        result += subgrid_size;
+    }
+    return result;
+}
+
+// Index of point in grid given its contiguous order
+intvec interpolant::SparseGrid::index_from_contiguous(std::uint64_t contiguous_index) const {
+    // determine i_level
+    std::uint64_t i_level;
+    for (i_level = 0; i_level < this->ndim(); i_level++) {
+        if (contiguous_index < this->sub_grid_start_index_[i_level+1]) {
+            break;
+        }
+    }
+    std::uint64_t contiguous_index_in_level = contiguous_index - this->sub_grid_start_index_[i_level];
+    // calculate level shape
+    intvec level_vector;
+    level_vector.assign(const_cast<std::uint64_t *>(&(this->level_index_[i_level*this->ndim()])), this->ndim());
+    intvec level_shape = get_level_shape(level_vector);
+    // get index wrt full grid
+    intvec ndim_index_in_level = contiguous_to_ndim_idx(contiguous_index_in_level, level_shape);
+    intvec result(this->ndim());
+    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+        intvec full_grid_index = hiearchical_index(level_vector[i_dim], this->grid_vectors_[i_dim].size());
+        result[i_dim] = full_grid_index[ndim_index_in_level[i_dim]];
+    }
+    return result;
+}
+
+// Point at a give multi-dimensional index.
+Vector<double> interpolant::SparseGrid::point_at_index(const intvec & index) const {
+    if (index.size() != this->ndim()) {
+        CUHDERR(std::invalid_argument, "Index must have the same ndim as the grid.\n");
+    }
+    Vector<double> result(this->ndim());
+    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+        result[i_dim] = this->grid_vectors_[i_dim][index[i_dim]];
+    }
+    return result;
+}
+
 // Representation
 std::string interpolant::SparseGrid::str(void) const {
     std::ostringstream os;
@@ -160,6 +287,10 @@ std::string interpolant::SparseGrid::str(void) const {
 
 // Destructor
 interpolant::SparseGrid::~SparseGrid(void) {}
+
+// --------------------------------------------------------------------------------------------------------------------
+// SparseGrid utils
+// --------------------------------------------------------------------------------------------------------------------
 
 // Retrieve values of points in the sparse grid from a full Cartesian array of value
 void interpolant::copy_value_from_cartesian_array(array::NdData & dest, const array::NdData & src,
@@ -186,6 +317,28 @@ void interpolant::copy_value_from_cartesian_array(array::NdData & dest, const ar
         intvec index_in_full_grid = grid.index_from_contiguous(i_point);
         dest.set(intvec({i_point}), src.get(index_in_full_grid));
     }
+}
+
+// Get Cartesian Grid corresponding to a given level vector
+interpolant::CartesianGrid interpolant::get_cartesian_grid(const SparseGrid & grid, std::uint64_t subgrid_index) {
+    // check for valid level index
+    std::uint64_t num_level = grid.num_level();
+    if (subgrid_index > num_level) {
+        FAILURE(std::invalid_argument, "Expected subgrid index less than %" PRIu64 ", got %" PRIu64 ".\n",
+                num_level, subgrid_index);
+    }
+    // initialize cartesian grid vector
+    Vector<Vector<double>> cart_grid_vectors(grid.ndim());
+    const intvec level_vector = grid.level_index(subgrid_index);
+    for (std::uint64_t i = 0; i < grid.ndim(); i++) {
+        intvec dim_index = hiearchical_index(level_vector[i], grid.grid_vectors()[i].size());
+        Vector<double> points(dim_index.size());
+        for (std::uint64_t j = 0; j < points.size(); j++) {
+            points[j] = grid.grid_vectors()[i][dim_index[j]];
+        }
+        cart_grid_vectors[i] = points;
+    }
+    return interpolant::CartesianGrid(cart_grid_vectors);
 }
 
 }  // namespace merlin

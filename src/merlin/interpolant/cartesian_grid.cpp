@@ -42,16 +42,6 @@ static bool has_duplicated_element(const Vector<double> & input) {
 // CartesianGrid
 // --------------------------------------------------------------------------------------------------------------------
 
-// Construct from a list of vector of values
-interpolant::CartesianGrid::CartesianGrid(std::initializer_list<Vector<double>> grid_vectors) :
-grid_vectors_(grid_vectors) {
-    for (std::uint64_t i = 0; i < this->ndim(); i++) {
-        if (has_duplicated_element(this->grid_vectors_[i])) {
-            FAILURE(std::invalid_argument, "Found duplicated element at dimension %" PRIu64 ".\n", i);
-        }
-    }
-}
-
 // Construct from a vector of values
 interpolant::CartesianGrid::CartesianGrid(const Vector<Vector<double>> & grid_vectors) : grid_vectors_(grid_vectors) {
     for (std::uint64_t i = 0; i < this->ndim(); i++) {
@@ -149,14 +139,11 @@ interpolant::CartesianGrid & interpolant::CartesianGrid::operator+=(const interp
 // String representation
 std::string interpolant::CartesianGrid::str(void) const {
     std::ostringstream os;
-    os << "Cartesian grid:\n";
-    os << "  Grid vectors:\n";
+    os << "<CartesianGrid(";
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
-        if (i_dim != 0) {
-            os << "\n";
-        }
-        os << "    Dimension " << i_dim << ": " << this->grid_vectors_[i_dim].str();
+        os << "(" << this->grid_vectors_[i_dim].str() << ")";
     }
+    os << ")>";
     return os.str();
 }
 

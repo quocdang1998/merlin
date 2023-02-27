@@ -185,6 +185,7 @@ __cudevice__ void * Vector<T>::copy_to_shared_mem(Vector<T> * share_ptr, void * 
 template <typename T>
 std::string Vector<T>::str(const char * sep) const {
     std::ostringstream os;
+    os << "<";
     for (std::uint64_t i = 0; i < this->size_; i++) {
         if constexpr (std::is_arithmetic_v<T>) {
             os << this->data_[i];
@@ -195,6 +196,7 @@ std::string Vector<T>::str(const char * sep) const {
             os << sep;
         }
     }
+    os << ">";
     return os.str();
 }
 

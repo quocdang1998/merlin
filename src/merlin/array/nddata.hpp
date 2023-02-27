@@ -4,7 +4,7 @@
 
 #include <cstddef>  // nullptr
 #include <cstdint>  // std::int64_t, std::uint64_t, std::uintptr_t
-#include <utility>  // std::pair
+#include <string>  // std::string
 
 #include "merlin/array/declaration.hpp"  // merlin::array::NdData, merlin::array::Slice
 #include "merlin/cuda_decorator.hpp"  // __cuhost__, __cuhostdev__
@@ -98,6 +98,25 @@ class MERLIN_EXPORTS array::NdData {
     Vector<Vector<array::Slice>> partite(std::uint64_t max_memory);
     /// @}
 
+    /// @name Operations
+    /// @{
+    /** @brief Reshape the dataset.
+     *  @param new_shape New shape.
+     */
+    void reshape(const intvec & new_shape);
+    /** @brief Collapse dimensions with size 1.
+     *  @param from_first If ``True``, erase from the left most dimension (slowest index in C). Otherwise erase from
+     *  the right most diemansion.
+     */
+    void collapse(bool from_first = true);
+    /// @}
+
+    /// @name Representation
+    /// @{
+    /** @brief String representation.*/
+    std::string str(bool first_call = true) const;
+    /// @}
+
     /// @name Destructor
     /// @{
     /** @brief Default destructor.*/
@@ -120,6 +139,13 @@ class MERLIN_EXPORTS array::NdData {
     /** @brief Release memory in destructor.*/
     bool release_ = false;
 };
+
+namespace array {
+
+/** @brief Slice current array to a new array with the same polymorphic type.*/
+array::NdData * slice_on(const array::NdData & original, const Vector<array::Slice> & slices);
+
+}
 
 }  // namespace merlin
 

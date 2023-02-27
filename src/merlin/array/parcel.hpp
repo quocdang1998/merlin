@@ -72,14 +72,16 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
 
     /// @name Transfer data to GPU
     /// @{
-    /** @brief Transfer data to GPU from CPU array.*/
+    /** @brief Transfer data to GPU from CPU array.
+     *  @note Stream synchronization is not included in this function.
+     */
     void transfer_data_to_gpu(const array::Array & cpu_array, const cuda::Stream & stream = cuda::Stream());
     /// @}
 
     /// @name GPU related features
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the object and its data.*/
-    std::uint64_t malloc_size(void) const {return sizeof(Parcel) + 2*this->ndim_*sizeof(std::uint64_t);}
+    std::uint64_t malloc_size(void) const {return sizeof(array::Parcel) + 2*this->ndim_*sizeof(std::uint64_t);}
     /** @brief Copy meta-data (shape and strides) from CPU to a pre-allocated memory on GPU.
      *  @details The meta-data should be to the memory region that comes right after the copied object.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.

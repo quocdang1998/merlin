@@ -56,17 +56,6 @@ __cuhostdev__ MERLIN_HOSTDEV_EXPORTS intvec get_level_shape(const intvec & level
 
 
 
-
-
-
-
-
-
-/** @brief Get size of a 1D grid given its max level.*/
-__cuhostdev__ MERLIN_HOSTDEV_EXPORTS constexpr std::uint64_t get_size_from_level(std::uint64_t level) noexcept {
-    return (level == 0) ? 1 : ((1 << level) + 1);
-}
-
 /** @brief Index of nodes belonging to a level of a 1D grid.
  *  @param level Level to get index.
  *  @param size Size of 1D grid level.

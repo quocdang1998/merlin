@@ -8,24 +8,14 @@
 
 namespace merlin::interpolant {
 
-void calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::Array & value,
-                            const Vector<array::Slice> & slices, array::Array & coeff);
+/** @brief Calculate Newton interpolation coefficients on a full Cartesian grid using CPU.*/
+void calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::NdData & value,
+                            array::NdData & coeff);
 
-#ifdef __experiment
-/** @brief Calculate Lagrage interpolation coefficients on a Cartesian grid using CPU.*/
-void calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::Array & value,
-                              const Vector<array::Slice> & slices, array::Array & coeff);
+/** @brief Evaluate Newton interpolation on a full Cartesian grid using CPU.*/
+double eval_newton_cpu(const interpolant::CartesianGrid & grid, const array::NdData & coeff,
+                       const Vector<double> & x);
 
-/** @brief Calculate Lagrage interpolation coefficients on a sparse grid using CPU.*/
-void calc_newton_coeffs_cpu(const interpolant::SparseGrid & grid, array::NdData & coeff);
-
-/** @brief Evaluate Lagrange interpolation on a Cartesian grid using CPU.*/
-double eval_newton_cpu(const interpolant::CartesianGrid & grid, const array::Array & coeff,
-                         const Vector<array::Slice> & slices, const Vector<double> & x);
-
-/** @brief Evaluate Lagrange interpolation on a Sparse grid using CPU.*/
-double eval_newton_cpu(const interpolant::SparseGrid & grid, const array::Array & coeff, const Vector<double> & x);
-#endif  // __experiment
 }  // namespace merlin::interpolant
 
 #endif  // MERLIN_INTERPOLANT_NEWTON_HPP_
