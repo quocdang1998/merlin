@@ -15,7 +15,7 @@ cdef extern from "merlin/array/array.hpp":
     cdef cppclass CppArray "merlin::array::Array" (CppNdData):
         CppArray()
         CppArray(double value)
-        CppArray(double * data, uint64_t ndim, const uint64_t * shape, const uint64_t * strides, bint copy)
+        CppArray(double * data, const CppIntvec & shape, const CppIntvec & strides, bint copy)
         CppArray(const CppIntvec & shape)
         CppArray(const CppArray & whole, const CppVector[CppSlice] & slices)
 

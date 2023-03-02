@@ -3,7 +3,7 @@
 
 #include <cuda.h>  // ::cuCtxGetCurrent
 
-#include "logger.hpp"
+#include "merlin/logger.hpp"
 
 namespace merlin {
 

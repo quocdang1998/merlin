@@ -20,20 +20,13 @@ namespace merlin {
 // --------------------------------------------------------------------------------------------------------------------
 
 // Member initialization for C++ interface
-array::NdData::NdData(double * data, std::uint64_t ndim,
-                      const intvec & shape, const intvec & strides) :
-ndim_(ndim), data_(data), shape_(shape), strides_(strides) {
-    this->data_ = data;
-    if (shape.size() != ndim) {
-        FAILURE(std::range_error, "Expected size of shape (%u) equals to ndim (%u).\n", shape.size(), ndim);
-    } else if (strides.size() != ndim) {
-        FAILURE(std::range_error, "Expected size of strides (%u) equals to ndim (%u).\n", strides.size(), ndim);
+array::NdData::NdData(double * data, const intvec & shape, const intvec & strides) :
+data_(data), ndim_(shape.size()), shape_(shape), strides_(strides) {
+    if (!is_same_size(shape, strides)) {
+        FAILURE(std::invalid_argument, "Expected size of shape (%" PRIu64 ") equals to size of strides (%" PRIu64
+                ").\n", shape.size(), strides.size());
     }
 }
-
-// Constructor from Numpy np.array
-array::NdData::NdData(double * data, std::uint64_t ndim, const std::uint64_t * shape, const std::uint64_t * strides) :
-ndim_(ndim), data_(data), shape_(shape, shape + ndim), strides_(strides, strides + ndim) {}
 
 // Constructor from shape vector
 array::NdData::NdData(const intvec & shape) : ndim_(shape.size()), shape_(shape) {

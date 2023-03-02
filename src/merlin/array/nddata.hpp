@@ -24,19 +24,10 @@ class MERLIN_EXPORTS array::NdData {
     /** @brief Constructor from data pointer and meta-data.
      *  @details This constructor is used to construct explicitly an NdData in C++ interface.
      *  @param data Pointer to data.
-     *  @param ndim Number of dimension.
      *  @param shape Shape vector.
      *  @param strides Strides vector.
      */
-    NdData(double * data, std::uint64_t ndim, const intvec & shape, const intvec & strides);
-    /** @brief Constructor from data pointer and meta-data pointers.
-     *  @details This constructor is designed for initializing object from Numpy np.array.
-     *  @param data Pointer to data.
-     *  @param ndim Number of dimension.
-     *  @param shape Pointer to shape vector.
-     *  @param strides Pointer to strides vector.
-     */
-    NdData(double * data, std::uint64_t ndim, const std::uint64_t * shape, const std::uint64_t * strides);
+    NdData(double * data, const intvec & shape, const intvec & strides);
     /** @brief Constructor from shape vector.*/
     NdData(const intvec & shape);
     /** @brief Constructor from a slice.

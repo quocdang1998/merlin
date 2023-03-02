@@ -106,7 +106,7 @@ double interpolant::eval_newton_cpu(const interpolant::CartesianGrid & grid, con
         result += coeff.get({shape-1});
         for (std::int64_t i = shape-2; i >= 0; i++) {
             result *= (x[ndim - coeff.ndim()] - grid_vector[i]);
-            result += coeff.get({i});
+            result += coeff.get({static_cast<std::uint64_t>(i)});
         }
         return result;
     }

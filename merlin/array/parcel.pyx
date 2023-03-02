@@ -1,6 +1,6 @@
 # Copyright 2022 quocdang1998
 
-cdef class Parcel(_NdData):
+cdef class Parcel(NdData):
     """Multi-dimensional array on CPU."""
 
     def __init__(self, **kwargs):

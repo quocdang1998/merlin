@@ -1,6 +1,6 @@
 # Copyright 2022 quocdang1998
 
-cdef class Array(_NdData):
+cdef class Array(NdData):
     """Multi-dimensional array on CPU."""
 
     cdef object reference_array
@@ -44,7 +44,7 @@ cdef class Array(_NdData):
             array_strides = CppIntvec(np.PyArray_STRIDES(array_arg), array_ndim)
             if kwargs.get("copy") is not None:
                 array_copy = kwargs.pop("copy")
-            self.core = new CppArray(array_data, array_ndim, array_shape.data(), array_strides.data(), array_copy)
+            self.core = new CppArray(array_data, array_shape, array_strides, array_copy)
             if not array_copy:
                 self.reference_array = array_arg
                 Py_INCREF(self.reference_array)

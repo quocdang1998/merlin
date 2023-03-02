@@ -10,8 +10,7 @@ cdef extern from "merlin/array/nddata.hpp":
 
     cdef cppclass CppNdData "merlin::array::NdData":
         CppNdData()
-        CppNdData(double * data, uint64_t ndim, const CppIntvec & shape, const CppIntvec & strides)
-        CppNdData(double * data, uint64_t ndim, const uint64_t * shape, const uint64_t * strides)
+        CppNdData(double * data, const CppIntvec & shape, const CppIntvec & strides)
         CppNdData(const CppIntvec & shape)
         CppNdData(const CppNdData & whole, const CppVector[CppSlice] & slices)
 

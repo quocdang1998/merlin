@@ -1,6 +1,6 @@
 # Copyright 2022 quocdang1998
 
-cdef class Stock(_NdData):
+cdef class Stock(NdData):
     """Multi-dimensional array serialized to a file."""
 
     def __init__(self, uint64_t offset=0, bint thread_safe=True, **kwargs):

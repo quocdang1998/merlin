@@ -1,6 +1,6 @@
 # Copyright 2022 quocdang1998
 
-cdef class _NdData:
+cdef class NdData:
     """Abstract class of N-dim array."""
 
     cdef CppNdData * core

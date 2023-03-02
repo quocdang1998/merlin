@@ -52,8 +52,7 @@ class MERLIN_EXPORTS array::Array : public array::NdData {
      *  @note The original memory tied to the pointer will not be freed at destruction. But if copy is true, the
         copied tensor is automatically deallocated inside the destructor.
      */
-    Array(double * data, std::uint64_t ndim,
-          const std::uint64_t * shape, const std::uint64_t * strides, bool copy = false);
+    Array(double * data, const intvec & shape, const intvec & strides, bool copy = false);
     /** @brief Constructor from a slice.
      *  @param whole merlin::array::Array of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
