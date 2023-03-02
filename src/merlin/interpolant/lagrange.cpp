@@ -1,25 +1,18 @@
 // Copyright 2022 quocdang1998
 #include "merlin/interpolant/lagrange.hpp"
 
-#include <algorithm>  // std::max
-
 #include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/array/slice.hpp"  // merlin::array::Slice
-#include "merlin/array/stock.hpp"  // merlin::array::Stock
-#include "merlin/logger.hpp"  // CUHDERR
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
-#include "merlin/interpolant/sparse_grid.hpp"  // merlin::interpolant::SparseGrid
-                                               // merlin::interpolant::get_cartesian_grid
-#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::get_level_shape
-#include "merlin/vector.hpp"  // merlin::Vector
+#include "merlin/logger.hpp"  // FAILURE, cuda_compile_error
+#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx
 
 namespace merlin {
 
 // Calculate Lagrange interpoaltion coefficient on a full Cartesian grid using CPU
-void interpolant::calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::NdData & value,
-                                           array::NdData & coeff) {
+void interpolant::calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::Array & value,
+                                           array::Array & coeff) {
     std::uint64_t ndim = grid.ndim();
     intvec grid_shape = grid.get_grid_shape();
     std::uint64_t size = value.size();
@@ -43,8 +36,18 @@ void interpolant::calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & gr
     }
 }
 
+#ifndef __MERLIN_CUDA__
+
+// Calculate Lagrange interpolation coefficients on a full Cartesian grid using GPU
+void interpolant::calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
+                                           array::Parcel & coeff, const cuda::Stream & stream) {
+    FAILURE(cuda_compile_error, "Compile the package with CUDA option enabled to access this feature.\n");
+}
+
+#endif  // __MERLIN_CUDA__
+
 // Evaluate Lagrange interpolation on a full Cartesian grid using CPU
-double interpolant::eval_lagrange_cpu(const interpolant::CartesianGrid & grid, const array::NdData & coeff,
+double interpolant::eval_lagrange_cpu(const interpolant::CartesianGrid & grid, const array::Array & coeff,
                                       const Vector<double> & x) {
     // check if point x lies on a hyperplane passing through a node of the grid
     std::uint64_t ndim = grid.ndim();

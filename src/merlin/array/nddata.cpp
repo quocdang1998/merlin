@@ -4,6 +4,7 @@
 #include <cinttypes>  // PRIu64
 #include <sstream>  // std::ostringstream
 #include <vector>  // std::vector
+#include <utility>  // std::move
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides
@@ -95,28 +96,22 @@ void array::NdData::reshape(const intvec & new_shape) {
 }
 
 // Collapse dimension from felt (or right)
-void array::NdData::collapse(bool from_first) {
-    if (from_first) {
-        std::uint64_t i_dim_break;
-        for (i_dim_break = 0; i_dim_break < this->shape_.size(); i_dim_break++) {
-            if (this->shape_[i_dim_break] != 1) {
-                break;
-            }
-        }
-        this->ndim_ -= i_dim_break;
-        this->shape_ = intvec(&this->shape_[i_dim_break], this->shape_.end());
-        this->strides_ = intvec(&this->strides_[i_dim_break], this->strides_.end());
-    } else {
-        std::int64_t i_dim_break;
-        for (i_dim_break = this->shape_.size()-1; i_dim_break >= 0; i_dim_break--) {
-            if (this->shape_[i_dim_break] != 1) {
-                break;
-            }
-        }
-        this->ndim_ = i_dim_break+1;
-        this->shape_ = intvec(this->shape_.begin(), i_dim_break+1);
-        this->strides_ = intvec(this->strides_.begin(), i_dim_break+1);
+void array::NdData::remove_dim(std::uint64_t i_dim) {
+    if (this->shape_[i_dim] != 1) {
+        return;
     }
+    this->ndim_ -= 1;
+    intvec new_shape(this->ndim_), new_strides(this->ndim_);
+    for (std::uint64_t i = 0; i < i_dim; i++) {
+        new_shape[i] = this->shape_[i];
+        new_strides[i] = this->strides_[i];
+    }
+    for (std::uint64_t i = i_dim; i < this->ndim_; i++) {
+        new_shape[i] = this->shape_[i+1];
+        new_strides[i] = this->strides_[i+1];
+    }
+    this->shape_ = std::move(new_shape);
+    this->strides_ = std::move(new_strides);
 }
 
 // String representation
@@ -154,7 +149,7 @@ std::string array::NdData::str(bool first_call) const {
         Vector<array::Slice> slice_i(this->ndim_);
         slice_i[0] = array::Slice({i});
         array::NdData * p_sliced = array::slice_on(*this, slice_i);
-        p_sliced->collapse(true);
+        p_sliced->remove_dim(0);
         os << p_sliced->str(false);
         delete p_sliced;
     }

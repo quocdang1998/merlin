@@ -1,7 +1,11 @@
 # Copyright 2022 quocdang1998
 
 cdef class Parcel(NdData):
-    """Multi-dimensional array on CPU."""
+    """Parcel(merlin.array.NdData)
+    Multi-dimensional array on GPU.
+
+    Inherits from :class:`merlin.array.NdData`.
+    """
 
     def __init__(self, **kwargs):
         """__init__(self)

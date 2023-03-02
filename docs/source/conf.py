@@ -32,6 +32,7 @@ release = '0.0.1'
 extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.autosummary',
+    'sphinx.ext.autosectionlabel',
     'sphinx_tabs.tabs',
     'sphinx_panels',
     'breathe',
@@ -46,11 +47,10 @@ templates_path = ['_templates']
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
 
-# List of custom sections to include for napoleon
-napoleon_custom_sections = [
-    ("Shape constructor", "Parameters"),
-    ("Numpy constructor", "Parameters")
-]
+# Prefix each section label with the name of the document it is in, followed by
+# a colon
+autosectionlabel_prefix_document = True
+autodoc_docstring_signature = True
 
 # Doxygen generated XML files
 breathe_projects = { "merlin": os.path.abspath("./xml") }

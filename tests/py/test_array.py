@@ -8,5 +8,6 @@ from merlin.array import Array
 
 x = np.array([0,1,2,3,4,5], dtype=np.double)
 a = Array(array=x)
+print(a)
 b = Array(array=np.ones((2,3,4)))
-b_array = np.array(b)
+print(b)

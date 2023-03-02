@@ -5,6 +5,7 @@
 #include "merlin/array/array.hpp"
 #include "merlin/cuda/context.hpp"
 #include "merlin/logger.hpp"
+#include "merlin/vector.hpp"
 
 __global__ void print_element(merlin::array::Parcel * parcel_ptr) {
     merlin::array::Parcel & parcel = *parcel_ptr;
@@ -20,9 +21,9 @@ __global__ void print_element_from_shared_memory(merlin::array::Parcel * parcel_
 int main(void) {
     // initialize an tensor
     double A_data[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    std::uint64_t dims[2] = {2, 3};
-    std::uint64_t strides[2] = {5*sizeof(double), 2*sizeof(double)};
-    merlin::array::Array A(A_data, 2, dims, strides, false);
+    merlin::intvec dims = {2, 3};
+    merlin::intvec strides = {5*sizeof(double), 2*sizeof(double)};
+    merlin::array::Array A(A_data, dims, strides, false);
 
     // copy data to GPU and print each element of the tensor
     MESSAGE("Initialize Parcel object with elements: 1.0 3.0 5.0 6.0 8.0 10.0.\n");

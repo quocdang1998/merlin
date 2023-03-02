@@ -80,6 +80,10 @@ class MERLINSHARED_EXPORTS Environment {
     static std::map<std::uintptr_t, Environment::ContextAttribute> attribute;
     /** @brief CUDA primary contexts.*/
     static std::map<int, std::uintptr_t> primary_contexts;
+    /** @brief Default CUDA kernel block size.
+     *  @details Should be multiple of 32.
+     */
+    static std::uint64_t default_block_size;
     /// @}
 
     /// @name Destructor

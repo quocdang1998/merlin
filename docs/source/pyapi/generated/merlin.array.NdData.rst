@@ -1,8 +1,8 @@
-﻿merlin.array.Array
-==================
+﻿merlin.array.NdData
+===================
 
 .. currentmodule:: merlin.array
 
-.. autoclass:: Array
+.. autoclass:: NdData
    :members:
    :special-members: __init__

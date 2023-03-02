@@ -1,7 +1,11 @@
 # Copyright 2022 quocdang1998
 
 cdef class Stock(NdData):
-    """Multi-dimensional array serialized to a file."""
+    """Stock(merlin.array.NdData)
+    Multi-dimensional array serialized to a file.
+
+    Inherits from :class:`merlin.array.NdData`.
+    """
 
     def __init__(self, uint64_t offset=0, bint thread_safe=True, **kwargs):
         """__init__(self)
@@ -9,15 +13,15 @@ cdef class Stock(NdData):
         __init__(self, filename, shape)
         Initializer.
 
+        If the shape argument is not provided, array shape is read from file. Otherwise, the file is prepared (created
+        and resized if needed) to be able to hold the data with the precised shape.
+
         Parameters
         ----------
         filename: str
             Name of the exported file to read/write.
         shape: Tuple[int]
             Shape of the array.
-
-        If the shape argument is not provided, array shape is read from file. Otherwise, the file is prepared (created
-        and resized if needed) to be able to hold the data with the precised shape.
         """
 
         cdef CppIntvec shape

@@ -68,9 +68,6 @@ To compile the documentation, install the following packages:
 Compilation
 -----------
 
-Algorithms are implemented in the C++ and CUDA interface. Even though only the
-Python package is required, the former interface must also be compiled.
-
 C++ and CUDA interface
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -112,21 +109,41 @@ Visual Studio application is strongly recommended. Inside the application:
       cd build
       ninja
 
+After the compilation step, executables, libraries and header files can be
+installed using CMake command (current directory is the one containing
+``cmake_install.cmake``):
+
+.. code-block:: sh
+
+   # current working dir. = build
+   cmake --install . --prefix="/path/to/install/folder/"
+
 Python package
 ^^^^^^^^^^^^^^
 
-To compile the Python interface, go back to the source directory of the package
-and run:
+Before compiling the Python interface, **make sure that the C++/CUDA interface
+have been compiled**.
+
+To compile the binary Python module in the source directory (build dependancies
+must have already been installed), run the setup script with options:
+
+.. code-block:: sh
+
+   python setup.py build_ext --inplace
+
+The package can also be installed using ``pip``. From the package's source
+directory (containing ``setup.py``), run:
 
 .. code-block:: sh
 
    pip install .
 
-If installation in the source directory is preferred:
+.. note::
 
-.. code-block:: sh
-
-   python setup.py build_ext --inplace
+   If ``setuptools>=30`` has been installed, build dependancies listed in the
+   section :ref:`installation:System requirements` above are not required.
+   ``setuptools`` will install automatically on the run (checkout
+   `PEP 517 <https://peps.python.org/pep-0517/>`_).
 
 
 CMake build options
@@ -139,19 +156,6 @@ CMake build options
    :Type: ``BOOL``
    :Value: ``ON``, ``OFF``
    :Default: ``ON``
-
-.. envvar:: MERLIN_DEBUG
-
-   Build Merlin library in debug mode. This mode allows backtracing the called
-   stack and printing symbolic names of functions in the stack to the standard
-   error everytime an exception is thrown.
-
-   This option is valid only if the variable |CMAKE_BUILD_TYPE|_ is
-   ``"Debug"``.
-
-   :Type: ``BOOL``
-   :Value: ``ON``, ``OFF``
-   :Default: ``OFF``
 
 .. envvar:: MERLIN_LIBKIND
 

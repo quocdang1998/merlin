@@ -1,20 +1,24 @@
 # Copyright 2022 quocdang1998
 
 cdef class Array(NdData):
-    """Multi-dimensional array on CPU."""
+    """Array(merlin.array.NdData)
+    Multi-dimensional array on CPU.
+
+    Inherits from :class:`merlin.array.NdData`.
+    """
 
     cdef object reference_array
 
     def __init__(self, **kwargs):
         """__init__(self)
-        __init__(self, array, copy)
-        __init__(self, shape)
+        __init__(self, array=array, copy=False)
+        __init__(self, shape=shape)
         Initializer.
 
         Parameters
         ----------
         array: numpy.ndarray
-            Multi dimensional array of type ``np.float64``.
+            Numpy array of ``dtype=np.float64``.
         copy: bool, optional
             Copy data from old array to new array. Default to ``False``.
         shape: Tuple[int]

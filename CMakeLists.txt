@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 3.21)
 # options
 set(MERLIN_CUDA ON CACHE BOOL "Build library using CUDA")  # -DMERLIN_CUDA=OFF
 set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
-    CACHE INTERNAL "Type of the created library (static or shared)")
+    CACHE STRING "Type of the created library (static or shared)")
 set(MERLIN_TEST OFF CACHE BOOL "Build test executables")  # -DMERLIN_TEST=ON
 
 # source list
@@ -43,6 +43,7 @@ list(APPEND MERLIN_SRC_CU
      cuda/event.cu
      cuda/stream.cu
      interpolant/cartesian_grid.cu
+     interpolant/lagrange.cu
      # interpolant/interpolant.cu
 )
 list(APPEND MERLIN_SRC_RDC
@@ -95,10 +96,10 @@ endif()
 
 # query build type
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message(STATUS "Compile library in debug mode.")
+    message(STATUS "Compile library in debug mode")
     set(MERLIN_DEBUG ON)
 else()
-    message(STATUS "Compile library in release mode.")
+    message(STATUS "Compile library in release mode")
     set(MERLIN_DEBUG OFF)
 endif()
 
@@ -248,11 +249,31 @@ endif(MERLIN_CUDA)
 MerlinSetTargetProperties(libmerlin)
 
 # =====================================================================================================================
-# external executable
+# extensions
 # =====================================================================================================================
 
 # Apollo3 MPO reader
 add_subdirectory(ext/ap3_mpo)
+
+# =====================================================================================================================
+# install
+# =====================================================================================================================
+
+# install header and template files
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/
+        DESTINATION "include"
+        FILES_MATCHING PATTERN "*.[ht]pp")
+
+# install to library to lib
+if(BUILD_MERLINCUDA_LIB)
+    install(TARGETS libmerlin libmerlincuda libmerlinshared
+            LIBRARY DESTINATION "lib"
+            ARCHIVE DESTINATION "lib")
+else()
+    install(TARGETS libmerlin libmerlinshared
+            LIBRARY DESTINATION "lib"
+            ARCHIVE DESTINATION "lib")
+endif()
 
 # =====================================================================================================================
 # tests

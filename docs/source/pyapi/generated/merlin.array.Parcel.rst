@@ -1,8 +1,8 @@
-﻿merlin.array.Array
-==================
+﻿merlin.array.Parcel
+===================
 
 .. currentmodule:: merlin.array
 
-.. autoclass:: Array
+.. autoclass:: Parcel
    :members:
    :special-members: __init__

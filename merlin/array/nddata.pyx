@@ -6,27 +6,19 @@ cdef class NdData:
     cdef CppNdData * core
 
     def __init__(self, **kwargs):
-        """__init__(self, **kwargs)
-        Initializer.
+        """__init__(self)
 
-        Shape constructor
-        -----------------
-        shape: Tuple[int]
-            Shape of the array.
+        Initializer.
         """
-        cdef CppIntvec shape
 
         if not kwargs:
             self.core = new CppNdData()
-        elif kwargs.get("shape") is not None:
-            arg = kwargs.pop("shape")
-            if not isinstance(arg, tuple):
-                raise TypeError("Expected \"shape\" argument has type tuple.")
-            shape = intvec_from_tuple(arg)
-            self.core = new CppNdData(shape)
 
         if kwargs:
             raise ValueError("Invalid keywords: " + ", ".join(k for k in kwargs.keys()))
+
+    def __repr__(self):
+        return PyUnicode_FromString(self.core.str().c_str())
 
     def assign(self, uintptr_t ptr):
         """assign(self, ptr)

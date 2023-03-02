@@ -25,6 +25,8 @@ from setup_cfg import build_ext, ext_options
 
 # extensions
 extensions = [
+    Extension("merlin.env", [abspath_wrt_package("merlin/env.pyx")],
+              language="c++", **ext_options),
     Extension("merlin.cuda", [abspath_wrt_package("merlin/cuda/core.pyx")],
               language="c++", **ext_options),
     Extension("merlin.array", [abspath_wrt_package("merlin/array/core.pyx")],

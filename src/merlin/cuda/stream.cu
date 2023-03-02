@@ -106,7 +106,7 @@ void cuda::Stream::synchronize(void) const {
 cuda::Stream::~Stream(void) {
     if (this->stream_ != 0) {
         cudaError_t err_ = ::cudaStreamDestroy(reinterpret_cast<cudaStream_t>(this->stream_));
-        if (err_ != cudaSuccess) {
+        if (err_ != 0) {
             FAILURE(cuda_runtime_error, "cudaStreamDestroy failed with message \"%s\".\n", ::cudaGetErrorName(err_));
         }
     }

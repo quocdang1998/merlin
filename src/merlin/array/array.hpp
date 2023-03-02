@@ -45,9 +45,8 @@ class MERLIN_EXPORTS array::Array : public array::NdData {
     Array(const intvec & shape);
     /** @brief Construct array from pointer, to data and meta-data.
      *  @param data Pointer to data.
-     *  @param ndim Number of dimension of tensor.
-     *  @param shape Pointer to tensor to size per dimension.
-     *  @param strides Pointer to tensor to stride per dimension.
+     *  @param shape Size per dimension.
+     *  @param strides Stride per dimension.
      *  @param copy Copy the original tensor to C-contiguous tensor.
      *  @note The original memory tied to the pointer will not be freed at destruction. But if copy is true, the
         copied tensor is automatically deallocated inside the destructor.

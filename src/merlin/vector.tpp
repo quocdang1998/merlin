@@ -164,7 +164,7 @@ void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
 #ifdef __NVCC__
 // Copy to shared memory
 template <typename T>
-__cudevice__ void * Vector<T>::copy_to_shared_mem(Vector<T> * share_ptr, void * data_ptr) {
+__cudevice__ void * Vector<T>::copy_to_shared_mem(Vector<T> * share_ptr, void * data_ptr) const {
     bool check_zeroth_thread = (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
     if (check_zeroth_thread) {
         // copy size
