@@ -1,6 +1,7 @@
 # Copyright 2022 quocdang1998
 
 from libc.stdint cimport uint64_t
+from libcpp.string cimport string
 
 from merlin.vector cimport CppVector, CppIntvec
 
@@ -27,5 +28,7 @@ cdef extern from "merlin/array/nddata.hpp":
         double get(uint64_t index) except +
         void set(const CppIntvec & index, double value) except +
         void set(uint64_t index, double value) except +
+
+        string str() except +
 
         CppVector[CppVector[CppSlice]] partite(uint64_t max_memory)

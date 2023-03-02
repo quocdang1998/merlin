@@ -28,6 +28,9 @@ cdef class NdData:
         if kwargs:
             raise ValueError("Invalid keywords: " + ", ".join(k for k in kwargs.keys()))
 
+    def __repr__(self):
+        return PyUnicode_FromString(self.core.str().c_str())
+
     def assign(self, uintptr_t ptr):
         """assign(self, ptr)
         Assign pointer to a C++ object to the Python class wrapper.

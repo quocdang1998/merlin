@@ -99,7 +99,7 @@ class MERLIN_EXPORTS array::NdData {
      *  @param from_first If ``True``, erase from the left most dimension (slowest index in C). Otherwise erase from
      *  the right most diemansion.
      */
-    void collapse(bool from_first = true);
+    void remove_dim(std::uint64_t i_dim = 0);
     /// @}
 
     /// @name Representation

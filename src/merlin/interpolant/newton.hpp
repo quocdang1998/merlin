@@ -9,11 +9,11 @@
 namespace merlin::interpolant {
 
 /** @brief Calculate Newton interpolation coefficients on a full Cartesian grid using CPU.*/
-void calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::NdData & value,
-                            array::NdData & coeff);
+void calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::Array & value,
+                            array::Array & coeff);
 
 /** @brief Evaluate Newton interpolation on a full Cartesian grid using CPU.*/
-double eval_newton_cpu(const interpolant::CartesianGrid & grid, const array::NdData & coeff,
+double eval_newton_cpu(const interpolant::CartesianGrid & grid, const array::Array & coeff,
                        const Vector<double> & x);
 
 }  // namespace merlin::interpolant

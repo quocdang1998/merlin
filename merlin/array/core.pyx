@@ -1,6 +1,7 @@
 # Copyright 2022 quocdang1998
 
 from cpython.ref cimport Py_INCREF, Py_DECREF
+from cpython.unicode cimport PyUnicode_FromString
 from cython.operator cimport dereference
 from libc.stdint cimport uint64_t, uintptr_t
 from libcpp.string cimport string
