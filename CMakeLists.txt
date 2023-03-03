@@ -43,6 +43,7 @@ list(APPEND MERLIN_SRC_CU
      cuda/event.cu
      cuda/stream.cu
      interpolant/cartesian_grid.cu
+     # interpolant/lagrange.cu
      # interpolant/interpolant.cu
 )
 list(APPEND MERLIN_SRC_RDC

@@ -3,6 +3,8 @@
 cdef class Stock(NdData):
     """Stock(merlin.array.NdData)
     Multi-dimensional array serialized to a file.
+
+    Inherited from :class:`merlin.array.NdData`.
     """
 
     def __init__(self, uint64_t offset=0, bint thread_safe=True, **kwargs):

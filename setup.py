@@ -42,7 +42,7 @@ if __name__ == "__main__":
           packages=["merlin"],
           ext_modules=cythonize(extensions, language_level="3str",
                                 include_path=[package_dir],
-                                nthreads=os.cpu_count(), annotate=True),
+                                nthreads=os.cpu_count(), annotate=False),
           python_requires=">=3.6",
           install_requires=["numpy>1.19"],
           extras_require={

@@ -57,6 +57,9 @@ std::map<std::uintptr_t, Environment::ContextAttribute> Environment::attribute;
 // CUDA primary contexts
 std::map<int, std::uintptr_t> Environment::primary_contexts;
 
+// Default CUDA kernel block size
+std::uint64_t Environment::default_block_size = 64;
+
 #ifndef __MERLIN_CUDA__
 
 // Initialize CUDA context

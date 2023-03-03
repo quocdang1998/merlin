@@ -51,10 +51,14 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
     /// @name Atributes
     /// @{
     #ifdef __NVCC__
-    /** @brief Get element at a given C-contiguous index.
-     *  @param index A C-contiguous index.
-     */
+    /** @brief Get reference to element at a given ndim index.*/
+    __cudevice__ double & operator[](const intvec & index);
+    /** @brief Get reference to element at a given C-contiguous index.*/
     __cudevice__ double & operator[](std::uint64_t index);
+    /** @brief Get constant reference to element at a given ndim index.*/
+    __cudevice__ const double & operator[](const intvec & index) const;
+    /** @brief Get const reference to element at a given C-contiguous index.*/
+    __cudevice__ const double & operator[](std::uint64_t index) const;
     #endif  // __NVCC__
     /// @}
 
@@ -96,7 +100,7 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
      *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and
      *  stride vector.
      */
-    __cudevice__ void * copy_to_shared_mem(array::Parcel * share_ptr, void * shape_strides_ptr);
+    __cudevice__ void * copy_to_shared_mem(array::Parcel * share_ptr, void * shape_strides_ptr) const;
     #endif  // __NVCC__
 
     /// @name Destructor

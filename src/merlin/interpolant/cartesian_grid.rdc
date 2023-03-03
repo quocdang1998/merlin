@@ -50,7 +50,7 @@ __cuhostdev__ Vector<double> interpolant::CartesianGrid::operator[](const intvec
 
 // Copy to shared memory
 __cudevice__ void * interpolant::CartesianGrid::copy_to_shared_mem(interpolant::CartesianGrid * share_ptr,
-                                                                   void * grid_vector_data_ptr) {
+                                                                   void * grid_vector_data_ptr) const {
     // shallow copy of grid vector
     bool check_zeroth_thread = (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
     if (check_zeroth_thread) {

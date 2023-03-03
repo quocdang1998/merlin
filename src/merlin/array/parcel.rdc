@@ -19,18 +19,38 @@ array::NdData(whole, slices) {
 
 #ifdef __NVCC__
 
-// Get element at a given C-contiguous index
-__cudevice__ double & array::Parcel::operator[](std::uint64_t index) {
-    // calculate index vector
-    intvec index_ = contiguous_to_ndim_idx(index, this->shape_);
+// Get reference to an element at a given n-dim index
+__cudevice__ double & array::Parcel::operator[](const intvec & index) {
     // calculate strides
-    std::uint64_t strides = inner_prod(index_, this->strides_);
+    std::uint64_t strides = inner_prod(index, this->strides_);
     double * element_ptr = reinterpret_cast<double *>(reinterpret_cast<std::uintptr_t>(this->data_) + strides);
     return *element_ptr;
 }
 
+// Get reference to an element at a given C-contiguous index
+__cudevice__ double & array::Parcel::operator[](std::uint64_t index) {
+    // calculate index vector
+    intvec index_ = contiguous_to_ndim_idx(index, this->shape_);
+    return this->operator[](index_);
+}
+
+// Get const reference to an element at a given n-dim index
+__cudevice__ const double & array::Parcel::operator[](const intvec & index) const {
+    // calculate strides
+    std::uint64_t strides = inner_prod(index, this->strides_);
+    double * element_ptr = reinterpret_cast<double *>(reinterpret_cast<std::uintptr_t>(this->data_) + strides);
+    return *element_ptr;
+}
+
+// Get constant reference to an element at a given C-contiguous index
+__cudevice__ const double & array::Parcel::operator[](std::uint64_t index) const {
+    // calculate index vector
+    intvec index_ = contiguous_to_ndim_idx(index, this->shape_);
+    return this->operator[](index_);
+}
+
 // Copy to shared memory
-__cudevice__ void * array::Parcel::copy_to_shared_mem(array::Parcel * share_ptr, void * shape_strides_ptr) {
+__cudevice__ void * array::Parcel::copy_to_shared_mem(array::Parcel * share_ptr, void * shape_strides_ptr) const {
     // copy meta data
     bool check_zeroth_thread = (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
     if (check_zeroth_thread) {

@@ -2,8 +2,10 @@
 #include "merlin/interpolant/lagrange.hpp"
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
+#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/array/slice.hpp"  // merlin::array::Slice
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
+#include "merlin/logger.hpp"  // FAILURE, cuda_compile_error
 #include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx
 
 namespace merlin {
@@ -33,6 +35,16 @@ void interpolant::calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & gr
         coeff.set(index, result);
     }
 }
+
+#ifndef __MERLIN_CUDA__
+
+// Calculate Lagrange interpolation coefficients on a full Cartesian grid using GPU
+void interpolant::calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
+                                           array::Parcel & coeff, const cuda::Stream & stream) {
+    FAILURE(cuda_compile_error, "Compile the package with CUDA option enabled to access this feature.\n");
+}
+
+#endif  // __MERLIN_CUDA__
 
 // Evaluate Lagrange interpolation on a full Cartesian grid using CPU
 double interpolant::eval_lagrange_cpu(const interpolant::CartesianGrid & grid, const array::Array & coeff,
