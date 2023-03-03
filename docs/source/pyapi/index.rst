@@ -48,8 +48,22 @@ CUDA Stream and Event
    merlin.cuda.EventCategory
    merlin.cuda.record_event
 
+
+Array API
+---------
+
+Hidden base class
+^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.array.NdData
+
 Multi-dimensional array
------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. autosummary::
    :toctree: generated
@@ -57,3 +71,5 @@ Multi-dimensional array
    :template: pyclass.rst
 
    merlin.array.Array
+   merlin.array.Parcel
+   merlin.array.Stock

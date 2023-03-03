@@ -1,8 +1,8 @@
-﻿merlin.array.Array
+﻿merlin.array.Stock
 ==================
 
 .. currentmodule:: merlin.array
 
-.. autoclass:: Array
+.. autoclass:: Stock
    :members:
    :special-members: __init__

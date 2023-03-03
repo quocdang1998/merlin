@@ -1,7 +1,9 @@
 # Copyright 2022 quocdang1998
 
 cdef class Array(NdData):
-    """Multi-dimensional array on CPU."""
+    """Array(merlin.array.NdData)
+    Multi-dimensional array on CPU.
+    """
 
     cdef object reference_array
 

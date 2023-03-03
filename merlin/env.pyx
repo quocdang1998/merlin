@@ -1,12 +1,9 @@
 # Copyright 2022 quocdang1998
 
-cdef extern from "merlin/env.hpp":
+from cython.operator cimport dereference
+from libc.stdint cimport uint64_t, UINT64_MAX
 
-    cdef cppclass CppEnvironment "merlin::Environment":
-        CppEnvironment() except +
-
-        void set_inited(bint value) except +
-        void print_inited() except +
+from merlin.env cimport *
 
 cdef class Environment:
     cdef CppEnvironment * core
@@ -14,11 +11,20 @@ cdef class Environment:
     def __init__(self):
         self.core = new CppEnvironment()
 
-    def set_inited(self, bint value):
-        self.core.set_inited(value)
+    @classmethod
+    def is_initialized(self):
+        return CppEnvironment_is_initialized
 
-    def print_inited(self):
-        self.core.print_inited()
+    @classmethod
+    def cpu_mem_limit(self, uint64_t limit = UINT64_MAX):
+        global CppEnvironment_cpu_mem_limit
+        if limit != UINT64_MAX:
+            CppEnvironment_cpu_mem_limit = limit
+        return CppEnvironment_cpu_mem_limit
+
+    @classmethod
+    def default_gpu(self):
+        return CppEnvironment_default_gpu
 
     def __dealloc__(self):
         del self.core

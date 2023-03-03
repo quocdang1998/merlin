@@ -68,9 +68,6 @@ To compile the documentation, install the following packages:
 Compilation
 -----------
 
-Algorithms are implemented in the C++ and CUDA interface. Even though only the
-Python package is required, the former interface must also be compiled.
-
 C++ and CUDA interface
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -115,14 +112,25 @@ Visual Studio application is strongly recommended. Inside the application:
 Python package
 ^^^^^^^^^^^^^^
 
-To compile the Python interface, go back to the source directory of the package
-and run:
+Before compiling the Python interface, **make sure that the C++/CUDA interface
+have been compiled**.
+
+If the package can be installed using ``pip``, go back
+to the source directory (containing ``setup.py``) and run:
 
 .. code-block:: sh
 
    pip install .
 
-If installation in the source directory is preferred:
+.. note::
+
+   If ``setuptools>=30`` has been installed, build dependancies listed in the
+   section :ref:`installation:System requirements` above are not required.
+   ``setuptools`` will install automatically on the run (checkout
+   `PEP 517 <https://peps.python.org/pep-0517/>`_).
+
+If installation in the source directory is preferred (build dependancies must
+have already been installed):
 
 .. code-block:: sh
 
@@ -139,19 +147,6 @@ CMake build options
    :Type: ``BOOL``
    :Value: ``ON``, ``OFF``
    :Default: ``ON``
-
-.. envvar:: MERLIN_DEBUG
-
-   Build Merlin library in debug mode. This mode allows backtracing the called
-   stack and printing symbolic names of functions in the stack to the standard
-   error everytime an exception is thrown.
-
-   This option is valid only if the variable |CMAKE_BUILD_TYPE|_ is
-   ``"Debug"``.
-
-   :Type: ``BOOL``
-   :Value: ``ON``, ``OFF``
-   :Default: ``OFF``
 
 .. envvar:: MERLIN_LIBKIND
 

@@ -96,8 +96,7 @@ class MERLIN_EXPORTS array::NdData {
      */
     void reshape(const intvec & new_shape);
     /** @brief Collapse dimensions with size 1.
-     *  @param from_first If ``True``, erase from the left most dimension (slowest index in C). Otherwise erase from
-     *  the right most diemansion.
+     *  @param i_dim Index of dimension to collapse.
      */
     void remove_dim(std::uint64_t i_dim = 0);
     /// @}

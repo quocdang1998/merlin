@@ -25,6 +25,8 @@ from setup_cfg import build_ext, ext_options
 
 # extensions
 extensions = [
+    Extension("merlin.env", [abspath_wrt_package("merlin/env.pyx")],
+              language="c++", **ext_options),
     Extension("merlin.cuda", [abspath_wrt_package("merlin/cuda/core.pyx")],
               language="c++", **ext_options),
     Extension("merlin.array", [abspath_wrt_package("merlin/array/core.pyx")],
@@ -40,7 +42,7 @@ if __name__ == "__main__":
           packages=["merlin"],
           ext_modules=cythonize(extensions, language_level="3str",
                                 include_path=[package_dir],
-                                nthreads=os.cpu_count(), annotate=False),
+                                nthreads=os.cpu_count(), annotate=True),
           python_requires=">=3.6",
           install_requires=["numpy>1.19"],
           extras_require={
