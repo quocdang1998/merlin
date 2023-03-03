@@ -4,7 +4,7 @@ cdef class Array(NdData):
     """Array(merlin.array.NdData)
     Multi-dimensional array on CPU.
 
-    Inherited from :class:`merlin.array.NdData`.
+    Inherits from :class:`merlin.array.NdData`.
     """
 
     cdef object reference_array

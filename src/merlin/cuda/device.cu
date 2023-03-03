@@ -103,30 +103,30 @@ bool cuda::Device::test_gpu(void) const {
     int reference = cpu_int[0] + cpu_int[1];
     // set device
     err_ = ::cudaSetDevice(this->id_);
-    if (err_ != cudaSuccess) {
+    if (err_ != 0) {
         FAILURE(cuda_runtime_error, "cudaSetDevice for id = %d failed with message \"%s\".\n",
                 this->id_, ::cudaGetErrorName(err_));
     }
     // malloc
     err_ = ::cudaMalloc(&gpu_int, 3*sizeof(int));
-    if (err_ != cudaSuccess) {
+    if (err_ != 0) {
         FAILURE(cuda_runtime_error, "cudaMalloc failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // copy to gpu
     err_ = ::cudaMemcpy(gpu_int, cpu_int, 3*sizeof(int), cudaMemcpyHostToDevice);
-    if (err_ != cudaSuccess) {
+    if (err_ != 0) {
         FAILURE(cuda_runtime_error, "cudaMemcpyHostToDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // launch kernel
     add_2_int_on_gpu<<<1, 1>>>(gpu_int, gpu_int+1, gpu_int+2);
     ::cudaDeviceSynchronize();
     err_ = ::cudaGetLastError();
-    if (err_ != cudaSuccess) {
+    if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Launch kernel failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // copy to cpu
     err_ = ::cudaMemcpy(cpu_int, gpu_int, 3*sizeof(int), cudaMemcpyDeviceToHost);
-    if (err_ != cudaSuccess) {
+    if (err_ != 0) {
         FAILURE(cuda_runtime_error, "cudaMemcpyDeviceToHost failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // check result
@@ -154,7 +154,7 @@ std::uint64_t cuda::Device::limit(cuda::Device::Limit limit, std::uint64_t size)
     } else {
         size_t limit_value = static_cast<size_t>(size);
         ::cudaError_t err_ = ::cudaDeviceSetLimit(static_cast<cudaLimit>(limit), limit_value);
-        if (err_ != cudaSuccess) {
+        if (err_ != 0) {
             FAILURE(cuda_runtime_error, "cudaDeviceSetLimit failed with message \"%s\".\n", ::cudaGetErrorName(err_));
         }
         result = size;

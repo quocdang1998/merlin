@@ -22,6 +22,9 @@ int main(void) {
     stream.synchronize();
 
     merlin::interpolant::calc_lagrange_coeffs_gpu(grid, value, coeff, stream);
-    ::cudaDeviceSynchronize();
-    MESSAGE("Result: %s\n", coeff.str().c_str());
+    MESSAGE("Result GPU: %s\n", coeff.str().c_str());
+
+    merlin::array::Array coeff_cpu(value_cpu.shape());
+    merlin::interpolant::calc_lagrange_coeffs_cpu(grid, value_cpu, coeff_cpu);
+    MESSAGE("Result GPU: %s\n", coeff_cpu.str().c_str());
 }

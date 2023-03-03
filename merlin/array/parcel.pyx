@@ -4,7 +4,7 @@ cdef class Parcel(NdData):
     """Parcel(merlin.array.NdData)
     Multi-dimensional array on GPU.
 
-    Inherited from :class:`merlin.array.NdData`.
+    Inherits from :class:`merlin.array.NdData`.
     """
 
     def __init__(self, **kwargs):

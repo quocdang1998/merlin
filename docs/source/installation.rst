@@ -109,14 +109,30 @@ Visual Studio application is strongly recommended. Inside the application:
       cd build
       ninja
 
+After the compilation step, executables, libraries and header files can be
+installed using CMake command (current directory is the one containing
+``cmake_install.cmake``):
+
+.. code-block:: sh
+
+   # current working dir. = build
+   cmake --install . --prefix="/path/to/install/folder/"
+
 Python package
 ^^^^^^^^^^^^^^
 
 Before compiling the Python interface, **make sure that the C++/CUDA interface
 have been compiled**.
 
-If the package can be installed using ``pip``, go back
-to the source directory (containing ``setup.py``) and run:
+To compile the binary Python module in the source directory (build dependancies
+must have already been installed), run the setup script with options:
+
+.. code-block:: sh
+
+   python setup.py build_ext --inplace
+
+The package can also be installed using ``pip``. From the package's source
+directory (containing ``setup.py``), run:
 
 .. code-block:: sh
 
@@ -128,13 +144,6 @@ to the source directory (containing ``setup.py``) and run:
    section :ref:`installation:System requirements` above are not required.
    ``setuptools`` will install automatically on the run (checkout
    `PEP 517 <https://peps.python.org/pep-0517/>`_).
-
-If installation in the source directory is preferred (build dependancies must
-have already been installed):
-
-.. code-block:: sh
-
-   python setup.py build_ext --inplace
 
 
 CMake build options

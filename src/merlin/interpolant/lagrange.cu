@@ -1,9 +1,6 @@
 // Copyright 2022 quocdang1998
 #include "merlin/interpolant/lagrange.hpp"
 
-#include <cinttypes>
-#include <cstdio>
-
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/env.hpp"  // merlin::Environment
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
@@ -14,7 +11,7 @@ namespace merlin {
 // --------------------------------------------------------------------------------------------------------------------
 // CUDA kernel for calculating Lagrange coefficients
 // --------------------------------------------------------------------------------------------------------------------
-/*
+
 // Calculate interpolation on a given index
 __cudevice__ static void calc_lagrange_coefficients(std::uint64_t c_index, const interpolant::CartesianGrid * p_grid,
                                                     const array::Parcel * p_value, array::Parcel * p_coeff) {
@@ -36,14 +33,12 @@ __cudevice__ static void calc_lagrange_coefficients(std::uint64_t c_index, const
     double result = p_value->operator[](index) / static_cast<double>(denominator);
     p_coeff->operator[](index) = result;
 }
-*/
+
 // Main kernel
 __global__ void calc_lagrange_kernel(const interpolant::CartesianGrid * p_grid, const array::Parcel * p_value,
                                             array::Parcel * p_coeff, std::uint64_t size) {
     // copy meta data to shared memory
     extern __shared__ char share_ptr[];
-    std::printf("Okay.\n");
-/*
     interpolant::CartesianGrid * p_grid_shared = reinterpret_cast<interpolant::CartesianGrid *>(share_ptr);
     void * current_mem_ptr = p_grid->copy_to_shared_mem(p_grid_shared, p_grid_shared+1);
     array::Parcel * p_value_shared = reinterpret_cast<array::Parcel *>(current_mem_ptr);
@@ -52,11 +47,9 @@ __global__ void calc_lagrange_kernel(const interpolant::CartesianGrid * p_grid, 
     p_coeff->copy_to_shared_mem(p_coeff_shared, p_coeff_shared+1);
     // perform the calculation
     std::uint64_t c_index = flatten_kernel_index();
-    std::printf("c_index = %" PRIu64 "\n", c_index);
     if (c_index < size) {
         calc_lagrange_coefficients(c_index, p_grid_shared, p_value_shared, p_coeff_shared);
     }
-*/
 }
 
 // Calculate Lagrange interpolation coefficients on a full Cartesian grid using GPU

@@ -51,7 +51,7 @@ array::Parcel::Parcel(const array::Parcel & src) : array::NdData(src) {
     // allocate data
     this->release_ = true;
     ::cudaError_t err_ = ::cudaMalloc(&(this->data_), sizeof(double) * this->size());
-    if (err_ != cudaSuccess) {
+    if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // create copy function
@@ -73,7 +73,7 @@ array::Parcel & array::Parcel::operator=(const array::Parcel & src) {
     // allocate data
     this->release_ = true;
     cudaError_t err_ = ::cudaMalloc(&(this->data_), sizeof(double) * this->size());
-    if (err_ != cudaSuccess) {
+    if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", cudaGetErrorString(err_));
     }
     // create copy function
