@@ -2,7 +2,7 @@
 #ifndef MERLIN_ENV_HPP_
 #define MERLIN_ENV_HPP_
 
-#include <atomic>  // std::atomic_uint64_t
+#include <atomic>  // std::atomic_uint, std::atomic_uint64_t
 #include <cstdint>  // std::uintptr_t
 #include <map>  // std::map
 #include <mutex>  // std::mutex
@@ -24,6 +24,8 @@ class MERLINSHARED_EXPORTS Environment {
     /// @{
     /** @brief Check if the environment is initialized or not.*/
     static bool is_initialized;
+    /** @brief Number of instances.*/
+    static std::atomic_uint num_instances;
     /** @brief Mutex for locking threads.*/
     static std::mutex mutex;
     /// @}
@@ -34,6 +36,14 @@ class MERLINSHARED_EXPORTS Environment {
      *  @details Default value: 20GB.
      */
     static std::uint64_t cpu_mem_limit;
+    /// @}
+
+    /// @name CPU parallelism
+    /// @{
+    /** @brief Minimum size over which the loop is parallelized.
+     *  @details Default value: 96 (LCM of 24, 32 and 48).
+     */
+    static std::uint64_t parallel_chunk;
     /// @}
 
     /// @name CUDA related settings
@@ -89,7 +99,7 @@ class MERLINSHARED_EXPORTS Environment {
     /// @name Destructor
     /// @{
     /** @brief Destructor.*/
-    ~Environment(void) = default;
+    ~Environment(void);
     /// @}
 };
 
@@ -98,6 +108,9 @@ MERLINSHARED_EXPORTS extern Environment default_environment;
 
 /** @brief Initialize CUDA primary contexts.*/
 void initialize_cuda_context(void);
+
+/** @brief Destroy CUDA primary contexts.*/
+void destroy_cuda_context(void);
 
 }  // namespace merlin
 

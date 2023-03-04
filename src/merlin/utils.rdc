@@ -42,6 +42,15 @@ std::string get_time(void) {
 // Multi-dimensional Index
 // --------------------------------------------------------------------------------------------------------------------
 
+// Product of all elements of the vector
+__cuhostdev__ std::uint64_t prod_elements(const intvec & v) {
+    std::uint64_t result = 1;
+    for (std::uint64_t i = 0; i < v.size(); i++) {
+        result *= v[i];
+    }
+    return result;
+}
+
 // Inner product of 2 index vectors
 __cuhostdev__ std::uint64_t inner_prod(const intvec & v1, const intvec & v2) {
     // check size of 2 vectors
@@ -83,7 +92,7 @@ __cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & 
     intvec index_(shape.size());
     std::uint64_t cum_prod = 1;
     if (shape.size() == 0) {
-        return index_;  // empty index vector
+        return index_;  // empty shape vector
     }
     index_[shape.size()-1] = index % shape[shape.size()-1];
     for (std::int64_t i = shape.size()-2; i >= 0; i--) {
@@ -91,6 +100,67 @@ __cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & 
         index_[i] = (index / cum_prod) % shape[i];
     }
     return index_;
+}
+
+// Increment of n-dim index
+__cuhostdev__ std::uint64_t increment_index(intvec & index, const intvec & shape) {
+    // check size of 2 vectors
+    if (!is_same_size(index, shape)) {
+        CUHDERR(std::invalid_argument, "Size of index (%" PRIu64 ") and size of shape (%" PRIu64 ") are not equal.\n",
+                index.size(), shape.size());
+    }
+    // trivial case: size zero -> do nothing
+    std::uint64_t result = index.size();
+    if (result == 0) {
+        return result;
+    }
+    // increment of index
+    result -= 1;
+    index[result]++;
+    while (index[result] >= shape[result]) {
+        if (result == 0) {
+            if (index[result] == shape[result]) {
+                break;
+            } else {
+                CUHDERR(std::out_of_range, "Maximum size reached, cannot increase more.\n");
+            }
+        }
+        index[result] = 0;
+        index[--result] += 1;
+    }
+    return result;
+}
+
+// Increment of n-dim index
+__cuhostdev__ std::uint64_t decrement_index(intvec & index, const intvec & shape) {
+    // check size of 2 vectors
+    if (!is_same_size(index, shape)) {
+        CUHDERR(std::invalid_argument, "Size of index (%" PRIu64 ") and size of shape (%" PRIu64 ") are not equal.\n",
+                index.size(), shape.size());
+    }
+    // trivial case: size zero -> do nothing
+    std::uint64_t result = index.size();
+    if (result == 0) {
+        return result;
+    }
+    // decrement of index
+    result -= 1;
+    do {
+        if (index[result] != 0) {
+            index[result] -= 1;
+            break;
+        }
+        index[result] = shape[result] - 1;
+        if (result == 0) {
+            for (std::uint64_t i = 0; i < index.size(); i++) {
+                index[i] = 0;
+            }
+            CUHDERR(std::invalid_argument, "Minimum reached, cannot decrease more.\n");
+            break;
+        }
+        result--;
+    } while (true);
+    return result;
 }
 
 // --------------------------------------------------------------------------------------------------------------------

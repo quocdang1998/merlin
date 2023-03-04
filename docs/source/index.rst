@@ -12,38 +12,42 @@ Welcome to Merlin's documentation!
 
 Merlin is a package written in C++, with Python wrapper package made possible by
 `Cython <https://cython.readthedocs.io/en/latest/>`_ for processing, evaluating
-and interpolating multidimensional dataset . It fastens calculations by
+and interpolating multidimensional dataset. It fastens calculations by
 exploiting the parallelism of CPU and HPC system equipped with multiple GPUs.
-The tool-kit can be scalable to big dataset thanks to its support for
-thread-safe out-of-core array.
+The tool-kit is scalable to big dataset thanks to its support for thread-safe
+out-of-core array.
 
 .. raw:: html
 
    <h2>Where to go from here ?</h2>
 
-.. panels::
-   :container: .container-lg
-   :column: col-lg-4 col-md-4 col-sm-6 col-xs-12 p-2
-   :card: shadow
-   :header: text-center
-   :body: text-center
+.. grid:: 3 
+   :gutter: 1
+   :class-container: .container-lg
 
-   Installation
-   ^^^^^^^^^^^^
+   .. grid-item-card:: Installation
+      :shadow: md
+      :text-align: center
 
-   To install Merlin, follow the :doc:`installation`.
-   ---
+      To install Merlin, follow the :doc:`installation`.
 
-   C++ API
-   ^^^^^^^
+   .. grid-item-card:: C++ API
+      :shadow: md
+      :text-align: center
 
-   To see the code documentation, see the :doc:`capi/index`.
-   ---
+      To see the code documentation, see the :doc:`capi/index`.
 
-   Developer guide
-   ^^^^^^^^^^^^^^^^
+   .. grid-item-card:: Python API
+      :shadow: md
+      :text-align: center
 
-   To extend the code for personal use, see the :doc:`developer/index`.
+      To see the code documentation, see the :doc:`pyapi/index`.
+
+   .. grid-item-card:: Developer guide
+      :shadow: md
+      :text-align: center
+
+      To extend the code for personal use, see the :doc:`developer/index`.
 
 .. toctree::
    :maxdepth: 1
@@ -53,4 +57,3 @@ thread-safe out-of-core array.
    capi/index
    pyapi/index
    developer/index
-

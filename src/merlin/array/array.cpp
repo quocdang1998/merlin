@@ -38,6 +38,9 @@ namespace merlin {
 
 // Initialize begin and end iterator
 void array::Array::initialize_iterator(void) noexcept {
+    if (this->ndim_ == 0) {
+        return;
+    }
     intvec index(this->ndim_, 0);
     this->begin_ = array::Array::iterator(index, this->shape_);
     index[0] = this->shape_[0];

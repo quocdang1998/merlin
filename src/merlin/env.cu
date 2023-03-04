@@ -1,7 +1,7 @@
 // Copyright quocdang1998
 #include "merlin/env.hpp"
 
-#include <cuda.h>  // ::cuCtxGetCurrent
+#include <cuda.h>  // ::cuCtxGetCurrent, ::cuDeviceGetCount, ::cuInit
 
 #include "merlin/logger.hpp"
 
@@ -10,8 +10,12 @@ namespace merlin {
 // Initialize CUDA context
 void initialize_cuda_context(void) {
     // check for number of GPU
+    ::cudaError_t err_ = static_cast<::cudaError_t>(::cuInit(0));
+    if (err_ != 0) {
+        FAILURE(cuda_runtime_error, "Initialize CUDA failed with error \"%s\"\n", ::cudaGetErrorString(err_));
+    }
     int num_gpu;
-    ::cudaError_t err_ = ::cudaGetDeviceCount(&num_gpu);
+    err_ = static_cast<::cudaError_t>(::cuDeviceGetCount(&num_gpu));
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Get device failed with error \"%s\"\n", ::cudaGetErrorString(err_));
     }
@@ -42,6 +46,17 @@ void initialize_cuda_context(void) {
     }
     // set back to default device
     ::cudaSetDevice(Environment::default_gpu);
+}
+
+// Destroy CUDA primary contexts
+void destroy_cuda_context(void) {
+    int num_gpu;
+    ::cudaGetDeviceCount(&num_gpu);
+    // uninitialized or undefined
+    for (int i_gpu = 0; i_gpu < num_gpu; i_gpu++) {
+        ::cuDevicePrimaryCtxRelease(i_gpu);
+        Environment::primary_contexts.erase(i_gpu);
+    }
 }
 
 }  // namespace merlin

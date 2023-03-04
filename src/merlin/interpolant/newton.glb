@@ -1,0 +1,40 @@
+// Copyright 2022 quocdang1998
+#include "merlin/interpolant/newton.hpp"
+
+#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
+#include "merlin/env.hpp"  // merlin::Environment
+#include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
+#include "merlin/utils.hpp"  // merlin::flatten_kernel_index, merlin::get_block_count, merlin::contiguous_to_ndim_idx
+
+namespace merlin {
+
+// Calculate divide diffrence of 2 arrays on GPU
+__global__ static void calc_divdiff_kernel(const array::Parcel * p_a1, const array::Parcel * p_a2,
+                                           double x1, double x2, array::Parcel * p_result, std::uint64_t size) {
+    // copy meta data to shared memory
+    extern __shared__ char share_ptr[];
+    array::Parcel * p_a1_shared = reinterpret_cast<array::Parcel *>(share_ptr);
+    void * current_mem_ptr = p_a1->copy_to_shared_mem(p_a1_shared, p_a1_shared+1);
+    array::Parcel * p_a2_shared = reinterpret_cast<array::Parcel *>(current_mem_ptr);
+    current_mem_ptr = p_a2->copy_to_shared_mem(p_a2_shared, p_a2_shared+1);
+    array::Parcel * p_result_shared = reinterpret_cast<array::Parcel *>(current_mem_ptr);
+    p_result->copy_to_shared_mem(p_result_shared, p_result_shared+1);
+    // perform the calculation
+    std::uint64_t c_index = flatten_kernel_index();
+    if (c_index < size) {
+        intvec index = contiguous_to_ndim_idx(c_index, p_result_shared->shape());
+        (*p_result_shared)[index] = ((*p_a1_shared)[index] - (*p_a2_shared)[index]) / (x1 - x2);
+    }
+}
+
+// Call divide difference algorithm on GPU
+void interpolant::call_divdiff_kernel(const array::Parcel * p_a1, const array::Parcel * p_a2,
+                                   double x1, double x2, array::Parcel * p_result, std::uint64_t size,
+                                   std::uint64_t shared_mem_size, std::uintptr_t stream_ptr) {
+    std::uint64_t block_count = get_block_count(Environment::default_block_size, size);
+    ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
+    calc_divdiff_kernel<<<block_count, Environment::default_block_size,
+                          shared_mem_size, cuda_stream>>>(p_a1, p_a2, x1, x2, p_result, size);
+}
+
+}  // namespace merlin

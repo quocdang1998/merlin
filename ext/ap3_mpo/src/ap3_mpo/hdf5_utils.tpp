@@ -4,10 +4,10 @@
 
 #include <iterator>  // std::distance
 
-namespace merlin {
+namespace ap3_mpo {
 
 template <typename T>
-std::pair<std::vector<T>, merlin::intvec> ext::ap3mpo::get_dset(H5::Group * group, char const * dset_address) {
+std::pair<std::vector<T>, merlin::intvec> get_dset(H5::Group * group, char const * dset_address) {
     // open dataset
     H5::DataSet dset = group->openDataSet(dset_address);
     // get data shape
@@ -56,13 +56,13 @@ std::pair<std::vector<T>, merlin::intvec> ext::ap3mpo::get_dset(H5::Group * grou
     // close dataset
     dset.close();
     // convert shape to intvec
-    intvec data_shape(shape.data(), ndims);
-    return std::pair<std::vector<T>, intvec>(data, data_shape);
+    merlin::intvec data_shape(shape.data(), ndims);
+    return std::pair<std::vector<T>, merlin::intvec>(data, data_shape);
 }
 
 // Find index by value
 template <typename ArrayType, typename Sample>
-std::uint64_t ext::ap3mpo::find_element(const std::vector<ArrayType> & array, const Sample & element) {
+std::uint64_t find_element(const std::vector<ArrayType> & array, const Sample & element) {
     auto it = std::find(array.cbegin(), array.cend(), element);
     if (it == array.cend()) {
         return UINT64_MAX;
@@ -70,6 +70,6 @@ std::uint64_t ext::ap3mpo::find_element(const std::vector<ArrayType> & array, co
     return std::distance(array.cbegin(), it);
 }
 
-}  // namespace merlin
+}  // namespace ap3_mpo
 
 #endif  // HDF5_UTILS_TPP_

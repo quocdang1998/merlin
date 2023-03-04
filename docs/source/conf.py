@@ -33,8 +33,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.autosummary',
     'sphinx.ext.autosectionlabel',
-    'sphinx_tabs.tabs',
-    'sphinx_panels',
+    'sphinx_design',
     'breathe',
     'sphinx_doxysummary'
 ]
@@ -50,7 +49,6 @@ exclude_patterns = []
 # Prefix each section label with the name of the document it is in, followed by
 # a colon
 autosectionlabel_prefix_document = True
-autodoc_docstring_signature = True
 
 # Doxygen generated XML files
 breathe_projects = { "merlin": os.path.abspath("./xml") }
@@ -58,7 +56,7 @@ breathe_default_project = "merlin"
 doxygen_xml = [breathe_projects[breathe_default_project]]
 
 # Sphinx-panel settings
-panels_add_fontawesome_latex = True
+sd_fontawesome_latex = True
 
 # -- Pygments style ----------------------------------------------------------
 

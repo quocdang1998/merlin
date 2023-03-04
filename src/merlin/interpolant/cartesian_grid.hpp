@@ -6,7 +6,7 @@
 #include <initializer_list>  // std::initializer_list
 #include <string>  // std::string
 
-#include "merlin/array/array.hpp"  // merlin::array::Array
+#include "merlin/array/declaration.hpp"  // merlin::array::Array
 #include "merlin/cuda_decorator.hpp"  // __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/interpolant/grid.hpp"  //  merlin::interpolant::Grid
@@ -26,6 +26,8 @@ class MERLIN_EXPORTS interpolant::CartesianGrid : public interpolant::Grid {
     CartesianGrid(const Vector<Vector<double>> & grid_vectors);
     /** @brief Constructor from an r-value reference to a vector of values.*/
     CartesianGrid(Vector<Vector<double>> && grid_vectors);
+    /** @brief Get a subgrid from original grid.*/
+    CartesianGrid(const interpolant::CartesianGrid & whole, const Vector<array::Slice> & slices);
     /** @brief Constructor from the number of dimension.*/
     CartesianGrid(std::uint64_t ndim) : grid_vectors_(ndim) {}
     /// @}

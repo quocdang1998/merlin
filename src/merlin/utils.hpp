@@ -42,6 +42,13 @@ __cudevice__ constexpr std::uint64_t flatten_kernel_index(void) {
 // Multi-dimensional Index
 // -----------------------
 
+/** @brief Product of entries of a vector.
+ *  @details Return product of all elements of the vector.
+ *  @param v Vector.
+ *  @note This function returns ``1`` if ``v`` has zero size.
+ */
+__cuhostdev__ MERLIN_HOSTDEV_EXPORTS std::uint64_t prod_elements(const intvec & v);
+
 /** @brief Inner product of 2 index vectors.
  *  @details Return convolution product / scalar product of 2 vectors.
  *  @param v1 First vector.
@@ -62,6 +69,20 @@ __cuhostdev__ MERLIN_HOSTDEV_EXPORTS std::uint64_t ndim_to_contiguous_idx(const 
  *  @return merlin::intvec of n-dimensional index.
  */
 __cuhostdev__ MERLIN_HOSTDEV_EXPORTS intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape);
+
+/** @brief Increase an n-dimensional index by one unit.
+ *  @param index Multi-dimensional index.
+ *  @param shape Shape vector.
+ *  @return Lowest changed dimension.
+ */
+__cuhostdev__ MERLIN_HOSTDEV_EXPORTS std::uint64_t increment_index(intvec & index, const intvec & shape);
+
+/** @brief Decrease an n-dimensional index by one unit.
+ *  @param index Multi-dimensional index.
+ *  @param shape Shape vector.
+ *  @return Lowest changed dimension.
+ */
+__cuhostdev__ MERLIN_HOSTDEV_EXPORTS std::uint64_t decrement_index(intvec & index, const intvec & shape);
 
 // Sparse Grid
 // -----------

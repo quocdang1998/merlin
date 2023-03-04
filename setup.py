@@ -46,7 +46,8 @@ if __name__ == "__main__":
           python_requires=">=3.6",
           install_requires=["numpy>1.19"],
           extras_require={
-              "docs": ["breathe>=4.34.0", "Sphinx>=4.0", "sphinx_rtd_theme>=1.2.0",
-                       "sphinx_tabs>=3.3.1", "sphinx_panels>=0.6.0"]
+              "docs": ["Sphinx>5.0", "sphinx_rtd_theme>=1.2.0",
+                       "sphinx_design>=0.3.0",
+                       "breathe>=4.34.0", "sphinx-doxysummary>=2.3.2"]
           },
           cmdclass={"build_ext": build_ext})

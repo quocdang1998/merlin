@@ -1,0 +1,24 @@
+digraph CudaCompilation {
+    node [fontname="Fira Code SemiBold", fontsize="16", shape=record, style=filled, labelloc=c]
+    subgraph SourceFiles {
+        node [color=lightskyblue1, label="*.rdc"] rdc;
+        node [color=lightskyblue1, label="*.glb"] glb;
+        {rank=same; rdc; glb;}
+    }
+
+    subgraph Object {
+        node [color=steelblue1, label="*.o or *.obj"] obj1;
+        node [color=steelblue1, label="*.o or *.obj"] obj2;
+    }
+
+    subgraph Lib {
+        node [color=dodgerblue, label="libmerlincuda"] libmerlincuda;
+        node [color=dodgerblue, label="libmerlinglobal"] libmerlinglobal;
+    }
+
+    rdc -> obj1 [color=dimgrey];
+    glb -> obj2 [color=dimgrey];
+    obj1 -> libmerlincuda [color=royalblue4];
+    obj2 -> libmerlinglobal [color=royalblue4];
+    libmerlincuda -> libmerlinglobal [color=royalblue4];
+}

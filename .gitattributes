@@ -1,1 +1,2 @@
 *.rdc linguist-language=Cuda
+*.glb linguist-language=Cuda

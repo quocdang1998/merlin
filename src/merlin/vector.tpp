@@ -159,7 +159,7 @@ void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
                this->size_*sizeof(T), cudaMemcpyDeviceToHost);
 }
 
-#endif  // __MERLIN_CUDA__
+#endif  // !__MERLIN_CUDA__
 
 #ifdef __NVCC__
 // Copy to shared memory
@@ -179,7 +179,7 @@ __cudevice__ void * Vector<T>::copy_to_shared_mem(Vector<T> * share_ptr, void * 
     std::uintptr_t ptr_end = reinterpret_cast<std::uint64_t>(data_ptr) + this->size_*sizeof(T);
     return reinterpret_cast<void *>(ptr_end);
 }
-#endif
+#endif  // __NVCC__
 
 // String representation for types printdable to std::ostream
 template <typename T>
@@ -234,6 +234,19 @@ __cuhostdev__ Vector<T>::~Vector(void) {
     if ((!this->assigned_) && (this->data_ != nullptr)) {
         delete[] this->data_;
     }
+}
+
+// Create vector from constrcutor arguments
+template <typename T, typename ... Args>
+Vector<T> make_vector(std::uint64_t size, Args ... args) noexcept {
+    static_assert(std::is_constructible_v<T, Args ...>, "Desired type is not constructible from provided arg.\n");
+    Vector<T> result;
+    result.data() = new T[size];
+    result.size() = size;
+    for (std::uint64_t i = 0; i < size; i++) {
+        new (&(result[i])) T(args ...);
+    }
+    return result;
 }
 
 }  // namespace merlin

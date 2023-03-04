@@ -1,6 +1,8 @@
 // Copyright 2022 quocdang1998
 #include "merlin/interpolant/lagrange.hpp"
 
+#include <omp.h>  // #pragma omp, omp_get_num_threads
+
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/array/slice.hpp"  // merlin::array::Slice
@@ -17,7 +19,8 @@ void interpolant::calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & gr
     intvec grid_shape = grid.get_grid_shape();
     std::uint64_t size = value.size();
     // parallel loop calculation
-    #pragma omp parallel for
+    bool parallel_exec = size > 2*omp_get_num_threads();
+    #pragma omp parallel for if (parallel_exec)
     for (std::int64_t i = 0; i < size; i++) {
         intvec index = contiguous_to_ndim_idx(i, grid_shape);
         // calculate the denomiantor (product of diferences of node values)
@@ -39,10 +42,15 @@ void interpolant::calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & gr
 #ifndef __MERLIN_CUDA__
 
 // Calculate Lagrange interpolation coefficients on a full Cartesian grid using GPU
-void interpolant::calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
+void interpolant::calc_lagrange_coeffs_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
                                            array::Parcel & coeff, const cuda::Stream & stream) {
     FAILURE(cuda_compile_error, "Compile the package with CUDA option enabled to access this feature.\n");
 }
+
+// Call CUDA kernel calculating coefficients on GPU
+void call_lagrange_coeff_kernel(const interpolant::CartesianGrid * p_grid, const array::Parcel * p_value,
+                                array::Parcel * p_coeff, std::uint64_t size, std::uint64_t shared_mem_size,
+                                std::uintptr_t stream_ptr) {}
 
 #endif  // __MERLIN_CUDA__
 

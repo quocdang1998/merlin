@@ -12,7 +12,7 @@
 // Short hand for filesystem
 namespace stdfs = std::filesystem;
 
-namespace merlin {
+namespace ap3_mpo {
 
 // Replace a string
 static bool string_replace(std::string & str, const std::string & substring, const std::string & destination) {
@@ -133,7 +133,7 @@ static bool has_magic(const std::string &pathname) {
 }
 
 // Get list of files satisfying the pattern
-std::vector<std::string> ext::ap3mpo::glob(const std::string & pattern) {
+std::vector<std::string> glob(const std::string & pattern) {
     // get base path
     std::string expanded = expand_tilde(pattern);
     stdfs::path base_path(expanded);
@@ -158,4 +158,4 @@ std::vector<std::string> ext::ap3mpo::glob(const std::string & pattern) {
     return result;
 }
 
-}  // namespace merlin
+}  // namespace ap3_mpo

@@ -180,6 +180,10 @@ class Vector {
  */
 using intvec = Vector<std::uint64_t>;
 
+/** @brief Create a vector from its arguments.*/
+template <typename T, typename ... Args>
+Vector<T> make_vector(std::uint64_t size, Args ... args) noexcept;
+
 }  // namespace merlin
 
 #include "merlin/vector.tpp"

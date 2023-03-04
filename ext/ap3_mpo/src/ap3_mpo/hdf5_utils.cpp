@@ -3,7 +3,7 @@
 
 #include "merlin/logger.hpp"  // FAILURE
 
-namespace merlin {
+namespace ap3_mpo {
 
 // Left trim a string
 static std::string & ltrim(std::string & s) {
@@ -20,14 +20,14 @@ static std::string & rtrim(std::string & s) {
 }
 
 // Trim a string.
-std::string & ext::ap3mpo::trim(std::string & s) {
+std::string & trim(std::string & s) {
     return ltrim(rtrim(s));
 }
 
 // Check if a string is in an array (convert to lowercase)
-std::uint64_t ext::ap3mpo::check_string_in_array(std::string element, std::vector<std::string> array) {
+std::uint64_t check_string_in_array(std::string element, std::vector<std::string> array) {
     for (int i = 0; i < array.size(); i++) {
-        if (ext::ap3mpo::lowercase(ext::ap3mpo::trim(array[i])).compare(ext::ap3mpo::lowercase(element)) == 0) {
+        if (lowercase(trim(array[i])).compare(lowercase(element)) == 0) {
             return i;
         }
     }
@@ -35,7 +35,7 @@ std::uint64_t ext::ap3mpo::check_string_in_array(std::string element, std::vecto
 }
 
 // List all subgroups and dataset in a group
-std::vector<std::string> ext::ap3mpo::ls_groups(H5::Group * group, const char * substring) {
+std::vector<std::string> ls_groups(H5::Group * group, const char * substring) {
     // function retrieving the name of subgroups and datasets in a given group
     auto get_name = [] (hid_t loc_id, char const * name, const H5L_info_t * info, void * operator_data) {
         H5O_info_t infobuf;
@@ -61,4 +61,4 @@ std::vector<std::string> ext::ap3mpo::ls_groups(H5::Group * group, const char * 
     return result;
 }
 
-}  // namespace merlin
+}  // namespace ap3_mpo

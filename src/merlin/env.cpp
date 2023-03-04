@@ -1,15 +1,26 @@
 // Copyright quocdang1998
 #include "merlin/env.hpp"
 
+#include <cstdio>
+
 namespace merlin {
 
 // Default constructor
 Environment::Environment(void) {
+    Environment::num_instances++;
     if (Environment::is_initialized) {
         return;
     }
     initialize_cuda_context();
     Environment::is_initialized = true;
+}
+
+// Destructor
+Environment::~Environment(void) {
+    Environment::num_instances--;
+    if (Environment::num_instances == 0) {
+        destroy_cuda_context();
+    }
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -19,6 +30,9 @@ Environment::Environment(void) {
 // Check if environment is initialized
 bool Environment::is_initialized = false;
 
+// Number of instances
+std::atomic_uint Environment::num_instances = 0;
+
 // Mutex
 std::mutex Environment::mutex;
 
@@ -26,8 +40,15 @@ std::mutex Environment::mutex;
 // Array allocation limit
 // --------------------------------------------------------------------------------------------------------------------
 
-//
+// Size in bytes of maximum allowed allocated memory
 std::uint64_t Environment::cpu_mem_limit = static_cast<std::uint64_t>(20) << 30;
+
+// --------------------------------------------------------------------------------------------------------------------
+// CPU Parallelism
+// --------------------------------------------------------------------------------------------------------------------
+
+// Minimum size over which the loop is parallelized
+std::uint64_t Environment::parallel_chunk = static_cast<std::uint64_t>(96);
 
 // --------------------------------------------------------------------------------------------------------------------
 // CUDA environment
@@ -64,6 +85,9 @@ std::uint64_t Environment::default_block_size = 64;
 
 // Initialize CUDA context
 void initialize_cuda_context(void) {}
+
+// Destroy CUDA primary contexts
+void destroy_cuda_context(void) {}
 
 #endif  // __MERLIN_CUDA__
 
