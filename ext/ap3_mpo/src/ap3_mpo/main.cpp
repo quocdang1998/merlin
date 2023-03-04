@@ -6,10 +6,10 @@
 #include "merlin/array/stock.hpp"  // merlin::array::Stock
 #include "merlin/logger.hpp"  // MESSAGE
 
-#include "ap3_mpo/ap3_xs.hpp"  // merlin::ext::ap3mpo::Ap3HomogXS
-#include "ap3_mpo/help_message.hpp"  // merlin::ext::ap3mpo::help_message
-#include "ap3_mpo/glob.hpp"  // merlin::ext::ap3mpo::glob
-#include "ap3_mpo/query_mpo.hpp"  // merlin::ext::ap3mpo::query_mpo
+#include "ap3_mpo/ap3_xs.hpp"  // ap3_mpo::Ap3HomogXS
+#include "ap3_mpo/help_message.hpp"  // ap3_mpo::help_message
+#include "ap3_mpo/glob.hpp"  // ap3_mpo::glob
+#include "ap3_mpo/query_mpo.hpp"  // ap3_mpo::query_mpo
 
 int main(int argc, char * argv[]) {
     // parse argument
@@ -45,33 +45,33 @@ int main(int argc, char * argv[]) {
             thread_safe = false;
             mode |= 4;
         } else {
-            std::vector<std::string> glob_expanded = merlin::ext::ap3mpo::glob(argument);
+            std::vector<std::string> glob_expanded = ap3_mpo::glob(argument);
             filenames.insert(filenames.end(), std::make_move_iterator(glob_expanded.begin()),
                              std::make_move_iterator(glob_expanded.end()));
         }
     }
     // help mode
     if (mode == 1) {
-        std::printf("%s", merlin::ext::ap3mpo::help_message);
+        std::printf("%s", ap3_mpo::help_message);
         return 0;
     }
     // query mode
     if (mode == 2) {
         for (const std::string & filename : filenames) {
             MESSAGE("Querying file %s...\n", filename.c_str());
-            merlin::ext::ap3mpo::query_mpo(filename);
+            ap3_mpo::query_mpo(filename);
         }
         return 0;
     }
     // write to file mode
     if (mode == 4) {
         // build combined object
-        merlin::ext::ap3mpo::Ap3HomogXS combined_mpo;
-        std::vector<merlin::ext::ap3mpo::Ap3HomogXS *> component_ptr;
+        ap3_mpo::Ap3HomogXS combined_mpo;
+        std::vector<ap3_mpo::Ap3HomogXS *> component_ptr;
         for (int i = 0; i < filenames.size(); i++) {
             const std::string & filename = filenames[i];
             MESSAGE("Reading MPO file \"%s\"...\n", filename.c_str());
-            auto mpofile = new merlin::ext::ap3mpo::Ap3HomogXS(filename, geometry, energymesh, isotope, reaction);
+            auto mpofile = new ap3_mpo::Ap3HomogXS(filename, geometry, energymesh, isotope, reaction);
             component_ptr.push_back(mpofile);
             combined_mpo += *component_ptr[i];
         }

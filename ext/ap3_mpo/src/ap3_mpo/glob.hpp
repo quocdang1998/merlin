@@ -5,11 +5,11 @@
 #include <string>  // std::string
 #include <vector>  // std::vector
 
-namespace merlin::ext::ap3mpo {
+namespace ap3_mpo {
 
 /** @brief Get list of files matching a certain pattern.*/
 std::vector<std::string> glob(const std::string & pattern);
 
-}  // namespace merlin::ext::ap3mpo
+}  // namespace ap3_mpo
 
 #endif  // EXT_AP3_MPO_SRC_AP3_MPO_GLOB_HPP_

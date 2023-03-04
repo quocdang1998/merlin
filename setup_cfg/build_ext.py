@@ -75,8 +75,9 @@ class custom_du_build_ext(_du_build_ext):
 
         # cuda device linker
         if MERLIN_CUDA:
-            device_linker = os.path.join(os.path.dirname(objects[0]),
-                                         "cuda_device_linker.obj")
+            obj_dir, obj_fname = os.path.split(objects[0])
+            device_obj_fname = "cu_dev_linker_" + obj_fname
+            device_linker = os.path.join(obj_dir, device_obj_fname)
             dlink_option = ["-forward-unknown-to-host-compiler",
                             "-Wno-deprecated-gpu-targets",
                             "-shared", "-dlink"]
@@ -103,7 +104,7 @@ class custom_du_build_ext(_du_build_ext):
                                  if p.startswith("/LIBPATH:")]
                 # linked library to dlink
                 if MERLIN_LIBKIND == "SHARED":
-                    lib_dlink = ["merlin.lib", "merlincuda.lib"]
+                    lib_dlink = ["merlinglobal.lib", "merlincuda.lib"]
                 else:
                     lib_dlink = ["merlin.lib"]
                 lib_dlink += [CUDADRIVER, CUDART, CUDADEVRT]
@@ -114,7 +115,7 @@ class custom_du_build_ext(_du_build_ext):
                 # linked library to dlink
                 dlink_option += [f"-L\"{MERLIN_BIN_DIR}\""]
                 if MERLIN_LIBKIND == "SHARED":
-                    lib_dlink = ["-lmerlincuda"]
+                    lib_dlink = ["-lmerlinglobal", "-lmerlincuda"]
                 else:
                     lib_dlink = ["-lmerlin"]
                 lib_dlink += ["-lcuda", "-lcudart_static", "-lcudadevrt"]

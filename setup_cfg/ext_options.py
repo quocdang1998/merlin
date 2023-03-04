@@ -49,7 +49,7 @@ def get_extension_options():
     # link librairies
     ext_options["libraries"] = ["merlin"]
     if MERLIN_LIBKIND == "SHARED" and MERLIN_CUDA:
-        ext_options["libraries"] += ["merlincuda"]
+        ext_options["libraries"] += ["merlinglobal", "merlincuda"]
     ext_options["libraries"] += ["merlinshared"]
     if MERLIN_CUDA:
         ext_options["libraries"] += ["cudart_static", "cudadevrt", "cuda"]

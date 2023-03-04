@@ -113,6 +113,13 @@ class MERLIN_EXPORTS cuda::Device {
 
 namespace cuda {
 
+/** @brief Perform addition of 2 integers on GPU.
+ *  @param p_a Pre-allocated pointer on GPU to the first value.
+ *  @param p_b Pre-allocated pointer on GPU to the second value.
+ *  @param p_result Pre-allocated pointer on GPU to the result;.
+ */
+void add_integers_on_gpu(int * p_a, int * p_b, int * p_result);
+
 /** @brief Print GPU specifications.
  *  @details Print GPU specifications (number of threads, total global memory, max shared memory) and API limitation
  *  (max thread per block, max block per grid).

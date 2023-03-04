@@ -15,7 +15,7 @@
 
 #include "merlin/vector.hpp"  // merlin::intvec
 
-namespace merlin::ext::ap3mpo {
+namespace ap3_mpo {
 
 /** @brief Trim a string.*/
 std::string & trim(std::string & s);
@@ -56,7 +56,7 @@ std::pair<std::vector<T>, merlin::intvec> get_dset(H5::Group * group, char const
 template <typename ArrayType, typename Sample>
 std::uint64_t find_element(const std::vector<ArrayType> & array, const Sample & element);
 
-}  // namespace merlin::ext::ap3mpo
+}  // namespace ap3_mpo
 
 #include "hdf5_utils.tpp"
 

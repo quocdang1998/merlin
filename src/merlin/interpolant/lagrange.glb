@@ -35,7 +35,7 @@ __cudevice__ static void calc_lagrange_coefficients(std::uint64_t c_index, const
 }
 
 // Main kernel
-__global__ void calc_lagrange_kernel(const interpolant::CartesianGrid * p_grid, const array::Parcel * p_value,
+__global__ static void calc_lagrange_kernel(const interpolant::CartesianGrid * p_grid, const array::Parcel * p_value,
                                             array::Parcel * p_coeff, std::uint64_t size) {
     // copy meta data to shared memory
     extern __shared__ char share_ptr[];
@@ -76,6 +76,10 @@ void interpolant::calc_lagrange_coeffs_gpu(const interpolant::CartesianGrid & gr
     calc_lagrange_kernel<<<block_count, Environment::default_block_size,
                            total_malloc_size, stream_ptr>>>(ptr_grid_on_gpu, ptr_value_on_gpu, ptr_coeff_on_gpu, size);
     stream.synchronize();
+    err_ = ::cudaGetLastError();
+    if (err_ != 0) {
+        FAILURE(cuda_runtime_error, "Launch kernel failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+    }
     // release memory
     ::cudaFree(ptr_meta_data);
 }

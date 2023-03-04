@@ -39,7 +39,7 @@ void interpolant::calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & gr
 #ifndef __MERLIN_CUDA__
 
 // Calculate Lagrange interpolation coefficients on a full Cartesian grid using GPU
-void interpolant::calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
+void interpolant::calc_lagrange_coeffs_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
                                            array::Parcel & coeff, const cuda::Stream & stream) {
     FAILURE(cuda_compile_error, "Compile the package with CUDA option enabled to access this feature.\n");
 }

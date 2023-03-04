@@ -1,9 +1,9 @@
 // Copyright 2022 quocdang1998
 #include "ap3_mpo/help_message.hpp"
 
-namespace merlin {
+namespace ap3_mpo {
 
-const char * ext::ap3mpo::help_message = R"(Retrieve microscopic cross-section from an MPO.
+const char * help_message = R"(Retrieve microscopic cross-section from an MPO.
 Options:
     Help mode:
         -h, --help: Print help message.
@@ -22,4 +22,4 @@ Result:
     An serialized array of microscopic homogenized cross-section, which can be read with merlin::array::Stock.
 )";
 
-}  // namespace merlin
+}  // namespace ap3_mpo

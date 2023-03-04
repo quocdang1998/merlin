@@ -20,7 +20,7 @@ namespace merlin {
 // Adapted from function _ConvertSMVer2Cores
 // For more info, see https://github.com/NVIDIA/cuda-samples/blob/master/Common/helper_cuda.h
 static int convert_SM_version_to_core(int major, int minor) {
-    std::map<int, int> num_gpu_arch_cores_per_SM = {
+    static std::map<int, int> num_gpu_arch_cores_per_SM = {
         {0x30, 192},
         {0x32, 192},
         {0x35, 192},
@@ -44,11 +44,6 @@ static int convert_SM_version_to_core(int major, int minor) {
         FAILURE(cuda_runtime_error, "Cannot detect SM number in the map \"num_gpu_arch_cores_per_SM\".\n");
     }
     return num_gpu_arch_cores_per_SM[SM];
-}
-
-// Add 2 integers on GPU
-__global__ static void add_2_int_on_gpu(int * p_a, int * p_b, int * p_result) {
-    *p_result = *p_a + *p_b;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -118,8 +113,7 @@ bool cuda::Device::test_gpu(void) const {
         FAILURE(cuda_runtime_error, "cudaMemcpyHostToDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // launch kernel
-    add_2_int_on_gpu<<<1, 1>>>(gpu_int, gpu_int+1, gpu_int+2);
-    ::cudaDeviceSynchronize();
+    cuda::add_integers_on_gpu(gpu_int, gpu_int+1, gpu_int+2);
     err_ = ::cudaGetLastError();
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Launch kernel failed with message \"%s\".\n", ::cudaGetErrorName(err_));

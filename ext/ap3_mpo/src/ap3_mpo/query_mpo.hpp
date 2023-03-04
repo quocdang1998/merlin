@@ -4,11 +4,11 @@
 
 #include <string>  // std::string
 
-namespace merlin::ext::ap3mpo {
+namespace ap3_mpo {
 
 /** @brief Get geometry names, energy mesh names, isotopes and reactions presenting in the MPO.*/
 void query_mpo(const std::string & filename);
 
-}
+}  // namespace ap3_mpo
 
 #endif  // EXT_AP3_MPO_SRC_AP3_MPO_QUERY_MPO_HPP_
