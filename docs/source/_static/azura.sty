@@ -48,6 +48,8 @@
 % Color
 \sphinxDeclareColorOption{main}{{RGB}{27, 130, 209}}
 \sphinxDeclareColorOption{second}{{RGB}{128, 200, 255}}
+\sphinxDeclareColorOption{guidebox}{{RGB}{191, 220, 245}}
+\sphinxDeclareColorOption{guideboxtitle}{{RGB}{2, 101, 186}}
 \sphinxDeclareColorOption{autosummary}{{RGB}{21, 109, 191}}
 \sphinxDeclareColorOption{sigwrapbox}{{RGB}{232, 245, 255}}
 \sphinxDeclareColorOption{sigwrapborder}{{RGB}{37, 154, 245}}
@@ -191,27 +193,32 @@
 \makeatother
 
 % Guide box
-\newenvironment{sphinxclasssd-row}{%
-    \vspace{\baselineskip}%
-}{%
-    \vspace{\baselineskip}%
-}
-
 \newenvironment{sphinxclasssd-card}{%
-    \begin{minipage}{0.333\textwidth-2\fboxsep-4\fboxrule}%
+    \vspace{\baselineskip}%
+    \begin{tikzpicture} [remember picture, baseline]
+        \node [rectangle, rounded corners, fill = guidebox, anchor = center, outer sep = 0, inner sep = 0] \bgroup%
+            \begin{minipage}{0.333\textwidth-2\fboxsep-4\fboxrule}%
 }{%
-    \end{minipage}%
+            \end{minipage}%
+        \egroup;%
+    \end{tikzpicture}%
 }
-
 \newenvironment{sphinxclasssd-card-title}{%
-    \begingroup\centering\bfseries%
+    \begin{tikzpicture} [remember picture, baseline]
+        \node [rectangle, rounded corners, fill = guideboxtitle, minimum height = 2\baselineskip, anchor = center, outer sep = 0, inner sep = 0] \bgroup%
+            \begin{minipage}{\textwidth}%
+            \color{white}\bfseries\centering%
 }{%
-    \endgroup\newline\noindent\vspace{\baselineskip}%
+            \end{minipage}%
+        \egroup;%
+    \end{tikzpicture}%
+    \newline\vspace{0.5\baselineskip}\newline%
 }
-
 \newenvironment{sphinxclasssd-text-center}{%
-    \begin{center}}{%
+    \begin{center}%
+}{%
     \end{center}%
+    \vspace{\baselineskip}%
 }
 
 % =============================================================================
