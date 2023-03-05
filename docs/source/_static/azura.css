@@ -93,6 +93,9 @@
     --note:                       hsl(var(--hls),  80%, 60%);  /* note title */
     --warning:                    hsl(var(--hrv), 100%, 50%);  /* warning title */
 
+    --codetabs-title:             hsl(var(--hmn), 100%, 50%);  /* code tabs title */
+    --codetabs-title-hover:       hsl(var(--hue), 100%, 70%);  /* hovered code tabs title */
+
     --rtd-version:                hsl(var(--hue),  88%, 58%);  /* readthedocs version */
 }
 
@@ -394,6 +397,20 @@ html.writer-html4 .rst-content dl:not(.docutils) > dt, html.writer-html5 .rst-co
 /* Warning */
 .rst-content .warning .admonition-title {
     background: var(--warning);
+}
+
+/* ============================================================================
+ CODE TABS
+============================================================================ */
+
+.sd-tab-set > input:checked + label {
+    border-color: var(--codetabs-title);
+    color: var(--codetabs-title);
+}
+
+.sd-tab-set > input:not(:checked) + label:hover {
+    color: var(--codetabs-title-hover);
+    border-color: var(--codetabs-title-hover);
 }
 
 /* ============================================================================

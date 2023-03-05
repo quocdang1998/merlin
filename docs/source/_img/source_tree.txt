@@ -4,6 +4,7 @@ merlin
 │       ├── foo.hpp  # declarations and inline function definitions
 │       ├── foo.tpp  # template definitions (should be included in header files)
 │       ├── foo.cpp  # C++ source
-│       ├── foo.cu   # CUDA source
-│       ├── foo.rdc  # relocatable device code
+│       ├── foo.cu   # CUDA source (functions calling CUDA Runtime and CUDA Driver API)
+│       ├── foo.rdc  # CUDA host device functions
+│       ├── foo.glb  # CUDA global functions and its C++ caller functions
 │

@@ -191,25 +191,25 @@
 \makeatother
 
 % Guide box
-\newenvironment{sphinxclassrow}{%
+\newenvironment{sphinxclasssd-row}{%
     \vspace{\baselineskip}%
 }{%
     \vspace{\baselineskip}%
 }
 
-\newenvironment{sphinxclasscol-lg-4}{%
-    \begin{minipage}{0.333\textwidth-2\fboxsep}%
+\newenvironment{sphinxclasssd-card}{%
+    \begin{minipage}{0.333\textwidth-2\fboxsep-4\fboxrule}%
 }{%
     \end{minipage}%
 }
 
-\newenvironment{sphinxclasscard-header}{%
-    \begingroup\bfseries%
+\newenvironment{sphinxclasssd-card-title}{%
+    \begingroup\centering\bfseries%
 }{%
-    \endgroup\vspace{\baselineskip}%
+    \endgroup\newline\noindent\vspace{\baselineskip}%
 }
 
-\newenvironment{sphinxclasstext-center}{%
+\newenvironment{sphinxclasssd-text-center}{%
     \begin{center}}{%
     \end{center}%
 }

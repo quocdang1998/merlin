@@ -1,10 +1,8 @@
-digraph StaticCompilation {
+digraph SharedCompilation {
     node [fontname="Fira Code SemiBold", fontsize="16", shape=record, style=filled, labelloc=c]
     subgraph SourceFiles {
         node [color=lightskyblue1, label="*.cpp"] cpp;
         node [color=lightskyblue1, label="*.cu"] cu;
-        node [color=lightskyblue1, label="*.rdc"] rdc;
-        node [color=lightskyblue1, label="*.glb"] glb;
     }
 
     subgraph Object {
@@ -12,12 +10,10 @@ digraph StaticCompilation {
     }
 
     subgraph Lib {
-        node [color=dodgerblue, label="libmerlin"] libmerlin;
+        node [color=dodgerblue, label="libmerlinshared"] libmerlinshared;
     }
 
     cpp -> obj [color=dimgrey];
     cu -> obj [color=dimgrey];
-    rdc -> obj [color=dimgrey];
-    glb -> obj [color=dimgrey];
-    obj -> libmerlin [color=royalblue4];
+    obj -> libmerlinshared [color=royalblue4];
 }
