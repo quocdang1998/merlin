@@ -21,7 +21,7 @@ int main(void) {
 
     omp_set_num_threads(1);
     // merlin::interpolant::calc_lagrange_coeffs_cpu(grid, value, coeff);
-    merlin::interpolant::calc_newton_coeffs_cpu(grid, value, coeff);
+    merlin::interpolant::calc_newton_coeffs_cpu2(grid, value, coeff);
     // merlin::interpolant::calc_lagrange_coeffs_cpu(grid, value, slices, coeff);
     for (merlin::array::Array::iterator it = coeff.begin(); it != coeff.end(); ++it) {
         MESSAGE("Coefficient of index (%d, %d) : %f.\n", int(it.index()[0]), int(it.index()[1]), coeff.get(it.index()));

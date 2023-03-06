@@ -42,6 +42,13 @@ __cudevice__ constexpr std::uint64_t flatten_kernel_index(void) {
 // Multi-dimensional Index
 // -----------------------
 
+/** @brief Product of entries of a vector.
+ *  @details Return product of all elements of the vector.
+ *  @param v Vector.
+ *  @note This function returns ``1`` if ``v`` has zero size.
+ */
+__cuhostdev__ MERLIN_HOSTDEV_EXPORTS std::uint64_t prod_elements(const intvec & v);
+
 /** @brief Inner product of 2 index vectors.
  *  @details Return convolution product / scalar product of 2 vectors.
  *  @param v1 First vector.

@@ -8,10 +8,6 @@
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
-// CUDA kernel for calculating Lagrange coefficients
-// --------------------------------------------------------------------------------------------------------------------
-
 // Calculate interpolation on a given index
 __cudevice__ static void calc_lagrange_coefficients(std::uint64_t c_index, const interpolant::CartesianGrid * p_grid,
                                                     const array::Parcel * p_value, array::Parcel * p_coeff) {
@@ -52,36 +48,14 @@ __global__ static void calc_lagrange_kernel(const interpolant::CartesianGrid * p
     }
 }
 
-// Calculate Lagrange interpolation coefficients on a full Cartesian grid using GPU
-void interpolant::calc_lagrange_coeffs_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
-                                           array::Parcel & coeff, const cuda::Stream & stream) {
-    // check for validity
-    stream.check_cuda_context();
-    // copy data to GPU
-    std::uint64_t grid_malloc_size = grid.malloc_size();
-    std::uint64_t coeff_malloc_size = coeff.malloc_size();
-    std::uint64_t total_malloc_size = grid_malloc_size + 2*coeff_malloc_size;
-    void * ptr_meta_data;
-    ::cudaError_t err_ = ::cudaMalloc(&ptr_meta_data, total_malloc_size);
-    interpolant::CartesianGrid * ptr_grid_on_gpu = reinterpret_cast<interpolant::CartesianGrid *>(ptr_meta_data);
-    void * ptr_current_meta_data = grid.copy_to_gpu(ptr_grid_on_gpu, ptr_grid_on_gpu+1);
-    array::Parcel * ptr_value_on_gpu = reinterpret_cast<array::Parcel *>(ptr_current_meta_data);
-    ptr_current_meta_data = value.copy_to_gpu(ptr_value_on_gpu, ptr_value_on_gpu+1);
-    array::Parcel * ptr_coeff_on_gpu = reinterpret_cast<array::Parcel *>(ptr_current_meta_data);
-    coeff.copy_to_gpu(ptr_coeff_on_gpu, ptr_coeff_on_gpu+1);
-    // call kernel
-    std::uint64_t size = value.size();
+// Call calculation kernel on GPU
+void interpolant::call_lagrange_coeff_kernel(const interpolant::CartesianGrid * p_grid, const array::Parcel * p_value,
+                                             array::Parcel * p_coeff, std::uint64_t size,
+                                             std::uint64_t shared_mem_size, std::uintptr_t stream_ptr) {
     std::uint64_t block_count = get_block_count(Environment::default_block_size, size);
-    ::cudaStream_t stream_ptr = reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr());
+    ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
     calc_lagrange_kernel<<<block_count, Environment::default_block_size,
-                           total_malloc_size, stream_ptr>>>(ptr_grid_on_gpu, ptr_value_on_gpu, ptr_coeff_on_gpu, size);
-    stream.synchronize();
-    err_ = ::cudaGetLastError();
-    if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Launch kernel failed with message \"%s\".\n", ::cudaGetErrorName(err_));
-    }
-    // release memory
-    ::cudaFree(ptr_meta_data);
+                           shared_mem_size, cuda_stream>>>(p_grid, p_value, p_coeff, size);
 }
 
 }  // namespace merlin

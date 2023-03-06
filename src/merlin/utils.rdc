@@ -42,6 +42,15 @@ std::string get_time(void) {
 // Multi-dimensional Index
 // --------------------------------------------------------------------------------------------------------------------
 
+// Product of all elements of the vector
+__cuhostdev__ std::uint64_t prod_elements(const intvec & v) {
+    std::uint64_t result = 1;
+    for (std::uint64_t i = 0; i < v.size(); i++) {
+        result *= v[i];
+    }
+    return result;
+}
+
 // Inner product of 2 index vectors
 __cuhostdev__ std::uint64_t inner_prod(const intvec & v1, const intvec & v2) {
     // check size of 2 vectors
@@ -83,7 +92,7 @@ __cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & 
     intvec index_(shape.size());
     std::uint64_t cum_prod = 1;
     if (shape.size() == 0) {
-        return index_;  // empty index vector
+        return index_;  // empty shape vector
     }
     index_[shape.size()-1] = index % shape[shape.size()-1];
     for (std::int64_t i = shape.size()-2; i >= 0; i--) {

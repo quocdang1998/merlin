@@ -43,11 +43,14 @@ list(APPEND MERLIN_SRC_CU
      cuda/event.cu
      cuda/stream.cu
      interpolant/cartesian_grid.cu
+     interpolant/lagrange.cu
+     interpolant/newton.cu
      # interpolant/interpolant.cu
 )
 list(APPEND MERLIN_SRC_GLB
      cuda/device.glb
      interpolant/lagrange.glb
+     interpolant/newton.glb
 )
 list(APPEND MERLIN_SRC_RDC
      array/array.rdc
@@ -215,7 +218,7 @@ if(MERLIN_CUDA AND MERLIN_LIBKIND MATCHES "SHARED")
     add_library(libmerlinglobal STATIC ${MERLIN_SRC_GLB})
     set_property(TARGET libmerlinglobal PROPERTY OUTPUT_NAME merlinglobal)
     set_property(TARGET libmerlinglobal PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-    target_compile_definitions(libmerlinglobal PRIVATE __MERLIN_BUILT_AS_STATIC__)
+    target_compile_definitions(libmerlinglobal PRIVATE __LIBMERLINCUDA__)
     target_link_libraries(libmerlinglobal PUBLIC libmerlinshared libmerlincuda)
     MerlinSetTargetProperties(libmerlinglobal)
 else()
@@ -254,8 +257,13 @@ if(MERLIN_CUDA)
     set_property(TARGET libmerlin PROPERTY CUDA_RUNTIME_LIBRARY Static)
     set_property(TARGET libmerlin PROPERTY CUDA_SEPARABLE_COMPILATION ON)
     if(BUILD_MERLINCUDA_LIB)
-        target_link_libraries(libmerlin PUBLIC libmerlincuda)
-        add_dependencies(libmerlin libmerlinglobal)
+        if(UNIX)
+            target_link_libraries(libmerlin PUBLIC libmerlincuda)
+            add_dependencies(libmerlin libmerlinglobal)
+        endif(UNIX)
+        if(MSVC)
+            target_link_libraries(libmerlin PUBLIC libmerlinglobal libmerlincuda)
+        endif(MSVC)
         set_property(TARGET libmerlin PROPERTY CUDA_SEPARABLE_COMPILATION OFF)
     endif(BUILD_MERLINCUDA_LIB)
 endif(MERLIN_CUDA)

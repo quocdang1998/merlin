@@ -61,12 +61,13 @@ To compile the documentation, install the following packages:
 
    .. code-block:: sh
 
-      pip install -U Sphinx sphinx_rtd_theme sphinx_design breathe sphinx_doxysummary
+      pip install -U sphinx_rtd_theme sphinx_design breathe sphinx_doxysummary
+      pip install -U Sphinx
 
 .. |Doxygen| replace:: ``Doxygen>=1.8.5``
 .. _Doxygen: https://doxygen.nl/download.html
 .. |Sphinx| replace:: ``Sphinx``
-.. _Sphinx: https://www.sphinx-doc.org/
+.. _Sphinx: https://www.sphinx-doc.org/en/master/
 .. |sphinx_rtd_theme| replace:: ``sphinx_rtd_theme``
 .. _sphinx_rtd_theme: https://sphinx-rtd-theme.readthedocs.io/en/stable/
 .. |sphinx_design| replace:: ``sphinx_design``

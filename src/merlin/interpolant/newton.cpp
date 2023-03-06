@@ -8,8 +8,8 @@
 #include "merlin/array/slice.hpp"  // merlin::array::Slice
 #include "merlin/logger.hpp"  // CUHDERR
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
-#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::get_level_from_valid_size,
-                             // merlin::get_level_shape
+#include "merlin/utils.hpp"  // merlin::prod_elements, merlin::contiguous_to_ndim_idx,
+                             // merlin::get_level_from_valid_size, merlin::get_level_shape
 #include "merlin/vector.hpp"  // merlin::Vector
 
 namespace merlin {
@@ -30,6 +30,21 @@ static void divide_difference(const array::Array & a1, const array::Array & a2,
     }
 }
 
+// Concatenating 3 intvec
+static intvec merge_3vectors(const intvec & v1, const intvec & v2, const intvec & v3) {
+    intvec result(v1.size() + v2.size() + v3.size());
+    for (std::uint64_t i = 0; i < v1.size(); i++) {
+        result[i] = v1[i];
+    }
+    for (std::uint64_t i = 0; i < v2.size(); i++) {
+        result[v1.size()+i] = v2[i];
+    }
+    for (std::uint64_t i = 0; i < v3.size(); i++) {
+        result[v2.size()+v1.size()+i] = v3[i];
+    }
+    return result;
+}
+
 // --------------------------------------------------------------------------------------------------------------------
 // Calculate coefficient
 // --------------------------------------------------------------------------------------------------------------------
@@ -47,7 +62,7 @@ void interpolant::calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid
     // trivial case (1D)
     if (coeff.ndim() == 1) {
         for (std::uint64_t i = 1; i < coeff.shape()[0]; i++) {
-            for (std::uint64_t k = coeff.shape()[0]-1; k >=i; k--) {
+            for (std::uint64_t k = coeff.shape()[0]-1; k >= i; k--) {
                 long double coeff_calc = (coeff.get({k}) - coeff.get({k-1})) / (grid_vector[k] - grid_vector[k-i]);
                 coeff.set({k}, coeff_calc);
             }
@@ -76,6 +91,52 @@ void interpolant::calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid
         array::Array array_coeff_i(coeff, slice_i);
         array_coeff_i.remove_dim(0);
         interpolant::calc_newton_coeffs_cpu(grid, array_coeff_i, array_coeff_i);
+    }
+}
+
+// Calculate coefficients for cartesian grid (no recursive, no slicing prototype)
+void interpolant::calc_newton_coeffs_cpu2(const interpolant::CartesianGrid & grid, const array::Array & value,
+                                          array::Array & coeff) {
+    // copy the first array corresponding to index=0
+    if (&coeff != &value) {
+        std::printf("Copy data from value to array.\n");
+        array::array_copy(&coeff, &value, std::memcpy);
+    }
+    // loop on each dimension
+    for (std::uint64_t i_dim = 0; i_dim < coeff.ndim(); i_dim++) {
+        std::printf("At i_dim = %d: %s\n", int(i_dim), coeff.str().c_str());
+        // get grid vector at current diemnsion
+        const Vector<double> & grid_vector = grid.grid_vectors()[grid.ndim() - coeff.ndim() + i_dim];
+        // get shape and size of previous dimensions
+        intvec shape_previous_dims;
+        shape_previous_dims.assign(const_cast<std::uint64_t *>(coeff.shape().begin()), i_dim);
+        std::uint64_t size_previous_dims = prod_elements(shape_previous_dims);
+        std::printf("    Size of previous elements: %d\n", int(size_previous_dims));
+        // get shape and size of divdiff subspace
+        intvec shape_divdiff_space;
+        shape_divdiff_space.assign(const_cast<std::uint64_t *>(coeff.shape().begin())+i_dim+1,
+                                   const_cast<std::uint64_t *>(coeff.shape().end()));
+        std::uint64_t size_divdiff_space = prod_elements(shape_divdiff_space);
+        std::printf("    Size of divdiff space: %d\n", int(size_divdiff_space));
+        // loop on each previous dims point
+        for (std::uint64_t i_previous_dims = 0; i_previous_dims < size_previous_dims; i_previous_dims++) {
+            intvec index_previous_dims = contiguous_to_ndim_idx(i_previous_dims, shape_previous_dims);
+            // loop on indices of current dim for divide difference
+            for (std::uint64_t i = 1; i < coeff.shape()[i_dim]; i++) {
+                for (std::uint64_t k = coeff.shape()[i_dim]-1; k >= i; k--) {
+                    // loop on each point in divdiff space
+                    for (std::uint64_t i_divdiff_space = 0; i_divdiff_space < size_divdiff_space; i_divdiff_space++) {
+                        intvec index_divdiff_space = contiguous_to_ndim_idx(i_divdiff_space, shape_divdiff_space);
+                        intvec point_index_k = merge_3vectors(index_previous_dims, {k}, index_divdiff_space);
+                        intvec point_index_k_1 = merge_3vectors(index_previous_dims, {k-1}, index_divdiff_space);
+                        long double divdiff_result = (coeff.get(point_index_k) - coeff.get(point_index_k_1));
+                        divdiff_result /= grid_vector[k] - grid_vector[k-i];
+                        intvec point_index_result = std::move(point_index_k);
+                        coeff.set(point_index_result, divdiff_result);
+                    }
+                }
+            }
+        }
     }
 }
 
