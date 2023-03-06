@@ -121,25 +121,42 @@ and `Developper command prompt
    cd build
    ninja
 
+To customize the settings of the compilation of the library (e.g. compiling
+without CUDA), checkout :ref:`installation:CMake build options`.
+
 After the compilation step, executables, libraries and C++ header files can be
 installed using CMake command (note that in the example below, current working
 directory is the one containing ``cmake_install.cmake``, i.e. ``build``):
 
 .. code-block:: sh
 
-   cmake --install . --prefix="/path/to/install/folder/"
-   # or cmake --install . --prefix="C:\\path\\to\\install\\folder\\" on Windows
+   cmake --install . --prefix="/path/to/install/folder"
+   # or cmake --install . --prefix='C:\path\to\install folder' on Windows
 
-In case of compilation of a dynamic library, the installation path must be
-added to the environment variable ``LD_LIBRARY_PATH`` after the installation:
+After the installation, environment variables must be set so compiler can find
+the package:
 
-.. code-block:: sh
+.. tab-set-code::
 
-   export LD_LIBRARY_PATH=/path/to/install/folder:$LD_LIBRARY_PATH
-   # or $env:LIB_PATH += "C:\\path\\to\\install\\folder\\" on Windows
+   .. code-block:: sh
 
-To customize the settings of the compilation of the library (e.g. compiling
-without CUDA), checkout :ref:`installation:CMake build options`.
+      # suppose the package installed in "/path/to/install/folder"
+      PATH=/path/to/install/folder/bin:$PATH
+      CPATH=/path/to/install/folder/include:$PATH
+      LD_LIBRARY_PATH=/path/to/install/folder:$LD_LIBRARY_PATH
+
+   .. code-block:: powershell
+
+      # suppose the package installed in "C:\path\to\install folder"
+      $env:PATH += ';C:\path\to\install folder\bin'
+      $env:INCLUDE += ';C:\path\to\install folder\include'
+      $env:LIB += ';C:\path\to\install folder\lib'
+
+   .. code-block:: cmake
+
+      # suppose the package installed in "/path/to/install/folder"
+      include_directories("/path/to/install/folder/include")
+      link_directories("/path/to/install/folder/lib")
 
 Python package
 ^^^^^^^^^^^^^^
