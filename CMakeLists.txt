@@ -60,6 +60,7 @@ list(APPEND MERLIN_SRC_RDC
      array/slice.rdc
      cuda/device.rdc
      interpolant/cartesian_grid.rdc
+     interpolant/newton.rdc
      logger.rdc
      utils.rdc
 )

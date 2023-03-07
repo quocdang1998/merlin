@@ -36,6 +36,14 @@ class MERLINSHARED_EXPORTS Environment {
     static std::uint64_t cpu_mem_limit;
     /// @}
 
+    /// @name CPU parallelism
+    /// @{
+    /** @brief Minimum size over which the loop is parallelized.
+     *  @details Default value: 96 (LCM of 24, 32 and 48).
+     */
+    static std::uint64_t parallel_chunk;
+    /// @}
+
     /// @name CUDA related settings
     /// @{
     /** @brief ID of default GPU.*/

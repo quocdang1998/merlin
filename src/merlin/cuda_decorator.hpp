@@ -2,7 +2,7 @@
 #ifndef MERLIN_CUDA_DECORATOR_HPP_
 #define MERLIN_CUDA_DECORATOR_HPP_
 
-// CUDA decorator expansion when not compiling nvcc
+// CUDA decorator expansion when not compiling with nvcc
 #ifdef __NVCC__
     #define __cuhost__ __host__
     #define __cudevice__ __device__

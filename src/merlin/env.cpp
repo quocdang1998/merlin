@@ -26,8 +26,15 @@ std::mutex Environment::mutex;
 // Array allocation limit
 // --------------------------------------------------------------------------------------------------------------------
 
-//
+// Size in bytes of maximum allowed allocated memory
 std::uint64_t Environment::cpu_mem_limit = static_cast<std::uint64_t>(20) << 30;
+
+// --------------------------------------------------------------------------------------------------------------------
+// CPU Parallelism
+// --------------------------------------------------------------------------------------------------------------------
+
+// Minimum size over which the loop is parallelized
+std::uint64_t Environment::parallel_chunk = static_cast<std::uint64_t>(96);
 
 // --------------------------------------------------------------------------------------------------------------------
 // CUDA environment

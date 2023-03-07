@@ -1,4 +1,4 @@
-// Copyright 2022 quocdang1998
+// Copyright 2023 quocdang1998
 #ifndef MERLIN_INTERPOLANT_LAGRANGE_HPP_
 #define MERLIN_INTERPOLANT_LAGRANGE_HPP_
 
@@ -19,6 +19,19 @@ namespace merlin::interpolant {
 void calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::Array & value,
                               array::Array & coeff);
 
+/** @brief Call the GPU kernel calculating the coefficient with Lagrange method.
+ *  @param p_grid Pointer to Cartesian grid pre-allocated on GPU.
+ *  @param p_value Pointer to value array pre-allocated on GPU.
+ *  @param p_coeff Pointer to coefficient array pre-allocated on GPU.
+ *  @param size Number of coefficients / values to calculate.
+ *  @param shared_mem_size Size (in bytes) of the block-wise shared memory.
+ *  @param stream_ptr Pointer to the CUDA calculation stream in form of an unsigned integer pointer.
+ *  @note This function is asynchronious. It simply push the CUDA kernel to the stream.
+ */
+void call_lagrange_coeff_kernel(const interpolant::CartesianGrid * p_grid, const array::Parcel * p_value,
+                                array::Parcel * p_coeff, std::uint64_t size, std::uint64_t shared_mem_size,
+                                std::uintptr_t stream_ptr);
+
 /** @brief Calculate Lagrange interpolation coefficients on a full Cartesian grid using GPU.
  *  @param grid Cartesian grid.
  *  @param value Array of function values, must have the same shape as the grid.
@@ -29,18 +42,6 @@ void calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & grid, const arr
  */
 void calc_lagrange_coeffs_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
                               array::Parcel & coeff, const cuda::Stream & stream = cuda::Stream());
-
-/** @brief Call the GPU kernel calculating the coefficient with Lagrange method.
- *  @param p_grid Pointer to Cartesian grid pre-allocated on GPU.
- *  @param p_value Pointer to value array pre-allocated on GPU.
- *  @param p_coeff Pointer to coefficient array pre-allocated on GPU.
- *  @param size Number of coefficients / values to calculate.
- *  @param shared_mem_size Size (in bytes) of the block-wise shared memory.
- *  @param stream_ptr Pointer to the CUDA calculation stream in form of an unsigned integer pointer.
- */
-void call_lagrange_coeff_kernel(const interpolant::CartesianGrid * p_grid, const array::Parcel * p_value,
-                                array::Parcel * p_coeff, std::uint64_t size, std::uint64_t shared_mem_size,
-                                std::uintptr_t stream_ptr);
 
 /** @brief Evaluate Lagrange interpolation on a full Cartesian grid using CPU.
  *  @param grid Cartesian grid.

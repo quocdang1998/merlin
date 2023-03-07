@@ -9,8 +9,8 @@
 namespace merlin {
 
 // Calculate divide diffrence of 2 arrays on GPU
-__global__ static void calc_divdiff_gpu(const array::Parcel * p_a1, const array::Parcel * p_a2,
-                                         double x1, double x2, array::Parcel * p_result, std::uint64_t size) {
+__global__ static void calc_divdiff_kernel(const array::Parcel * p_a1, const array::Parcel * p_a2,
+                                           double x1, double x2, array::Parcel * p_result, std::uint64_t size) {
     // copy meta data to shared memory
     extern __shared__ char share_ptr[];
     array::Parcel * p_a1_shared = reinterpret_cast<array::Parcel *>(share_ptr);
@@ -28,13 +28,13 @@ __global__ static void calc_divdiff_gpu(const array::Parcel * p_a1, const array:
 }
 
 // Call divide difference algorithm on GPU
-void interpolant::call_divdiff_gpu(const array::Parcel * p_a1, const array::Parcel * p_a2,
+void interpolant::call_divdiff_kernel(const array::Parcel * p_a1, const array::Parcel * p_a2,
                                    double x1, double x2, array::Parcel * p_result, std::uint64_t size,
                                    std::uint64_t shared_mem_size, std::uintptr_t stream_ptr) {
     std::uint64_t block_count = get_block_count(Environment::default_block_size, size);
     ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
-    calc_divdiff_gpu<<<block_count, Environment::default_block_size,
-                       shared_mem_size, cuda_stream>>>(p_a1, p_a2, x1, x2, p_result, size);
+    calc_divdiff_kernel<<<block_count, Environment::default_block_size,
+                          shared_mem_size, cuda_stream>>>(p_a1, p_a2, x1, x2, p_result, size);
 }
 
 }  // namespace merlin

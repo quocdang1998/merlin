@@ -30,7 +30,7 @@ __cudevice__ static void calc_lagrange_coefficients(std::uint64_t c_index, const
     p_coeff->operator[](index) = result;
 }
 
-// Main kernel
+// Call CUDA kernel calculating coefficients on GPU
 __global__ static void calc_lagrange_kernel(const interpolant::CartesianGrid * p_grid, const array::Parcel * p_value,
                                             array::Parcel * p_coeff, std::uint64_t size) {
     // copy meta data to shared memory
