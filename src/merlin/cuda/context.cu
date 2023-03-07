@@ -161,9 +161,7 @@ cuda::Context::~Context(void) {
     if (this->context_ != 0) {
         Environment::attribute[this->context_].reference_count -= 1;
         if (Environment::attribute[this->context_].reference_count == 0) {
-            if (this->is_primary()) {
-                ::cuDevicePrimaryCtxRelease(Environment::attribute[this->context_].gpu);
-            } else {
+            if (!this->is_primary()) {
                 ::cuCtxDestroy(reinterpret_cast<::CUcontext>(this->context_));
             }
             Environment::attribute.erase(this->context_);

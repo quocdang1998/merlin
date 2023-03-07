@@ -5,11 +5,20 @@ namespace merlin {
 
 // Default constructor
 Environment::Environment(void) {
+    Environment::num_instances++;
     if (Environment::is_initialized) {
         return;
     }
     initialize_cuda_context();
     Environment::is_initialized = true;
+}
+
+// Destructor
+Environment::~Environment(void) {
+    Environment::num_instances--;
+    if (Environment::num_instances == 0) {
+        destroy_cuda_context();
+    }
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -18,6 +27,9 @@ Environment::Environment(void) {
 
 // Check if environment is initialized
 bool Environment::is_initialized = false;
+
+// Number of instances
+std::atomic_uint Environment::num_instances = 0;
 
 // Mutex
 std::mutex Environment::mutex;
@@ -71,6 +83,9 @@ std::uint64_t Environment::default_block_size = 64;
 
 // Initialize CUDA context
 void initialize_cuda_context(void) {}
+
+// Destroy CUDA primary contexts
+void destroy_cuda_context(void) {}
 
 #endif  // __MERLIN_CUDA__
 

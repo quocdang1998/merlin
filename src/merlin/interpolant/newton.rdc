@@ -30,7 +30,7 @@ __cuhostdev__ void interpolant::calc_newton_coeffs_single_core(const interpolant
     array::Parcel * p_coeff = static_cast<array::Parcel *>(&coeff);
     #else
     array::Array * p_coeff = static_cast<array::Array *>(&coeff);
-    #endif
+    #endif  // __CUDA_ARCH__
     // loop on each dimension
     for (std::uint64_t i_dim = 0; i_dim < coeff.ndim(); i_dim++) {
         // get grid vector at current diemnsion
@@ -45,6 +45,9 @@ __cuhostdev__ void interpolant::calc_newton_coeffs_single_core(const interpolant
                                    const_cast<std::uint64_t *>(coeff.shape().end()));
         std::uint64_t size_divdiff_space = prod_elements(shape_divdiff_space);
         // loop on each previous dims point
+        #ifndef __CUDA_ARCH__
+        #pragma omp parallel for collapse(1) schedule(guided, Environment::parallel_chunk)
+        #endif  // !__CUDA_ARCH__
         for (std::int64_t i_previous_dims = 0; i_previous_dims < size_previous_dims; i_previous_dims++) {
             intvec index_previous_dims = contiguous_to_ndim_idx(i_previous_dims, shape_previous_dims);
             // loop on indices of current dim for divide difference

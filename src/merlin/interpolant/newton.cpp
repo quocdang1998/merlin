@@ -11,7 +11,7 @@
 #include "merlin/env.hpp"  // merlin::Environment
 #include "merlin/logger.hpp"  // CUHDERR
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
-#include "merlin/utils.hpp"  // merlin::prod_elements, merlin::contiguous_to_ndim_idx, merlin::get_num_parallel_process
+#include "merlin/utils.hpp"  // merlin::prod_elements, merlin::contiguous_to_ndim_idx
 #include "merlin/vector.hpp"  // merlin::Vector
 
 namespace merlin {
@@ -33,31 +33,50 @@ void interpolant::divide_difference_cpu_parallel(const array::Array & a1, const 
     }
 }
 
-// Calculate divide diference between 2 arrays having the same shape: result <- (a1 - a2) / (x1 - x2)
-static void divide_difference(const array::Array & a1, const array::Array & a2,
-                              double x1, double x2, array::Array & result) {
-    long double denominator = x1 - x2;
-    std::uint64_t size = a1.size();
-    for (std::uint64_t i = 0; i < size; i++) {
-        intvec index = contiguous_to_ndim_idx(i, a1.shape());
-        double div_diff = (a1.get(index) - a2.get(index)) / denominator;
-        result.set(i, div_diff);
+// Calculate coefficients for cartesian grid (supposed shape value == shape of coeff)
+void calc_newton_coeffs_cpu_recursive(const interpolant::CartesianGrid & grid, const array::Array & value,
+                                      array::Array & coeff) {
+    // get associated 1D grid to calculate on
+    std::uint64_t ndim = grid.ndim();
+    const Vector<double> & grid_vector = grid.grid_vectors()[ndim - value.ndim()];
+    // copy the first array corresponding to index=0
+    if (&coeff != &value) {
+        array::array_copy(&coeff, &value, std::memcpy);
     }
-}
-
-// Concatenating 3 intvec
-static intvec merge_3vectors(const intvec & v1, const intvec & v2, const intvec & v3) {
-    intvec result(v1.size() + v2.size() + v3.size());
-    for (std::uint64_t i = 0; i < v1.size(); i++) {
-        result[i] = v1[i];
+    // trivial case (1D)
+    if (coeff.ndim() == 1) {
+        for (std::uint64_t i = 1; i < coeff.shape()[0]; i++) {
+            for (std::uint64_t k = coeff.shape()[0]-1; k >=i; k--) {
+                long double coeff_calc = (coeff.get({k}) - coeff.get({k-1})) / (grid_vector[k] - grid_vector[k-i]);
+                coeff.set({k}, coeff_calc);
+            }
+        }
+        return;
     }
-    for (std::uint64_t i = 0; i < v2.size(); i++) {
-        result[v1.size()+i] = v2[i];
+    // calculate divdiff on dim i-th
+    for (std::uint64_t i = 1; i < coeff.shape()[0]; i++) {
+        for (std::uint64_t k = coeff.shape()[0]-1; k >= i; k--) {
+            // get NdData of sub slice
+            Vector<array::Slice> slice_k(coeff.ndim()), slice_k_1(coeff.ndim());
+            slice_k[0] = array::Slice({k});
+            slice_k_1[0] = array::Slice({k-1});
+            const array::Array array_k(coeff, slice_k);
+            const array::Array array_k_1(coeff, slice_k_1);
+            array::Array array_result(coeff, slice_k);
+            // calculate divide difference
+            interpolant::divide_difference_cpu_parallel(array_k, array_k_1, grid_vector[k], grid_vector[k-i],
+                                                        array_result);
+        }
     }
-    for (std::uint64_t i = 0; i < v3.size(); i++) {
-        result[v2.size()+v1.size()+i] = v3[i];
+    // recursively calculate divide difference for dimension from i-1-th
+    #pragma omp parallel for
+    for (std::int64_t i = 0; i < coeff.shape()[0]; i++) {
+        Vector<array::Slice> slice_i(coeff.ndim());
+        slice_i[0] = array::Slice({static_cast<std::uint64_t>(i)});
+        array::Array array_coeff_i(coeff, slice_i);
+        array_coeff_i.remove_dim(0);
+        interpolant::calc_newton_coeffs_cpu(grid, array_coeff_i, array_coeff_i);
     }
-    return result;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -74,12 +93,8 @@ void interpolant::calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid
     if (&coeff != &value) {
         array::array_copy(&coeff, &value, std::memcpy);
     }
-    // calculate coefficients for small case
-    std::uint64_t size = coeff.size();
-    if (size <= 1024) {
-        interpolant::calc_newton_coeffs_single_core(grid, coeff);
-        return;
-    }
+    // calculate number of instances to loop on and to calculate divide difference on
+    interpolant::calc_newton_coeffs_single_core(grid, coeff);
 }
 
 // --------------------------------------------------------------------------------------------------------------------

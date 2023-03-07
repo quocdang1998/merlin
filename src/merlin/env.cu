@@ -44,4 +44,15 @@ void initialize_cuda_context(void) {
     ::cudaSetDevice(Environment::default_gpu);
 }
 
+// Destroy CUDA primary contexts
+void destroy_cuda_context(void) {
+    int num_gpu;
+    ::cudaGetDeviceCount(&num_gpu);
+    // uninitialized or undefined
+    for (int i_gpu = 0; i_gpu < num_gpu; i_gpu++) {
+        ::cuDevicePrimaryCtxRelease(i_gpu);
+        Environment::primary_contexts.erase(i_gpu);
+    }
+}
+
 }  // namespace merlin
