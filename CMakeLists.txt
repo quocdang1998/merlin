@@ -171,7 +171,9 @@ find_package(OpenMP)
 function(MerlinSetTargetProperties target_library)
     set_property(TARGET ${target_library} PROPERTY POSITION_INDEPENDENT_CODE 1)
     set_property(TARGET ${target_library} PROPERTY CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
-    target_include_directories(${target_library} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    target_include_directories(${target_library} PUBLIC
+                               $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+                               $<INSTALL_INTERFACE:include>)
     if(MERLIN_CUDA)
         set_property(TARGET ${target_library} PROPERTY CUDA_STANDARD 17 CUDA_STANDARD_REQUIRED ON)
         target_compile_definitions(${target_library} PUBLIC __MERLIN_CUDA__)
@@ -181,7 +183,7 @@ function(MerlinSetTargetProperties target_library)
         target_compile_options(${target_library} PUBLIC
                                $<$<COMPILE_LANGUAGE:CUDA>: ${MERLIN_CUDA_OPTION} >)
         target_link_libraries(${target_library} PUBLIC ${CUDA_DRIVER_LIBRARY} ${CUDA_DEVRT_LIBRARY})
-        set_property(TARGET ${target_library} PROPERTY CUDA_RUNTIME_LIBRARY Static)
+        set_property(TARGET ${target_library} PROPERTY EXPORT_PROPERTIES CUDA_RUNTIME_LIBRARY Static)
     endif(MERLIN_CUDA)
     if(MERLIN_DEBUG)
         target_compile_definitions(${target_library} PUBLIC __MERLIN_DEBUG__)
@@ -289,13 +291,20 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/
 # install to library to lib
 if(BUILD_MERLINCUDA_LIB)
     install(TARGETS libmerlin libmerlinglobal libmerlincuda libmerlinshared
+            EXPORT limerlin-cmake
             LIBRARY DESTINATION "lib"
             ARCHIVE DESTINATION "lib")
 else()
     install(TARGETS libmerlin libmerlinshared
+            EXPORT limerlin-cmake
             LIBRARY DESTINATION "lib"
             ARCHIVE DESTINATION "lib")
 endif()
+
+# cmake export
+install(EXPORT limerlin-cmake
+        DESTINATION "lib/cmake"
+        FILE libmerlinConfig.cmake)
 
 # =====================================================================================================================
 # tests

@@ -1,6 +1,7 @@
 // Copyright 2022 quocdang1998
 #include "merlin/interpolant/newton.hpp"
 
+#include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
 #include "merlin/utils.hpp"  // merlin::prod_elements, merlin::contiguous_to_ndim_idx

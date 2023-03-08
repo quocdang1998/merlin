@@ -75,6 +75,15 @@ int main(int argc, char * argv[]) {
             component_ptr.push_back(mpofile);
             combined_mpo += *component_ptr[i];
         }
+        // print combined state param space
+        MESSAGE("Combined state parameters:\n");
+        for (auto & [param_name, param_values] : combined_mpo.state_param().param_values) {
+            std::printf("    %s:", param_name.c_str());
+            for (double & pv : param_values) {
+                std::printf(" %.2f", pv);
+            }
+            std::printf("\n");
+        }
         // write data to file
         merlin::array::Stock stock(output, combined_mpo.get_output_shape(), 0, thread_safe);
         combined_mpo.assign_destination_array(stock);

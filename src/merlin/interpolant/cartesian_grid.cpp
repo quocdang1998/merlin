@@ -9,7 +9,9 @@
 #include <utility>  // std::move
 #include <vector>  // std::vector
 
+#include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides
+#include "merlin/array/slice.hpp"  // merlin::array::Slice
 #include "merlin/logger.hpp"  // FAILURE
 
 namespace merlin {
@@ -56,6 +58,26 @@ interpolant::CartesianGrid::CartesianGrid(Vector<Vector<double>> && grid_vectors
     for (std::uint64_t i = 0; i < this->ndim(); i++) {
         if (has_duplicated_element(this->grid_vectors_[i])) {
             FAILURE(std::invalid_argument, "Found duplicated element at dimension %" PRIu64 ".\n", i);
+        }
+    }
+}
+
+// Constructor as subgrid of another grid
+interpolant::CartesianGrid::CartesianGrid(const interpolant::CartesianGrid & whole, const Vector<array::Slice> & slices) {
+    // check size
+    if (slices.size() != whole.ndim()) {
+        FAILURE(std::invalid_argument, "Dimension of Slices and CartesianGrid not compatible (expected %u, got %u).\n",
+                static_cast<unsigned int>(whole.ndim()), static_cast<unsigned int>(slices.size()));
+    }
+    // create result
+    this->grid_vectors_ = Vector<Vector<double>>(whole.ndim());
+    intvec original_shape = whole.get_grid_shape();
+    for (std::uint64_t i_dim = 0; i_dim < whole.ndim(); i_dim++) {
+        auto [_, new_shape, __] = slices[i_dim].slice_on(original_shape[i_dim], {sizeof(double)});
+        this->grid_vectors_[i_dim] = Vector<double>(new_shape);
+        for (std::uint64_t i_shape = 0; i_shape < new_shape; i_shape++) {
+            std::uint64_t in_wrt_original = slices[i_dim].start() + i_shape * slices[i_dim].step();
+            this->grid_vectors_[i_dim][i_shape] = whole.grid_vectors()[i_dim][in_wrt_original];
         }
     }
 }
