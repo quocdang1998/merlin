@@ -26,8 +26,8 @@ void interpolant::divide_difference_cpu_parallel(const array::Array & a1, const 
                                                  double x2, array::Array & result) {
     long double denominator = x1 - x2;
     std::uint64_t size = a1.size();
-    #pragma omp parallel for collapse(1) schedule(guided, Environment::parallel_chunk)
-    for (std::uint64_t i = 0; i < size; i++) {
+    #pragma omp parallel for schedule(guided, Environment::parallel_chunk)
+    for (std::int64_t i = 0; i < size; i++) {
         intvec index = contiguous_to_ndim_idx(i, a1.shape());
         double div_diff = (a1.get(index) - a2.get(index)) / denominator;
         result.set(i, div_diff);
