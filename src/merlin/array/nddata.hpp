@@ -117,7 +117,7 @@ class MERLIN_EXPORTS array::NdData {
     /** @brief Pointer to data.*/
     double * data_ = nullptr;
     /** @brief Number of dimension.*/
-    std::uint64_t ndim_;
+    std::uint64_t ndim_ = 0;
     /** @brief Shape vector.
      *  @details Size of each dimension.
      */

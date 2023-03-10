@@ -21,18 +21,11 @@ namespace merlin::interpolant {
  */
 __cuhostdev__ void calc_newton_coeffs_single_core(const interpolant::CartesianGrid & grid, array::NdData & coeff);
 
-/** @brief Calculate divide difference of 2 arrays on CPU in parallel.*/
-void divide_difference_cpu_parallel(const array::Array & a1, const array::Array & a2, double x1, double x2,
-                                    array::Array & result);
-
 /** @brief Call divide difference function on GPU.*/
 void call_divdiff_kernel(const array::Parcel * p_a1, const array::Parcel * p_a2,
                          double x1, double x2, array::Parcel * p_result, std::uint64_t size,
                          std::uint64_t shared_mem_size, std::uintptr_t stream_ptr);
 
-/** @brief Calculate parallelized divide difference on GPU.*/
-void divide_difference_gpu_parallel(const array::Parcel & a1, const array::Parcel & a2, double x1, double x2,
-                                    array::Parcel & result, const cuda::Stream & stream = cuda::Stream());
 
 
 
@@ -41,9 +34,7 @@ void divide_difference_gpu_parallel(const array::Parcel & a1, const array::Parce
 
 
 
-/** @brief Calculate Newton interpolation coefficients on a full Cartesian grid using CPU.*/
-void calc_newton_coeffs_cpu2(const interpolant::CartesianGrid & grid, const array::Array & value,
-                            array::Array & coeff);
+
 
 /** @brief Calculate Newton coefficients without using recursion (for loop only).*/
 void calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::Array & value,

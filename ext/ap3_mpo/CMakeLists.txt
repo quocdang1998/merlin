@@ -15,6 +15,7 @@ set_property(TARGET ap3_mpo PROPERTY OUTPUT_NAME ap3_mpo)
 set_property(TARGET ap3_mpo PROPERTY CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
 target_include_directories(ap3_mpo PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src ${HDF5_INCLUDE_DIRS})
 target_link_libraries(ap3_mpo PUBLIC libmerlin ${HDF5_CXX_LIBRARIES} ${HDF5_C_LIBRARIES})
+set_property(TARGET ap3_mpo PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/
         DESTINATION "include" FILES_MATCHING PATTERN "*.[ht]pp")

@@ -1,6 +1,8 @@
 // Copyright quocdang1998
 #include "merlin/env.hpp"
 
+#include <cstdio>
+
 namespace merlin {
 
 // Default constructor

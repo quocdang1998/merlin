@@ -25,7 +25,10 @@ void array::array_copy(array::NdData * dest, const array::NdData * src, CopyFunc
         FAILURE(std::invalid_argument, "Expected shape of source equals shape of destination.\n");
     }
     intvec shape(src->shape());
-
+    // trivial case: size zero
+    if (ndim == 0) {
+        return;
+    }
     // longest contiguous segment and break index of the source
     std::uint64_t src_lcs, des_lcs;
     std::int64_t src_bridx, des_bridx;
