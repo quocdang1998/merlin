@@ -145,7 +145,7 @@ void interpolant::calc_newton_coeffs_gpu(const interpolant::CartesianGrid & grid
         return;
     }
     // recursive calculation
-    merlin::Vector<array::Parcel> sub_slices(cumulative_size);
+    Vector<array::Parcel> sub_slices = make_vector<array::Parcel>(cumulative_size);
     calc_newton_coeffs_gpu_recursive(grid, coeff, dim_max, sub_slices, 0, stream);
     // parallel calculation after that
     for (std::int64_t i = 0; i < sub_slices.size(); i++) {

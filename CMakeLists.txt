@@ -161,6 +161,10 @@ endif(MERLIN_CUDA)
 
 # OpenMP
 find_package(OpenMP QUIET REQUIRED)
+if (MSVC)  # patch the MSVC OpenMP default 2.0 version
+    set_property(TARGET OpenMP::OpenMP_CXX PROPERTY
+                 INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CXX>:-openmp:experimental>)
+endif(MSVC)
 
 # =====================================================================================================================
 # library
@@ -195,7 +199,7 @@ function(MerlinSetTargetProperties target_library)
             target_link_libraries(${target_library} PRIVATE DbgHelp.lib)
         endif(MSVC)
     endif(MERLIN_DEBUG)
-    target_link_libraries(${target_library} PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(${target_library} PRIVATE OpenMP::OpenMP_CXX)
 endfunction(MerlinSetTargetProperties)
 
 # setting library for static variables

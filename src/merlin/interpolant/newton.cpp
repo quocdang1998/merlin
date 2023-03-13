@@ -122,7 +122,7 @@ void interpolant::calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid
         return;
     }
     // recursive calculation
-    merlin::Vector<array::Array> sub_slices(cumulative_size);
+    Vector<array::Array> sub_slices = make_vector<array::Array>(cumulative_size);
     calc_newton_coeffs_cpu_recursive(grid, coeff, dim_max, sub_slices, 0);
     // parallel calculation after that
     #pragma omp parallel for schedule(guided, Environment::parallel_chunk)
