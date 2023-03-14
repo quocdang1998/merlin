@@ -14,12 +14,11 @@ double f(double x, double y, double z) {
 }
 
 int main(void) {
-    double data[24];
     merlin::intvec dims = {2, 4, 3};
-    merlin::intvec strides = merlin::array::contiguous_strides(dims, sizeof(double));
-    merlin::array::Array value(data, dims, strides);
+    merlin::array::Array value(dims);
 
     merlin::interpolant::CartesianGrid grid({{0.0, 2.5}, {0.0, 1.0, 2.0, 3.0}, {-1.0, 0.0, 1.0}});
+    MESSAGE("Grid: %s\n", grid.str().c_str());
     for (std::uint64_t i_point = 0; i_point < grid.size(); i_point++) {
         merlin::Vector<double> point = grid[i_point];
         value.set(i_point, f(point[0], point[1], point[2]));
@@ -33,7 +32,7 @@ int main(void) {
 
     merlin::Vector<double> p1({0.0, 2.0, 1.0});  // on grid
     // double p1_eval = merlin::interpolant::eval_lagrange_cpu(grid, coeff, p1);
-    double p1_eval = merlin::interpolant::eval_newton_cpu(grid, coeff, p1);
+    double p1_eval = merlin::interpolant::eval_newton_cpu2(grid, coeff, p1);
     MESSAGE("Evaluated value: %f.\n", p1_eval);
     MESSAGE("Expected value: %f.\n", f(p1[0], p1[1], p1[2]));
     merlin::Vector<double> p2({1.0, 1.0, 1.2});  // 2nd dim on grid

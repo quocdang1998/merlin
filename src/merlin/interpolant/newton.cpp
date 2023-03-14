@@ -1,6 +1,7 @@
 // Copyright 2022 quocdang1998
 #include "merlin/interpolant/newton.hpp"
 
+#include <cinttypes>
 #include <cstring>  // std::memcpy
 #include <utility>  // std::move
 
@@ -12,7 +13,7 @@
 #include "merlin/env.hpp"  // merlin::Environment
 #include "merlin/logger.hpp"  // CUHDERR
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
-#include "merlin/utils.hpp"  // merlin::prod_elements, merlin::contiguous_to_ndim_idx
+#include "merlin/utils.hpp"  // merlin::prod_elements, merlin::contiguous_to_ndim_idx, merlin::decrement_index
 #include "merlin/vector.hpp"  // merlin::Vector
 
 namespace merlin {
@@ -166,6 +167,45 @@ double interpolant::eval_newton_cpu(const interpolant::CartesianGrid & grid, con
         result += interpolant::eval_newton_cpu(grid, array_coeff_i, x);
     }
     return result;
+}
+
+// Evaluate Newton interpolation without recursive
+double interpolant::eval_newton_cpu2(const interpolant::CartesianGrid & grid, const array::Array & coeff,
+                                     const Vector<double> & x) {
+    // initialize storing vector
+    std::uint64_t ndim = grid.ndim(), max_dim = ndim-1;
+    intvec shape = grid.get_grid_shape();
+    intvec begin(ndim, 0), iterator(coeff.end().index());
+    Vector<double> cum(ndim, 0.f);
+    decrement_index(iterator, shape);
+    cum[max_dim] = coeff.get(iterator);
+    // loop over each point in coeff array
+    while (iterator != begin) {
+        std::uint64_t i_dim = decrement_index(iterator, shape);
+        std::printf("Iterator: %s\n", iterator.str().c_str());
+        cum[i_dim] *= x[i_dim] - grid.grid_vectors()[i_dim][iterator[i_dim]];
+        if (i_dim == max_dim) {
+            cum[i_dim] += coeff.get(iterator);
+        } else {
+            for (std::uint64_t i = i_dim+1; i < max_dim; i++) {
+                cum[i_dim] += (x[i] - grid.grid_vectors()[i][0]) * cum[i];
+            }
+            cum[i_dim] += cum[max_dim];
+            // cum[i_dim] += cum[i_dim+1];
+            for (std::uint64_t i = i_dim+1; i < max_dim; i++) {
+                cum[i] = 0;
+            }
+            cum[max_dim] = coeff.get(iterator);
+        }
+        std::printf("Cumulative: %s\n", cum.str().c_str());
+    }
+    double result = 0.0;
+    for (std::uint64_t i = 0; i < max_dim; i++) {
+        result += (x[i] - grid.grid_vectors()[i][0]) * cum[i];
+    }
+    return result;
+    // cum[i_dim] += cum[max_dim];
+    return cum[0];
 }
 
 }  // namespace merlin
