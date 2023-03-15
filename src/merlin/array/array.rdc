@@ -58,11 +58,21 @@ double * allocate_memory(std::uint64_t size) {
     ::cudaError_t err_ = ::cudaMallocHost(&result, sizeof(double) * size);
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Allocate non-pageable memory failed with message \"%s\".\n",
-                ::cudaGetErrorName(err_));
+                ::cudaGetErrorString(err_));
     }
     #endif  // __MERLIN_CUDA__
     Environment::cpu_mem_limit -= size * sizeof(double);
     return result;
+}
+
+// Pin memory to RAM
+void cuda_pin_memory(double * ptr, std::uint64_t n_elem) {
+    #ifdef __MERLIN_CUDA__
+    ::cudaError_t err_ = ::cudaHostRegister(ptr, sizeof(double) * n_elem, cudaHostRegisterDefault);
+    if (err_ != 0) {
+        FAILURE(cuda_runtime_error, "Pin pageable memory failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+    }
+    #endif  // __MERLIN_CUDA__
 }
 
 // Free non pageable memory

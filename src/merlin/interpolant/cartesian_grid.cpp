@@ -127,8 +127,8 @@ std::uint64_t interpolant::CartesianGrid::malloc_size(void) const {
 #ifndef __MERLIN_CUDA__
 
 // Copy data to a pre-allocated memory
-void * interpolant::CartesianGrid::copy_to_gpu(interpolant::CartesianGrid * gpu_ptr,
-                                               void * grid_vector_data_ptr) const {
+void * interpolant::CartesianGrid::copy_to_gpu(interpolant::CartesianGrid * gpu_ptr, void * grid_vector_data_ptr,
+                                               std::uintptr_t stream_ptr) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
     return nullptr;
 }

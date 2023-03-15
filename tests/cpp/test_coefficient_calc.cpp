@@ -32,18 +32,21 @@ int main(void) {
 
     merlin::Vector<double> p1({0.0, 2.0, 1.0});  // on grid
     // double p1_eval = merlin::interpolant::eval_lagrange_cpu(grid, coeff, p1);
-    double p1_eval = merlin::interpolant::eval_newton_cpu2(grid, coeff, p1);
+    double p1_eval = merlin::interpolant::eval_newton_cpu(grid, coeff, p1);
     MESSAGE("Evaluated value: %f.\n", p1_eval);
     MESSAGE("Expected value: %f.\n", f(p1[0], p1[1], p1[2]));
+    // MESSAGE("Refrence value: %f.\n", merlin::interpolant::eval_newton_cpu2(grid, coeff, p1));
     merlin::Vector<double> p2({1.0, 1.0, 1.2});  // 2nd dim on grid
     // double p2_eval = merlin::interpolant::eval_lagrange_cpu(grid, coeff, p2);
     double p2_eval = merlin::interpolant::eval_newton_cpu(grid, coeff, p2);
     MESSAGE("Evaluated value: %f.\n", p2_eval);
     MESSAGE("Expected value: %f.\n", f(p2[0], p2[1], p2[2]));
+    // MESSAGE("Refrence value: %f.\n", merlin::interpolant::eval_newton_cpu2(grid, coeff, p2));
     merlin::Vector<double> p3({0.5, 0.25, 2.4});  // both dim off grid
     // double p3_eval = merlin::interpolant::eval_lagrange_cpu(grid, coeff, p3);
     double p3_eval = merlin::interpolant::eval_newton_cpu(grid, coeff, p3);
     MESSAGE("Evaluated value: %f.\n", p3_eval);
     MESSAGE("Expected value: %f.\n", f(p3[0], p3[1], p3[2]));
+    // MESSAGE("Refrence value: %f.\n", merlin::interpolant::eval_newton_cpu2(grid, coeff, p3));
 
 }

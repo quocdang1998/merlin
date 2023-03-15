@@ -91,8 +91,9 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
      *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and
      *  stride vector.
+     *  @param stream_ptr Pointer to CUDA sytream for asynchronious copy.
      */
-    void * copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr) const;
+    void * copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr, std::uintptr_t stream_ptr = 0) const;
     #ifdef __NVCC__
     /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
      *  @note This operation is single-threaded.
@@ -101,6 +102,12 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
      *  stride vector.
      */
     __cudevice__ void * copy_to_shared_mem(array::Parcel * share_ptr, void * shape_strides_ptr) const;
+    /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
+     *  @param share_ptr Dynamically allocated shared pointer on GPU.
+     *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and
+     *  stride vector.
+     */
+    __cudevice__ void * copy_to_shared_mem_single(array::Parcel * share_ptr, void * shape_strides_ptr) const;
     #endif  // __NVCC__
 
     /// @name Destructor

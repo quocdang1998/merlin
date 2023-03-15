@@ -12,6 +12,10 @@
 
 namespace merlin {
 
+// --------------------------------------------------------------------------------------------------------------------
+// Calculate coefficients
+// --------------------------------------------------------------------------------------------------------------------
+
 // Calculate Lagrange interpoaltion coefficient on a full Cartesian grid using CPU
 void interpolant::calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::Array & value,
                                            array::Array & coeff) {
@@ -53,6 +57,10 @@ void call_lagrange_coeff_kernel(const interpolant::CartesianGrid * p_grid, const
                                 std::uintptr_t stream_ptr) {}
 
 #endif  // __MERLIN_CUDA__
+
+// --------------------------------------------------------------------------------------------------------------------
+// Evaluate interpolation
+// --------------------------------------------------------------------------------------------------------------------
 
 // Evaluate Lagrange interpolation on a full Cartesian grid using CPU
 double interpolant::eval_lagrange_cpu(const interpolant::CartesianGrid & grid, const array::Array & coeff,

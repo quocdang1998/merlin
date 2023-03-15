@@ -158,7 +158,7 @@ void array::Parcel::transfer_data_to_gpu(const array::Array & cpu_array, const c
 }
 
 // Copy data to a pre-allocated memory
-void * array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr) const {
+void * array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr, std::uintptr_t stream_ptr) const {
     // initialize buffer to store data of the copy before cloning it to GPU
     array::Parcel copy_on_gpu;
     // shallow copy of the current object
@@ -166,10 +166,11 @@ void * array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_
     copy_on_gpu.ndim_ = this->ndim_;
     copy_on_gpu.device_ = this->device_;
     // copy temporary object to GPU
-    ::cudaMemcpy(gpu_ptr, &copy_on_gpu, sizeof(array::Parcel), ::cudaMemcpyHostToDevice);
+    ::cudaMemcpyAsync(gpu_ptr, &copy_on_gpu, sizeof(array::Parcel), ::cudaMemcpyHostToDevice,
+                      reinterpret_cast<::cudaStream_t>(stream_ptr));
     // copy shape and strides data
-    void * strides_data_ptr_gpu = this->shape_.copy_to_gpu(&(gpu_ptr->shape_), shape_strides_ptr);
-    void * result_ptr = this->strides_.copy_to_gpu(&(gpu_ptr->strides_), strides_data_ptr_gpu);
+    void * strides_data_ptr_gpu = this->shape_.copy_to_gpu(&(gpu_ptr->shape_), shape_strides_ptr, stream_ptr);
+    void * result_ptr = this->strides_.copy_to_gpu(&(gpu_ptr->strides_), strides_data_ptr_gpu, stream_ptr);
     // nullify data pointer to avoid free data
     copy_on_gpu.data_ = nullptr;
     copy_on_gpu.shape_.data() = nullptr;

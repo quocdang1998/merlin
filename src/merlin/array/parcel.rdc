@@ -64,6 +64,18 @@ __cudevice__ void * array::Parcel::copy_to_shared_mem(array::Parcel * share_ptr,
     return result;
 }
 
+// Copy to shared memory
+__cudevice__ void * array::Parcel::copy_to_shared_mem_single(array::Parcel * share_ptr,
+                                                             void * shape_strides_ptr) const {
+    // copy meta data
+    share_ptr->data_ = this->data_;
+    share_ptr->ndim_ = this->ndim_;
+    // copy shape and strides
+    void * strides_data_ptr = this->shape_.copy_to_shared_mem(&(share_ptr->shape_), shape_strides_ptr);
+    void * result = this->strides_.copy_to_shared_mem(&(share_ptr->strides_), strides_data_ptr);
+    return result;
+}
+
 #endif  //  __NVCC__
 
 }  // namespace merlin
