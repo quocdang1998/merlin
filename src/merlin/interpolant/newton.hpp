@@ -57,7 +57,7 @@ void calc_newton_coeffs_gpu(const interpolant::CartesianGrid & grid, const array
 double eval_newton_cpu(const interpolant::CartesianGrid & grid, const array::Array & coeff,
                        const Vector<double> & x);
 
-/** @brief Evaluate Newton interpolation on a full Cartesian grid using CPU.*/
+/** @brief Evaluate Newton interpolation by dimensionality recursion method on a full Cartesian grid using CPU.*/
 double eval_newton_cpu2(const interpolant::CartesianGrid & grid, const array::Array & coeff,
                         const Vector<double> & x);
 

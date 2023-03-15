@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cinttypes>
 
+#include "merlin/cuda/memory.hpp"
 #include "merlin/vector.hpp"  // merlin::intvec
 #include "merlin/logger.hpp"  // CUDAOUT
 
@@ -25,15 +26,17 @@ __global__ void initialize_intvec_on_gpu(void) {
 
 int main(void) {
     // create intvec instance
-    merlin::intvec x({1, 2, 3});
+    merlin::intvec x({1, 2, 3}), y({7, 8, 9});
     MESSAGE("Initialize intvec with values: %" PRIu64 " %" PRIu64 " %" PRIu64 ".\n", x[0], x[1], x[2]);
     // allocate and copy intvec to GPU
-    merlin::intvec * ptr_x_gpu;
+    /*merlin::intvec * ptr_x_gpu;
     cudaMalloc(&ptr_x_gpu, x.malloc_size());
-    x.copy_to_gpu(ptr_x_gpu, ptr_x_gpu+1);
+    x.copy_to_gpu(ptr_x_gpu, ptr_x_gpu+1);*/
+    merlin::cuda::Memory m(x, y);
+    merlin::intvec * ptr_x_gpu = const_cast<merlin::intvec *>(m.get<1>());
     // print vector
-    print_element<<<1,3>>>(ptr_x_gpu);
-    print_element_from_shared_memory<<<1,3,x.malloc_size()>>>(ptr_x_gpu);
+    print_element<<<1,x.size()>>>(ptr_x_gpu);
+    print_element_from_shared_memory<<<1,x.size(),x.malloc_size()>>>(ptr_x_gpu);
     initialize_intvec_on_gpu<<<1,1>>>();
     cudaError_t err_ = cudaGetLastError();
     if (err_ != cudaSuccess) {
@@ -41,5 +44,5 @@ int main(void) {
     }
     cudaDeviceSynchronize();
     // free vector on GPU
-    cudaFree(ptr_x_gpu);
+    /*cudaFree(ptr_x_gpu);*/
 }

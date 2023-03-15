@@ -244,7 +244,7 @@ Vector<T> make_vector(std::uint64_t size, Args ... args) noexcept {
     result.data() = new T[size];
     result.size() = size;
     for (std::uint64_t i = 0; i < size; i++) {
-        new (&(result[i])) T(args ...);
+        new (&(result[i])) T(args...);
     }
     return result;
 }

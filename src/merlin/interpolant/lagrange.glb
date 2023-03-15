@@ -2,6 +2,7 @@
 #include "merlin/interpolant/lagrange.hpp"
 
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
+#include "merlin/cuda/memory.hpp"  // merlin::cuda::SharedMemLoad
 #include "merlin/env.hpp"  // merlin::Environment
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
 #include "merlin/utils.hpp"  // merlin::flatten_kernel_index, merlin::get_block_count, merlin::contiguous_to_ndim_idx
@@ -35,12 +36,18 @@ __global__ static void calc_lagrange_kernel(const interpolant::CartesianGrid * p
                                             array::Parcel * p_coeff, std::uint64_t size) {
     // copy meta data to shared memory
     extern __shared__ char share_ptr[];
+    /*
     interpolant::CartesianGrid * p_grid_shared = reinterpret_cast<interpolant::CartesianGrid *>(share_ptr);
     void * current_mem_ptr = p_grid->copy_to_shared_mem(p_grid_shared, p_grid_shared+1);
     array::Parcel * p_value_shared = reinterpret_cast<array::Parcel *>(current_mem_ptr);
     current_mem_ptr = p_value->copy_to_shared_mem(p_value_shared, p_value_shared+1);
     array::Parcel * p_coeff_shared = reinterpret_cast<array::Parcel *>(current_mem_ptr);
     p_coeff->copy_to_shared_mem(p_coeff_shared, p_coeff_shared+1);
+    */
+    auto shared_mem_tuple = cuda::copy_class_to_shared_mem(share_ptr, *p_grid, *p_value, *p_coeff);
+    interpolant::CartesianGrid * p_grid_shared = std::get<0>(shared_mem_tuple);
+    array::Parcel * p_value_shared = std::get<1>(shared_mem_tuple);
+    array::Parcel * p_coeff_shared = std::get<2>(shared_mem_tuple);
     // perform the calculation
     std::uint64_t c_index = flatten_kernel_index();
     if (c_index < size) {

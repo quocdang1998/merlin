@@ -27,5 +27,5 @@ int main(void) {
 
     merlin::array::Array coeff_cpu(value_cpu.shape());
     merlin::interpolant::calc_lagrange_coeffs_cpu(grid, value_cpu, coeff_cpu);
-    MESSAGE("Result GPU: %s\n", coeff_cpu.str().c_str());
+    MESSAGE("Result CPU: %s\n", coeff_cpu.str().c_str());
 }

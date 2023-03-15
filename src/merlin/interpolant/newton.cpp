@@ -137,8 +137,8 @@ void interpolant::calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid
 // --------------------------------------------------------------------------------------------------------------------
 
 // Evaluate Newton interpolation on a full Cartesian grid using CPU (supposed shape of grid == shape of coeff)
-double interpolant::eval_newton_cpu(const interpolant::CartesianGrid & grid, const array::Array & coeff,
-                                    const Vector<double> & x) {
+double interpolant::eval_newton_cpu2(const interpolant::CartesianGrid & grid, const array::Array & coeff,
+                                     const Vector<double> & x) {
     long double result = 0;
     std::uint64_t ndim = grid.ndim();
     const Vector<double> & grid_vector = grid.grid_vectors()[ndim - coeff.ndim()];
@@ -158,20 +158,20 @@ double interpolant::eval_newton_cpu(const interpolant::CartesianGrid & grid, con
     slice_i[0] = array::Slice({shape-1});
     array::Array array_coeff_i(coeff, slice_i);
     array_coeff_i.remove_dim(0);
-    result += interpolant::eval_newton_cpu(grid, array_coeff_i, x);
+    result += interpolant::eval_newton_cpu2(grid, array_coeff_i, x);
     for (std::int64_t i = shape-2; i >= 0; i--) {
         result *= (x[ndim - coeff.ndim()] - grid_vector[i]);
         slice_i[0] = array::Slice({static_cast<std::uint64_t>(i)});
         array_coeff_i = array::Array(coeff, slice_i);
         array_coeff_i.remove_dim(0);
-        result += interpolant::eval_newton_cpu(grid, array_coeff_i, x);
+        result += interpolant::eval_newton_cpu2(grid, array_coeff_i, x);
     }
     return result;
 }
 
 // Evaluate Newton interpolation without recursive
-double interpolant::eval_newton_cpu2(const interpolant::CartesianGrid & grid, const array::Array & coeff,
-                                     const Vector<double> & x) {
+double interpolant::eval_newton_cpu(const interpolant::CartesianGrid & grid, const array::Array & coeff,
+                                    const Vector<double> & x) {
     // initialize storing vector
     std::uint64_t ndim = grid.ndim(), max_dim = ndim-1;
     intvec shape = grid.get_grid_shape();
@@ -182,30 +182,26 @@ double interpolant::eval_newton_cpu2(const interpolant::CartesianGrid & grid, co
     // loop over each point in coeff array
     while (iterator != begin) {
         std::uint64_t i_dim = decrement_index(iterator, shape);
-        std::printf("Iterator: %s\n", iterator.str().c_str());
-        cum[i_dim] *= x[i_dim] - grid.grid_vectors()[i_dim][iterator[i_dim]];
         if (i_dim == max_dim) {
+            cum[i_dim] *= x[i_dim] - grid.grid_vectors()[i_dim][iterator[i_dim]];
             cum[i_dim] += coeff.get(iterator);
         } else {
+            cum[i_dim] *= x[i_dim] - grid.grid_vectors()[i_dim][iterator[i_dim]+1];
             for (std::uint64_t i = i_dim+1; i < max_dim; i++) {
                 cum[i_dim] += (x[i] - grid.grid_vectors()[i][0]) * cum[i];
-            }
-            cum[i_dim] += cum[max_dim];
-            // cum[i_dim] += cum[i_dim+1];
-            for (std::uint64_t i = i_dim+1; i < max_dim; i++) {
                 cum[i] = 0;
             }
+            cum[i_dim] += cum[max_dim];
             cum[max_dim] = coeff.get(iterator);
         }
-        std::printf("Cumulative: %s\n", cum.str().c_str());
     }
+    // finalize
     double result = 0.0;
     for (std::uint64_t i = 0; i < max_dim; i++) {
         result += (x[i] - grid.grid_vectors()[i][0]) * cum[i];
     }
+    result += cum[max_dim];
     return result;
-    // cum[i_dim] += cum[max_dim];
-    return cum[0];
 }
 
 }  // namespace merlin
