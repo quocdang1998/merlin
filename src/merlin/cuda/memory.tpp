@@ -39,23 +39,22 @@ void * copy_metadata_to_gpu(void * data, const T & first, const Args & ... args)
 
 // Copy metadata to shared mem
 template <typename T, typename ... Args>
-__cudevice__ void * copy_metadata_to_shared_mem(void * data, std::uintptr_t * arr, std::uint64_t write_index,
-                                                const T & first, const Args & ... args) {
+__cudevice__ std::tuple<T *, Args * ...> copy_metadata_to_shmem(void * data, const T & first, const Args & ... args) {
     T * ptr_data = reinterpret_cast<T *>(data);
-    arr[write_index] = reinterpret_cast<std::uintptr_t>(data);
-    void * result = first.copy_to_shared_mem(ptr_data, ptr_data+1);
+    std::tuple<T *> current(ptr_data);
+    void * next = first.copy_to_shared_mem(ptr_data, ptr_data+1);
     if constexpr (sizeof...(args) > 0) {
-        result = copy_metadata_to_shared_mem(result, arr, write_index+1, args...);
+        return std::tuple_cat(current, copy_metadata_to_shmem(next, args...));
+    } else {
+        return current;
     }
-    return result;
 }
 
 // --------------------------------------------------------------------------------------------------------------------
 // Memory
 // --------------------------------------------------------------------------------------------------------------------
 
-
-// Constrcutor
+// Constructor
 template <typename ... Args>
 cuda::Memory<Args ...>::Memory(const Args & ... args) {
     // allocate data
@@ -93,14 +92,7 @@ cuda::Memory<Args ...>::~Memory(void) {
 
 template <typename ... Args>
 __cudevice__ std::tuple<Args * ...> cuda::copy_class_to_shared_mem(void * share_ptr, const Args & ... args) {
-    std::tuple<Args * ...> result;
-    const std::uint64_t n_elems = std::tuple_size_v<std::tuple<Args * ...>>;
-    std::array<std::uintptr_t, sizeof...(Args)> arr;
-    copy_metadata_to_shared_mem(share_ptr, arr.data(), 0, args...);
-    for (std::uint64_t i = 0; i < n_elems; i++) {
-        std::get<const_cast<const uint64_t>(i)>(result) = reinterpret_cast<typename std::tuple_element<const uint64_t>(i), std::tuple<Args * ...>>::type>(arr[i]);
-    }
-    return result;
+    return copy_metadata_to_shmem(share_ptr, args...);
 }
 
 }  // namespace merlin

@@ -2,6 +2,7 @@
 #include "merlin/interpolant/newton.hpp"
 
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
+#include "merlin/cuda/memory.hpp"  // merlin::cuda::copy_class_to_shared_mem
 #include "merlin/env.hpp"  // merlin::Environment
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
 #include "merlin/utils.hpp"  // merlin::flatten_kernel_index, merlin::get_block_count, merlin::contiguous_to_ndim_idx
@@ -13,12 +14,10 @@ __global__ static void calc_divdiff_kernel(const array::Parcel * p_a1, const arr
                                            double x1, double x2, array::Parcel * p_result, std::uint64_t size) {
     // copy meta data to shared memory
     extern __shared__ char share_ptr[];
-    array::Parcel * p_a1_shared = reinterpret_cast<array::Parcel *>(share_ptr);
-    void * current_mem_ptr = p_a1->copy_to_shared_mem(p_a1_shared, p_a1_shared+1);
-    array::Parcel * p_a2_shared = reinterpret_cast<array::Parcel *>(current_mem_ptr);
-    current_mem_ptr = p_a2->copy_to_shared_mem(p_a2_shared, p_a2_shared+1);
-    array::Parcel * p_result_shared = reinterpret_cast<array::Parcel *>(current_mem_ptr);
-    p_result->copy_to_shared_mem(p_result_shared, p_result_shared+1);
+    auto shared_mem_tuple = cuda::copy_class_to_shared_mem(share_ptr, *p_a1, *p_a2, *p_result);
+    array::Parcel * p_a1_shared = std::get<0>(shared_mem_tuple);
+    array::Parcel * p_a2_shared = std::get<1>(shared_mem_tuple);
+    array::Parcel * p_result_shared = std::get<2>(shared_mem_tuple);
     // perform the calculation
     std::uint64_t c_index = flatten_kernel_index();
     if (c_index < size) {
@@ -35,6 +34,20 @@ void interpolant::call_divdiff_kernel(const array::Parcel * p_a1, const array::P
     ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
     calc_divdiff_kernel<<<block_count, Environment::default_block_size,
                           shared_mem_size, cuda_stream>>>(p_a1, p_a2, x1, x2, p_result, size);
+}
+
+// Calculate divide difference by a single thread on GPU
+__global__ static void calc_newton_coeffs_by_single_core(const interpolant::CartesianGrid * p_grid,
+                                                         array::NdData * coeff, std::uint64_t size) {
+    // copy meta data to GPU
+    extern __shared__ char share_ptr[];
+    interpolant::CartesianGrid * p_grid_share = reinterpret_cast<interpolant::CartesianGrid *>(share_ptr);
+    void * share_coeff_arrays = p_grid->copy_to_shared_mem(p_grid_share, p_grid_share+1);
+
+    std::uint64_t c_index = flatten_kernel_index();
+    if (c_index < size) {
+        
+    }
 }
 
 }  // namespace merlin

@@ -29,6 +29,21 @@ __cuhostdev__ constexpr std::uint64_t get_block_count(std::uint64_t block_size, 
 
 #ifdef __NVCC__
 
+/** @brief Flatten index of the current thread in block.*/
+// __cudevice__ constexpr std::uint64_t flatten_thread_index(void) {
+//     return threadIdx.x + threadIdx.y*blockDim.x + threadIdx.z*blockDim.x*blockDim.y;
+// }
+// 
+// /** @brief Size of thread block.*/
+// __cudevice__ constexpr std::uint64_t size_of_block(void) {
+//     return blockDim.x*blockDim.y*blockDim.z;
+// }
+// 
+// /** @brief Flatten index of the current grid block.*/
+// __cudevice__ constexpr std::uint64_t flatten_block_index(void) {
+//     return blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y;
+// }
+
 /** @brief Flatten index of the current thread block.*/
 __cudevice__ constexpr std::uint64_t flatten_kernel_index(void) {
     std::uint64_t index_in_block = threadIdx.x + threadIdx.y*blockDim.x + threadIdx.z*blockDim.x*blockDim.y;

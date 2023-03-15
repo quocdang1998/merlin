@@ -136,39 +136,6 @@ void interpolant::calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid
 // Evaluate interpolation
 // --------------------------------------------------------------------------------------------------------------------
 
-// Evaluate Newton interpolation on a full Cartesian grid using CPU (supposed shape of grid == shape of coeff)
-double interpolant::eval_newton_cpu2(const interpolant::CartesianGrid & grid, const array::Array & coeff,
-                                     const Vector<double> & x) {
-    long double result = 0;
-    std::uint64_t ndim = grid.ndim();
-    const Vector<double> & grid_vector = grid.grid_vectors()[ndim - coeff.ndim()];
-    // trivial case
-    if (coeff.ndim() == 1) {
-        const std::uint64_t & shape = coeff.shape()[0];
-        result += coeff.get({shape-1});
-        for (std::int64_t i = shape-2; i >= 0; i--) {
-            result *= (x[ndim - coeff.ndim()] - grid_vector[i]);
-            result += coeff.get({static_cast<std::uint64_t>(i)});
-        }
-        return result;
-    }
-    // recursively calculate for non-trivial case
-    const std::uint64_t & shape = coeff.shape()[0];
-    Vector<array::Slice> slice_i(coeff.ndim());
-    slice_i[0] = array::Slice({shape-1});
-    array::Array array_coeff_i(coeff, slice_i);
-    array_coeff_i.remove_dim(0);
-    result += interpolant::eval_newton_cpu2(grid, array_coeff_i, x);
-    for (std::int64_t i = shape-2; i >= 0; i--) {
-        result *= (x[ndim - coeff.ndim()] - grid_vector[i]);
-        slice_i[0] = array::Slice({static_cast<std::uint64_t>(i)});
-        array_coeff_i = array::Array(coeff, slice_i);
-        array_coeff_i.remove_dim(0);
-        result += interpolant::eval_newton_cpu2(grid, array_coeff_i, x);
-    }
-    return result;
-}
-
 // Evaluate Newton interpolation without recursive
 double interpolant::eval_newton_cpu(const interpolant::CartesianGrid & grid, const array::Array & coeff,
                                     const Vector<double> & x) {
@@ -203,5 +170,40 @@ double interpolant::eval_newton_cpu(const interpolant::CartesianGrid & grid, con
     result += cum[max_dim];
     return result;
 }
+
+#ifdef __comment
+// Evaluate Newton interpolation on a full Cartesian grid using CPU (supposed shape of grid == shape of coeff)
+double eval_newton_cpu2(const interpolant::CartesianGrid & grid, const array::Array & coeff,
+                                     const Vector<double> & x) {
+    long double result = 0;
+    std::uint64_t ndim = grid.ndim();
+    const Vector<double> & grid_vector = grid.grid_vectors()[ndim - coeff.ndim()];
+    // trivial case
+    if (coeff.ndim() == 1) {
+        const std::uint64_t & shape = coeff.shape()[0];
+        result += coeff.get({shape-1});
+        for (std::int64_t i = shape-2; i >= 0; i--) {
+            result *= (x[ndim - coeff.ndim()] - grid_vector[i]);
+            result += coeff.get({static_cast<std::uint64_t>(i)});
+        }
+        return result;
+    }
+    // recursively calculate for non-trivial case
+    const std::uint64_t & shape = coeff.shape()[0];
+    Vector<array::Slice> slice_i(coeff.ndim());
+    slice_i[0] = array::Slice({shape-1});
+    array::Array array_coeff_i(coeff, slice_i);
+    array_coeff_i.remove_dim(0);
+    result += interpolant::eval_newton_cpu2(grid, array_coeff_i, x);
+    for (std::int64_t i = shape-2; i >= 0; i--) {
+        result *= (x[ndim - coeff.ndim()] - grid_vector[i]);
+        slice_i[0] = array::Slice({static_cast<std::uint64_t>(i)});
+        array_coeff_i = array::Array(coeff, slice_i);
+        array_coeff_i.remove_dim(0);
+        result += interpolant::eval_newton_cpu2(grid, array_coeff_i, x);
+    }
+    return result;
+}
+#endif // __comment
 
 }  // namespace merlin
