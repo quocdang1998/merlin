@@ -10,8 +10,8 @@
 
 namespace merlin::interpolant {
 
-// Uitls
-// -----
+// GPU kernel wrapper
+// ------------------
 
 /** @brief Calculate Newton coefficients by a signle CPU or GPU core.
  *  @note Keep in mind:
@@ -22,21 +22,18 @@ namespace merlin::interpolant {
 __cuhostdev__ void calc_newton_coeffs_single_core(const interpolant::CartesianGrid & grid, array::NdData & coeff);
 
 /** @brief Call divide difference function on GPU.*/
-void call_divdiff_kernel(const array::Parcel * p_a1, const array::Parcel * p_a2,
-                         double x1, double x2, array::Parcel * p_result, std::uint64_t size,
-                         std::uint64_t shared_mem_size, std::uintptr_t stream_ptr);
+void call_divdiff_kernel(const array::Parcel * p_a1, const array::Parcel * p_a2, double x1, double x2,
+                         array::Parcel * p_result, std::uint64_t size, std::uint64_t shared_mem_size,
+                         std::uintptr_t stream_ptr);
+
+void call_single_core_kernel(const interpolant::CartesianGrid * p_grid, array::Parcel * p_coeff, std::uint64_t size,
+                             std::uint64_t shared_mem_size, std::uintptr_t stream_ptr);
 
 
+// Calculate coefficients
+// ----------------------
 
-
-
-
-
-
-
-
-
-/** @brief Calculate Newton coefficients without using recursion (for loop only).*/
+/** @brief Calculate Newton coefficients using CPU.*/
 void calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::Array & value,
                              array::Array & coeff);
 
@@ -51,7 +48,8 @@ void calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid, const array
 void calc_newton_coeffs_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
                             array::Parcel & coeff, const cuda::Stream & stream = cuda::Stream());
 
-
+// Evaluate interpolation
+// ----------------------
 
 /** @brief Evaluate Newton interpolation on a full Cartesian grid using CPU.*/
 double eval_newton_cpu(const interpolant::CartesianGrid & grid, const array::Array & coeff,

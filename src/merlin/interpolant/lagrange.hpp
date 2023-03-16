@@ -11,13 +11,8 @@
 
 namespace merlin::interpolant {
 
-/** @brief Calculate Lagrange interpolation coefficients on a full Cartesian grid using CPU.
- *  @param grid Cartesian grid.
- *  @param value Array of function values, must have the same shape as the grid.
- *  @param coeff Array storing interpolation coefficient after the calculation.
- */
-void calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::Array & value,
-                              array::Array & coeff);
+// GPU kernel wrapper
+// ------------------
 
 /** @brief Call the GPU kernel calculating the coefficient with Lagrange method.
  *  @param p_grid Pointer to Cartesian grid pre-allocated on GPU.
@@ -32,6 +27,17 @@ void call_lagrange_coeff_kernel(const interpolant::CartesianGrid * p_grid, const
                                 array::Parcel * p_coeff, std::uint64_t size, std::uint64_t shared_mem_size,
                                 std::uintptr_t stream_ptr);
 
+// Calculate coefficients
+// ----------------------
+
+/** @brief Calculate Lagrange interpolation coefficients on a full Cartesian grid using CPU.
+ *  @param grid Cartesian grid.
+ *  @param value Array of function values, must have the same shape as the grid.
+ *  @param coeff Array storing interpolation coefficient after the calculation.
+ */
+void calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::Array & value,
+                              array::Array & coeff);
+
 /** @brief Calculate Lagrange interpolation coefficients on a full Cartesian grid using GPU.
  *  @param grid Cartesian grid.
  *  @param value Array of function values, must have the same shape as the grid.
@@ -42,6 +48,9 @@ void call_lagrange_coeff_kernel(const interpolant::CartesianGrid * p_grid, const
  */
 void calc_lagrange_coeffs_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
                               array::Parcel & coeff, const cuda::Stream & stream = cuda::Stream());
+
+// Evaluate interpolation
+// ----------------------
 
 /** @brief Evaluate Lagrange interpolation on a full Cartesian grid using CPU.
  *  @param grid Cartesian grid.

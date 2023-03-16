@@ -11,6 +11,10 @@
 
 namespace merlin {
 
+// --------------------------------------------------------------------------------------------------------------------
+// GPU kernel wrapper
+// --------------------------------------------------------------------------------------------------------------------
+
 // Calculate interpolation on a given index
 __cudevice__ static void calc_lagrange_coefficients(std::uint64_t c_index, const interpolant::CartesianGrid * p_grid,
                                                     const array::Parcel * p_value, array::Parcel * p_coeff) {

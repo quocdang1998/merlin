@@ -4,7 +4,7 @@
 
 #include <string>  // std::string
 
-#include "merlin/cuda_decorator.hpp"  // __cuhostdev__
+#include "merlin/cuda_decorator.hpp"  // __cudevice__, __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_HOSTDEV_EXPORTS
 #include "merlin/vector.hpp"  // merlin::Vector
 
@@ -30,19 +30,22 @@ __cuhostdev__ constexpr std::uint64_t get_block_count(std::uint64_t block_size, 
 #ifdef __NVCC__
 
 /** @brief Flatten index of the current thread in block.*/
-// __cudevice__ constexpr std::uint64_t flatten_thread_index(void) {
-//     return threadIdx.x + threadIdx.y*blockDim.x + threadIdx.z*blockDim.x*blockDim.y;
-// }
-// 
-// /** @brief Size of thread block.*/
-// __cudevice__ constexpr std::uint64_t size_of_block(void) {
-//     return blockDim.x*blockDim.y*blockDim.z;
-// }
-// 
-// /** @brief Flatten index of the current grid block.*/
-// __cudevice__ constexpr std::uint64_t flatten_block_index(void) {
-//     return blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y;
-// }
+__cudevice__ constexpr std::uint64_t flatten_thread_index(void) {
+    std::uint64_t result = threadIdx.x + threadIdx.y*blockDim.x + threadIdx.z*blockDim.x*blockDim.y;
+    return result;
+}
+
+/** @brief Size of thread block.*/
+__cudevice__ constexpr std::uint64_t size_of_block(void) {
+    std::uint64_t result = blockDim.x*blockDim.y*blockDim.z;
+    return result;
+}
+
+/** @brief Flatten index of the current grid block.*/
+__cudevice__ constexpr std::uint64_t flatten_block_index(void) {
+    std::uint64_t result = blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y;
+    return result;
+}
 
 /** @brief Flatten index of the current thread block.*/
 __cudevice__ constexpr std::uint64_t flatten_kernel_index(void) {

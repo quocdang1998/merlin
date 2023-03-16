@@ -3,6 +3,7 @@
 #include "merlin/cuda/stream.hpp"
 #include "merlin/interpolant/cartesian_grid.hpp"
 #include "merlin/interpolant/lagrange.hpp"
+#include "merlin/interpolant/newton.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/vector.hpp"
 
@@ -21,11 +22,14 @@ int main(void) {
     merlin::array::Parcel coeff(value_cpu.shape());
     stream.synchronize();
 
-    merlin::interpolant::calc_lagrange_coeffs_gpu(grid, value, coeff, stream);
+    // merlin::interpolant::calc_lagrange_coeffs_gpu(grid, value, coeff, stream);
+    merlin::interpolant::calc_newton_coeffs_gpu(grid, value, coeff, stream);
     stream.synchronize();
     MESSAGE("Result GPU: %s\n", coeff.str().c_str());
 
     merlin::array::Array coeff_cpu(value_cpu.shape());
-    merlin::interpolant::calc_lagrange_coeffs_cpu(grid, value_cpu, coeff_cpu);
+    // merlin::interpolant::calc_lagrange_coeffs_cpu(grid, value_cpu, coeff_cpu);
+    merlin::interpolant::calc_newton_coeffs_cpu(grid, value_cpu, coeff_cpu);
     MESSAGE("Result CPU: %s\n", coeff_cpu.str().c_str());
+
 }

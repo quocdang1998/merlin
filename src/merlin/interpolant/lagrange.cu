@@ -7,6 +7,10 @@
 
 namespace merlin {
 
+// --------------------------------------------------------------------------------------------------------------------
+// Calculate coefficients
+// --------------------------------------------------------------------------------------------------------------------
+
 // Calculate Lagrange interpolation coefficients on a full Cartesian grid using GPU
 void interpolant::calc_lagrange_coeffs_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
                                            array::Parcel & coeff, const cuda::Stream & stream) {
