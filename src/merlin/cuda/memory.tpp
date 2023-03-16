@@ -28,11 +28,11 @@ std::uint64_t total_malloc_size(std::uintptr_t * arr, std::uint64_t write_index,
 
 // Copy metadata to GPU
 template <typename T, typename ... Args>
-void * copy_metadata_to_gpu(void * data, const T & first, const Args & ... args) {
+void * copy_metadata_to_gpu(std::uintptr_t stream_ptr, void * data, const T & first, const Args & ... args) {
     T * ptr_data = reinterpret_cast<T *>(data);
-    void * result = first.copy_to_gpu(ptr_data, ptr_data+1);
+    void * result = first.copy_to_gpu(ptr_data, ptr_data+1, stream_ptr);
     if constexpr (sizeof...(args) > 0) {
-        result = copy_metadata_to_gpu(result, args...);
+        result = copy_metadata_to_gpu(stream_ptr, result, args...);
     }
     return result;
 }
@@ -56,7 +56,7 @@ __cudevice__ std::tuple<T *, Args * ...> copy_metadata_to_shmem(void * data, con
 
 // Constructor
 template <typename ... Args>
-cuda::Memory<Args ...>::Memory(const Args & ... args) {
+cuda::Memory<Args ...>::Memory(std::uintptr_t stream_ptr, const Args & ... args) {
     // allocate data
     this->offset_.fill(0);
     this->total_malloc_size_ = total_malloc_size(this->offset_.data(), 1, args...);
@@ -67,7 +67,7 @@ cuda::Memory<Args ...>::Memory(const Args & ... args) {
     // storing source pointers
     this->type_ptr_ = std::make_tuple<const Args * ...>(&(args)...);
     // copy data to GPU
-    copy_metadata_to_gpu(this->gpu_ptr_, args...);
+    copy_metadata_to_gpu(stream_ptr, this->gpu_ptr_, args...);
     // cummulative sum
     for (std::size_t i = 1; i < this->offset_.size(); i++) {
         this->offset_[i] += this->offset_[i-1];
@@ -90,6 +90,11 @@ cuda::Memory<Args ...>::~Memory(void) {
     }
 }
 
+// --------------------------------------------------------------------------------------------------------------------
+// Shared Memory Copy
+// --------------------------------------------------------------------------------------------------------------------
+
+// Copy class to shared memory
 template <typename ... Args>
 __cudevice__ std::tuple<Args * ...> cuda::copy_class_to_shared_mem(void * share_ptr, const Args & ... args) {
     return copy_metadata_to_shmem(share_ptr, args...);

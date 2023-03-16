@@ -124,8 +124,9 @@ class Vector {
      *  @details The object and its data is copied to the global memory of the GPU.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory storing the object.
      *  @param data_ptr Pre-allocated pointer to memory region storing data of the vector.
+     *  @param stream_ptr Pointer to CUDA stream for asynchronious copy.
      */
-    void * copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr) const;
+    void * copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr, std::uintptr_t stream_ptr = 0) const;
     /** @brief Copy data from GPU to CPU.
      *  @param gpu_ptr Pointer to object on GPU global memory.
      */

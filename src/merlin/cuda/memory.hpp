@@ -29,7 +29,7 @@ class cuda::Memory {
     /** @brief Default constructor.*/
     Memory(void) = default;
     /** @brief Constructor from classes.*/
-    Memory(const Args & ... args);
+    Memory(std::uintptr_t stream_ptr, const Args & ... args);
 
     /** @brief Copy constructor (deleted).*/
     Memory(const cuda::Memory<Args ...> & src) = delete;

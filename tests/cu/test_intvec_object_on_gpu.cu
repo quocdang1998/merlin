@@ -29,10 +29,7 @@ int main(void) {
     merlin::intvec x({1, 2, 3}), y({7, 8, 9});
     MESSAGE("Initialize intvec with values: %" PRIu64 " %" PRIu64 " %" PRIu64 ".\n", x[0], x[1], x[2]);
     // allocate and copy intvec to GPU
-    /*merlin::intvec * ptr_x_gpu;
-    cudaMalloc(&ptr_x_gpu, x.malloc_size());
-    x.copy_to_gpu(ptr_x_gpu, ptr_x_gpu+1);*/
-    merlin::cuda::Memory m(x, y);
+    merlin::cuda::Memory m(0, x, y);
     merlin::intvec * ptr_x_gpu = const_cast<merlin::intvec *>(m.get<1>());
     // print vector
     print_element<<<1,x.size()>>>(ptr_x_gpu);
@@ -43,6 +40,4 @@ int main(void) {
         FAILURE(cuda_runtime_error, "%s.\n", cudaGetErrorName(err_));
     }
     cudaDeviceSynchronize();
-    // free vector on GPU
-    /*cudaFree(ptr_x_gpu);*/
 }

@@ -87,6 +87,7 @@ array::Array::Array(double * data, const intvec & shape, const intvec & strides,
     } else {
         this->strides_ = strides;
         this->data_ = data;
+        cuda_pin_memory(this->data_, this->size());
     }
     this->initialize_iterator();
 }

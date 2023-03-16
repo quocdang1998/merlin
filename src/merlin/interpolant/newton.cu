@@ -24,7 +24,7 @@ void divide_difference_gpu_parallel(const array::Parcel & a1, const array::Parce
     // check for validity
     stream.check_cuda_context();
     // copy data to GPU
-    cuda::Memory mem(a1, a2, result);
+    cuda::Memory mem(stream.get_stream_ptr(), a1, a2, result);
     array::Parcel * ptr_a1_on_gpu = const_cast<array::Parcel *>(mem.get<0>());
     array::Parcel * ptr_a2_on_gpu = const_cast<array::Parcel *>(mem.get<1>());
     array::Parcel * ptr_result_on_gpu = const_cast<array::Parcel *>(mem.get<2>());

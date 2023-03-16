@@ -95,8 +95,9 @@ class MERLIN_EXPORTS interpolant::CartesianGrid : public interpolant::Grid {
      *  @details Values of vectors should be copied to the memory region that comes right after the copied object.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
      *  @param grid_vector_data_ptr Pointer to a pre-allocated GPU memory storing data of grid vectors.
+     *  @param stream_ptr Pointer to CUDA stream for asynchronious copy.
      */
-    void * copy_to_gpu(interpolant::CartesianGrid * gpu_ptr, void * grid_vector_data_ptr) const;
+    void * copy_to_gpu(interpolant::CartesianGrid * gpu_ptr, void * grid_vector_data_ptr, std::uintptr_t stream_ptr = 0) const;
     #ifdef __NVCC__
     /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
      *  @note This operation is single-threaded.
