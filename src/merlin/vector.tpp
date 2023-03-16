@@ -163,6 +163,7 @@ void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
 #endif  // !__MERLIN_CUDA__
 
 #ifdef __NVCC__
+
 // Copy to shared memory
 template <typename T>
 __cudevice__ void * Vector<T>::copy_to_shared_mem(Vector<T> * share_ptr, void * data_ptr) const {
@@ -180,6 +181,21 @@ __cudevice__ void * Vector<T>::copy_to_shared_mem(Vector<T> * share_ptr, void * 
     std::uintptr_t ptr_end = reinterpret_cast<std::uint64_t>(data_ptr) + this->size_*sizeof(T);
     return reinterpret_cast<void *>(ptr_end);
 }
+
+// Copy to shared memory by current thread
+template <typename T>
+__cudevice__ void * Vector<T>::copy_to_shared_mem_single(Vector<T> * share_ptr, void * data_ptr) const {
+    // copy size
+    share_ptr->size_ = this->size_;
+    share_ptr->data_ = reinterpret_cast<T *>(data_ptr);
+    // copy data
+    for (std::uint64_t i = 0; i < this->size_; i++) {
+        share_ptr->data_[i] = this->data_[i];
+    }
+    std::uintptr_t ptr_end = reinterpret_cast<std::uint64_t>(data_ptr) + this->size_*sizeof(T);
+    return reinterpret_cast<void *>(ptr_end);
+}
+
 #endif  // __NVCC__
 
 // String representation for types printdable to std::ostream

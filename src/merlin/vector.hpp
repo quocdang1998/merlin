@@ -138,6 +138,11 @@ class Vector {
      *  @param data_ptr Pre-allocated pointer to memory region storing data of the vector.
      */
     __cudevice__ void * copy_to_shared_mem(Vector<T> * share_ptr, void * data_ptr) const;
+    /** @brief Copy data from GPU global memory to shared memory of a kernel.
+     *  @param share_ptr Dynamically allocated shared pointer on GPU.
+     *  @param data_ptr Pre-allocated pointer to memory region storing data of the vector.
+     */
+    __cudevice__ void * copy_to_shared_mem_single(Vector<T> * share_ptr, void * data_ptr) const;
     #endif  // __NVCC__
     /// @}
 

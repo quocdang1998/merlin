@@ -4,7 +4,7 @@
 #include <tuple>  // std::get
 
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/cuda/memory.hpp"  // merlin::cuda::SharedMemLoad
+#include "merlin/cuda/memory.hpp"  // merlin::cuda::copy_class_to_shared_mem
 #include "merlin/env.hpp"  // merlin::Environment
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
 #include "merlin/utils.hpp"  // merlin::flatten_kernel_index, merlin::get_block_count, merlin::contiguous_to_ndim_idx
