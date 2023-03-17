@@ -44,7 +44,7 @@ class cuda::Memory {
     constexpr std::uint64_t get_total_malloc_size(void) noexcept{return this->total_malloc_size_;}
     /** @brief Get GPU pointer to element.*/
     template <std::uint64_t index>
-    typename std::tuple_element<index, std::tuple<const Args * ...>>::type get(void);
+    typename std::tuple_element<index, std::tuple<Args * ...>>::type get(void);
 
     /** @brief Defer the CUDA free on pointer for asynchronious launch on GPU.*/
     void defer_allocation(void);
@@ -60,7 +60,7 @@ class cuda::Memory {
     /** @brief Total malloc size.*/
     std::uint64_t total_malloc_size_;
     /** @brief Tuple of pointers to elements for storing class type.*/
-    std::tuple<const Args * ...> type_ptr_;
+    std::tuple<Args * ...> type_ptr_;
     /** @brief Deferred deallocation.*/
     bool deferred_dealloc_ = false;
 };

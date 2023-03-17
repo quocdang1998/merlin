@@ -69,7 +69,7 @@ cuda::Memory<Args ...>::Memory(std::uintptr_t stream_ptr, const Args & ... args)
         FAILURE(cuda_runtime_error, "Alloc data faile with message \"%s\"\n", ::cudaGetErrorString(err_));
     }
     // storing source pointers
-    this->type_ptr_ = std::make_tuple<const Args * ...>(&(args)...);
+    this->type_ptr_ = std::make_tuple<Args * ...>(const_cast<Args *>(&(args))...);
     // copy data to GPU
     copy_metadata_to_gpu(stream_ptr, this->gpu_ptr_, args...);
     // cummulative sum
@@ -81,9 +81,9 @@ cuda::Memory<Args ...>::Memory(std::uintptr_t stream_ptr, const Args & ... args)
 // Get pointer element
 template <typename ... Args>
 template <std::uint64_t index>
-typename std::tuple_element<index, std::tuple<const Args * ...>>::type cuda::Memory<Args ...>::get(void) {
+typename std::tuple_element<index, std::tuple<Args * ...>>::type cuda::Memory<Args ...>::get(void) {
     std::uintptr_t result = reinterpret_cast<std::uintptr_t>(this->gpu_ptr_) + this->offset_[index];
-    return reinterpret_cast<typename std::tuple_element<index, std::tuple<const Args * ...>>::type>(result);
+    return reinterpret_cast<typename std::tuple_element<index, std::tuple<Args * ...>>::type>(result);
 }
 
 // Defer the CUDA free on pointer

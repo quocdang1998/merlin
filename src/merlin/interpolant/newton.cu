@@ -26,9 +26,9 @@ void calc_divdiff_gpu(const array::Parcel & a1, const array::Parcel & a2, double
     // copy data to GPU
     cuda::Memory mem(stream.get_stream_ptr(), a1, a2, result);
     mem.defer_allocation();
-    array::Parcel * ptr_a1_on_gpu = const_cast<array::Parcel *>(mem.get<0>());
-    array::Parcel * ptr_a2_on_gpu = const_cast<array::Parcel *>(mem.get<1>());
-    array::Parcel * ptr_result_on_gpu = const_cast<array::Parcel *>(mem.get<2>());
+    array::Parcel * ptr_a1_on_gpu = mem.get<0>();
+    array::Parcel * ptr_a2_on_gpu = mem.get<1>();
+    array::Parcel * ptr_result_on_gpu = mem.get<2>();
     std::uint64_t total_malloc_size = mem.get_total_malloc_size();
     // call divide difference algorithm on GPU
     std::uint64_t size = a1.size();
