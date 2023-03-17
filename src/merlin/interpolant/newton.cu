@@ -70,7 +70,6 @@ void calc_newton_coeffs_gpu_recursive(const interpolant::CartesianGrid & grid, a
             calc_divdiff_gpu(array_k, array_k_1, grid_vector[k], grid_vector[k-i], array_result, stream);
         }
     }
-    stream.synchronize();
     // calculate new start index jump
     intvec shape_other_dims;
     intvec total_dim = grid.get_grid_shape();
@@ -130,16 +129,16 @@ void interpolant::calc_newton_coeffs_gpu(const interpolant::CartesianGrid & grid
     // copy value to coeff
     if (&coeff != &value) {
         ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr());
-        /*
-        auto copy_func = std::bind(::cudaMemcpyPeerAsync, std::placeholders::_1, coeff.device().id(),
-                                   std::placeholders::_2, value.device().id(), std::placeholders::_3, cuda_stream);
-        */
-        auto copy_func = std::bind(::cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2,
-                                   std::placeholders::_3, ::cudaMemcpyDeviceToDevice, cuda_stream);
-        array::array_copy(&coeff, &value, copy_func);
-        stream.synchronize();
+        if (coeff.device() != value.device()) {
+            auto copy_func = std::bind(::cudaMemcpyPeerAsync, std::placeholders::_1, coeff.device().id(),
+                                       std::placeholders::_2, value.device().id(), std::placeholders::_3, cuda_stream);
+            array::array_copy(&coeff, &value, copy_func);
+        } else {
+            auto copy_func = std::bind(::cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2,
+                                    std::placeholders::_3, ::cudaMemcpyDeviceToDevice, cuda_stream);
+            array::array_copy(&coeff, &value, copy_func);
+        }
     }
-    std::printf("Coeff array: %s.\n", coeff.str().c_str());
     // get max recursive dimension
     static std::uint64_t parallel_limit = Environment::parallel_chunk;
     intvec total_shape = grid.get_grid_shape();

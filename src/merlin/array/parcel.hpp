@@ -8,6 +8,7 @@
 #include "merlin/array/nddata.hpp"  // merlin::array::Array, merlin::array::NdData
 #include "merlin/cuda_decorator.hpp"  // __cudevice__, __cuhostdev__
 #include "merlin/cuda/device.hpp"  // merlin::cuda::Device
+#include "merlin/cuda/context.hpp"  // merlin::cuda::Context
 #include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/vector.hpp"  // merlin::intvec
@@ -119,6 +120,8 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
   protected:
     /** @brief Device containing data of Parcel.*/
     cuda::Device device_;
+    /** @brief Context containing data of Parcel.*/
+    cuda::Context context_;
     /** @brief Mutex lock at destruction time.*/
     static std::mutex & mutex_;
 

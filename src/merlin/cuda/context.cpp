@@ -38,18 +38,18 @@ cuda::Context::Context(const cuda::Device & gpu, cuda::Context::Flags flag) {
 }
 
 // Check if the context is the top of context stack
-bool cuda::Context::is_current(void) {
+bool cuda::Context::is_current(void) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for context management.\n");
     return false;
 }
 
 // Push the context to the stack
-void cuda::Context::push_current(void) {
+void cuda::Context::push_current(void) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for context management.\n");
 }
 
 // Pop the context out of the stack
-cuda::Context & cuda::Context::pop_current(void) {
+const cuda::Context & cuda::Context::pop_current(void) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for context management.\n");
     return *this;
 }
