@@ -113,6 +113,11 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
 
     /// @name Destructor
     /// @{
+    /** @brief Defer deallocation.
+     *  @details Delay CUDA memory deallocation until the end of program, or until
+     *  ``merlin::Environment::flush_cuda_deferred_deallocation`` is called.
+     */
+    void defer_allocation(void);
     /** @brief Destructor.*/
     ~Parcel(void);
     /// @}

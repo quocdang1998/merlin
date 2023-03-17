@@ -18,6 +18,7 @@ void interpolant::calc_lagrange_coeffs_gpu(const interpolant::CartesianGrid & gr
     stream.check_cuda_context();
     // copy data to GPU
     cuda::Memory mem(stream.get_stream_ptr(), grid, value, coeff);
+    mem.defer_allocation();
     interpolant::CartesianGrid * ptr_grid_on_gpu = const_cast<interpolant::CartesianGrid *>(mem.get<0>());
     array::Parcel * ptr_value_on_gpu = const_cast<array::Parcel *>(mem.get<1>());
     array::Parcel * ptr_coeff_on_gpu = const_cast<array::Parcel *>(mem.get<2>());

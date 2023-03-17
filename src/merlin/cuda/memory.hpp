@@ -46,6 +46,9 @@ class cuda::Memory {
     template <std::uint64_t index>
     typename std::tuple_element<index, std::tuple<const Args * ...>>::type get(void);
 
+    /** @brief Defer the CUDA free on pointer for asynchronious launch on GPU.*/
+    void defer_allocation(void);
+
     /** @brief Destructor.*/
     ~Memory(void);
 
@@ -58,6 +61,8 @@ class cuda::Memory {
     std::uint64_t total_malloc_size_;
     /** @brief Tuple of pointers to elements for storing class type.*/
     std::tuple<const Args * ...> type_ptr_;
+    /** @brief Deferred deallocation.*/
+    bool deferred_dealloc_ = false;
 };
 
 namespace cuda {

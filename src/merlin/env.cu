@@ -59,4 +59,17 @@ void destroy_cuda_context(void) {
     }
 }
 
+// Deallocate all pointers in deferred pointer array
+void Environment::flush_cuda_deferred_deallocation(void) {
+    Environment::mutex.lock();
+    for (auto & [gpu, pointer] : Environment::deferred_gpu_pointer) {
+        ::CUcontext gpu_context = reinterpret_cast<::CUcontext>(Environment::primary_contexts[gpu]);
+        ::cuCtxPushCurrent(gpu_context);
+        ::cudaFree(pointer);
+        ::cuCtxPopCurrent(&gpu_context);
+    }
+    Environment::deferred_gpu_pointer.clear();
+    Environment::mutex.unlock();
+}
+
 }  // namespace merlin

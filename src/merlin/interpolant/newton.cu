@@ -2,7 +2,7 @@
 #include "merlin/interpolant/newton.hpp"
 
 #include <functional>  // std::bind, std::placeholders
-#include <utility> // std::move
+#include <utility> // std::move, std::make_pair
 
 #include "merlin/array/copy.hpp"  // merlin::array::array_copy
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
@@ -25,6 +25,7 @@ void calc_divdiff_gpu(const array::Parcel & a1, const array::Parcel & a2, double
     stream.check_cuda_context();
     // copy data to GPU
     cuda::Memory mem(stream.get_stream_ptr(), a1, a2, result);
+    mem.defer_allocation();
     array::Parcel * ptr_a1_on_gpu = const_cast<array::Parcel *>(mem.get<0>());
     array::Parcel * ptr_a2_on_gpu = const_cast<array::Parcel *>(mem.get<1>());
     array::Parcel * ptr_result_on_gpu = const_cast<array::Parcel *>(mem.get<2>());
@@ -115,8 +116,9 @@ void calc_newton_coeff_single_core_gpu(const interpolant::CartesianGrid & grid, 
     std::uint64_t shared_mem_size = grid.malloc_size() + Environment::default_block_size * coeff_size;
     interpolant::call_single_core_kernel(grid_gpu, reinterpret_cast<array::Parcel *>(coeff_gpu_data), size,
                                          shared_mem_size, stream.get_stream_ptr());
-    // deallocate data
-    ::cudaFree(gpu_memory);
+    // defer deallocation
+    int gpu = stream.get_gpu().id();
+    Environment::deferred_gpu_pointer.push_back(std::pair(gpu, gpu_memory));
 }
 
 // Calculate Lagrange interpolation coefficients on a full Cartesian grid using GPU

@@ -5,7 +5,11 @@
 #include <algorithm>  // std::reverse
 #include <cstddef>  // std::size_t
 #include <type_traits>  // std::remove_pointer_t
+#include <utility>  // std::make_pair
 
+#include <cuda.h>  // ::cuCtxGetDevice
+
+#include "merlin/env.hpp"  // merlin::Environment
 #include "merlin/logger.hpp"  // FAILURE
 
 namespace merlin {
@@ -82,10 +86,20 @@ typename std::tuple_element<index, std::tuple<const Args * ...>>::type cuda::Mem
     return reinterpret_cast<typename std::tuple_element<index, std::tuple<const Args * ...>>::type>(result);
 }
 
+// Defer the CUDA free on pointer
+template <typename ... Args>
+void cuda::Memory<Args ...>::defer_allocation(void) {
+    if (this->gpu_ptr_ != nullptr) {
+        int gpu;
+        ::cuCtxGetDevice(&gpu);
+        Environment::deferred_gpu_pointer.push_back(std::make_pair(gpu, this->gpu_ptr_));
+    }
+}
+
 // Destructor
 template <typename ... Args>
 cuda::Memory<Args ...>::~Memory(void) {
-    if (this->gpu_ptr_ != nullptr) {
+    if ((this->gpu_ptr_ != nullptr) && !(this->deferred_dealloc_)) {
         ::cudaFree(this->gpu_ptr_);
     }
 }
