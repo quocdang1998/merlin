@@ -2,7 +2,7 @@
 #include "merlin/interpolant/newton.hpp"
 
 #include <functional>  // std::bind, std::placeholders
-#include <utility> // std::move
+#include <utility> // std::move, std::make_pair
 
 #include "merlin/array/copy.hpp"  // merlin::array::array_copy
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
@@ -25,9 +25,10 @@ void calc_divdiff_gpu(const array::Parcel & a1, const array::Parcel & a2, double
     stream.check_cuda_context();
     // copy data to GPU
     cuda::Memory mem(stream.get_stream_ptr(), a1, a2, result);
-    array::Parcel * ptr_a1_on_gpu = const_cast<array::Parcel *>(mem.get<0>());
-    array::Parcel * ptr_a2_on_gpu = const_cast<array::Parcel *>(mem.get<1>());
-    array::Parcel * ptr_result_on_gpu = const_cast<array::Parcel *>(mem.get<2>());
+    mem.defer_allocation();
+    array::Parcel * ptr_a1_on_gpu = mem.get<0>();
+    array::Parcel * ptr_a2_on_gpu = mem.get<1>();
+    array::Parcel * ptr_result_on_gpu = mem.get<2>();
     std::uint64_t total_malloc_size = mem.get_total_malloc_size();
     // call divide difference algorithm on GPU
     std::uint64_t size = a1.size();
@@ -36,9 +37,9 @@ void calc_divdiff_gpu(const array::Parcel & a1, const array::Parcel & a2, double
 }
 
 // Calculate coefficients for cartesian grid (supposed shape value == shape of coeff)
-void calc_newton_coeffs_gpu_recursive(const interpolant::CartesianGrid & grid, array::Parcel & coeff,
-                                      std::uint64_t max_dimension, merlin::Vector<array::Parcel> & sub_slices,
-                                      std::uint64_t start_index, const cuda::Stream & stream) {
+static void calc_newton_coeffs_gpu_recursive(const interpolant::CartesianGrid & grid, array::Parcel & coeff,
+                                             std::uint64_t max_dimension, merlin::Vector<array::Parcel> & sub_slices,
+                                             std::uint64_t start_index, const cuda::Stream & stream) {
     // get associated 1D grid to calculate on
     std::uint64_t ndim = grid.ndim();
     std::uint64_t current_dim = ndim - coeff.ndim();
@@ -70,7 +71,6 @@ void calc_newton_coeffs_gpu_recursive(const interpolant::CartesianGrid & grid, a
             calc_divdiff_gpu(array_k, array_k_1, grid_vector[k], grid_vector[k-i], array_result, stream);
         }
     }
-    stream.synchronize();
     // calculate new start index jump
     intvec shape_other_dims;
     intvec total_dim = grid.get_grid_shape();
@@ -116,8 +116,9 @@ void calc_newton_coeff_single_core_gpu(const interpolant::CartesianGrid & grid, 
     std::uint64_t shared_mem_size = grid.malloc_size() + Environment::default_block_size * coeff_size;
     interpolant::call_single_core_kernel(grid_gpu, reinterpret_cast<array::Parcel *>(coeff_gpu_data), size,
                                          shared_mem_size, stream.get_stream_ptr());
-    // deallocate data
-    ::cudaFree(gpu_memory);
+    // defer deallocation
+    int gpu = stream.get_gpu().id();
+    Environment::deferred_gpu_pointer.push_back(std::pair(gpu, gpu_memory));
 }
 
 // Calculate Lagrange interpolation coefficients on a full Cartesian grid using GPU
@@ -130,16 +131,18 @@ void interpolant::calc_newton_coeffs_gpu(const interpolant::CartesianGrid & grid
     // copy value to coeff
     if (&coeff != &value) {
         ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr());
-        /*
-        auto copy_func = std::bind(::cudaMemcpyPeerAsync, std::placeholders::_1, coeff.device().id(),
-                                   std::placeholders::_2, value.device().id(), std::placeholders::_3, cuda_stream);
-        */
-        auto copy_func = std::bind(::cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2,
-                                   std::placeholders::_3, ::cudaMemcpyDeviceToDevice, cuda_stream);
-        array::array_copy(&coeff, &value, copy_func);
-        stream.synchronize();
+        if (coeff.device() != value.device()) {
+            auto copy_func = std::bind(::cudaMemcpyPeerAsync, std::placeholders::_1, coeff.device().id(),
+                                       std::placeholders::_2, value.device().id(), std::placeholders::_3, cuda_stream);
+            array::array_copy(&coeff, &value, copy_func);
+        } else {
+            auto copy_func = std::bind(::cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2,
+                                    std::placeholders::_3, ::cudaMemcpyDeviceToDevice, cuda_stream);
+            array::array_copy(&coeff, &value, copy_func);
+        }
     }
-    std::printf("Coeff array: %s.\n", coeff.str().c_str());
+    calc_newton_coeff_single_core_gpu(grid, &coeff, 1, stream);
+    #ifdef __deprecated
     // get max recursive dimension
     static std::uint64_t parallel_limit = Environment::parallel_chunk;
     intvec total_shape = grid.get_grid_shape();
@@ -161,6 +164,7 @@ void interpolant::calc_newton_coeffs_gpu(const interpolant::CartesianGrid & grid
     calc_newton_coeffs_gpu_recursive(grid, coeff, dim_max, sub_slices, 0, stream);
     // parallel calculation after that
     calc_newton_coeff_single_core_gpu(grid, sub_slices.data(), sub_slices.size(), stream);
+    #endif  // __deprecated
 }
 
 }  // namespace merlin

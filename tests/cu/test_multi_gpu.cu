@@ -21,9 +21,9 @@ __global__ void print_parcel_data(merlin::array::Parcel * pointer_on_gpu) {
 int main(void) {
     double A_ptr[65536];
     std::iota<double *, double>(A_ptr, A_ptr + 65536, 0.0);  // A = {0, 1, 2, ...}
-    merlin::intvec A_shape({64, 128, 8});
+    merlin::intvec A_shape = {64, 128, 8};
     merlin::intvec A_strides = merlin::array::contiguous_strides(A_shape, sizeof(double));
-    merlin::array::Array A_array(A_ptr, 3, A_shape.data(), A_strides.data(), false);
+    merlin::array::Array A_array(A_ptr, A_shape, A_strides, false);
     merlin::cuda::Context default_context = merlin::cuda::Context::get_current();
 
     std::uint64_t num_gpu = merlin::cuda::Device::get_num_gpu();
@@ -31,10 +31,6 @@ int main(void) {
     for (std::int64_t i_gpu = 0; i_gpu < num_gpu; i_gpu++) {
         merlin::cuda::Device gpu(i_gpu);
         gpu.set_as_current();
-        merlin::cuda::Context current_thread = merlin::cuda::Context::get_current();
-        if (current_thread != default_context) {
-            MESSAGE("Context changed when changing GPU.\n");
-        }
         merlin::cuda::Stream s(merlin::cuda::Stream::Setting::Default, 0);
         merlin::array::Array sliced_array(A_array, {{}, {}, {static_cast<std::uint64_t>(i_gpu)}});
         merlin::array::Parcel array_on_gpu(sliced_array.shape());

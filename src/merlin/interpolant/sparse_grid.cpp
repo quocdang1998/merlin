@@ -33,7 +33,7 @@ static inline void check_validity(const Vector<Vector<double>> & grid_vectors) {
             FAILURE(std::invalid_argument, "Size of each grid vector must be 2^n + 1, dimension %" PRIu64 " got %"
                     PRIu64 ".\n", i, data[i].size());
         }
-        // check sorted
+        // check sorted --> maybe removed in the future
         if (!std::is_sorted(data[i].cbegin(), data[i].cend())) {
             FAILURE(std::invalid_argument, "Grid vector of dimension %d is not sorted.\n", i);
         }
@@ -41,7 +41,7 @@ static inline void check_validity(const Vector<Vector<double>> & grid_vectors) {
 }
 
 // Get the level from a given valid size of a 1D grid
-static std::uint64_t get_level_from_valid_size(std::uint64_t size) noexcept {
+static inline std::uint64_t get_level_from_valid_size(std::uint64_t size) noexcept {
     size -= 1;
     std::uint64_t level = 0;
     while (size >>= 1) {
@@ -338,7 +338,7 @@ interpolant::CartesianGrid interpolant::get_cartesian_grid(const SparseGrid & gr
         }
         cart_grid_vectors[i] = points;
     }
-    return interpolant::CartesianGrid(cart_grid_vectors);
+    return interpolant::CartesianGrid(std::move(cart_grid_vectors));
 }
 
 }  // namespace merlin

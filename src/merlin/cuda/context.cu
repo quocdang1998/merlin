@@ -81,16 +81,14 @@ cuda::Context::Context(std::uintptr_t context_ptr) : context_(context_ptr) {
 }
 
 // Check if the context is the top of context stack
-bool cuda::Context::is_current(void) {
+bool cuda::Context::is_current(void) const {
     return this->context_ == get_current_context_ptr();
 }
 
 // Push the context to the stack
-void cuda::Context::push_current(void) {
-    if (this->is_current()) {
-        FAILURE(cuda_runtime_error, "The current context is being attached to the CPU process.\n");
-    }
+void cuda::Context::push_current(void) const {
     ::CUcontext ctx = reinterpret_cast<::CUcontext>(this->context_);
+    std::printf("Pushed context: %p\n", ctx);
     ::cudaError_t err_ = static_cast<::cudaError_t>(::cuCtxPushCurrent(ctx));
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Push context to current stack failed with message \"%s\".\n",
@@ -99,9 +97,9 @@ void cuda::Context::push_current(void) {
 }
 
 // Pop the context out of the stack
-cuda::Context & cuda::Context::pop_current(void) {
+const cuda::Context & cuda::Context::pop_current(void) const {
     if (!(this->is_current())) {
-        FAILURE(cuda_runtime_error, "The current context is not being attached to any processes.\n");
+        FAILURE(cuda_runtime_error, "The current context is not being attached to the current processes.\n");
     }
     ::CUcontext ctx = reinterpret_cast<::CUcontext>(this->context_);
     ::cudaError_t err_ = static_cast<::cudaError_t>(::cuCtxPopCurrent(&ctx));

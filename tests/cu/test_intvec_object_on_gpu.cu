@@ -30,7 +30,7 @@ int main(void) {
     MESSAGE("Initialize intvec with values: %" PRIu64 " %" PRIu64 " %" PRIu64 ".\n", x[0], x[1], x[2]);
     // allocate and copy intvec to GPU
     merlin::cuda::Memory m(0, x, y);
-    merlin::intvec * ptr_x_gpu = const_cast<merlin::intvec *>(m.get<1>());
+    merlin::intvec * ptr_x_gpu = m.get<1>();
     // print vector
     print_element<<<1,x.size()>>>(ptr_x_gpu);
     print_element_from_shared_memory<<<1,x.size(),x.malloc_size()>>>(ptr_x_gpu);

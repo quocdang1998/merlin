@@ -19,7 +19,7 @@ cdef extern from "merlin/cuda/context.hpp":
         bint is_primary()
 
         void push_current() except +
-        CppContext & pop_current() except +
+        const CppContext & pop_current() except +
         bint is_current() except +
 
         string str() except +

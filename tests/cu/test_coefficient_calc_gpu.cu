@@ -7,14 +7,20 @@
 #include "merlin/logger.hpp"
 #include "merlin/vector.hpp"
 
-int main(void) {
-    double data[9] = {1.0, 3.0, 9.0, 2.0, 4.0, 10.0, 2.5, 4.5, 10.5};
-    merlin::intvec dims = {3, 3};
-    merlin::intvec strides = {dims[1] * sizeof(double), sizeof(double)};
-    merlin::array::Array value_cpu(data, dims, strides);
-    MESSAGE("Initial array: %s\n", value_cpu.str().c_str());
+double f(double x, double y, double z) {
+    return (2.f*x + y*y + x*y) * z;
+}
 
-    merlin::interpolant::CartesianGrid grid({{0.0, 1.0, 1.5}, {0.0, 1.0, 2.0}});
+int main(void) {
+    merlin::intvec dims = {2, 3, 3};
+    merlin::array::Array value_cpu(dims);
+
+    merlin::interpolant::CartesianGrid grid({{0, 4.8}, {0.0, 1.0, 1.5}, {0.0, 1.0, 2.0}});
+    for (std::uint64_t i_point = 0; i_point < grid.size(); i_point++) {
+        merlin::Vector<double> point = grid[i_point];
+        value_cpu.set(i_point, f(point[0], point[1], point[2]));
+    }
+    MESSAGE("Initial array: %s\n", value_cpu.str().c_str());
 
     merlin::cuda::Stream stream(merlin::cuda::Stream::Setting::Default);
     merlin::array::Parcel value(value_cpu.shape());

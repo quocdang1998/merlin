@@ -84,11 +84,11 @@ class MERLIN_EXPORTS cuda::Context {
     /// @name Manipulation of the context stack
     /// @{
     /** @brief Check if the context is the top of context stack.*/
-    bool is_current(void);
+    bool is_current(void) const;
     /** @brief Push the context to the stack owned by the current CPU process.*/
-    void push_current(void);
+    void push_current(void) const;
     /** @brief Pop the context out of the stack of the current CPU process.*/
-    cuda::Context & pop_current(void);
+    const cuda::Context & pop_current(void) const;
     /// @}
 
     /// @name Query current context

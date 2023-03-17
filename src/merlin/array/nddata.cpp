@@ -92,7 +92,7 @@ void array::NdData::reshape(const intvec & new_shape) {
     }
     this->ndim_ = new_shape.size();
     this->shape_ = new_shape;
-    this->strides_ = array::contiguous_strides(new_shape, sizeof(double));
+    this->strides_ = array::contiguous_strides(new_shape, this->strides_[0]);
 }
 
 // Collapse dimension from felt (or right)

@@ -19,6 +19,7 @@ Environment::Environment(void) {
 Environment::~Environment(void) {
     Environment::num_instances--;
     if (Environment::num_instances == 0) {
+        Environment::flush_cuda_deferred_deallocation();
         destroy_cuda_context();
     }
 }
@@ -81,6 +82,9 @@ std::map<int, std::uintptr_t> Environment::primary_contexts;
 // Default CUDA kernel block size
 std::uint64_t Environment::default_block_size = 64;
 
+// CUDA deferred pointers
+std::vector<std::pair<int, void *>> Environment::deferred_gpu_pointer;
+
 #ifndef __MERLIN_CUDA__
 
 // Initialize CUDA context
@@ -88,6 +92,9 @@ void initialize_cuda_context(void) {}
 
 // Destroy CUDA primary contexts
 void destroy_cuda_context(void) {}
+
+// Deallocate all pointers in deferred pointer array
+void Environment::flush_cuda_deferred_deallocation(void);
 
 #endif  // __MERLIN_CUDA__
 

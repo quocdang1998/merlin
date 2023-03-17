@@ -15,6 +15,9 @@ namespace merlin {
 __cuhostdev__ array::Parcel::Parcel(const array::Parcel & whole, const Vector<array::Slice> & slices) :
 array::NdData(whole, slices) {
     this->device_ = whole.device_;
+    #ifndef __CUDA_ARCH__
+    this->context_ = whole.context_;
+    #endif  // __CUDA_ARCH__
 }
 
 #ifdef __NVCC__

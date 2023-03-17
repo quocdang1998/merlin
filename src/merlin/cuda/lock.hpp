@@ -2,6 +2,8 @@
 #ifndef MERLIN_CUDA_LOCK_HPP_
 #define MERLIN_CUDA_LOCK_HPP_
 
+#include "merlin/cuda_decorator.hpp"  // __cudevice__
+
 namespace merlin {
 
 #ifdef __NVCC__
@@ -14,9 +16,9 @@ class KernelLock {
      *  @details Allocate an `int` on GPU to indicate wwhether the block are executed or not.
      */
     KernelLock(void) {
-        cudaMalloc(&this->state_, sizeof(int));
+        ::cudaMalloc(&this->state_, sizeof(int));
         int temp = 0;
-        cudaMemcpy(this->state_, &temp, sizeof(int), cudaMemcpyHostToDevice);
+        ::cudaMemcpy(this->state_, &temp, sizeof(int), ::cudaMemcpyHostToDevice);
         this->reference_count_ = 1;
     }
     /// @}
@@ -44,13 +46,13 @@ class KernelLock {
     /// @name Mutex lock
     /// @{
     /** @brief Lock the region (other thread blocks are blocked).*/
-    __device__ void lock(void) {
+    __cudevice__ void lock(void) {
         if (threadIdx.x == 0) {
             while (atomicCAS(this->state_, 0, 1) != 0) {}
         }
     }
     /** @brief Unlock the region (other thread blocks can continue the execution).*/
-    __device__ void unlock(void) {
+    __cudevice__ void unlock(void) {
         if (threadIdx.x == 0) {
             atomicExch(this->state_, 0);
         }
@@ -61,7 +63,7 @@ class KernelLock {
     /// @{
     ~KernelLock(void) {
         if (this->reference_count_ == 1) {
-            cudaFree(this->state_);
+            ::cudaFree(this->state_);
         }
     }
     /// @}

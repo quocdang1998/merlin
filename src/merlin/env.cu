@@ -35,28 +35,41 @@ void initialize_cuda_context(void) {
         return;
     }
     // uninitialized or undefined
+    std::printf("Initializing CUDA primary contexts.\n");
     for (int i_gpu = 0; i_gpu < num_gpu; i_gpu++) {
-        err_ = ::cudaSetDevice(i_gpu);
+        err_ = static_cast<::cudaError_t>(::cuDevicePrimaryCtxRetain(&current_ctx, i_gpu));
         if (err_ != 0) {
-            FAILURE(cuda_runtime_error, "Set current GPU of ID %d failed with message \"%s\".\n",
+            FAILURE(cuda_runtime_error, "Retain primary context for GPU of ID %d failed with message \"%s\".\n",
                     i_gpu, ::cudaGetErrorString(err_));
         }
-        ::cuCtxGetCurrent(&current_ctx);
         Environment::primary_contexts[i_gpu] = reinterpret_cast<std::uint64_t>(current_ctx);
     }
     // set back to default device
-    ::cudaSetDevice(Environment::default_gpu);
+    ::cuCtxPushCurrent(reinterpret_cast<::CUcontext>(Environment::primary_contexts[Environment::default_gpu]));
 }
 
 // Destroy CUDA primary contexts
 void destroy_cuda_context(void) {
     int num_gpu;
-    ::cudaGetDeviceCount(&num_gpu);
+    ::cuDeviceGetCount(&num_gpu);
     // uninitialized or undefined
     for (int i_gpu = 0; i_gpu < num_gpu; i_gpu++) {
         ::cuDevicePrimaryCtxRelease(i_gpu);
         Environment::primary_contexts.erase(i_gpu);
     }
+}
+
+// Deallocate all pointers in deferred pointer array
+void Environment::flush_cuda_deferred_deallocation(void) {
+    Environment::mutex.lock();
+    for (auto & [gpu, pointer] : Environment::deferred_gpu_pointer) {
+        ::CUcontext gpu_context = reinterpret_cast<::CUcontext>(Environment::primary_contexts[gpu]);
+        ::cuCtxPushCurrent(gpu_context);
+        ::cudaFree(pointer);
+        ::cuCtxPopCurrent(&gpu_context);
+    }
+    Environment::deferred_gpu_pointer.clear();
+    Environment::mutex.unlock();
 }
 
 }  // namespace merlin

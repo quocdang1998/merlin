@@ -6,6 +6,8 @@
 #include <cstdint>  // std::uintptr_t
 #include <map>  // std::map
 #include <mutex>  // std::mutex
+#include <utility>  // std::pair
+#include <vector>  // std::vector
 
 #include "merlin/exports.hpp"  // MERLINSHARED_EXPORTS
 
@@ -94,6 +96,10 @@ class MERLINSHARED_EXPORTS Environment {
      *  @details Should be multiple of 32.
      */
     static std::uint64_t default_block_size;
+    /** @brief CUDA deferred pointers.*/
+    static std::vector<std::pair<int, void *>> deferred_gpu_pointer;
+    /** @brief Deallocate all pointers in deferred pointer array.*/
+    static void flush_cuda_deferred_deallocation(void);
     /// @}
 
     /// @name Destructor
