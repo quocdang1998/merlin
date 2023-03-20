@@ -64,8 +64,6 @@ float eval_lagrange_cpu(const interpolant::CartesianGrid * pgrid, const array::N
 void calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid * pgrid, const array::Array * pvalue,
                                       const Vector<array::Slice> & slices, array::Array * presult);
 
-array::Array calc_lagrange_coeffs_cpu(const interpolant::SparseGrid * pgrid, const array::Array * pvalue);
-
 array::Array calc_lagrange_coeffs_gpu(const interpolant::CartesianGrid * pgrid, const array::Array * pvalue,
                                       const Vector<array::Slice> & slices,
                                       const cuda::Stream & stream = cuda::Stream());

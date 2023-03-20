@@ -49,6 +49,14 @@ void calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & grid, const arr
 void calc_lagrange_coeffs_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
                               array::Parcel & coeff, const cuda::Stream & stream = cuda::Stream());
 
+/** @brief Calculate Lagrange interpolation coefficients on a sparse grid using CPU.
+ *  @param grid Sparse grid.
+ *  @param value Array of function values, must have the same shape as the grid.
+ *  @param coeff Array storing interpolation coefficient after the calculation.
+ */
+void calc_lagrange_coeffs_cpu(const interpolant::SparseGrid & grid, const array::Array & value,
+                              array::Array & coeff);
+
 // Evaluate interpolation
 // ----------------------
 

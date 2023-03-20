@@ -1,14 +1,18 @@
 // Copyright 2022 quocdang1998
 #include "merlin/interpolant/lagrange.hpp"
 
+#include <cstring>  // std::memcpy
+
 #include <omp.h>  // #pragma omp, omp_get_num_threads
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
+#include "merlin/array/copy.hpp"  // merlin::array::array_copy, merlin::array::contiguous_strides
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/array/slice.hpp"  // merlin::array::Slice
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
+#include "merlin/interpolant/sparse_grid.hpp"  // merlin::interpolant::SparseGrid
 #include "merlin/logger.hpp"  // FAILURE, cuda_compile_error
-#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx
+#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::get_level_shape
 
 namespace merlin {
 
@@ -57,6 +61,45 @@ void call_lagrange_coeff_kernel(const interpolant::CartesianGrid * p_grid, const
                                 std::uintptr_t stream_ptr) {}
 
 #endif  // __MERLIN_CUDA__
+
+// Calculate max_level from old max_level and new_max_level
+static void accumulate_level(intvec & old_level, const intvec & new_level) {
+    for (std::uint64_t i_dim = 0; i_dim < old_level.size(); i_dim++) {
+        old_level[i_dim] = std::max(old_level[i_dim], new_level[i_dim]);
+    }
+}
+
+// Calculate Lagrange interpolation coefficients on a sparse grid using CPU (function value are preprocessed)
+void interpolant::calc_lagrange_coeffs_cpu(const interpolant::SparseGrid & grid, const array::Array & value,
+                                           array::Array & coeff) {
+    // copy value to coeff
+    if (&value != &coeff) {
+        array::array_copy(&coeff, &value, std::memcpy);
+    }
+    // Initialize
+    std::uint64_t num_subgrid = grid.num_level();
+    for (std::uint64_t i_subgrid = 0; i_subgrid < num_subgrid; i_subgrid++) {
+        // get hiearchical level
+        const intvec level_index = grid.level_index(i_subgrid);
+        // calculate coefficient at current grid level
+        interpolant::CartesianGrid level_cartgrid = interpolant::get_cartesian_grid(grid, i_subgrid);
+        intvec level_shape = get_level_shape(level_index);
+        intvec level_strides = array::contiguous_strides(level_shape, sizeof(double));
+        array::Array level_coeff(&coeff[grid.sub_grid_start_index()[i_subgrid]], level_shape, level_strides, false);
+        interpolant::calc_lagrange_coeffs_cpu(level_cartgrid, level_coeff, level_coeff);
+        // subtract other points of the grid
+        for (std::uint64_t j_subgrid = i_subgrid+1; j_subgrid < num_subgrid; j_subgrid++) {
+            std::uint64_t start_index = grid.sub_grid_start_index()[j_subgrid];
+            interpolant::CartesianGrid level_j_cartgrid = interpolant::get_cartesian_grid(grid, j_subgrid);
+            std::uint64_t level_j_cartgrid_size = level_j_cartgrid.size();
+            for(std::uint64_t i_point = 0; i_point < level_j_cartgrid_size; i_point++) {
+                Vector<double> point = level_j_cartgrid[i_point];
+                std::uint64_t i_point_sparsegrid = start_index + i_point;
+                coeff[i_point_sparsegrid] -= interpolant::eval_lagrange_cpu(level_cartgrid, level_coeff, point);
+            }
+        }
+    }
+}
 
 // --------------------------------------------------------------------------------------------------------------------
 // Evaluate interpolation
@@ -158,12 +201,7 @@ static Vector<array::Slice> get_slice_from_level(const intvec & level_index, con
     return result;
 }
 
-// Calculate max_level from old max_level and new_max_level
-static void accumulate_level(intvec & old_level, const intvec & new_level) {
-    for (std::uint64_t i_dim = 0; i_dim < old_level.size(); i_dim++) {
-        old_level[i_dim] = std::max(old_level[i_dim], new_level[i_dim]);
-    }
-}
+
 
 // --------------------------------------------------------------------------------------------------------------------
 // Calculate coefficient
