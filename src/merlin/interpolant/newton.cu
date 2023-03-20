@@ -37,9 +37,9 @@ void calc_divdiff_gpu(const array::Parcel & a1, const array::Parcel & a2, double
 }
 
 // Calculate coefficients for cartesian grid (supposed shape value == shape of coeff)
-void calc_newton_coeffs_gpu_recursive(const interpolant::CartesianGrid & grid, array::Parcel & coeff,
-                                      std::uint64_t max_dimension, merlin::Vector<array::Parcel> & sub_slices,
-                                      std::uint64_t start_index, const cuda::Stream & stream) {
+static void calc_newton_coeffs_gpu_recursive(const interpolant::CartesianGrid & grid, array::Parcel & coeff,
+                                             std::uint64_t max_dimension, merlin::Vector<array::Parcel> & sub_slices,
+                                             std::uint64_t start_index, const cuda::Stream & stream) {
     // get associated 1D grid to calculate on
     std::uint64_t ndim = grid.ndim();
     std::uint64_t current_dim = ndim - coeff.ndim();
@@ -141,6 +141,8 @@ void interpolant::calc_newton_coeffs_gpu(const interpolant::CartesianGrid & grid
             array::array_copy(&coeff, &value, copy_func);
         }
     }
+    calc_newton_coeff_single_core_gpu(grid, &coeff, 1, stream);
+    #ifdef __deprecated
     // get max recursive dimension
     static std::uint64_t parallel_limit = Environment::parallel_chunk;
     intvec total_shape = grid.get_grid_shape();
@@ -162,6 +164,7 @@ void interpolant::calc_newton_coeffs_gpu(const interpolant::CartesianGrid & grid
     calc_newton_coeffs_gpu_recursive(grid, coeff, dim_max, sub_slices, 0, stream);
     // parallel calculation after that
     calc_newton_coeff_single_core_gpu(grid, sub_slices.data(), sub_slices.size(), stream);
+    #endif  // __deprecated
 }
 
 }  // namespace merlin

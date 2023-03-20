@@ -12,7 +12,7 @@ double f(double x, double y, double z) {
 }
 
 int main(void) {
-    merlin::intvec dims = {3, 3};
+    merlin::intvec dims = {2, 3, 3};
     merlin::array::Array value_cpu(dims);
 
     merlin::interpolant::CartesianGrid grid({{0, 4.8}, {0.0, 1.0, 1.5}, {0.0, 1.0, 2.0}});

@@ -88,6 +88,7 @@ bool cuda::Context::is_current(void) const {
 // Push the context to the stack
 void cuda::Context::push_current(void) const {
     ::CUcontext ctx = reinterpret_cast<::CUcontext>(this->context_);
+    std::printf("Pushed context: %p\n", ctx);
     ::cudaError_t err_ = static_cast<::cudaError_t>(::cuCtxPushCurrent(ctx));
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Push context to current stack failed with message \"%s\".\n",

@@ -20,14 +20,20 @@ void array::Parcel::free_current_data(void) {
     // lock mutex
     array::Parcel::mutex_.lock();
     // switch to appropriate context
-    this->context_.push_current();
+    bool pushed_context = false;
+    if (!this->context_.is_current() && (this->context_ != cuda::Context())) {
+        this->context_.push_current();
+        pushed_context = true;
+    }
     // free data
     if ((this->data_ != nullptr) && this->release_) {
         ::cudaFree(this->data_);
         this->data_ = nullptr;
     }
     // finalize: set back the original GPU and unlock the mutex
-    this->context_.pop_current();
+    if (pushed_context) {
+        this->context_.pop_current();
+    }
     array::Parcel::mutex_.unlock();
 }
 
