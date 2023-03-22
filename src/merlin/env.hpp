@@ -115,9 +115,6 @@ MERLINSHARED_EXPORTS extern Environment default_environment;
 /** @brief Initialize CUDA primary contexts.*/
 void initialize_cuda_context(void);
 
-/** @brief Destroy CUDA primary contexts.*/
-void destroy_cuda_context(void);
-
 }  // namespace merlin
 
 #endif  // MERLIN_ENV_HPP_

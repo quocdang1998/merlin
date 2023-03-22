@@ -5,6 +5,7 @@
 #include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Parcel, merlin::array::Slice
 #include "merlin/cuda_decorator.hpp"  // __cuhostdev__
 #include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
+#include "merlin/env.hpp"  // merlin::Environment
 #include "merlin/interpolant/grid.hpp"  // merlin::interpolant::CartesianGrid
 #include "merlin/vector.hpp"  // merlin::Vector
 
@@ -13,22 +14,19 @@ namespace merlin::interpolant {
 // GPU kernel wrapper
 // ------------------
 
-/** @brief Calculate Newton coefficients by a signle CPU or GPU core.
- *  @note Keep in mind:
- *   - Function values are pre-copied to ``coeff``.
- *   - N-dim of ``coeff`` may be less than ``grid``. In this case, only dimensions from ``grid.ndim() - coeff.ndim()``
- *  are considered.
+/** @brief Concatenate 3 vectors.*/
+__cuhostdev__ intvec merge_3vectors(const intvec & v1, const intvec & v2, const intvec & v3);
+
+/** @brief Call the GPU kernel calculating the coefficient with Newton method.
+ *  @param p_grid Pointer to Cartesian grid pre-allocated on GPU.
+ *  @param p_coeff Pointer to coefficient array pre-allocated on GPU.
+ *  @param shared_mem_size Size (in bytes) of the block-wise shared memory.
+ *  @param stream_ptr Pointer to the CUDA calculation stream in form of an unsigned integer pointer.
+ *  @param n_thread Number of CUDA threads for parallel execution.
+ *  @note This function is asynchronious. It simply push the CUDA kernel to the stream.
  */
-__cuhostdev__ void calc_newton_coeffs_single_core(const interpolant::CartesianGrid & grid, array::NdData & coeff);
-
-/** @brief Call divide difference function on GPU.*/
-void call_divdiff_kernel(const array::Parcel * p_a1, const array::Parcel * p_a2, double x1, double x2,
-                         array::Parcel * p_result, std::uint64_t size, std::uint64_t shared_mem_size,
-                         std::uintptr_t stream_ptr);
-
-void call_single_core_kernel(const interpolant::CartesianGrid * p_grid, array::Parcel * p_coeff, std::uint64_t size,
-                             std::uint64_t shared_mem_size, std::uintptr_t stream_ptr);
-
+void call_newton_coeff_kernel(const interpolant::CartesianGrid * p_grid, array::Parcel * p_coeff,
+                              std::uint64_t shared_mem_size, std::uintptr_t stream_ptr, std::uint64_t n_thread);
 
 // Calculate coefficients
 // ----------------------
@@ -46,7 +44,8 @@ void calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid, const array
  *  CPU to wait until the calculation has finished.
  */
 void calc_newton_coeffs_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
-                            array::Parcel & coeff, const cuda::Stream & stream = cuda::Stream());
+                            array::Parcel & coeff, const cuda::Stream & stream = cuda::Stream(),
+                            std::uint64_t n_thread = Environment::default_block_size);
 
 // Evaluate interpolation
 // ----------------------

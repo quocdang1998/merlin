@@ -20,7 +20,7 @@ namespace merlin {
 // Calculate coefficients
 // --------------------------------------------------------------------------------------------------------------------
 
-// Calculate Lagrange interpoaltion coefficient on a full Cartesian grid using CPU
+// Calculate Lagrange interpolation coefficient on a full Cartesian grid using CPU
 void interpolant::calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::Array & value,
                                            array::Array & coeff) {
     std::uint64_t ndim = grid.ndim();
@@ -51,14 +51,15 @@ void interpolant::calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & gr
 
 // Calculate Lagrange interpolation coefficients on a full Cartesian grid using GPU
 void interpolant::calc_lagrange_coeffs_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
-                                           array::Parcel & coeff, const cuda::Stream & stream) {
+                                           array::Parcel & coeff, const cuda::Stream & stream,
+                                           std::uint64_t n_thread) {
     FAILURE(cuda_compile_error, "Compile the package with CUDA option enabled to access this feature.\n");
 }
 
 // Call CUDA kernel calculating coefficients on GPU
 void call_lagrange_coeff_kernel(const interpolant::CartesianGrid * p_grid, const array::Parcel * p_value,
-                                array::Parcel * p_coeff, std::uint64_t size, std::uint64_t shared_mem_size,
-                                std::uintptr_t stream_ptr) {}
+                                array::Parcel * p_coeff, std::uint64_t shared_mem_size, std::uintptr_t stream_ptr,
+                                std::uint64_t n_thread) {}
 
 #endif  // __MERLIN_CUDA__
 
@@ -66,6 +67,33 @@ void call_lagrange_coeff_kernel(const interpolant::CartesianGrid * p_grid, const
 static void accumulate_level(intvec & old_level, const intvec & new_level) {
     for (std::uint64_t i_dim = 0; i_dim < old_level.size(); i_dim++) {
         old_level[i_dim] = std::max(old_level[i_dim], new_level[i_dim]);
+    }
+}
+
+// Calculate Lagrange interpolation coefficient on an added Cartesian grid to SParse grid using CPU
+static void calc_lagrange_coeffs_of_added_grid_cpu(const interpolant::CartesianGrid & accumulated_grid,
+                                                   const interpolant::CartesianGrid & grid, const array::Array & value,
+                                                   array::Array & coeff) {
+    std::uint64_t ndim = grid.ndim();
+    intvec grid_shape = grid.get_grid_shape();
+    std::uint64_t size = value.size();
+    // parallel loop calculation
+    for (std::int64_t i = 0; i < size; i++) {
+        intvec index = contiguous_to_ndim_idx(i, grid_shape);
+        // calculate the denomiantor (product of diferences of node values)
+        long double denominator = 1.0;
+        for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
+            const Vector<double> & accumulated_grid_vector = accumulated_grid.grid_vectors()[i_dim];
+            double point_corrdinate = grid.grid_vectors()[i_dim][index[i_dim]];
+            for (std::uint64_t i_node = 0; i_node < accumulated_grid_vector.size(); i_node++) {
+                if (accumulated_grid_vector[i_node] == point_corrdinate) {
+                    continue;
+                }
+                denominator *= point_corrdinate - accumulated_grid_vector[i_node];
+            }
+        }
+        double result = value.get(index) / static_cast<double>(denominator);
+        coeff.set(index, result);
     }
 }
 
@@ -78,15 +106,17 @@ void interpolant::calc_lagrange_coeffs_cpu(const interpolant::SparseGrid & grid,
     }
     // Initialize
     std::uint64_t num_subgrid = grid.num_level();
+    interpolant::CartesianGrid accumulated_cart_grid(grid.ndim());
     for (std::uint64_t i_subgrid = 0; i_subgrid < num_subgrid; i_subgrid++) {
         // get hiearchical level
         const intvec level_index = grid.level_index(i_subgrid);
         // calculate coefficient at current grid level
         interpolant::CartesianGrid level_cartgrid = interpolant::get_cartesian_grid(grid, i_subgrid);
+        accumulated_cart_grid += level_cartgrid;
         intvec level_shape = get_level_shape(level_index);
         intvec level_strides = array::contiguous_strides(level_shape, sizeof(double));
         array::Array level_coeff(&coeff[grid.sub_grid_start_index()[i_subgrid]], level_shape, level_strides, false);
-        interpolant::calc_lagrange_coeffs_cpu(level_cartgrid, level_coeff, level_coeff);
+        calc_lagrange_coeffs_of_added_grid_cpu(accumulated_cart_grid, level_cartgrid, level_coeff, level_coeff);
         // subtract other points of the grid
         for (std::uint64_t j_subgrid = i_subgrid+1; j_subgrid < num_subgrid; j_subgrid++) {
             std::uint64_t start_index = grid.sub_grid_start_index()[j_subgrid];

@@ -13,8 +13,13 @@ from distutils.dep_util import newer_group
 from distutils.spawn import spawn
 from distutils import log
 
+from string import Template
+
 from .config import *
 
+# CUDA architechture template
+cu_arch_template = Template("--generate-code=arch=compute_${arch},"
+                            "code=[compute_${arch},sm_${arch}]")
 
 # overwrite method build_extension of setuptools.build_ext
 class build_ext(_sut_build_ext):
@@ -78,9 +83,12 @@ class custom_du_build_ext(_du_build_ext):
             obj_dir, obj_fname = os.path.split(objects[0])
             device_obj_fname = "cu_dev_linker_" + obj_fname
             device_linker = os.path.join(obj_dir, device_obj_fname)
+            arch_args = [cu_arch_template.substitute(arch=str(arch))
+                         for arch in CUDA_ARCHITECHTURE]
             dlink_option = ["-forward-unknown-to-host-compiler",
                             "-Wno-deprecated-gpu-targets",
                             "-shared", "-dlink"]
+            dlink_option += arch_args
             lib_dlink = []
             if sys.platform == "win32":
                 from distutils.ccompiler import gen_lib_options

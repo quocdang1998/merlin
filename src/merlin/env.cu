@@ -44,23 +44,6 @@ void initialize_cuda_context(void) {
     ::cudaSetDevice(Environment::default_gpu);
 }
 
-// Destroy CUDA primary contexts
-void destroy_cuda_context(void) {
-/*
-    int num_gpu;
-    ::cudaGetDeviceCount(&num_gpu);
-    // uninitialized or undefined
-    for (int i_gpu = 0; i_gpu < num_gpu; i_gpu++) {
-        ::cudaError_t err_ = static_cast<::cudaError_t>(::cuDevicePrimaryCtxRelease(i_gpu));
-        if (err_ != 0) {
-            FAILURE(cuda_runtime_error, "Destroy CUDA primary contexts failed with error \"%s\"\n",
-                    ::cudaGetErrorString(err_));
-        }
-        Environment::primary_contexts.erase(i_gpu);
-    }
-*/
-}
-
 // Deallocate all pointers in deferred pointer array
 void Environment::flush_cuda_deferred_deallocation(void) {
     Environment::mutex.lock();
