@@ -14,10 +14,10 @@ namespace merlin {
 /** @brief CUDA event.
  *  @details Milestone marking events in the CUDA stream.
  */
-class MERLIN_EXPORTS cuda::Event {
+class cuda::Event {
   public:
     /** @brief Parameter describing the purpose of the event.*/
-    enum class Category : unsigned int {
+    enum class MERLIN_EXPORTS Category : unsigned int {
         /** Default event.*/
         Default = 0x00,
         /** Event meant to be synchronize with CPU (process on CPU blocked until the event occurs).*/
@@ -34,7 +34,7 @@ class MERLIN_EXPORTS cuda::Event {
      *  @details Construct a CUDA event with a specific flag.
      *  @param category %Event flag.
      */
-    Event(cuda::Event::Category category = cuda::Event::Category::Default);
+    MERLIN_EXPORTS Event(cuda::Event::Category category = cuda::Event::Category::Default);
     /// @}
 
     /// @name Copy and Move
@@ -75,11 +75,11 @@ class MERLIN_EXPORTS cuda::Event {
     /** @brief Query the status of all work currently captured by event.
      *  @details ``true`` if all captured work has been completed.
      */
-    bool is_complete(void) const;
+    MERLIN_EXPORTS bool is_complete(void) const;
     /** @brief Check validity of GPU and context.
      * @details Check if the current CUDA context and active GPU is valid for the event.
      */
-    void check_cuda_context(void) const;
+    MERLIN_EXPORTS void check_cuda_context(void) const;
     /// @}
 
     /// @name Operations
@@ -87,7 +87,7 @@ class MERLIN_EXPORTS cuda::Event {
     /** @brief Synchronize the event.
      *  @details Block the CPU process until the event occurs.
      */
-    void synchronize(void) const;
+    MERLIN_EXPORTS void synchronize(void) const;
 
     MERLIN_EXPORTS friend float operator-(const cuda::Event & ev_1, const cuda::Event & ev_2);
     /// @}
@@ -95,13 +95,13 @@ class MERLIN_EXPORTS cuda::Event {
     /// @name Representation
     /// @{
     /** @brief String representation.*/
-    std::string str(void) const;
+    MERLIN_EXPORTS std::string str(void) const;
     /// @}
 
     /// @name Destructor
     /// @{
     /** @brief Destructor.*/
-    ~Event(void);
+    MERLIN_EXPORTS ~Event(void);
     /// @}
 
   protected:

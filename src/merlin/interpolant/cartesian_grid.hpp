@@ -8,7 +8,7 @@
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array
 #include "merlin/cuda_decorator.hpp"  // __cuhostdev__
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS, MERLIN_HOSTDEV_EXPORTS
 #include "merlin/interpolant/grid.hpp"  //  merlin::interpolant::Grid
 #include "merlin/iterator.hpp"  // merlin::Iterator
 #include "merlin/vector.hpp"  // merlin::Vector, merlin::intvec
@@ -16,18 +16,18 @@
 namespace merlin {
 
 /** @brief Multi-dimensional Cartesian grid.*/
-class MERLIN_EXPORTS interpolant::CartesianGrid : public interpolant::Grid {
+class interpolant::CartesianGrid : public interpolant::Grid {
   public:
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
     CartesianGrid(void) = default;
     /** @brief Constructor from a vector of values.*/
-    CartesianGrid(const Vector<Vector<double>> & grid_vectors);
+    MERLIN_EXPORTS CartesianGrid(const Vector<Vector<double>> & grid_vectors);
     /** @brief Constructor from an r-value reference to a vector of values.*/
-    CartesianGrid(Vector<Vector<double>> && grid_vectors);
+    MERLIN_EXPORTS CartesianGrid(Vector<Vector<double>> && grid_vectors);
     /** @brief Get a subgrid from original grid.*/
-    CartesianGrid(const interpolant::CartesianGrid & whole, const Vector<array::Slice> & slices);
+    MERLIN_EXPORTS CartesianGrid(const interpolant::CartesianGrid & whole, const Vector<array::Slice> & slices);
     /** @brief Constructor from the number of dimension.*/
     CartesianGrid(std::uint64_t ndim) : grid_vectors_(ndim) {}
     /// @}
@@ -57,22 +57,22 @@ class MERLIN_EXPORTS interpolant::CartesianGrid : public interpolant::Grid {
         return this->grid_vectors_;
     }
     /** @brief Get shape of the grid.*/
-    __cuhostdev__ intvec get_grid_shape(void) const noexcept;
+    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS intvec get_grid_shape(void) const noexcept;
     /** @brief Full tensor of each point in the CartesianGrid in form of 2D table.*/
-    array::Array grid_points(void) const;
+    MERLIN_EXPORTS array::Array grid_points(void) const;
     /** @brief Number of dimension of the CartesianGrid.*/
     __cuhostdev__ std::uint64_t ndim(void) const {return this->grid_vectors_.size();}
     /** @brief Number of points in the CartesianGrid.*/
-    __cuhostdev__ std::uint64_t size(void) const;
+    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS std::uint64_t size(void) const;
     /// @}
 
     /// @name Iterator
     /// @{
     using iterator = Iterator;
     /** @brief Begin iterator.*/
-    interpolant::CartesianGrid::iterator begin(void);
+    MERLIN_EXPORTS interpolant::CartesianGrid::iterator begin(void);
     /** @brief End iterator.*/
-    interpolant::CartesianGrid::iterator end(void);
+    MERLIN_EXPORTS interpolant::CartesianGrid::iterator end(void);
     /// @}
 
     /// @name Slicing operator
@@ -80,25 +80,25 @@ class MERLIN_EXPORTS interpolant::CartesianGrid : public interpolant::Grid {
     /** @brief Get element at a given index.
      *  @param index Index of point in the CartesianGrid::grid_points table.
      */
-    __cuhostdev__ Vector<double> operator[](std::uint64_t index) const noexcept;
+    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS Vector<double> operator[](std::uint64_t index) const noexcept;
     /** @brief Get element at a given index vector.
      *  @param index Vector of index on each dimension.
      */
-    __cuhostdev__ Vector<double> operator[](const intvec & index) const noexcept;
+    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS Vector<double> operator[](const intvec & index) const noexcept;
     /// @}
 
     /// @name GPU related features
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the grid and its data.*/
-    std::uint64_t malloc_size(void) const;
+    MERLIN_EXPORTS std::uint64_t malloc_size(void) const;
     /** @brief Copy the grid from CPU to a pre-allocated memory on GPU.
      *  @details Values of vectors should be copied to the memory region that comes right after the copied object.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
      *  @param grid_vector_data_ptr Pointer to a pre-allocated GPU memory storing data of grid vectors.
      *  @param stream_ptr Pointer to CUDA stream for asynchronious copy.
      */
-    void * copy_to_gpu(interpolant::CartesianGrid * gpu_ptr, void * grid_vector_data_ptr,
-                       std::uintptr_t stream_ptr = 0) const;
+    MERLIN_EXPORTS void * copy_to_gpu(interpolant::CartesianGrid * gpu_ptr, void * grid_vector_data_ptr,
+                                      std::uintptr_t stream_ptr = 0) const;
     #ifdef __NVCC__
     /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
      *  @note This operation is single-threaded.
@@ -118,21 +118,21 @@ class MERLIN_EXPORTS interpolant::CartesianGrid : public interpolant::Grid {
     /// @name Grid merge operator
     /// @{
     /** @brief Union assignment of 2 Cartesian grids.*/
-    interpolant::CartesianGrid & operator+=(const interpolant::CartesianGrid & grid);
-    friend interpolant::CartesianGrid operator+(const interpolant::CartesianGrid & grid_1,
-                                                const interpolant::CartesianGrid & grid_2);
+    MERLIN_EXPORTS interpolant::CartesianGrid & operator+=(const interpolant::CartesianGrid & grid);
+    MERLIN_EXPORTS friend interpolant::CartesianGrid operator+(const interpolant::CartesianGrid & grid_1,
+                                                               const interpolant::CartesianGrid & grid_2);
     /// @}
 
     /// @name Representation
     /// @{
     /** @brief String representation.*/
-    std::string str(void) const;
+    MERLIN_EXPORTS std::string str(void) const;
     /// @}
 
     /// @name Destructor
     /// @{
     /** @brief Default destructor.*/
-    __cuhostdev__ ~CartesianGrid(void);
+    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS ~CartesianGrid(void);
     /// @}
 
   protected:

@@ -19,12 +19,12 @@ class SparseGrid;  // Sparse Grid (basic form)
 namespace merlin {
 
 /** @brief A base class for all kinds of Grid.*/
-class MERLIN_EXPORTS interpolant::Grid {
+class interpolant::Grid {
   public:
     /** @brief Default constructor.*/
     __cuhostdev__ Grid(void) {}
     /** @brief Destructor.*/
-    ~Grid(void);
+    MERLIN_EXPORTS ~Grid(void);
 
   protected:
     /** @brief Array holding coordinates of points in the Grid.*/

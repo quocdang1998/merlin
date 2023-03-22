@@ -12,16 +12,16 @@ namespace merlin {
 /** @brief Iterator of multi-dimensional array and grid.
  *  @details Callable only on CPU.
  */
-class MERLIN_EXPORTS Iterator {
+class Iterator {
   public:
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
     Iterator(void) = default;
     /** @brief Constructor from multi-dimensional index and container.*/
-    Iterator(const intvec & index, const intvec & shape);
+    MERLIN_EXPORTS Iterator(const intvec & index, const intvec & shape);
     /** @brief Constructor from C-contiguous index.*/
-    Iterator(std::uint64_t index, const intvec & shape);
+    MERLIN_EXPORTS Iterator(std::uint64_t index, const intvec & shape);
     /// @}
 
     /// @name Copy and Move
@@ -51,7 +51,7 @@ class MERLIN_EXPORTS Iterator {
         return left.item_ptr_ != right.item_ptr_;
     }
     /** @brief Pre-increment operator.*/
-    Iterator & operator++(void);
+    MERLIN_EXPORTS Iterator & operator++(void);
     /** @brief Post-increment operator.*/
     Iterator operator++(int) {return ++(*this);}
     /// @}

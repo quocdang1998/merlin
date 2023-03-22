@@ -8,14 +8,14 @@
 
 #include "merlin/array/declaration.hpp"  // merlin::array::NdData, merlin::array::Slice
 #include "merlin/cuda_decorator.hpp"  // __cuhost__, __cuhostdev__
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS, MERLIN_HOSTDEV_EXPORTS
 #include "merlin/vector.hpp"  // merlin::intvec
 
 
 namespace merlin {
 
 /** @brief Abstract class of N-dim array.*/
-class MERLIN_EXPORTS array::NdData {
+class array::NdData {
   public:
     /// @name Constructor
     /// @{
@@ -27,14 +27,14 @@ class MERLIN_EXPORTS array::NdData {
      *  @param shape Shape vector.
      *  @param strides Strides vector.
      */
-    NdData(double * data, const intvec & shape, const intvec & strides);
+    MERLIN_EXPORTS NdData(double * data, const intvec & shape, const intvec & strides);
     /** @brief Constructor from shape vector.*/
-    NdData(const intvec & shape);
+    MERLIN_EXPORTS NdData(const intvec & shape);
     /** @brief Constructor from a slice.
      *  @param whole merlin::array::NdData of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    __cuhostdev__ NdData(const array::NdData & whole, const Vector<array::Slice> & slices);
+    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS NdData(const array::NdData & whole, const Vector<array::Slice> & slices);
     /// @}
 
     /// @name Copy and move
@@ -64,19 +64,19 @@ class MERLIN_EXPORTS array::NdData {
     /// @name Atributes
     /// @{
     /** @brief Number of element.*/
-    __cuhostdev__ std::uint64_t size(void) const noexcept;
+    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS std::uint64_t size(void) const noexcept;
     /// @}
 
     /// @name Get and set element
     /// @{
     /** @brief Get value of element at a n-dim index.*/
-    virtual double get(const intvec & index) const;
+    MERLIN_EXPORTS virtual double get(const intvec & index) const;
     /** @brief Get value of element at a C-contiguous index.*/
-    virtual double get(std::uint64_t index) const;
+    MERLIN_EXPORTS virtual double get(std::uint64_t index) const;
     /** @brief Set value of element at a n-dim index.*/
-    virtual void set(const intvec index, double value);
+    MERLIN_EXPORTS virtual void set(const intvec index, double value);
     /** @brief Set value of element at a C-contiguous index.*/
-    virtual void set(std::uint64_t index, double value);
+    MERLIN_EXPORTS virtual void set(std::uint64_t index, double value);
     /// @}
 
     /// @name Partite data
@@ -86,7 +86,7 @@ class MERLIN_EXPORTS array::NdData {
      *  @return A tuple of limit dimension and number of sub-array. If the original array fits in the memory, a tuple
      *  of ``UINT64_MAX, UINT64_MAX`` is returned.
      */
-    Vector<Vector<array::Slice>> partite(std::uint64_t max_memory);
+    MERLIN_EXPORTS Vector<Vector<array::Slice>> partite(std::uint64_t max_memory);
     /// @}
 
     /// @name Operations
@@ -94,23 +94,23 @@ class MERLIN_EXPORTS array::NdData {
     /** @brief Reshape the dataset.
      *  @param new_shape New shape.
      */
-    void reshape(const intvec & new_shape);
+    MERLIN_EXPORTS void reshape(const intvec & new_shape);
     /** @brief Collapse dimensions with size 1.
      *  @param i_dim Index of dimension to collapse.
      */
-    void remove_dim(std::uint64_t i_dim = 0);
+    MERLIN_EXPORTS void remove_dim(std::uint64_t i_dim = 0);
     /// @}
 
     /// @name Representation
     /// @{
     /** @brief String representation.*/
-    std::string str(bool first_call = true) const;
+    MERLIN_EXPORTS std::string str(bool first_call = true) const;
     /// @}
 
     /// @name Destructor
     /// @{
     /** @brief Default destructor.*/
-    virtual ~NdData(void);
+    MERLIN_EXPORTS virtual ~NdData(void);
     /// @}
 
   protected:
@@ -133,7 +133,7 @@ class MERLIN_EXPORTS array::NdData {
 namespace array {
 
 /** @brief Slice current array to a new array with the same polymorphic type.*/
-array::NdData * slice_on(const array::NdData & original, const Vector<array::Slice> & slices);
+MERLIN_EXPORTS array::NdData * slice_on(const array::NdData & original, const Vector<array::Slice> & slices);
 
 }
 

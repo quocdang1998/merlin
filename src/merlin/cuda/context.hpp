@@ -21,10 +21,10 @@ namespace merlin {
  *  @note This API is highly volatile. At the beginning a default context has already created. Creation of custom
  *  contexts is highly unrecommended.
  */
-class MERLIN_EXPORTS cuda::Context {
+class cuda::Context {
   public:
     /** @brief Parameter controlling how the CPU process schedules tasks when waiting for results from the GPU.*/
-    enum class Flags : unsigned int {
+    enum class MERLIN_EXPORTS Flags : unsigned int {
         /** Automatic schedule based on the number of context and number of logical process.*/
         AutoSchedule = 0x00,
         /** Actively spins when waiting for results from the GPU.*/
@@ -40,11 +40,11 @@ class MERLIN_EXPORTS cuda::Context {
     /** @brief Construct a context referencing to the current context.*/
     Context(void) = default;
     /** @brief Construct a context assigned to a GPU and attached to the current CPU process.*/
-    Context(const cuda::Device & gpu, cuda::Context::Flags flag = cuda::Context::Flags::AutoSchedule);
+    MERLIN_EXPORTS Context(const cuda::Device & gpu, cuda::Context::Flags flag = cuda::Context::Flags::AutoSchedule);
     /** @brief Construct a context from context pointer.
      *  @note The context will be destroyed after the instance is deleted.
      */
-    Context(std::uintptr_t context_ptr);
+    MERLIN_EXPORTS Context(std::uintptr_t context_ptr);
     /// @}
 
     /// @name Copy and Move
@@ -78,29 +78,29 @@ class MERLIN_EXPORTS cuda::Context {
     std::uint64_t get_reference_count(void) const noexcept {
         return Environment::attribute[this->context_].reference_count;
     }
-    bool is_primary(void) const;
+    MERLIN_EXPORTS bool is_primary(void) const;
     /// @}
 
     /// @name Manipulation of the context stack
     /// @{
     /** @brief Check if the context is the top of context stack.*/
-    bool is_current(void) const;
+    MERLIN_EXPORTS bool is_current(void) const;
     /** @brief Push the context to the stack owned by the current CPU process.*/
-    void push_current(void) const;
+    MERLIN_EXPORTS void push_current(void) const;
     /** @brief Pop the context out of the stack of the current CPU process.*/
-    const cuda::Context & pop_current(void) const;
+    MERLIN_EXPORTS const cuda::Context & pop_current(void) const;
     /// @}
 
     /// @name Query current context
     /// @{
     /** @brief Get current context.*/
-    static cuda::Context get_current(void);
+    MERLIN_EXPORTS static cuda::Context get_current(void);
     /** @brief Get GPU attached to current context.*/
-    static cuda::Device get_gpu_of_current_context(void);
+    MERLIN_EXPORTS static cuda::Device get_gpu_of_current_context(void);
     /** @brief Get flag of the current context.*/
-    static cuda::Context::Flags get_flag_of_current_context(void);
+    MERLIN_EXPORTS static cuda::Context::Flags get_flag_of_current_context(void);
     /** @brief Block for a context's tasks to complete.*/
-    static void synchronize(void);
+    MERLIN_EXPORTS static void synchronize(void);
     /// @}
 
     /// @name Primary context
@@ -111,11 +111,11 @@ class MERLIN_EXPORTS cuda::Context {
     /// @name Comparison
     /// @{
     /** @brief Identical comparison operator.*/
-    friend bool constexpr operator==(const cuda::Context & ctx_1, const cuda::Context & ctx_2) noexcept {
+    MERLIN_EXPORTS friend bool constexpr operator==(const cuda::Context & ctx_1, const cuda::Context & ctx_2) noexcept {
         return ctx_1.context_ == ctx_2.context_;
     }
     /** @brief Different comparison operator.*/
-    friend bool constexpr operator!=(const cuda::Context & ctx_1, const cuda::Context & ctx_2) noexcept {
+    MERLIN_EXPORTS friend bool constexpr operator!=(const cuda::Context & ctx_1, const cuda::Context & ctx_2) noexcept {
         return ctx_1.context_ != ctx_2.context_;
     }
     /// @}
@@ -123,13 +123,13 @@ class MERLIN_EXPORTS cuda::Context {
     /// @name Representation
     /// @{
     /** @brief String representation.*/
-    std::string str(void);
+    MERLIN_EXPORTS std::string str(void);
     /// @}
 
     /// @name Destructor
     /// @{
     /** @brief Destructor.*/
-    ~Context(void);
+    MERLIN_EXPORTS ~Context(void);
     /// @}
 
   protected:

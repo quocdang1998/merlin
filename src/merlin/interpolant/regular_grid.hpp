@@ -15,7 +15,7 @@
 namespace merlin {
 
 /** @brief A set of multi-dimensional points.*/
-class MERLIN_EXPORTS interpolant::RegularGrid : interpolant::Grid {
+class interpolant::RegularGrid : interpolant::Grid {
   public:
     /// @name Constructor
     /// @{
@@ -25,23 +25,23 @@ class MERLIN_EXPORTS interpolant::RegularGrid : interpolant::Grid {
      *  @param npoint Number of points in the grid.
      *  @param ndim Number of dimension of points in the grid.
      */
-    RegularGrid(std::uint64_t npoint, std::uint64_t ndim);
+    MERLIN_EXPORTS RegularGrid(std::uint64_t npoint, std::uint64_t ndim);
     /** @brief Construct a grid and copy data from an array.
      *  @param points 2D merlin::Array of points, dimension ``(npoints, ndim)``.
      */
-    RegularGrid(const array::Array & points);
+    MERLIN_EXPORTS RegularGrid(const array::Array & points);
     /// @}
 
     /// @name Copy and Move
     /// @{
     /** @brief Copy constructor.*/
-    RegularGrid(const interpolant::RegularGrid & src);
+    MERLIN_EXPORTS RegularGrid(const interpolant::RegularGrid & src);
     /** @brief Copy assignment.*/
-    interpolant::RegularGrid & operator=(const interpolant::RegularGrid & src);
+    MERLIN_EXPORTS interpolant::RegularGrid & operator=(const interpolant::RegularGrid & src);
     /** @brief Move constructor.*/
-    RegularGrid(interpolant::RegularGrid && src);
+    MERLIN_EXPORTS RegularGrid(interpolant::RegularGrid && src);
     /** @brief Move assignment.*/
-    interpolant::RegularGrid & operator=(interpolant::RegularGrid && src);
+    MERLIN_EXPORTS interpolant::RegularGrid & operator=(interpolant::RegularGrid && src);
     /// @}
 
     /// @name Get members and attributes
@@ -63,9 +63,9 @@ class MERLIN_EXPORTS interpolant::RegularGrid : interpolant::Grid {
     /** @brief RegularGrid iterator.*/
     using iterator = Iterator;
     /** @brief Begin iterator.*/
-    RegularGrid::iterator begin(void);
+    MERLIN_EXPORTS RegularGrid::iterator begin(void);
     /** @brief End iterator.*/
-    RegularGrid::iterator end(void);
+    MERLIN_EXPORTS RegularGrid::iterator end(void);
     /// @}
 
     /// @name Modify points
@@ -73,17 +73,17 @@ class MERLIN_EXPORTS interpolant::RegularGrid : interpolant::Grid {
     /** @brief Get reference Array to a point.
      *  @param index Index of point to get in the grid.
      */
-    Vector<double> operator[](std::uint64_t index);
+    MERLIN_EXPORTS Vector<double> operator[](std::uint64_t index);
     /** @brief Append a point at the end of the grid.*/
-    void push_back(Vector<double> && point);
+    MERLIN_EXPORTS void push_back(Vector<double> && point);
     /** @brief Remove a point at the end of the grid.*/
-    void pop_back(void);
+    MERLIN_EXPORTS void pop_back(void);
     /// @}
 
     /// @name Destructor
     /// @{
     /** @brief Default destructor.*/
-    ~RegularGrid(void);
+    MERLIN_EXPORTS ~RegularGrid(void);
     /// @}
 
   protected:
