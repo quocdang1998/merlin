@@ -22,7 +22,7 @@ namespace merlin::array {
  *  (respectively reading) threads/processes finished their jobs. By switching off this option, user is responsible for
  *  assuring that concurrent I/O operations do not crash one another.
  */
-class MERLIN_EXPORTS Stock : public NdData {
+class Stock : public NdData {
   public:
     /// @name Constructors
     /// @{
@@ -36,18 +36,19 @@ class MERLIN_EXPORTS Stock : public NdData {
      *  @param offset Starting position from the beginning of file.
      *  @param thread_safe Threasafe policy.
      */
-    Stock(const std::string & filename, const intvec & shape, std::uint64_t offset = 0, bool thread_safe = true);
+    MERLIN_EXPORTS Stock(const std::string & filename, const intvec & shape, std::uint64_t offset = 0,
+                         bool thread_safe = true);
     /** @brief Open an already existing file for reading and storing data.
      *  @param filename Name of input file (or output file).
      *  @param offset Starting position from the beginning of file.
      *  @param thread_safe Threasafe policy.
      */
-    Stock(const std::string & filename, std::uint64_t offset = 0, bool thread_safe = true);
+    MERLIN_EXPORTS Stock(const std::string & filename, std::uint64_t offset = 0, bool thread_safe = true);
     /** @brief Constructor from a slice.
      *  @param whole merlin::array::Stock of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    Stock(const array::Stock & whole, const Vector<array::Slice> & slices);
+    MERLIN_EXPORTS Stock(const array::Stock & whole, const Vector<array::Slice> & slices);
     /// @}
 
     /// @name Copy and Move
@@ -77,23 +78,23 @@ class MERLIN_EXPORTS Stock : public NdData {
     /// @name Get and set element
     /// @{
     /** @brief Get value of element at a n-dim index.*/
-    double get(const intvec & index) const;
+    MERLIN_EXPORTS double get(const intvec & index) const;
     /** @brief Get value of element at a C-contiguous index.*/
-    double get(std::uint64_t index) const;
+    MERLIN_EXPORTS double get(std::uint64_t index) const;
     /** @brief Set value of element at a n-dim index.*/
-    void set(const intvec index, double value);
+    MERLIN_EXPORTS void set(const intvec index, double value);
     /** @brief Set value of element at a C-contiguous index.*/
-    void set(std::uint64_t index, double value);
+    MERLIN_EXPORTS void set(std::uint64_t index, double value);
     /// @}
 
     /// @name Write to file
     /// @{
     /** @brief Write data from a merlin::array::Array to a file.*/
-    void record_data_to_file(const Array & src);
+    MERLIN_EXPORTS void record_data_to_file(const Array & src);
     /// @}
 
     /** @brief Destructor.*/
-    ~Stock(void);
+    MERLIN_EXPORTS ~Stock(void);
 
   protected:
     /** @brief Pointer to file stream.*/

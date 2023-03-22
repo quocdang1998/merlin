@@ -28,46 +28,46 @@ namespace merlin {
  *   - On **Linux**, the lock is not binded to read/write permission. A thread/process **without locking can read/write
  *  the file normally** even if the file is locked by another.
  */
-class MERLIN_EXPORTS FileLock {
+class FileLock {
   public:
     /// @name Constructors
     /// @{
     /** @brief Default constructor.*/
     FileLock(void) = default;
     /** @brief Constructor from C file stream pointer.*/
-    FileLock(std::FILE * file_ptr);
+    MERLIN_EXPORTS FileLock(std::FILE * file_ptr);
     /// @}
 
     /// @name Exclusive lock
     /// @{
     /** @brief Exclusively lock file.*/
-    void lock(void);
+    MERLIN_EXPORTS void lock(void);
     /** @brief Attemp to exclusively lock file.
      * @return ``True`` if lock succeeds and file is locked. ``False`` otherwise.
      */
-    bool try_lock(void);
+    MERLIN_EXPORTS bool try_lock(void);
     /// @}
 
     /// @name Share lock
     /// @{
     /** @brief Sharable lock file.*/
-    void lock_shared(void);
+    MERLIN_EXPORTS void lock_shared(void);
     /** @brief Attemp to sharable lock file.
      * @return ``True`` if lock succeeds and file is locked. ``False`` otherwise.
      */
-    bool try_lock_shared(void);
+    MERLIN_EXPORTS bool try_lock_shared(void);
     /// @}
 
     /// @name Unlock
     /// @{
     /** @brief Exclusively unlock file.*/
-    void unlock(void);
+    MERLIN_EXPORTS void unlock(void);
     /// @}
 
     /// @name String representation
     /// @{
     /** @brief String representation.*/
-    std::string str() const;
+    MERLIN_EXPORTS std::string str() const;
 
     /// @name Destructor
     /// @{

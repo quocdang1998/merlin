@@ -10,37 +10,37 @@
 #include "merlin/cuda/device.hpp"  // merlin::cuda::Device
 #include "merlin/cuda/context.hpp"  // merlin::cuda::Context
 #include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS, MERLIN_HOSTDEV_EXPORTS
 #include "merlin/vector.hpp"  // merlin::intvec
 
 namespace merlin {
 
 /** @brief Multi-dimensional array on GPU.*/
-class MERLIN_EXPORTS array::Parcel : public array::NdData {
+class array::Parcel : public array::NdData {
   public:
     /// @name Constructors
     /// @{
     /** @brief Default constructor (do nothing).*/
     __cuhostdev__ Parcel(void) {}
     /** @brief Construct a contiguous array from shape on GPU.*/
-    Parcel(const intvec & shape);
+    MERLIN_EXPORTS Parcel(const intvec & shape);
     /** @brief Constructor from a slice.
      *  @param whole merlin::array::NdData of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    __cuhostdev__ Parcel(const array::Parcel & whole, const Vector<array::Slice> & slices);
+    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS Parcel(const array::Parcel & whole, const Vector<array::Slice> & slices);
     /// @}
 
     /// @name Copy and Move
     /// @{
     /** @brief Deep copy constructor.*/
-    Parcel(const array::Parcel & src);
+    MERLIN_EXPORTS Parcel(const array::Parcel & src);
     /** @brief Deep copy assignment.*/
-    array::Parcel & operator=(const array::Parcel & src);
+    MERLIN_EXPORTS array::Parcel & operator=(const array::Parcel & src);
     /** @brief Move constructor.*/
-    Parcel(array::Parcel && src);
+    MERLIN_EXPORTS Parcel(array::Parcel && src);
     /** @brief Move assignment.*/
-    array::Parcel & operator=(array::Parcel && src);
+    MERLIN_EXPORTS array::Parcel & operator=(array::Parcel && src);
     /// @}
 
     /// @name Get members
@@ -66,13 +66,13 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
     /// @name Get and set element
     /// @{
     /** @brief Get value of element at a n-dim index.*/
-    double get(const intvec & index) const;
+    MERLIN_EXPORTS double get(const intvec & index) const;
     /** @brief Get value of element at a C-contiguous index.*/
-    double get(std::uint64_t index) const;
+    MERLIN_EXPORTS double get(std::uint64_t index) const;
     /** @brief Set value of element at a n-dim index.*/
-    void set(const intvec index, double value);
+    MERLIN_EXPORTS void set(const intvec index, double value);
     /** @brief Set value of element at a C-contiguous index.*/
-    void set(std::uint64_t index, double value);
+    MERLIN_EXPORTS void set(std::uint64_t index, double value);
     /// @}
 
     /// @name Transfer data to GPU
@@ -80,7 +80,8 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
     /** @brief Transfer data to GPU from CPU array.
      *  @note Stream synchronization is not included in this function.
      */
-    void transfer_data_to_gpu(const array::Array & cpu_array, const cuda::Stream & stream = cuda::Stream());
+    MERLIN_EXPORTS void transfer_data_to_gpu(const array::Array & cpu_array,
+                                             const cuda::Stream & stream = cuda::Stream());
     /// @}
 
     /// @name GPU related features
@@ -94,7 +95,8 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
      *  stride vector.
      *  @param stream_ptr Pointer to CUDA sytream for asynchronious copy.
      */
-    void * copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr, std::uintptr_t stream_ptr = 0) const;
+    MERLIN_EXPORTS void * copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr,
+                                      std::uintptr_t stream_ptr = 0) const;
     #ifdef __NVCC__
     /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
      *  @note This operation is single-threaded.
@@ -117,9 +119,9 @@ class MERLIN_EXPORTS array::Parcel : public array::NdData {
      *  @details Delay CUDA memory deallocation until the end of program, or until
      *  ``merlin::Environment::flush_cuda_deferred_deallocation`` is called.
      */
-    void defer_allocation(void);
+    MERLIN_EXPORTS void defer_allocation(void);
     /** @brief Destructor.*/
-    ~Parcel(void);
+    MERLIN_EXPORTS ~Parcel(void);
     /// @}
 
   protected:

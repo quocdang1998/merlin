@@ -17,30 +17,30 @@ namespace merlin {
  *  of disjointed union of many multi-dimensional Cartesian grids, each associated with a level index vector (an array
  *  of level on each dimension). Each point in the grid belongs to a sub-grid, and associated to an index in the grid.
  */
-class MERLIN_EXPORTS interpolant::SparseGrid : interpolant::Grid {
+class interpolant::SparseGrid : interpolant::Grid {
   public:
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
     SparseGrid(void) = default;
     /** @brief Constructor a full sparse grid from vector of components.*/
-    SparseGrid(std::initializer_list<Vector<double>> grid_vectors);
+    MERLIN_EXPORTS SparseGrid(std::initializer_list<Vector<double>> grid_vectors);
     /** @brief Constructor anisotropic grid from vector of components.*/
-    SparseGrid(std::initializer_list<Vector<double>> grid_vectors, std::uint64_t max, const intvec & weight);
+    MERLIN_EXPORTS SparseGrid(std::initializer_list<Vector<double>> grid_vectors, std::uint64_t max, const intvec & weight);
     /** @brief Constructor sparse grid from vector of components and level index vectors.*/
-    SparseGrid(std::initializer_list<Vector<double>> grid_vectors, const Vector<intvec> & level_vectors);
+    MERLIN_EXPORTS SparseGrid(std::initializer_list<Vector<double>> grid_vectors, const Vector<intvec> & level_vectors);
     /// @}
 
     /// @name Copy and Move
     /// @{
     /** @brief Copy constructor.*/
-    SparseGrid(const interpolant::SparseGrid & src);
+    MERLIN_EXPORTS SparseGrid(const interpolant::SparseGrid & src);
     /** @brief Copy assignment.*/
-    interpolant::SparseGrid & operator=(const interpolant::SparseGrid & src);
+    MERLIN_EXPORTS interpolant::SparseGrid & operator=(const interpolant::SparseGrid & src);
     /** @brief Move constructor.*/
-    SparseGrid(interpolant::SparseGrid && src);
+    MERLIN_EXPORTS SparseGrid(interpolant::SparseGrid && src);
     /** @brief Move assignment.*/
-    interpolant::SparseGrid & operator=(interpolant::SparseGrid && src);
+    MERLIN_EXPORTS interpolant::SparseGrid & operator=(interpolant::SparseGrid && src);
     /// @}
 
     /// @name Get members and attributes
@@ -50,11 +50,11 @@ class MERLIN_EXPORTS interpolant::SparseGrid : interpolant::Grid {
     /** @brief Number of dimension of the SparseGrid.*/
     constexpr std::uint64_t ndim(void) const noexcept {return this->grid_vectors_.size();}
     /** @brief Get shape of the grid.*/
-    intvec get_grid_shape(void) const noexcept;
+    MERLIN_EXPORTS intvec get_grid_shape(void) const noexcept;
     /** @brief Get start index of each sub-grid.*/
     constexpr const intvec & sub_grid_start_index(void) const noexcept {return this->sub_grid_start_index_;}
     /** @brief Number of points in the SparseGrid.*/
-    std::uint64_t size(void) const;
+    MERLIN_EXPORTS std::uint64_t size(void) const;
     /// @}
 
     /// @name Grid levels
@@ -79,26 +79,26 @@ class MERLIN_EXPORTS interpolant::SparseGrid : interpolant::Grid {
         return result;
     }
     /** @brief Max level on each dimension.*/
-    intvec max_levels(void) const;
+    MERLIN_EXPORTS intvec max_levels(void) const;
     /// @}
 
     /// @name Iterator
     /// @{
     /** @brief Index of point in grid given its contiguous order.*/
-    intvec index_from_contiguous(std::uint64_t contiguous_index) const;
+    MERLIN_EXPORTS intvec index_from_contiguous(std::uint64_t contiguous_index) const;
     /** @brief Point at a given multi-dimensional index.*/
-    Vector<double> point_at_index(const intvec & index) const;
+    MERLIN_EXPORTS Vector<double> point_at_index(const intvec & index) const;
     /// @}
 
     /// @name Representation
     /// @{
-    std::string str(void) const;
+    MERLIN_EXPORTS std::string str(void) const;
     /// @}
 
     /// @name Destructor
     /// @{
     /** @brief Default destructor.*/
-    ~SparseGrid(void);
+    MERLIN_EXPORTS ~SparseGrid(void);
     /// @}
 
   protected:
@@ -115,11 +115,11 @@ class MERLIN_EXPORTS interpolant::SparseGrid : interpolant::Grid {
 namespace interpolant {
 
 /** @brief Copy value from multi dimensional value array to compacted array for sparse grid interpolation.*/
-void copy_value_from_cartesian_array(array::NdData & dest, const array::NdData & src,
-                                     const interpolant::SparseGrid & grid);
+MERLIN_EXPORTS void copy_value_from_cartesian_array(array::NdData & dest, const array::NdData & src,
+                                                    const interpolant::SparseGrid & grid);
 
 /** @brief Get Cartesian grid corresponding to a given level vector.*/
-interpolant::CartesianGrid get_cartesian_grid(const SparseGrid & grid, std::uint64_t subgrid_index);
+MERLIN_EXPORTS interpolant::CartesianGrid get_cartesian_grid(const SparseGrid & grid, std::uint64_t subgrid_index);
 
 /** @brief Get slice of a given level index.*/
 Vector<array::Slice> get_slice(const SparseGrid & grid, std::uint64_t subgrid_index);

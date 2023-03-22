@@ -22,10 +22,10 @@ typedef void(* CudaStreamCallback)(std::uintptr_t, int, void *);
 namespace merlin {
 
 /** @brief CUDA stream of tasks.*/
-class MERLIN_EXPORTS cuda::Stream {
+class cuda::Stream {
   public:
     /** @brief Parameter controlling the behavior of the stream.*/
-    enum class Setting : unsigned int {
+    enum class MERLIN_EXPORTS Setting : unsigned int {
         /** Default stream creation flag (synchonized with the null stream).*/
         Default = 0x00,
         /** Works may run concurrently with null stream.*/
@@ -35,13 +35,13 @@ class MERLIN_EXPORTS cuda::Stream {
     /// @name Constructor
     /// @{
     /** @brief Default constructor (the null stream).*/
-    Stream(void);
+    MERLIN_EXPORTS Stream(void);
     /** @brief Constructor from Setting and priority.
      *  @details Construct a CUDA stream from its setting and priority in the current context.
      *  @param setting %Stream creation flag.
      *  @param priority %Stream task priority (lower number means higher priority).
      */
-    Stream(cuda::Stream::Setting setting, int priority = 0);
+    MERLIN_EXPORTS Stream(cuda::Stream::Setting setting, int priority = 0);
     /// @}
 
     /// @name Copy and Move
@@ -68,11 +68,11 @@ class MERLIN_EXPORTS cuda::Stream {
     /** @brief Get stream pointer.*/
     constexpr std::uintptr_t get_stream_ptr(void) const noexcept {return this->stream_;}
     /** @brief Get setting flag of the stream.*/
-    cuda::Stream::Setting setting(void) const;
+    MERLIN_EXPORTS cuda::Stream::Setting setting(void) const;
     /** @brief Get priority of the stream.*/
-    int priority(void) const;
+    MERLIN_EXPORTS int priority(void) const;
     /** @brief Get context associated to stream.*/
-    cuda::Context get_context(void) const;
+    MERLIN_EXPORTS cuda::Context get_context(void) const;
     /** @brief Get GPU.*/
     constexpr const cuda::Device & get_gpu(void) const noexcept {return this->device_;}
     /// @}
@@ -82,11 +82,11 @@ class MERLIN_EXPORTS cuda::Stream {
     /** @brief Query for completion status.
      *  @details ``true`` if all operations in the stream have completed.
      */
-    bool is_complete(void) const;
+    MERLIN_EXPORTS bool is_complete(void) const;
     /** @brief Check validity of GPU and context.
      * @details Check if the current CUDA context and active GPU is valid for the stream.
      */
-    void check_cuda_context(void) const;
+    MERLIN_EXPORTS void check_cuda_context(void) const;
     /// @}
 
     /// @name Operations
@@ -111,23 +111,23 @@ class MERLIN_EXPORTS cuda::Stream {
      *  Callback argument: 1
      *  @endcode
      */
-    void add_callback(cuda::CudaStreamCallback func, void * arg);
+    MERLIN_EXPORTS void add_callback(cuda::CudaStreamCallback func, void * arg);
     /** @brief Synchronize the stream.
      *  @details Pause the CPU process until all operations on the stream has finished.
      */
-    void synchronize(void) const;
+    MERLIN_EXPORTS void synchronize(void) const;
     /// @}
 
     /// @name Representation
     /// @{
     /** @brief String representation.*/
-    std::string str(void) const;
+    MERLIN_EXPORTS std::string str(void) const;
     /// @}
 
     /// @name Destructor
     /// @{
     /** @brief Destructor.*/
-    ~Stream(void);
+    MERLIN_EXPORTS ~Stream(void);
     /// @}
 
   protected:

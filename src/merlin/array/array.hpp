@@ -32,7 +32,7 @@ void free_memory(double * ptr, std::uint64_t size);
 // -----------
 
 /** @brief Multi-dimensional array on CPU.*/
-class MERLIN_EXPORTS array::Array : public array::NdData {
+class array::Array : public array::NdData {
   public:
     /// @name Constructor
     /// @{
@@ -41,11 +41,11 @@ class MERLIN_EXPORTS array::Array : public array::NdData {
     /** @brief Construct 1D array holding a double precision value.
      *  @param value Assigned value.
      */
-    Array(double value);
+    MERLIN_EXPORTS Array(double value);
     /** @brief Construct C-contiguous empty array from dimension vector.
      *  @param shape Shape vector.
      */
-    Array(const intvec & shape);
+    MERLIN_EXPORTS Array(const intvec & shape);
     /** @brief Construct array from pointer, to data and meta-data.
      *  @param data Pointer to data.
      *  @param shape Size per dimension.
@@ -54,24 +54,24 @@ class MERLIN_EXPORTS array::Array : public array::NdData {
      *  @note The original memory tied to the pointer will not be freed at destruction. But if copy is true, the
         copied tensor is automatically deallocated inside the destructor.
      */
-    Array(double * data, const intvec & shape, const intvec & strides, bool copy = false);
+    MERLIN_EXPORTS Array(double * data, const intvec & shape, const intvec & strides, bool copy = false);
     /** @brief Constructor from a slice.
      *  @param whole merlin::array::Array of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    Array(const array::Array & whole, const Vector<array::Slice> & slices);
+    MERLIN_EXPORTS Array(const array::Array & whole, const Vector<array::Slice> & slices);
     /// @}
 
     /// @name Copy and move
     /// @{
     /** @brief Deep copy constructor.*/
-    Array(const array::Array & src);
+    MERLIN_EXPORTS Array(const array::Array & src);
     /** @brief Deep copy assignment.*/
-    Array & operator=(const array::Array & src);
+    MERLIN_EXPORTS Array & operator=(const array::Array & src);
     /** @brief Move constructor.*/
-    Array(array::Array && src);
+    MERLIN_EXPORTS Array(array::Array && src);
     /** @brief Move assignment.*/
-    Array & operator=(array::Array && src);
+    MERLIN_EXPORTS Array & operator=(array::Array && src);
     /// @}
 
     /// @name Iterator
@@ -91,35 +91,35 @@ class MERLIN_EXPORTS array::Array : public array::NdData {
      *  @param index Vector of indices along each dimension.
      *  @return Reference to the element at the provided index.
      */
-    double & operator[](const intvec & index);
+    MERLIN_EXPORTS double & operator[](const intvec & index);
     /// @}
 
     /// @name Get and set element
     /// @{
     /** @brief Get value of element at a n-dim index.*/
-    double get(const intvec & index) const;
+    MERLIN_EXPORTS double get(const intvec & index) const;
     /** @brief Get value of element at a C-contiguous index.*/
-    double get(std::uint64_t index) const;
+    MERLIN_EXPORTS double get(std::uint64_t index) const;
     /** @brief Set value of element at a n-dim index.*/
-    void set(const intvec index, double value);
+    MERLIN_EXPORTS void set(const intvec index, double value);
     /** @brief Set value of element at a C-contiguous index.*/
-    void set(std::uint64_t index, double value);
+    MERLIN_EXPORTS void set(std::uint64_t index, double value);
     /// @}
 
     /// @name Transfer data
     /// @{
     /** @brief Copy data from GPU array.*/
-    void clone_data_from_gpu(const array::Parcel & src, const cuda::Stream & stream = cuda::Stream());
+    MERLIN_EXPORTS void clone_data_from_gpu(const array::Parcel & src, const cuda::Stream & stream = cuda::Stream());
     /** @brief Export data to a file.
      *  @param src Exported array.
      */
-    void extract_data_from_file(const array::Stock & src);
+    MERLIN_EXPORTS void extract_data_from_file(const array::Stock & src);
     /// @}
 
     /// @name Destructor
     /// @{
     /** @brief Destructor.*/
-    ~Array(void);
+    MERLIN_EXPORTS ~Array(void);
     /// @}
 
   protected:

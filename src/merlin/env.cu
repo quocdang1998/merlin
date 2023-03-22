@@ -3,19 +3,15 @@
 
 #include <cuda.h>  // ::cuCtxGetCurrent, ::cuDeviceGetCount, ::cuInit
 
-#include "merlin/logger.hpp"
+#include "merlin/logger.hpp"  // FAILURE
+#include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
 
 namespace merlin {
 
 // Initialize CUDA context
 void initialize_cuda_context(void) {
-    // check for number of GPU
-    ::cudaError_t err_ = static_cast<::cudaError_t>(::cuInit(0));
-    if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Initialize CUDA failed with error \"%s\"\n", ::cudaGetErrorString(err_));
-    }
     int num_gpu;
-    err_ = static_cast<::cudaError_t>(::cuDeviceGetCount(&num_gpu));
+    ::cudaError_t err_ = ::cudaGetDeviceCount(&num_gpu);
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Get device failed with error \"%s\"\n", ::cudaGetErrorString(err_));
     }
@@ -35,28 +31,34 @@ void initialize_cuda_context(void) {
         return;
     }
     // uninitialized or undefined
-    std::printf("Initializing CUDA primary contexts.\n");
     for (int i_gpu = 0; i_gpu < num_gpu; i_gpu++) {
-        err_ = static_cast<::cudaError_t>(::cuDevicePrimaryCtxRetain(&current_ctx, i_gpu));
+        err_ = ::cudaSetDevice(i_gpu);
         if (err_ != 0) {
-            FAILURE(cuda_runtime_error, "Retain primary context for GPU of ID %d failed with message \"%s\".\n",
+            FAILURE(cuda_runtime_error, "Initialize primary context for GPU of ID %d failed with message \"%s\".\n",
                     i_gpu, ::cudaGetErrorString(err_));
         }
-        Environment::primary_contexts[i_gpu] = reinterpret_cast<std::uint64_t>(current_ctx);
+        ::cuCtxGetCurrent(&current_ctx);
+        Environment::primary_contexts[i_gpu] = reinterpret_cast<std::uintptr_t>(current_ctx);
     }
     // set back to default device
-    ::cuCtxPushCurrent(reinterpret_cast<::CUcontext>(Environment::primary_contexts[Environment::default_gpu]));
+    ::cudaSetDevice(Environment::default_gpu);
 }
 
 // Destroy CUDA primary contexts
 void destroy_cuda_context(void) {
+/*
     int num_gpu;
-    ::cuDeviceGetCount(&num_gpu);
+    ::cudaGetDeviceCount(&num_gpu);
     // uninitialized or undefined
     for (int i_gpu = 0; i_gpu < num_gpu; i_gpu++) {
-        ::cuDevicePrimaryCtxRelease(i_gpu);
+        ::cudaError_t err_ = static_cast<::cudaError_t>(::cuDevicePrimaryCtxRelease(i_gpu));
+        if (err_ != 0) {
+            FAILURE(cuda_runtime_error, "Destroy CUDA primary contexts failed with error \"%s\"\n",
+                    ::cudaGetErrorString(err_));
+        }
         Environment::primary_contexts.erase(i_gpu);
     }
+*/
 }
 
 // Deallocate all pointers in deferred pointer array
