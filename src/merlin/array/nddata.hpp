@@ -135,6 +135,9 @@ namespace array {
 /** @brief Slice current array to a new array with the same polymorphic type.*/
 MERLIN_EXPORTS array::NdData * slice_on(const array::NdData & original, const Vector<array::Slice> & slices);
 
+/** @brief Maximum number of dimension allowed.*/
+inline constexpr std::uint64_t max_allowed_dim = 16;
+
 }
 
 }  // namespace merlin

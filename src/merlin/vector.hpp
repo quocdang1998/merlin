@@ -39,7 +39,7 @@ class Vector {
      *  @param size Number of element.
      *  @param value Value of each element (must be copy constructible or copy assignable)
      */
-    __cuhostdev__ Vector(std::uint64_t size, const T & value = T());
+    __cuhostdev__ explicit Vector(std::uint64_t size, const T & value = T());
     /** @brief Copy constructor from a pointer to first and last element.
      *  @tparam Convertable Type convertable to ``T`` (constructor of ``T`` from ``Convertable``, i.e
      *  ``T(Convertable)`` must exists).

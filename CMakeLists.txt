@@ -5,7 +5,7 @@
 # =====================================================================================================================
 
 # cmake minimum version
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.25)
 
 # options
 set(MERLIN_CUDA ON CACHE BOOL "Build library using CUDA")  # -DMERLIN_CUDA=OFF
@@ -177,15 +177,16 @@ endif(MSVC)
 
 # set compilation options
 function(MerlinSetTargetProperties target_library)
-    set_property(TARGET ${target_library} PROPERTY POSITION_INDEPENDENT_CODE 1)
-    set_property(TARGET ${target_library} PROPERTY CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
+    set_property(TARGET ${target_library} PROPERTY POSITION_INDEPENDENT_CODE ON)
+    set_property(TARGET ${target_library} PROPERTY INTERFACE_POSITION_INDEPENDENT_CODE ON)
+    target_compile_features(${target_library} PUBLIC cxx_std_17 cuda_std_17)
     target_include_directories(
         ${target_library} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
         $<INSTALL_INTERFACE:include>
     )
+    set_property(TARGET ${target_library} PROPERTY INTERPROCEDURAL_OPTIMIZATION ON)
     if(MERLIN_CUDA)
-        set_property(TARGET ${target_library} PROPERTY CUDA_STANDARD 17 CUDA_STANDARD_REQUIRED ON)
         target_compile_definitions(${target_library} PUBLIC __MERLIN_CUDA__)
         set(DIAG_SUPPRESS -Xcudafe "--diag_suppress=field_without_dll_interface")
         set(RELAXED_CONSTEXPR --expt-relaxed-constexpr)
@@ -203,6 +204,10 @@ function(MerlinSetTargetProperties target_library)
         if(MSVC)
             target_link_libraries(${target_library} PRIVATE DbgHelp.lib)
         endif(MSVC)
+    else()
+        if(UNIX)
+            target_compile_options(${target_library} PRIVATE -O3)
+        endif(UNIX)
     endif(MERLIN_DEBUG)
     target_link_libraries(${target_library} PRIVATE OpenMP::OpenMP_CXX)
 endfunction(MerlinSetTargetProperties)
@@ -218,6 +223,7 @@ set_source_files_properties(${MERLIN_SRC_SHR} PROPERTIES LANGUAGE CXX)
 set_property(TARGET libmerlinshared PROPERTY OUTPUT_NAME merlinshared)
 set_property(TARGET libmerlinshared PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 MerlinSetTargetProperties(libmerlinshared)
+# set_property(TARGET libmerlinshared PROPERTY EXPORT_PROPERTIES CUDA_SEPARABLE_COMPILATION)
 
 # setting library for device code if compiling a shared library with CUDA
 if(MERLIN_CUDA AND MERLIN_LIBKIND MATCHES "SHARED")
@@ -301,20 +307,15 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/
 
 # install to library to lib
 if(BUILD_MERLINCUDA_LIB)
-    install(TARGETS libmerlin libmerlinglobal libmerlincuda libmerlinshared
-            EXPORT limerlin-cmake
-            LIBRARY DESTINATION "lib"
-            ARCHIVE DESTINATION "lib"
-            RUNTIME DESTINATION "bin"
-    )
+    list(APPEND MERLIN_LIBS_LIST libmerlin libmerlinglobal libmerlincuda libmerlinshared)
 else()
-    install(TARGETS libmerlin libmerlinshared
-            EXPORT limerlin-cmake
-            LIBRARY DESTINATION "lib"
-            ARCHIVE DESTINATION "lib"
-            RUNTIME DESTINATION "bin"
-    )
+    list(APPEND MERLIN_LIBS_LIST libmerlin libmerlinshared)
 endif()
+install(TARGETS ${MERLIN_LIBS_LIST}
+        EXPORT limerlin-cmake
+        LIBRARY DESTINATION "lib"
+        ARCHIVE DESTINATION "lib"
+        RUNTIME DESTINATION "bin")
 
 # cmake export
 install(EXPORT limerlin-cmake
@@ -334,8 +335,6 @@ function(CONFIGURE_TESTFILES LANGUAGE)
         string(REPLACE ".${LANGUAGE}" "" TESTNAME ${TESTFILENAME})
         add_executable(${TESTNAME} ${TESTFILE})
         target_link_libraries(${TESTNAME} libmerlin)
-        set_property(TARGET ${TESTNAME} PROPERTY CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
-        set_property(TARGET ${TESTNAME} PROPERTY CUDA_STANDARD 17 CUDA_STANDARD_REQUIRED ON)
         set_property(TARGET ${TESTNAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
         set_target_properties(${TESTNAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
                               ${CMAKE_CURRENT_BINARY_DIR}/tests)

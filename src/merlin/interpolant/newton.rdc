@@ -9,16 +9,20 @@
 namespace merlin {
 
 // Concatenate 3 intvec
-__cuhostdev__ intvec interpolant::merge_3vectors(const intvec & v1, const intvec & v2, const intvec & v3) {
-    intvec result(v1.size() + v2.size() + v3.size());
+__cuhostdev__ intvec interpolant::merge_3vectors(const intvec & v1, std::uint64_t v2, const intvec & v3,
+                                                 std::uint64_t * data_ptr) {
+    intvec result;
+    if (data_ptr != nullptr) {
+        result.assign(data_ptr, v1.size() + 1 + v3.size());
+    } else {
+        result = intvec(v1.size() + 1 + v3.size());
+    }
     for (std::uint64_t i = 0; i < v1.size(); i++) {
         result[i] = v1[i];
     }
-    for (std::uint64_t i = 0; i < v2.size(); i++) {
-        result[v1.size()+i] = v2[i];
-    }
+    result[v1.size()] = v2;
     for (std::uint64_t i = 0; i < v3.size(); i++) {
-        result[v2.size()+v1.size()+i] = v3[i];
+        result[1+v1.size()+i] = v3[i];
     }
     return result;
 }

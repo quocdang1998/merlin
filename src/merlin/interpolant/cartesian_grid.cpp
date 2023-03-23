@@ -63,7 +63,8 @@ interpolant::CartesianGrid::CartesianGrid(Vector<Vector<double>> && grid_vectors
 }
 
 // Constructor as subgrid of another grid
-interpolant::CartesianGrid::CartesianGrid(const interpolant::CartesianGrid & whole, const Vector<array::Slice> & slices) {
+interpolant::CartesianGrid::CartesianGrid(const interpolant::CartesianGrid & whole,
+                                          const Vector<array::Slice> & slices) {
     // check size
     if (slices.size() != whole.ndim()) {
         FAILURE(std::invalid_argument, "Dimension of Slices and CartesianGrid not compatible (expected %u, got %u).\n",
@@ -142,7 +143,6 @@ interpolant::CartesianGrid & interpolant::CartesianGrid::operator+=(const interp
     }
     // unify 2 grid on each dimension
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
-        std::uint64_t dim_1 = this->grid_vectors_[i_dim].size(), dim_2 = grid.grid_vectors_[i_dim].size();
         // push_back if not duplicated
         const Vector<double> & this_grid_vector = this->grid_vectors_[i_dim];
         const Vector<double> & other_grid_vector = grid.grid_vectors_[i_dim];
@@ -156,6 +156,27 @@ interpolant::CartesianGrid & interpolant::CartesianGrid::operator+=(const interp
         this->grid_vectors_[i_dim] = Vector<double>(buffer.data(), buffer.size());
     }
     return *this;
+}
+
+// Exclusion on each dimension of 2 Cartesian grids
+double interpolant::exclusion_grid(const interpolant::CartesianGrid & grid_parent,
+                                   const interpolant::CartesianGrid & grid_child, const Vector<double> & x) {
+    // check n-dim of 2 grids
+    if (grid_parent.ndim() != grid_child.ndim()) {
+        FAILURE(std::invalid_argument, "Cannot get exclusion of 2 grids with different n-dim.\n");
+    }
+    // get exclusion of 2 grid on each dimension
+    double result = 1.0;
+    for (std::uint64_t i_dim = 0; i_dim < grid_parent.ndim(); i_dim++) {
+        const Vector<double> & parent_vector = grid_parent.grid_vectors_[i_dim];
+        const Vector<double> & child_vector = grid_child.grid_vectors_[i_dim];
+        for (const double & node : parent_vector) {
+            if (std::find(child_vector.cbegin(), child_vector.cend(), node) == child_vector.cend()) {
+                result *= (x[i_dim] - node);
+            }
+        }
+    }
+    return result;
 }
 
 // String representation

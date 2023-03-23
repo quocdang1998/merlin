@@ -27,11 +27,19 @@ data_(data), ndim_(shape.size()), shape_(shape), strides_(strides) {
         FAILURE(std::invalid_argument, "Expected size of shape (%" PRIu64 ") equals to size of strides (%" PRIu64
                 ").\n", shape.size(), strides.size());
     }
+    if (this->ndim_ > array::max_allowed_dim) {
+        FAILURE(std::invalid_argument, "Only allow array up to %" PRIu64 " dimension, got %" PRIu64 ".\n", this->ndim_,
+                array::max_allowed_dim);
+    }
 }
 
 // Constructor from shape vector
 array::NdData::NdData(const intvec & shape) : ndim_(shape.size()), shape_(shape) {
     this->strides_ = array::contiguous_strides(shape, sizeof(double));
+    if (this->ndim_ > array::max_allowed_dim) {
+        FAILURE(std::invalid_argument, "Only allow array up to %" PRIu64 " dimension, got %" PRIu64 ".\n", this->ndim_,
+                array::max_allowed_dim);
+    }
 }
 
 // Get value of element at a n-dim index

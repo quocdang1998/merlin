@@ -1,7 +1,9 @@
 #include <cinttypes>
 
 #include "merlin/array/array.hpp"
+#include "merlin/array/copy.hpp"
 #include "merlin/array/slice.hpp"
+#include "merlin/interpolant/cartesian_grid.hpp"
 #include "merlin/interpolant/sparse_grid.hpp"
 #include "merlin/interpolant/lagrange.hpp"
 #include "merlin/logger.hpp"
@@ -9,20 +11,25 @@
 
 int main(void) {
     double data[9] = {1.0, 3.0, 5.0, 2.0, 4.0, 6.0, 3.0, 5.0, 7.0};
-    std::uint64_t ndim = 2;
-    std::uint64_t dims[2] = {3, 3};
-    std::uint64_t strides[2] = {dims[1] * sizeof(double), sizeof(double)};
-    merlin::array::Array value(data, ndim, dims, strides);
+    merlin::intvec dims({3, 3});
+    merlin::intvec strides = merlin::array::contiguous_strides(dims, sizeof(double));
+    merlin::array::Array value(data, dims, strides);
+    MESSAGE("Original value: %s\n", value.str().c_str());
 
     merlin::interpolant::SparseGrid grid({{0.0, 1.0, 2.0}, {0.0, 1.0, 2.0}}, 1, merlin::intvec({1, 1}));
-    merlin::array::Array coeff(merlin::intvec({grid.size()}));
-    merlin::interpolant::copy_value_from_cartesian_array(coeff, value, grid);
-    merlin::interpolant::calc_lagrange_coeffs_cpu(grid, coeff);
-    MESSAGE("After calculation\n");
-    for (std::uint64_t i = 0; i < coeff.shape()[0]; i++) {
-        MESSAGE("Coefficient %" PRIu64 " %.5f.\n", i, coeff.get(i));
+    MESSAGE("Level index of sparse grid:\n");
+    for (std::uint64_t level_index = 0; level_index < grid.num_level(); level_index++) {
+        std::printf("    Level %" PRIu64 ": %s\n", level_index, grid.level_index(level_index).str().c_str());
     }
+    MESSAGE("Subgrid start index: %s\n", grid.sub_grid_start_index().str().c_str());
+    merlin::array::Array coeff(merlin::intvec({grid.size()}));
+    merlin::interpolant::calc_lagrange_coeffs_cpu(grid, value, coeff);
+    MESSAGE("Coefficients are: %s\n", coeff.str().c_str());
 
-    double f_x = merlin::interpolant::eval_lagrange_cpu(grid, coeff, {1.0, 1.0});
-    MESSAGE("Value calculated at (0.0, 2.0) is %.6f.\n", f_x);
+    merlin::interpolant::CartesianGrid c_grid({{0.0, 1.0, 2.0}, {0.0, 1.0, 2.0}});
+    for (std::uint64_t i = 0; i < c_grid.size(); i ++) {
+        merlin::Vector<double> point = c_grid[i];
+        double f_x = merlin::interpolant::eval_lagrange_cpu(grid, coeff, point);
+        MESSAGE("Value calculated at %s is %.6f.\n", point.str().c_str(), f_x);
+    }
 }

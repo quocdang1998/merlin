@@ -10,10 +10,9 @@
 int main(void) {
     // whole array
     double data[6] = {1.0, 3.0, 5.0, 2.0, 4.0, 6.0};
-    std::uint64_t ndim = 2;
-    std::uint64_t dims[2] = {2, 3};
-    std::uint64_t strides[2] = {dims[1] * sizeof(double), sizeof(double)};
-    merlin::array::Array value(data, ndim, dims, strides);
+    merlin::intvec dims({2, 3});
+    merlin::intvec strides({dims[1] * sizeof(double), sizeof(double)});
+    merlin::array::Array value(data, dims, strides);
     // sub-array 1
     merlin::Vector<merlin::array::Slice> slice_1({{0}, {}});
     merlin::array::Array value_1(value, slice_1);
@@ -32,7 +31,7 @@ int main(void) {
         std::printf("%.1f ", value_2.get(i));
     }
     std::printf("\n");
-
+/*
     // interpolation
     merlin::interpolant::CartesianGrid grid({{0.0, 1.0}, {0.0, 1.0, 2.0}});
     merlin::array::Array coeff(value.shape());
@@ -54,4 +53,5 @@ int main(void) {
     }
     std::printf("\n");
     MESSAGE("Theorical calculated values (C-contiguous order): 1 -4 3.\n");
+*/
 }

@@ -10,8 +10,13 @@ namespace merlin {
 // --------------------------------------------------------------------------------------------------------------------
 
 // Get shape of the grid
-__cuhostdev__ intvec interpolant::CartesianGrid::get_grid_shape(void) const noexcept {
-    intvec result(this->ndim());
+__cuhostdev__ intvec interpolant::CartesianGrid::get_grid_shape(std::uint64_t * data_ptr) const noexcept {
+    intvec result;
+    if (data_ptr != nullptr) {
+        result.assign(data_ptr, this->ndim());
+    } else {
+        result = intvec(this->ndim());
+    }
     for (std::uint64_t i = 0; i < this->ndim(); i++) {
         result[i] = this->grid_vectors_[i].size();
     }

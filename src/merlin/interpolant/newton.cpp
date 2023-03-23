@@ -116,9 +116,9 @@ static void calc_newton_coeffs_single_core(const interpolant::CartesianGrid & gr
                     // loop on each point in divdiff space
                     for (std::uint64_t i_divdiff_space = 0; i_divdiff_space < size_divdiff_space; i_divdiff_space++) {
                         intvec index_divdiff_space = contiguous_to_ndim_idx(i_divdiff_space, shape_divdiff_space);
-                        intvec point_index_k = interpolant::merge_3vectors(index_previous_dims, {k},
+                        intvec point_index_k = interpolant::merge_3vectors(index_previous_dims, k,
                                                                            index_divdiff_space);
-                        intvec point_index_k_1 = interpolant::merge_3vectors(index_previous_dims, {k-1},
+                        intvec point_index_k_1 = interpolant::merge_3vectors(index_previous_dims, k-1,
                                                                              index_divdiff_space);
                         double divdiff_result = (coeff[point_index_k] - coeff[point_index_k_1]);
                         divdiff_result /= grid_vector[k] - grid_vector[k-i];

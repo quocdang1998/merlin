@@ -4,6 +4,7 @@
 #include <tuple>  // std::get
 
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
+#include "merlin/array/nddata.hpp"  // merlin::array::max_allowed_dim
 #include "merlin/cuda/memory.hpp"  // merlin::cuda::copy_class_to_shared_mem
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
 #include "merlin/utils.hpp"  // merlin::flatten_kernel_index, merlin::get_block_count, merlin::contiguous_to_ndim_idx
@@ -16,19 +17,22 @@ namespace merlin {
 
 // Calculate interpolation on a given index
 __cudevice__ static void calc_lagrange_coefficients(const interpolant::CartesianGrid * p_grid,
-                                                    const array::Parcel * p_value, array::Parcel * p_coeff) {
+                                                    const array::Parcel * p_value, array::Parcel * p_coeff,
+                                                    std::uintptr_t free_shared_mem) {
     // get array index from contiguous index
     std::uint64_t ndim = p_grid->ndim();
-    intvec grid_shape = p_grid->get_grid_shape();
+    const intvec & shape = p_value->shape();
     // calculate the denomiantor (product of diferences of node values)
     std::uint64_t size = p_value->size();
     std::uint64_t i_thread = flatten_thread_index();
     std::uint64_t n_thread = size_of_block();
+    // std::uint64_t index_data[array::max_allowed_dim];
+    std::uint64_t * index_data = reinterpret_cast<std::uint64_t *>(free_shared_mem) + i_thread * ndim;
     for (std::uint64_t i = i_thread; i < size; i += n_thread) {
-        intvec index = contiguous_to_ndim_idx(i, grid_shape);
+        intvec index = contiguous_to_ndim_idx(i, shape, index_data);
         double denominator = 1.0;
         for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
-            for (std::uint64_t i_node = 0; i_node < grid_shape[i_dim]; i_node++) {
+            for (std::uint64_t i_node = 0; i_node < shape[i_dim]; i_node++) {
                 // skip for repeating index
                 if (i_node == index[i_dim]) {
                     continue;
@@ -51,8 +55,10 @@ __global__ static void calc_lagrange_kernel(const interpolant::CartesianGrid * p
     interpolant::CartesianGrid * p_grid_shared = std::get<0>(shared_mem_tuple);
     array::Parcel * p_value_shared = std::get<1>(shared_mem_tuple);
     array::Parcel * p_coeff_shared = std::get<2>(shared_mem_tuple);
+    std::uintptr_t free_shared_mem = reinterpret_cast<std::uintptr_t>(p_coeff_shared) + sizeof(array::Parcel)
+                                     + 2*(p_coeff_shared->ndim())*sizeof(std::uint64_t);
     // perform the calculation
-    calc_lagrange_coefficients(p_grid_shared, p_value_shared, p_coeff_shared);
+    calc_lagrange_coefficients(p_grid_shared, p_value_shared, p_coeff_shared, free_shared_mem);
 }
 
 // Call calculation kernel on GPU

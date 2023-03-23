@@ -23,9 +23,9 @@ void interpolant::calc_lagrange_coeffs_gpu(const interpolant::CartesianGrid & gr
     interpolant::CartesianGrid * ptr_grid_on_gpu = mem.get<0>();
     array::Parcel * ptr_value_on_gpu = mem.get<1>();
     array::Parcel * ptr_coeff_on_gpu = mem.get<2>();
-    std::uint64_t total_malloc_size = mem.get_total_malloc_size();
+    std::uint64_t shared_mem_size = mem.get_total_malloc_size() + n_thread * grid.ndim() * sizeof(std::uint64_t);
     // call kernel
-    interpolant::call_lagrange_coeff_kernel(ptr_grid_on_gpu, ptr_value_on_gpu, ptr_coeff_on_gpu, total_malloc_size,
+    interpolant::call_lagrange_coeff_kernel(ptr_grid_on_gpu, ptr_value_on_gpu, ptr_coeff_on_gpu, shared_mem_size,
                                             stream.get_stream_ptr(), n_thread);
 }
 

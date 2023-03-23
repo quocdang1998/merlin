@@ -70,6 +70,13 @@ void calc_lagrange_coeffs_cpu(const interpolant::SparseGrid & grid, const array:
 double eval_lagrange_cpu(const interpolant::CartesianGrid & grid, const array::Array & coeff,
                          const Vector<double> & x);
 
+/** @brief Calculate Lagrange interpolation coefficients on a sparse grid using CPU.
+ *  @param grid Sparse grid.
+ *  @param coeff Calculated coefficients.
+ *  @param x Evaluate point, must have the same dimension as grid and coeff.
+ */
+double eval_lagrange_cpu(const interpolant::SparseGrid & grid, const array::Array & coeff,
+                         const Vector<double> & x);
 
 #ifdef __comment
 /** @brief Calculate Lagrage interpolation coefficients on a Cartesian grid using CPU.*/
