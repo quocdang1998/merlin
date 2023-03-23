@@ -5,7 +5,6 @@
 
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/cuda/memory.hpp"  // merlin::cuda::copy_class_to_shared_mem
-#include "merlin/env.hpp"  // merlin::Environment
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
 #include "merlin/utils.hpp"  // merlin::flatten_kernel_index, merlin::get_block_count, merlin::contiguous_to_ndim_idx
 
@@ -40,6 +39,7 @@ __cudevice__ static void calc_lagrange_coefficients(const interpolant::Cartesian
         double result = p_value->operator[](index) / static_cast<double>(denominator);
         p_coeff->operator[](index) = result;
     }
+    __syncthreads();
 }
 
 // Call CUDA kernel calculating coefficients on GPU
@@ -57,10 +57,10 @@ __global__ static void calc_lagrange_kernel(const interpolant::CartesianGrid * p
 
 // Call calculation kernel on GPU
 void interpolant::call_lagrange_coeff_kernel(const interpolant::CartesianGrid * p_grid, const array::Parcel * p_value,
-                                             array::Parcel * p_coeff, std::uint64_t size,
-                                             std::uint64_t shared_mem_size, std::uintptr_t stream_ptr) {
+                                             array::Parcel * p_coeff, std::uint64_t shared_mem_size,
+                                             std::uintptr_t stream_ptr, std::uint64_t n_thread) {
     ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
-    calc_lagrange_kernel<<<1, 32, shared_mem_size, cuda_stream>>>(p_grid, p_value, p_coeff);
+    calc_lagrange_kernel<<<1, n_thread, shared_mem_size, cuda_stream>>>(p_grid, p_value, p_coeff);
 }
 
 }  // namespace merlin

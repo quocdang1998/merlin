@@ -3,68 +3,70 @@
 
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/cuda/memory.hpp"  // merlin::cuda::copy_class_to_shared_mem
-#include "merlin/env.hpp"  // merlin::Environment
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
 #include "merlin/utils.hpp"  // merlin::flatten_kernel_index, merlin::get_block_count, merlin::contiguous_to_ndim_idx
 
 namespace merlin {
 
-// Calculate divide diffrence of 2 arrays on GPU
-__global__ static void calc_divdiff_kernel(const array::Parcel * p_a1, const array::Parcel * p_a2,
-                                           double x1, double x2, array::Parcel * p_result, std::uint64_t size) {
-    // copy meta data to shared memory
-    extern __shared__ char share_ptr[];
-    auto shared_mem_tuple = cuda::copy_class_to_shared_mem(share_ptr, *p_a1, *p_a2, *p_result);
-    array::Parcel * p_a1_shared = std::get<0>(shared_mem_tuple);
-    array::Parcel * p_a2_shared = std::get<1>(shared_mem_tuple);
-    array::Parcel * p_result_shared = std::get<2>(shared_mem_tuple);
-    // perform the calculation
-    std::uint64_t c_index = flatten_kernel_index();
-    if (c_index < size) {
-        intvec index = contiguous_to_ndim_idx(c_index, p_result_shared->shape());
-        (*p_result_shared)[index] = ((*p_a1_shared)[index] - (*p_a2_shared)[index]) / (x1 - x2);
+// Calculate divide difference algorithm
+__device__ static void calc_newton_coeffs_single_core(const interpolant::CartesianGrid & grid, array::Parcel & coeff) {
+    // get thread index and n_thread
+    std::uint64_t thrd_idx = flatten_thread_index();
+    std::uint64_t n_th = size_of_block();
+    // loop on each dimension
+    for (std::uint64_t i_dim = 0; i_dim < coeff.ndim(); i_dim++) {
+        // get grid vector at current diemnsion
+        const Vector<double> & grid_vector = grid.grid_vectors()[grid.ndim() - coeff.ndim() + i_dim];
+        // get shape and size of previous dimensions
+        intvec shape_previous_dims;
+        shape_previous_dims.assign(const_cast<std::uint64_t *>(coeff.shape().begin()), i_dim);
+        std::uint64_t size_previous_dims = prod_elements(shape_previous_dims);
+        // get shape and size of divdiff subspace
+        intvec shape_divdiff_space;
+        shape_divdiff_space.assign(const_cast<std::uint64_t *>(coeff.shape().begin())+i_dim+1,
+                                   const_cast<std::uint64_t *>(coeff.shape().end()));
+        std::uint64_t size_divdiff_space = prod_elements(shape_divdiff_space);
+        // loop on each previous dims point
+        for (std::int64_t i_previous_dims = thrd_idx; i_previous_dims < size_previous_dims; i_previous_dims += n_th) {
+            intvec index_previous_dims = contiguous_to_ndim_idx(i_previous_dims, shape_previous_dims);
+            // loop on indices of current dim for divide difference
+            for (std::uint64_t i = 1; i < coeff.shape()[i_dim]; i++) {
+                for (std::uint64_t k = coeff.shape()[i_dim]-1; k >= i; k--) {
+                    // loop on each point in divdiff space
+                    for (std::uint64_t i_divdiff_space = 0; i_divdiff_space < size_divdiff_space; i_divdiff_space++) {
+                        intvec index_divdiff_space = contiguous_to_ndim_idx(i_divdiff_space, shape_divdiff_space);
+                        intvec point_index_k = interpolant::merge_3vectors(index_previous_dims, {k},
+                                                                           index_divdiff_space);
+                        intvec point_index_k_1 = interpolant::merge_3vectors(index_previous_dims, {k-1},
+                                                                             index_divdiff_space);
+                        double divdiff_result = (coeff[point_index_k] - coeff[point_index_k_1]);
+                        divdiff_result /= grid_vector[k] - grid_vector[k-i];
+                        intvec point_index_result = std::move(point_index_k);
+                        coeff[point_index_result] = divdiff_result;
+                    }
+                }
+            }
+        }
+        __syncthreads();
     }
-}
-
-// Call divide difference algorithm on GPU
-void interpolant::call_divdiff_kernel(const array::Parcel * p_a1, const array::Parcel * p_a2,
-                                      double x1, double x2, array::Parcel * p_result, std::uint64_t size,
-                                      std::uint64_t shared_mem_size, std::uintptr_t stream_ptr) {
-    std::uint64_t block_count = get_block_count(Environment::default_block_size, size);
-    ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
-    calc_divdiff_kernel<<<block_count, Environment::default_block_size,
-                          shared_mem_size, cuda_stream>>>(p_a1, p_a2, x1, x2, p_result, size);
 }
 
 // Calculate divide difference by a single thread on GPU
-__global__ static void calc_single_core_kernel(const interpolant::CartesianGrid * p_grid, array::Parcel * p_coeff,
-                                               std::uint64_t size) {
+__global__ static void calc_single_core_kernel(const interpolant::CartesianGrid * p_grid, array::Parcel * p_coeff) {
     // copy meta data to GPU
     extern __shared__ char share_ptr[];
-    interpolant::CartesianGrid * p_grid_share = reinterpret_cast<interpolant::CartesianGrid *>(share_ptr);
-    void * share_coeff_arrays = p_grid->copy_to_shared_mem(p_grid_share, p_grid_share+1);
-    // copy Parcel objects to GPU
-    std::uintptr_t jump = sizeof(array::Parcel) + 2 * p_coeff->ndim() * sizeof(std::uint64_t);
-    std::uint64_t c_index = flatten_kernel_index();
-    std::uintptr_t coeff_i_ptr = reinterpret_cast<std::uintptr_t>(p_coeff) + c_index*jump;
-    array::Parcel * ptr_coeff_i = reinterpret_cast<array::Parcel *>(coeff_i_ptr);
-    std::uint64_t thread_index = flatten_thread_index();
-    std::uintptr_t dest_coeff_i_ptr = reinterpret_cast<std::uintptr_t>(share_coeff_arrays) + thread_index*jump;
-    array::Parcel * ptr_dest_coeff_i = reinterpret_cast<array::Parcel *>(dest_coeff_i_ptr);
-    if (c_index < size) {
-        ptr_coeff_i->copy_to_shared_mem_single(ptr_dest_coeff_i, ptr_dest_coeff_i+1);
-        interpolant::calc_newton_coeffs_single_core(*p_grid_share, *ptr_coeff_i);
-    }
+    auto shared_mem_tuple = cuda::copy_class_to_shared_mem(share_ptr, *p_grid, *p_coeff);
+    interpolant::CartesianGrid * p_grid_shared = std::get<0>(shared_mem_tuple);
+    array::Parcel * p_coeff_shared = std::get<1>(shared_mem_tuple);
+    calc_newton_coeffs_single_core(*p_grid_shared, *p_coeff_shared);
 }
 
 // Call coefficient calculation on single core
-void interpolant::call_single_core_kernel(const interpolant::CartesianGrid * p_grid, array::Parcel * p_coeff,
-                                          std::uint64_t size, std::uint64_t shared_mem_size,
-                                          std::uintptr_t stream_ptr) {
-    std::uint64_t block_count = get_block_count(Environment::default_block_size, size);
+void interpolant::call_newton_coeff_kernel(const interpolant::CartesianGrid * p_grid, array::Parcel * p_coeff,
+                                           std::uint64_t shared_mem_size, std::uintptr_t stream_ptr,
+                                           std::uint64_t n_thread) {
     ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
-    calc_single_core_kernel<<<block_count, Environment::default_block_size,
-                              shared_mem_size, cuda_stream>>>(p_grid, p_coeff, size);
+    calc_single_core_kernel<<<1, n_thread, shared_mem_size, cuda_stream>>>(p_grid, p_coeff);
 }
 
 }  // namespace merlin

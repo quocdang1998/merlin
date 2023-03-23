@@ -13,7 +13,8 @@ namespace merlin {
 
 // Calculate Lagrange interpolation coefficients on a full Cartesian grid using GPU
 void interpolant::calc_lagrange_coeffs_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
-                                           array::Parcel & coeff, const cuda::Stream & stream) {
+                                           array::Parcel & coeff, const cuda::Stream & stream,
+                                           std::uint64_t n_thread) {
     // check for validity
     stream.check_cuda_context();
     // copy data to GPU
@@ -24,9 +25,8 @@ void interpolant::calc_lagrange_coeffs_gpu(const interpolant::CartesianGrid & gr
     array::Parcel * ptr_coeff_on_gpu = mem.get<2>();
     std::uint64_t total_malloc_size = mem.get_total_malloc_size();
     // call kernel
-    std::uint64_t size = value.size();
-    interpolant::call_lagrange_coeff_kernel(ptr_grid_on_gpu, ptr_value_on_gpu, ptr_coeff_on_gpu, size,
-                                            total_malloc_size, stream.get_stream_ptr());
+    interpolant::call_lagrange_coeff_kernel(ptr_grid_on_gpu, ptr_value_on_gpu, ptr_coeff_on_gpu, total_malloc_size,
+                                            stream.get_stream_ptr(), n_thread);
 }
 
 }  // namespace merlin
