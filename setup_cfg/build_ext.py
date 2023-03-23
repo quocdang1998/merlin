@@ -87,7 +87,7 @@ class custom_du_build_ext(_du_build_ext):
                          for arch in CUDA_ARCHITECHTURE]
             dlink_option = ["-forward-unknown-to-host-compiler",
                             "-Wno-deprecated-gpu-targets",
-                            "-shared", "-dlink"]
+                            "-shared", "-dlink", "-dlto"]
             dlink_option += arch_args
             lib_dlink = []
             if sys.platform == "win32":
