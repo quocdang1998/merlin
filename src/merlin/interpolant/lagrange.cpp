@@ -1,6 +1,7 @@
 // Copyright 2022 quocdang1998
 #include "merlin/interpolant/lagrange.hpp"
 
+#include <algorithm>  // std::find
 #include <cstring>  // std::memcpy
 
 #include <omp.h>  // #pragma omp, omp_get_num_threads
@@ -70,7 +71,7 @@ static void accumulate_level(intvec & old_level, const intvec & new_level) {
     }
 }
 
-// Calculate Lagrange interpolation coefficient on an added Cartesian grid to SParse grid using CPU
+// Calculate Lagrange interpolation coefficient on an added Cartesian grid to Sparse grid using CPU
 static void calc_lagrange_coeffs_of_added_grid_cpu(const interpolant::CartesianGrid & accumulated_grid,
                                                    const interpolant::CartesianGrid & grid, const array::Array & value,
                                                    array::Array & coeff) {
@@ -80,7 +81,7 @@ static void calc_lagrange_coeffs_of_added_grid_cpu(const interpolant::CartesianG
     // parallel loop calculation
     for (std::int64_t i = 0; i < size; i++) {
         intvec index = contiguous_to_ndim_idx(i, grid_shape);
-        // calculate the denomiantor (product of diferences of node values)
+        // calculate the denominator (product of diferences of node values)
         long double denominator = 1.0;
         for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
             const Vector<double> & accumulated_grid_vector = accumulated_grid.grid_vectors()[i_dim];
@@ -95,6 +96,28 @@ static void calc_lagrange_coeffs_of_added_grid_cpu(const interpolant::CartesianG
         double result = value.get(index) / static_cast<double>(denominator);
         coeff.set(index, result);
     }
+}
+
+// Calculate Lagrange interpolation evaluation on an added Cartesian grid to Sparse grid using CPU
+static double eval_lagrange_of_added_grid_cpu(const interpolant::CartesianGrid & accumulated_grid,
+                                              const interpolant::CartesianGrid & grid, const array::Array & coeff,
+                                              const Vector<double> & x) {
+    double result = interpolant::eval_lagrange_cpu(grid, coeff, x);
+    // calculate factors
+    double factor = 1.0;
+    for (std::uint64_t i_dim = 0; i_dim < grid.ndim(); i_dim++) {
+        const Vector<double> & accumulated_grid_vector = accumulated_grid.grid_vectors()[i_dim];
+        const Vector<double> & grid_vector = grid.grid_vectors()[i_dim];
+        for (std::uint64_t i_node = 0; i_node < accumulated_grid_vector.size(); i_node++) {
+            // skip for same points
+            const double & search_value = accumulated_grid_vector[i_node];
+            if (std::find(grid_vector.cbegin(), grid_vector.cend(), search_value) != grid_vector.cend()) {
+                continue;
+            }
+            factor *= x[i_dim] - search_value;
+        }
+    }
+    return result*factor;
 }
 
 // Calculate Lagrange interpolation coefficients on a sparse grid using CPU (function value are preprocessed)
@@ -125,7 +148,8 @@ void interpolant::calc_lagrange_coeffs_cpu(const interpolant::SparseGrid & grid,
             for(std::uint64_t i_point = 0; i_point < level_j_cartgrid_size; i_point++) {
                 Vector<double> point = level_j_cartgrid[i_point];
                 std::uint64_t i_point_sparsegrid = start_index + i_point;
-                coeff[i_point_sparsegrid] -= interpolant::eval_lagrange_cpu(level_cartgrid, level_coeff, point);
+                coeff[i_point_sparsegrid] -= eval_lagrange_of_added_grid_cpu(accumulated_cart_grid, level_cartgrid,
+                                                                             level_coeff, point);
             }
         }
     }
