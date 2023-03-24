@@ -57,7 +57,7 @@ class interpolant::CartesianGrid : public interpolant::Grid {
         return this->grid_vectors_;
     }
     /** @brief Get shape of the grid.*/
-    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS intvec get_grid_shape(void) const noexcept;
+    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS intvec get_grid_shape(std::uint64_t * data_ptr = nullptr) const noexcept;
     /** @brief Full tensor of each point in the CartesianGrid in form of 2D table.*/
     MERLIN_EXPORTS array::Array grid_points(void) const;
     /** @brief Number of dimension of the CartesianGrid.*/

@@ -15,7 +15,8 @@ namespace merlin::interpolant {
 // ------------------
 
 /** @brief Concatenate 3 vectors.*/
-__cuhostdev__ intvec merge_3vectors(const intvec & v1, const intvec & v2, const intvec & v3);
+__cuhostdev__ intvec merge_3vectors(const intvec & v1, std::uint64_t v2, const intvec & v3,
+                                    std::uint64_t * data_ptr = nullptr);
 
 /** @brief Call the GPU kernel calculating the coefficient with Newton method.
  *  @param p_grid Pointer to Cartesian grid pre-allocated on GPU.

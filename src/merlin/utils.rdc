@@ -87,9 +87,14 @@ __cuhostdev__ std::uint64_t ndim_to_contiguous_idx(const intvec & index, const i
 }
 
 // Convert C-contiguous index to n-dimensional index
-__cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape) {
+__cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape, std::uint64_t * data_ptr) {
     // calculate index vector
-    intvec index_(shape.size());
+    intvec index_;
+    if (data_ptr != nullptr) {
+        index_.assign(data_ptr, shape.size());
+    } else {
+        index_ = intvec(shape.size());
+    }
     std::uint64_t cum_prod = 1;
     if (shape.size() == 0) {
         return index_;  // empty shape vector

@@ -109,7 +109,7 @@ void Ap3HomogXS::write_to_stock(const Ap3StateParam & pspace, const std::string 
         return;
     }
     // get address to cross section
-    MESSAGE("Processing data from MPO file \"%s\"...\n", this->mpo_file_.getFileName().c_str());
+    // MESSAGE("Processing data from MPO file \"%s\"...\n", this->mpo_file_.getFileName().c_str());
     auto [addrxs, addrxs_shape] = get_dset<int>(&(this->output_), "info/ADDRXS");
     // get index of isotope and reaction
     auto [i_iso_in_geo, num_iso_in_geo] = get_dset<int>(&(this->output_), "info/ISOTOPE");

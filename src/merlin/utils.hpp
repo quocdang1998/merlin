@@ -84,9 +84,11 @@ __cuhostdev__ MERLIN_HOSTDEV_EXPORTS std::uint64_t ndim_to_contiguous_idx(const 
 /** @brief Convert C-contiguous index to n-dimensional index.
  *  @param index C-contiguous index.
  *  @param shape Shape vector.
+ *  @param data_ptr Pointer to result data. If the value is ``nullptr``, new instance is allocated.
  *  @return merlin::intvec of n-dimensional index.
  */
-__cuhostdev__ MERLIN_HOSTDEV_EXPORTS intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape);
+__cuhostdev__ MERLIN_HOSTDEV_EXPORTS intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape,
+                                                                   std::uint64_t * data_ptr = nullptr);
 
 /** @brief Increase an n-dimensional index by one unit.
  *  @param index Multi-dimensional index.
