@@ -90,7 +90,7 @@ std::vector<std::pair<int, void *>> Environment::deferred_gpu_pointer;
 void initialize_cuda_context(void) {}
 
 // Deallocate all pointers in deferred pointer array
-void Environment::flush_cuda_deferred_deallocation(void);
+void Environment::flush_cuda_deferred_deallocation(void) {}
 
 #endif  // __MERLIN_CUDA__
 

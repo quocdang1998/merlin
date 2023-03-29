@@ -41,7 +41,7 @@ class cuda::Memory {
     cuda::Memory<Args ...> & operator=(cuda::Memory<Args ...> && src) = delete;
 
     /** @brief Get total malloc size.*/
-    constexpr std::uint64_t get_total_malloc_size(void) noexcept{return this->total_malloc_size_;}
+    constexpr std::uint64_t get_total_malloc_size(void) noexcept {return this->total_malloc_size_;}
     /** @brief Get GPU pointer to element.*/
     template <std::uint64_t index>
     typename std::tuple_element<index, std::tuple<Args * ...>>::type get(void);

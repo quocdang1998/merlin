@@ -121,6 +121,9 @@ class interpolant::CartesianGrid : public interpolant::Grid {
     MERLIN_EXPORTS interpolant::CartesianGrid & operator+=(const interpolant::CartesianGrid & grid);
     MERLIN_EXPORTS friend interpolant::CartesianGrid operator+(const interpolant::CartesianGrid & grid_1,
                                                                const interpolant::CartesianGrid & grid_2);
+    MERLIN_EXPORTS friend double exclusion_grid(const interpolant::CartesianGrid & grid_parent,
+                                                const interpolant::CartesianGrid & grid_child,
+                                                const Vector<double> & x);
     /// @}
 
     /// @name Representation
@@ -149,6 +152,10 @@ namespace interpolant {
 /** @brief Union of 2 Cartesian grids.*/
 interpolant::CartesianGrid operator+(const interpolant::CartesianGrid & grid_1,
                                      const interpolant::CartesianGrid & grid_2);
+
+/** @brief Exclusion on each dimension of 2 Cartesian grids.*/
+double exclusion_grid(const interpolant::CartesianGrid & grid_parent, const interpolant::CartesianGrid & grid_child,
+                      const Vector<double> & x);
 
 }  // namespace interpolant
 

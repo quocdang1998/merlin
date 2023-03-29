@@ -77,7 +77,21 @@ class array::Array : public array::NdData {
     /// @name Iterator
     /// @{
     /** @brief Iterator class.*/
-    using iterator = Iterator;
+    // using iterator = Iterator;
+    class iterator : public Iterator {
+      public:
+        /** @brief Default constructor.*/
+        iterator(void) = default;
+        /** @brief Constructor from index.*/
+        iterator(const intvec & index, const intvec & shape, const double * data_ptr) :
+        Iterator(index, shape), data_ptr_(const_cast<double *>(data_ptr)) {}
+        /** @brief Dereference operator.*/
+        double & operator*(void) const {
+            return this->data_ptr_[this->item_ptr_];
+        }
+      private:
+        mutable double * data_ptr_ = nullptr;
+    };
     /** @brief Begin iterator.
      *  @details Vector of index \f$(0, 0, ..., 0)\f$.
      */

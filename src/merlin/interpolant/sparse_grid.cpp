@@ -234,7 +234,7 @@ std::uint64_t interpolant::SparseGrid::size(void) const {
 intvec interpolant::SparseGrid::index_from_contiguous(std::uint64_t contiguous_index) const {
     // determine i_level
     std::uint64_t i_level;
-    for (i_level = 0; i_level < this->ndim(); i_level++) {
+    for (i_level = 0; i_level < this->num_level(); i_level++) {
         if (contiguous_index < this->sub_grid_start_index_[i_level+1]) {
             break;
         }

@@ -14,8 +14,7 @@ __cuhostdev__ intvec interpolant::CartesianGrid::get_grid_shape(std::uint64_t * 
     intvec result;
     if (data_ptr != nullptr) {
         result.assign(data_ptr, this->ndim());
-    }
-    else {
+    } else {
         result = intvec(this->ndim());
     }
     for (std::uint64_t i = 0; i < this->ndim(); i++) {

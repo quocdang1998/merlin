@@ -1,6 +1,7 @@
 // Copyright 2022 quocdang1998
 #include <cinttypes>
 
+#include "merlin/array/array.hpp"
 #include "merlin/interpolant/cartesian_grid.hpp"
 #include "merlin/vector.hpp"
 #include "merlin/logger.hpp"

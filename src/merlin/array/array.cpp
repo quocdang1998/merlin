@@ -42,9 +42,9 @@ void array::Array::initialize_iterator(void) noexcept {
         return;
     }
     intvec index(this->ndim_, 0);
-    this->begin_ = array::Array::iterator(index, this->shape_);
+    this->begin_ = array::Array::iterator(index, this->shape_, this->data_);
     index[0] = this->shape_[0];
-    this->end_ = array::Array::iterator(index, this->shape_);
+    this->end_ = array::Array::iterator(index, this->shape_, this->data_);
 }
 
 // Constructor Array of one element
