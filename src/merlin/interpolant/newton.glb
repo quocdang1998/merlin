@@ -17,7 +17,6 @@ __device__ static void calc_newton_coeffs_single_core(const interpolant::Cartesi
     std::uint64_t index_previous_dims_data[array::max_allowed_dim];
     std::uint64_t index_divdiff_space_data[array::max_allowed_dim];
     std::uint64_t point_index_k_data[array::max_allowed_dim];
-    std::uint64_t point_index_k_1_data[array::max_allowed_dim];
     // loop on each dimension
     for (std::uint64_t i_dim = 0; i_dim < coeff.ndim(); i_dim++) {
         // get grid vector at current diemnsion
@@ -45,17 +44,17 @@ __device__ static void calc_newton_coeffs_single_core(const interpolant::Cartesi
                                                                             index_divdiff_space_data);
                         intvec point_index_k = interpolant::merge_3vectors(index_previous_dims, k,
                                                                            index_divdiff_space, point_index_k_data);
-                        intvec point_index_k_1 = interpolant::merge_3vectors(index_previous_dims, k-1,
-                                                                             index_divdiff_space, point_index_k_1_data);
-                        double divdiff_result = (coeff[point_index_k] - coeff[point_index_k_1]);
+                        double divdiff_result = coeff[point_index_k];
+                        point_index_k[i_dim] = k-1;
+                        divdiff_result -= coeff[point_index_k];
                         divdiff_result /= grid_vector[k] - grid_vector[k-i];
-                        intvec point_index_result = std::move(point_index_k);
-                        coeff[point_index_result] = divdiff_result;
+                        point_index_k[i_dim] = k;
+                        coeff[point_index_k] = divdiff_result;
                     }
                 }
             }
         }
-        // __syncthreads();
+        __syncthreads();
     }
 }
 
