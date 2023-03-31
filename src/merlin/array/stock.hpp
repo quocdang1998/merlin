@@ -87,6 +87,18 @@ class Stock : public NdData {
     MERLIN_EXPORTS void set(std::uint64_t index, double value);
     /// @}
 
+    /// @name Operations
+    /// @{
+    /** @brief Reshape the dataset.
+     *  @param new_shape New shape.
+     */
+    MERLIN_EXPORTS void reshape(const intvec & new_shape);
+    /** @brief Collapse dimensions with size 1.
+     *  @param i_dim Index of dimension to collapse.
+     */
+    MERLIN_EXPORTS void remove_dim(std::uint64_t i_dim = 0);
+    /// @}
+
     /// @name Write to file
     /// @{
     /** @brief Write data from a merlin::array::Array to a file.*/

@@ -48,11 +48,23 @@ void calc_newton_coeffs_gpu(const interpolant::CartesianGrid & grid, const array
                             array::Parcel & coeff, const cuda::Stream & stream = cuda::Stream(),
                             std::uint64_t n_thread = Environment::default_block_size);
 
+/** @brief Calculate Newton coefficients using CPU.*/
+void calc_newton_coeffs_cpu(const interpolant::SparseGrid & grid, const array::Array & value,
+                            array::Array & coeff);
+
 // Evaluate interpolation
 // ----------------------
 
 /** @brief Evaluate Newton interpolation on a full Cartesian grid using CPU.*/
 double eval_newton_cpu(const interpolant::CartesianGrid & grid, const array::Array & coeff,
+                       const Vector<double> & x);
+
+/** @brief Calculate Newton interpolation coefficients on a sparse grid using CPU.
+ *  @param grid Sparse grid.
+ *  @param coeff Calculated coefficients.
+ *  @param x Evaluate point, must have the same dimension as grid and coeff.
+ */
+double eval_newton_cpu(const interpolant::SparseGrid & grid, const array::Array & coeff,
                        const Vector<double> & x);
 
 }  // namespace merlin::interpolant

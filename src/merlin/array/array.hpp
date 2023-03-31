@@ -87,7 +87,7 @@ class array::Array : public array::NdData {
         Iterator(index, shape), data_ptr_(const_cast<double *>(data_ptr)) {}
         /** @brief Dereference operator.*/
         double & operator*(void) const {
-            return this->data_ptr_[this->item_ptr_];
+            return this->data_ptr_[this->item_ptr_];  // not counting non contiguous
         }
       private:
         mutable double * data_ptr_ = nullptr;
@@ -118,6 +118,18 @@ class array::Array : public array::NdData {
     MERLIN_EXPORTS void set(const intvec index, double value);
     /** @brief Set value of element at a C-contiguous index.*/
     MERLIN_EXPORTS void set(std::uint64_t index, double value);
+    /// @}
+
+    /// @name Operations
+    /// @{
+    /** @brief Reshape the dataset.
+     *  @param new_shape New shape.
+     */
+    MERLIN_EXPORTS void reshape(const intvec & new_shape);
+    /** @brief Collapse dimensions with size 1.
+     *  @param i_dim Index of dimension to collapse.
+     */
+    MERLIN_EXPORTS void remove_dim(std::uint64_t i_dim = 0);
     /// @}
 
     /// @name Transfer data

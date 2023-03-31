@@ -93,6 +93,7 @@ void cuda::Memory<Args ...>::defer_allocation(void) {
         int gpu;
         ::cuCtxGetDevice(&gpu);
         Environment::deferred_gpu_pointer.push_back(std::make_pair(gpu, this->gpu_ptr_));
+        this->deferred_dealloc_ = true;
     }
 }
 

@@ -12,6 +12,7 @@
 #include "merlin/array/slice.hpp"  // merlin::array::Slice
 #include "merlin/logger.hpp"  // CUHDERR
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
+#include "merlin/interpolant/sparse_grid.hpp"  // merlin::interpolant::SparseGrid
 #include "merlin/utils.hpp"  // merlin::prod_elements, merlin::contiguous_to_ndim_idx, merlin::decrement_index
 #include "merlin/vector.hpp"  // merlin::Vector
 
@@ -170,6 +171,74 @@ void interpolant::calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid
     }
 }
 
+// Calculate Newton interpolation coefficient on an added Cartesian grid to Sparse grid using CPU
+static void calc_newton_coeffs_of_added_grid_cpu(const interpolant::CartesianGrid & accumulated_grid,
+                                                 const interpolant::CartesianGrid & grid, const array::Array & value,
+                                                 array::Array & coeff) {
+    // copy value to coeff
+    if (&coeff != &value) {
+        array::array_copy(&coeff, &value, std::memcpy);
+    }
+    // update coefficient by a factor
+    std::uint64_t ndim = grid.ndim();
+    intvec grid_shape = grid.get_grid_shape();
+    std::uint64_t size = value.size();
+    for (std::uint64_t i_point = 0; i_point < size; i_point++) {
+        intvec index = contiguous_to_ndim_idx(i_point, grid_shape);
+        Vector<double> point = grid[index];
+        coeff[index] /= interpolant::exclusion_grid(accumulated_grid, grid, point);
+    }
+    // calculate cartesian interpolation
+    interpolant::calc_newton_coeffs_cpu(grid, coeff, coeff);
+}
+
+// Calculate Newton interpolation evaluation on an added Cartesian grid to Sparse grid using CPU
+static double eval_newton_of_added_grid_cpu(const interpolant::CartesianGrid & accumulated_grid,
+                                            const interpolant::CartesianGrid & grid, const array::Array & coeff,
+                                            const Vector<double> & x) {
+    double result = interpolant::eval_newton_cpu(grid, coeff, x);
+    double factor = interpolant::exclusion_grid(accumulated_grid, grid, x);
+    return result*factor;
+}
+
+// Calculate Newton interpolation coefficients on a sparse grid using CPU (function value are preprocessed)
+void interpolant::calc_newton_coeffs_cpu(const interpolant::SparseGrid & grid, const array::Array & value,
+                                         array::Array & coeff) {
+    // copy value to coeff
+    if (&value != &coeff) {
+        interpolant::copy_value_from_cartesian_array(coeff, value, grid);
+    }
+    // Initialize
+    std::uint64_t num_subgrid = grid.num_level();
+    interpolant::CartesianGrid accumulated_cart_grid(grid.ndim());
+    for (std::uint64_t i_subgrid = 0; i_subgrid < num_subgrid; i_subgrid++) {
+        // get hiearchical level
+        const intvec level_index = grid.level_index(i_subgrid);
+        // calculate coefficient at current grid level
+        interpolant::CartesianGrid level_cartgrid = interpolant::get_cartesian_grid(grid, i_subgrid);
+        accumulated_cart_grid += level_cartgrid;
+        intvec level_shape = get_level_shape(level_index);
+        array::Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid+1]);
+        array::Array level_coeff(coeff, {level_slice});
+        level_coeff.reshape(level_shape);
+        std::printf("Coeff before is %s\n", level_coeff.str().c_str());
+        calc_newton_coeffs_of_added_grid_cpu(accumulated_cart_grid, level_cartgrid, level_coeff, level_coeff);
+        std::printf("Coeff after is %s\n", level_coeff.str().c_str());
+        // subtract other points of the grid
+        for (std::uint64_t j_subgrid = i_subgrid+1; j_subgrid < num_subgrid; j_subgrid++) {
+            std::uint64_t start_index = grid.sub_grid_start_index()[j_subgrid];
+            interpolant::CartesianGrid level_j_cartgrid = interpolant::get_cartesian_grid(grid, j_subgrid);
+            std::uint64_t level_j_cartgrid_size = level_j_cartgrid.size();
+            for (std::uint64_t i_point = 0; i_point < level_j_cartgrid_size; i_point++) {
+                Vector<double> point = level_j_cartgrid[i_point];
+                std::uint64_t i_point_sparsegrid = start_index + i_point;
+                coeff[{i_point_sparsegrid}] -= eval_newton_of_added_grid_cpu(accumulated_cart_grid, level_cartgrid,
+                                                                             level_coeff, point);
+            }
+        }
+    }
+}
+
 // --------------------------------------------------------------------------------------------------------------------
 // Evaluate interpolation
 // --------------------------------------------------------------------------------------------------------------------
@@ -206,6 +275,28 @@ double interpolant::eval_newton_cpu(const interpolant::CartesianGrid & grid, con
         result += (x[i] - grid.grid_vectors()[i][0]) * cum[i];
     }
     result += cum[max_dim];
+    return result;
+}
+
+// Evaluate Newton interpolation on a sparse grid using CPU (function value are preprocessed)
+double interpolant::eval_newton_cpu(const interpolant::SparseGrid & grid, const array::Array & coeff,
+                                    const Vector<double> & x) {
+    // Initialize
+    long double result = 0.0;
+    std::uint64_t num_subgrid = grid.num_level();
+    interpolant::CartesianGrid accumulated_cart_grid(grid.ndim());
+    for (std::uint64_t i_subgrid = 0; i_subgrid < num_subgrid; i_subgrid++) {
+        // get hiearchical level
+        const intvec level_index = grid.level_index(i_subgrid);
+        // calculate coefficient at current grid level
+        interpolant::CartesianGrid level_cartgrid = interpolant::get_cartesian_grid(grid, i_subgrid);
+        accumulated_cart_grid += level_cartgrid;
+        intvec level_shape = get_level_shape(level_index);
+        array::Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid+1]);
+        array::Array level_coeff(coeff, {level_slice});
+        level_coeff.reshape(level_shape);
+        result += eval_newton_of_added_grid_cpu(accumulated_cart_grid, level_cartgrid, level_coeff, x);
+    }
     return result;
 }
 

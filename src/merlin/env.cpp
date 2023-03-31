@@ -3,6 +3,8 @@
 
 #include <cstdio>
 
+#include "merlin/logger.hpp"  // FAILURE
+
 namespace merlin {
 
 // Default constructor
@@ -19,7 +21,10 @@ Environment::Environment(void) {
 Environment::~Environment(void) {
     Environment::num_instances--;
     if (Environment::num_instances == 0) {
-        Environment::flush_cuda_deferred_deallocation();
+        if (!Environment::deferred_gpu_pointer.empty()) {
+            WARNING("CUDA memory leak detected (%z memory blocks allocated on GPU not freed "
+                    "at the end of the program).\n", Environment::deferred_gpu_pointer.size());
+        }
     }
 }
 

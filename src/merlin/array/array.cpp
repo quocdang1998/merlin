@@ -184,6 +184,18 @@ void array::Array::set(std::uint64_t index, double value) {
     this->set(contiguous_to_ndim_idx(index, this->shape()), value);
 }
 
+// Reshape
+void array::Array::reshape(const intvec & new_shape) {
+    this->array::NdData::reshape(new_shape);
+    this->initialize_iterator();
+}
+
+// Collapse dimension from felt (or right)
+void array::Array::remove_dim(std::uint64_t i_dim) {
+    this->array::NdData::remove_dim(i_dim);
+    this->initialize_iterator();
+}
+
 // Copy data from GPU array
 #ifndef __MERLIN_CUDA__
 void array::Array::clone_data_from_gpu(const array::Parcel & src, const cuda::Stream & stream) {

@@ -1,6 +1,7 @@
 #include "merlin/array/array.hpp"
 #include "merlin/array/parcel.hpp"
 #include "merlin/cuda/stream.hpp"
+#include "merlin/env.hpp"
 #include "merlin/interpolant/cartesian_grid.hpp"
 #include "merlin/interpolant/lagrange.hpp"
 #include "merlin/interpolant/newton.hpp"
@@ -25,11 +26,11 @@ int main(void) {
     merlin::cuda::Stream stream(merlin::cuda::Stream::Setting::Default);
     merlin::array::Parcel coeff(value_cpu.shape());
     coeff.transfer_data_to_gpu(value_cpu, stream);
-    stream.synchronize();
-
     // merlin::interpolant::calc_lagrange_coeffs_gpu(grid, coeff, coeff, stream);
     merlin::interpolant::calc_newton_coeffs_gpu(grid, coeff, coeff, stream);
     stream.synchronize();
+    merlin::Environment::flush_cuda_deferred_deallocation();
+
     MESSAGE("Result GPU: %s\n", coeff.str().c_str());
 
     merlin::array::Array coeff_cpu(value_cpu.shape());

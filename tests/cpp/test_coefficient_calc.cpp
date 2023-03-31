@@ -14,6 +14,7 @@ double f(double x, double y, double z) {
 }
 
 int main(void) {
+
     merlin::intvec dims = {2, 4, 3};
     merlin::array::Array value(dims);
 

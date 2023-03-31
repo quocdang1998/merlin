@@ -75,26 +75,16 @@ static void accumulate_level(intvec & old_level, const intvec & new_level) {
 static void calc_lagrange_coeffs_of_added_grid_cpu(const interpolant::CartesianGrid & accumulated_grid,
                                                    const interpolant::CartesianGrid & grid, const array::Array & value,
                                                    array::Array & coeff) {
+    // calculate cartesian interpolation
+    interpolant::calc_lagrange_coeffs_cpu(grid, value, coeff);
+    // update coefficient by a factor
     std::uint64_t ndim = grid.ndim();
     intvec grid_shape = grid.get_grid_shape();
     std::uint64_t size = value.size();
-    // parallel loop calculation
-    for (std::int64_t i = 0; i < size; i++) {
-        intvec index = contiguous_to_ndim_idx(i, grid_shape);
-        // calculate the denominator (product of diferences of node values)
-        long double denominator = 1.0;
-        for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
-            const Vector<double> & accumulated_grid_vector = accumulated_grid.grid_vectors()[i_dim];
-            double point_coordinate = grid.grid_vectors()[i_dim][index[i_dim]];
-            for (std::uint64_t i_node = 0; i_node < accumulated_grid_vector.size(); i_node++) {
-                if (accumulated_grid_vector[i_node] == point_coordinate) {
-                    continue;
-                }
-                denominator *= point_coordinate - accumulated_grid_vector[i_node];
-            }
-        }
-        double result = value.get(index) / static_cast<double>(denominator);
-        coeff.set(index, result);
+    for (std::uint64_t i_point = 0; i_point < size; i_point++) {
+        intvec index = contiguous_to_ndim_idx(i_point, grid_shape);
+        Vector<double> point = grid[index];
+        coeff[index] /= interpolant::exclusion_grid(accumulated_grid, grid, point);
     }
 }
 
