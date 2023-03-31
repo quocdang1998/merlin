@@ -26,9 +26,11 @@ class interpolant::SparseGrid : interpolant::Grid {
     /** @brief Constructor a full sparse grid from vector of components.*/
     MERLIN_EXPORTS SparseGrid(std::initializer_list<Vector<double>> grid_vectors);
     /** @brief Constructor anisotropic grid from vector of components.*/
-    MERLIN_EXPORTS SparseGrid(std::initializer_list<Vector<double>> grid_vectors, std::uint64_t max, const intvec & weight);
+    MERLIN_EXPORTS SparseGrid(std::initializer_list<Vector<double>> grid_vectors,
+                              std::uint64_t max, const intvec & weight);
     /** @brief Constructor sparse grid from vector of components and level index vectors.*/
-    MERLIN_EXPORTS SparseGrid(std::initializer_list<Vector<double>> grid_vectors, const Vector<intvec> & level_vectors);
+    MERLIN_EXPORTS SparseGrid(std::initializer_list<Vector<double>> grid_vectors,
+                              const Vector<intvec> & level_vectors);
     /// @}
 
     /// @name Copy and Move
@@ -88,6 +90,12 @@ class interpolant::SparseGrid : interpolant::Grid {
     MERLIN_EXPORTS intvec index_from_contiguous(std::uint64_t contiguous_index) const;
     /** @brief Point at a given multi-dimensional index.*/
     MERLIN_EXPORTS Vector<double> point_at_index(const intvec & index) const;
+    /// @}
+
+    /// @name Query
+    /// @{
+    /** @brief Check if point in the grid.*/
+    MERLIN_EXPORTS bool contains(const Vector<double> & point) const;
     /// @}
 
     /// @name Representation

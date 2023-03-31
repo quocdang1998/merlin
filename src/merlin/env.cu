@@ -44,13 +44,30 @@ void initialize_cuda_context(void) {
     ::cudaSetDevice(Environment::default_gpu);
 }
 
+// Alarm for CUDA error
+void alarming_cuda_error(void) {
+    // check for any CUDA error
+    ::cudaError_t err_ = ::cudaPeekAtLastError();
+    if (err_ != 0) {
+        WARNING("A CUDA error has occurred somewhere int he program with message \"%s\"", ::cudaGetErrorString(err_));
+    }
+    // check for unreleased memory
+    if (!Environment::deferred_gpu_pointer.empty()) {
+            WARNING("CUDA memory leak detected (%zu memory blocks allocated on GPU not freed "
+                    "at the end of the program).\n", Environment::deferred_gpu_pointer.size());
+        }
+}
+
 // Deallocate all pointers in deferred pointer array
 void Environment::flush_cuda_deferred_deallocation(void) {
     Environment::mutex.lock();
     for (auto & [gpu, pointer] : Environment::deferred_gpu_pointer) {
         ::CUcontext gpu_context = reinterpret_cast<::CUcontext>(Environment::primary_contexts[gpu]);
         ::cuCtxPushCurrent(gpu_context);
-        ::cudaFree(pointer);
+        ::cudaError_t err_ = ::cudaFree(pointer);
+        if (err_ != 0) {
+            FAILURE(cuda_runtime_error, "CUDA free failed with error \"%s\"\n", ::cudaGetErrorString(err_));
+        }
         ::cuCtxPopCurrent(&gpu_context);
     }
     Environment::deferred_gpu_pointer.clear();

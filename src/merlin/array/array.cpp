@@ -160,6 +160,13 @@ double & array::Array::operator[] (const intvec & index) {
     return *(reinterpret_cast<double *>(data_ptr));
 }
 
+// Get value operator
+const double & array::Array::operator[] (const intvec & index) const {
+    std::uint64_t leap = inner_prod(index, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    return *(reinterpret_cast<const double *>(data_ptr));
+}
+
 // Get value of element at a n-dim index
 double array::Array::get(const intvec & index) const {
     std::uint64_t leap = inner_prod(index, this->strides_);
@@ -182,6 +189,18 @@ void array::Array::set(const intvec index, double value) {
 // Set value of element at a C-contiguous index
 void array::Array::set(std::uint64_t index, double value) {
     this->set(contiguous_to_ndim_idx(index, this->shape()), value);
+}
+
+// Reshape
+void array::Array::reshape(const intvec & new_shape) {
+    this->array::NdData::reshape(new_shape);
+    this->initialize_iterator();
+}
+
+// Collapse dimension from felt (or right)
+void array::Array::remove_dim(std::uint64_t i_dim) {
+    this->array::NdData::remove_dim(i_dim);
+    this->initialize_iterator();
 }
 
 // Copy data from GPU array

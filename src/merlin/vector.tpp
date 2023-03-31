@@ -127,7 +127,7 @@ void * Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr, std::uintptr
 
 // Copy data from GPU to CPU
 template <typename T>
-void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
+void Vector<T>::copy_from_gpu(const T * gpu_ptr, std::uintptr_t stream_ptr) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access this feature.\n");
 }
 
@@ -153,11 +153,11 @@ void * Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr, std::uintptr
 
 // Copy data from GPU to CPU
 template <typename T>
-void Vector<T>::copy_from_device(Vector<T> * gpu_ptr) {
+void Vector<T>::copy_from_gpu(const T * gpu_ptr, std::uintptr_t stream_ptr) {
     // copy data
-    std::uintptr_t gpu_data = reinterpret_cast<std::uintptr_t>(gpu_ptr) + sizeof(Vector<T>);
-    ::cudaMemcpy(reinterpret_cast<T *>(gpu_data), this->data_,
-               this->size_*sizeof(T), cudaMemcpyDeviceToHost);
+    ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
+    ::cudaMemcpyAsync(this->data_, gpu_ptr, this->size_*sizeof(T),
+                      cudaMemcpyDeviceToHost, stream);
 }
 
 #endif  // !__MERLIN_CUDA__
@@ -243,6 +243,17 @@ __cuhostdev__ bool operator!=(const Vector<T> & vec_1, const Vector<T> & vec_2) 
         }
     }
     return false;
+}
+
+// Check all elemets are zeros
+template <typename T>
+__cuhostdev__ bool is_zeros(const Vector<T> & vec) noexcept {
+    for (std::uint64_t i = 0; i < vec.size_; i++) {
+        if (vec.data_[i] != 0) {
+            return false;
+        }
+    }
+    return true;
 }
 
 // Destructor

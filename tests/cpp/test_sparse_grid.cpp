@@ -1,26 +1,18 @@
 #include <cinttypes>
 #include <cstdint>
+#include <iostream>
 
 #include "merlin/interpolant/sparse_grid.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/vector.hpp"
 
 int main(void) {
-    merlin::Vector<double> v1 = {0, 0.25, 0.5, 0.75, 1.0};
-    merlin::Vector<double> v2 = {0, 0.5, 1.0};
-    merlin::Vector<double> v3 = {0.5};
-    merlin::interpolant::SparseGrid grid({v1, v2, v3});
-    std::uint64_t num_level_vector = grid.num_level();
-    for (int i = 0; i < num_level_vector; i++) {
-        MESSAGE("Level vector %d: %s.\n", i, grid.level_index(i).str().c_str());
-        MESSAGE("Index of first point in sub-grid relative to the grid: %" PRIu64 ".\n",
-                grid.sub_grid_start_index()[i]);
-    }
-    MESSAGE("Number of points in grid: %" PRIu64 ".\n", grid.size());
+    merlin::Vector<double> br = {0, 300, 600, 900, 1200};  // l = 2
+    merlin::Vector<double> pm = {157};  // l = 0
+    merlin::Vector<double> tf = {500, 560, 600, 700, 800, 900, 1000, 1100, 1200};  // l = 3
+    merlin::Vector<double> tm = {300, 400, 500, 560, 600};  // l = 2
+    merlin::Vector<double> xe = {0.1, 0.4, 0.9};  // l = 1
 
-    merlin::interpolant::SparseGrid ani_grid({v1, v2, v3}, 3, {2, 1, 1});
-    num_level_vector = ani_grid.num_level();
-    for (int i = 0; i < num_level_vector; i++) {
-        MESSAGE("Anisotropic grid's level vector %d: %s.\n", i, ani_grid.level_index(i).str().c_str());
-    }
+    merlin::interpolant::SparseGrid grid({br, pm, tf, tm, xe}, 6, {1, 1, 1, 1, 1});
+    std::cout << grid.str() << "\n";
 }

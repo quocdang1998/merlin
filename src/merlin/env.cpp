@@ -3,6 +3,8 @@
 
 #include <cstdio>
 
+#include "merlin/logger.hpp"  // FAILURE
+
 namespace merlin {
 
 // Default constructor
@@ -19,7 +21,7 @@ Environment::Environment(void) {
 Environment::~Environment(void) {
     Environment::num_instances--;
     if (Environment::num_instances == 0) {
-        Environment::flush_cuda_deferred_deallocation();
+        alarming_cuda_error();
     }
 }
 
@@ -41,7 +43,7 @@ std::mutex Environment::mutex;
 // --------------------------------------------------------------------------------------------------------------------
 
 // Size in bytes of maximum allowed allocated memory
-std::uint64_t Environment::cpu_mem_limit = static_cast<std::uint64_t>(20) << 30;
+std::uint64_t Environment::cpu_mem_limit = static_cast<std::uint64_t>(32) << 30;
 
 // --------------------------------------------------------------------------------------------------------------------
 // CPU Parallelism
@@ -88,6 +90,9 @@ std::vector<std::pair<int, void *>> Environment::deferred_gpu_pointer;
 
 // Initialize CUDA context
 void initialize_cuda_context(void) {}
+
+// Alarm for CUDA error
+void alarming_cuda_error(void) {}
 
 // Deallocate all pointers in deferred pointer array
 void Environment::flush_cuda_deferred_deallocation(void) {}

@@ -191,6 +191,16 @@ void array::Stock::set(std::uint64_t index, double value) {
     this->set(contiguous_to_ndim_idx(index, this->shape()), value);
 }
 
+// Reshape
+void array::Stock::reshape(const intvec & new_shape) {
+    this->array::NdData::reshape(new_shape);
+}
+
+// Collapse dimension from felt (or right)
+void array::Stock::remove_dim(std::uint64_t i_dim) {
+    this->array::NdData::remove_dim(i_dim);
+}
+
 // Write data from an array to a file
 void array::Stock::record_data_to_file(const array::Array & src) {
     auto write_func = std::bind(write_to_file, this->file_ptr_,

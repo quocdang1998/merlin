@@ -94,11 +94,11 @@ class array::NdData {
     /** @brief Reshape the dataset.
      *  @param new_shape New shape.
      */
-    MERLIN_EXPORTS void reshape(const intvec & new_shape);
+    MERLIN_EXPORTS virtual void reshape(const intvec & new_shape);
     /** @brief Collapse dimensions with size 1.
      *  @param i_dim Index of dimension to collapse.
      */
-    MERLIN_EXPORTS void remove_dim(std::uint64_t i_dim = 0);
+    MERLIN_EXPORTS virtual void remove_dim(std::uint64_t i_dim = 0);
     /// @}
 
     /// @name Representation

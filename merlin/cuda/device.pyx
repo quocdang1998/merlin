@@ -108,7 +108,7 @@ cdef class Device:
 
     @classmethod
     def limit(self, DeviceLimit limit, uint64_t size = UINT64_MAX):
-        """limit(limit, size = UINT64_MAX)
+        """limit(limit, size=UINT64_MAX)
         Get (in case of the argument ``size`` is not provided) or set the limit of GPU.
 
         Parameters

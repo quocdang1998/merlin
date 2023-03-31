@@ -35,7 +35,7 @@ class MERLINSHARED_EXPORTS Environment {
     /// @name Array allocation limit
     /// @{
     /** @brief Memory limit of a process for allocating ``merlin::array::Array``.
-     *  @details Default value: 20GB.
+     *  @details Default value: 32GB.
      */
     static std::uint64_t cpu_mem_limit;
     /// @}
@@ -114,6 +114,9 @@ MERLINSHARED_EXPORTS extern Environment default_environment;
 
 /** @brief Initialize CUDA primary contexts.*/
 void initialize_cuda_context(void);
+
+/** @brief Alarm for CUDA error.*/
+void alarming_cuda_error(void);
 
 }  // namespace merlin
 

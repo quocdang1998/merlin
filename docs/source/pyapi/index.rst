@@ -6,6 +6,17 @@ Python API
    \setcounter{codelanguage}{0}
 
 
+Environment
+-----------
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.env.Environment
+
+
 GPU with CUDA
 -------------
 

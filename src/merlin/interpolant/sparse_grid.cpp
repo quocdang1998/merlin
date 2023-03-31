@@ -2,8 +2,9 @@
 #include "merlin/interpolant/sparse_grid.hpp"
 
 #include <algorithm>  // std::is_sorted, std::stable_sort
-#include <cstdint>  // std::uint64_t
 #include <cinttypes>  // PRIu64
+#include <cstdint>  // std::uint64_t
+#include <cstring>  // std::memcpy
 #include <numeric>  // std::iota
 #include <sstream>  // std::ostringstream
 #include <utility>  // std::move
@@ -124,20 +125,21 @@ interpolant::SparseGrid::SparseGrid(std::initializer_list<Vector<double>> grid_v
         level_vector_storage.push_back(std::move(subgrid_index));
     }
     // sort according to its alpha_l
-    std::vector<std::uint64_t> sorted_index(level_vector_storage.size());
+    intvec sorted_index(level_vector_storage.size());
     std::iota(sorted_index.begin(), sorted_index.end(), 0);
-    std::stable_sort(sorted_index.begin(), sorted_index.end(),
-                     [&alpha_level] (std::uint64_t i1, std::uint64_t i2) {return alpha_level[i1] < alpha_level[i2];});
+    auto sort_policy = [&alpha_level] (const std::uint64_t & i1, const std::uint64_t & i2) {
+        return alpha_level[i1] < alpha_level[i2];
+    };
+    std::stable_sort(sorted_index.begin(), sorted_index.end(), sort_policy);
     // copying value to level_vectors and calculate start index
     this->level_index_ = intvec(level_vector_storage.size()*this->ndim(), 0);
     this->sub_grid_start_index_ = intvec(level_vector_storage.size()+1, 0);
-    for (const std::uint64_t & i_subgrid : sorted_index) {
-        intvec dummy_level = this->level_index(i_subgrid);
-        for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
-            dummy_level[i_dim] = level_vector_storage[i_subgrid][i_dim];
-        }
-        std::uint64_t subgrid_size = calc_subgrid_size(level_vector_storage[i_subgrid]);
-        this->sub_grid_start_index_[i_subgrid+1] = this->sub_grid_start_index_[i_subgrid] + subgrid_size;
+    for (std::uint64_t i = 0; i < sorted_index.size(); i++) {
+        const std::uint64_t & i_subgrid = sorted_index[i];
+        intvec dummy_level = this->level_index(i);
+        std::memcpy(dummy_level.data(), level_vector_storage[i_subgrid].data(), this->ndim()*sizeof(std::uint64_t));
+        std::uint64_t subgrid_size = calc_subgrid_size(dummy_level);
+        this->sub_grid_start_index_[i+1] = this->sub_grid_start_index_[i] + subgrid_size;
     }
 }
 
@@ -264,6 +266,26 @@ Vector<double> interpolant::SparseGrid::point_at_index(const intvec & index) con
         result[i_dim] = this->grid_vectors_[i_dim][index[i_dim]];
     }
     return result;
+}
+
+bool interpolant::SparseGrid::contains(const Vector<double> & point) const {
+    if (point.size() != this->ndim()) {
+        return false;
+    }
+    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+        const Vector<double> & grid_vector = this->grid_vectors_[i_dim];
+        if (std::find(grid_vector.cbegin(), grid_vector.cend(), point[i_dim]) == grid_vector.cend()) {
+            return false;
+        }
+    }
+    std::uint64_t num_level = this->num_level();
+    for (std::uint64_t i_level = 0; i_level < num_level; i_level++) {
+        interpolant::CartesianGrid cart_grid_level(interpolant::get_cartesian_grid(*this, i_level));
+        if (cart_grid_level.contains(point)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 // Representation
