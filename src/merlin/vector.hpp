@@ -21,6 +21,8 @@ template <typename T>
 __cuhostdev__ bool operator!=(const Vector<T> & vec_1, const Vector<T> & vec_2) noexcept;
 template <typename T>
 __cuhostdev__ constexpr bool is_same_size(const Vector<T> & vec_1, const Vector<T> & vec_2) noexcept;
+template <typename T>
+__cuhostdev__ bool is_zeros(const Vector<T> & vec) noexcept;
 
 /** @brief 1D un-resizable dynamic array.
  *  @details Similar to ``std::vector``, but transportable to GPU global memory and shared memory.
@@ -130,7 +132,7 @@ class Vector {
     /** @brief Copy data from GPU to CPU.
      *  @param gpu_ptr Pointer to object on GPU global memory.
      */
-    void copy_from_device(Vector<T> * gpu_ptr);
+    void copy_from_gpu(const T * gpu_ptr, std::uintptr_t stream_ptr = 0);
     #ifdef __NVCC__
     /** @brief Copy data from GPU global memory to shared memory of a kernel.
      *  @note This operation is single-threaded.
@@ -164,6 +166,8 @@ class Vector {
     friend __cuhostdev__ constexpr bool is_same_size(const Vector<T> & vec_1, const Vector<T> & vec_2) noexcept {
         return vec_1.size_ == vec_2.size_;
     }
+    /** @brief Check if all elements of vector are zeros.*/
+    friend __cuhostdev__ bool is_zeros<>(const Vector<T> & vec) noexcept;
     /// @}
 
     /// @name Destructor

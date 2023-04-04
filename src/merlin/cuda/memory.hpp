@@ -68,7 +68,7 @@ class cuda::Memory {
 namespace cuda {
 
 template <typename ... Args>
-__cudevice__ std::tuple<Args * ...> copy_class_to_shared_mem(void * share_ptr, const Args & ... args);
+__cudevice__ std::tuple<void *, Args * ...> copy_class_to_shared_mem(void * share_ptr, const Args & ... args);
 
 }  // namespace cuda
 

@@ -43,12 +43,14 @@ void * copy_metadata_to_gpu(std::uintptr_t stream_ptr, void * data, const T & fi
 
 // Copy metadata to shared mem
 template <typename T, typename ... Args>
-__cudevice__ std::tuple<T *, Args * ...> copy_metadata_to_shmem(void * data, const T & first, const Args & ... args) {
+__cudevice__ std::tuple<T *, Args * ...> copy_metadata_to_shmem(void * data, void ** final,
+                                                                const T & first, const Args & ... args) {
     T * ptr_data = reinterpret_cast<T *>(data);
     std::tuple<T *> current(ptr_data);
     void * next = first.copy_to_shared_mem(ptr_data, ptr_data+1);
+    *final = next;
     if constexpr (sizeof...(args) > 0) {
-        return std::tuple_cat(current, copy_metadata_to_shmem(next, args...));
+        return std::tuple_cat(current, copy_metadata_to_shmem(next, final, args...));
     } else {
         return current;
     }
@@ -111,8 +113,11 @@ cuda::Memory<Args ...>::~Memory(void) {
 
 // Copy class to shared memory
 template <typename ... Args>
-__cudevice__ std::tuple<Args * ...> cuda::copy_class_to_shared_mem(void * share_ptr, const Args & ... args) {
-    return copy_metadata_to_shmem(share_ptr, args...);
+__cudevice__ std::tuple<void *, Args * ...> cuda::copy_class_to_shared_mem(void * share_ptr, const Args & ... args) {
+    void * final = nullptr;
+    std::tuple<Args * ...> result = copy_metadata_to_shmem(share_ptr, &final, args...);
+    std::tuple<void *> final_tpl(final);
+    return std::tuple_cat(final_tpl, result);
 }
 
 }  // namespace merlin

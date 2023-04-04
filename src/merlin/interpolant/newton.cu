@@ -2,11 +2,11 @@
 #include "merlin/interpolant/newton.hpp"
 
 #include <functional>  // std::bind, std::placeholders
-#include <utility> // std::move, std::make_pair
+#include <utility>  // std::move, std::make_pair
 
 #include "merlin/array/copy.hpp"  // merlin::array::array_copy
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/array/slice.hpp" // merlin::array::Slice
+#include "merlin/array/slice.hpp"  // merlin::array::Slice
 #include "merlin/cuda/memory.hpp"  // merlin::cuda::Memory
 #include "merlin/env.hpp"  // merlin::Environment
 #include "merlin/utils.hpp"  // merlin::prod_elements
@@ -18,7 +18,7 @@ namespace merlin {
 // Utils
 // --------------------------------------------------------------------------------------------------------------------
 
-// Calculate Lagrange interpolation coefficients on a full Cartesian grid using GPU
+// Calculate Newton interpolation coefficients on a full Cartesian grid using GPU
 void interpolant::calc_newton_coeffs_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
                                          array::Parcel & coeff, const cuda::Stream & stream, std::uint64_t n_thread) {
     // check for validity
@@ -43,10 +43,34 @@ void interpolant::calc_newton_coeffs_gpu(const interpolant::CartesianGrid & grid
     mem.defer_allocation();
     interpolant::CartesianGrid * ptr_grid_on_gpu = mem.get<0>();
     array::Parcel * ptr_coeff_on_gpu = mem.get<1>();
-    std::uint64_t total_malloc_size = mem.get_total_malloc_size();
+    std::uint64_t total_malloc_size = mem.get_total_malloc_size() + n_thread * grid.ndim() * sizeof(std::uint64_t);
     // call calculation kernel
     interpolant::call_newton_coeff_kernel(ptr_grid_on_gpu, ptr_coeff_on_gpu, total_malloc_size,
                                           stream.get_stream_ptr(), n_thread);
+}
+
+// Evaluate Newton interpolation on a full Cartesian grid using GPU
+Vector<double> interpolant::eval_newton_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & coeff,
+                                            const array::Parcel & points, const cuda::Stream & stream,
+                                            std::uint64_t n_thread) {
+    // check for validity
+    stream.check_cuda_context();
+    // copy data to GPU
+    Vector<double> result(points.shape()[0]);
+    cuda::Memory mem(stream.get_stream_ptr(), grid, coeff, points, result);
+    mem.defer_allocation();
+    interpolant::CartesianGrid * ptr_grid_on_gpu = mem.get<0>();
+    array::Parcel * ptr_coeff_on_gpu = mem.get<1>();
+    array::Parcel * ptr_points_on_gpu = mem.get<2>();
+    Vector<double> * ptr_result_on_gpu = mem.get<3>();
+    std::uint64_t additional_shared_mem = n_thread * grid.ndim() * (sizeof(std::uint64_t) + sizeof(double));
+    std::uint64_t shared_mem_size = mem.get_total_malloc_size() + additional_shared_mem;
+    // call kernel
+    interpolant::call_newton_eval_kernel(ptr_grid_on_gpu, ptr_coeff_on_gpu, ptr_points_on_gpu, ptr_result_on_gpu,
+                                         shared_mem_size, stream.get_stream_ptr(), n_thread);
+    // copy result back to CPU
+    result.copy_from_gpu(reinterpret_cast<double *>(ptr_result_on_gpu+1), stream.get_stream_ptr());
+    return result;
 }
 
 }  // namespace merlin

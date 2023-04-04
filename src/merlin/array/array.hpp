@@ -106,6 +106,12 @@ class array::Array : public array::NdData {
      *  @return Reference to the element at the provided index.
      */
     MERLIN_EXPORTS double & operator[](const intvec & index);
+    /** @brief Sciling operator.
+     *  @details Get an element at a given index.
+     *  @param index Vector of indices along each dimension.
+     *  @return Reference to the element at the provided index.
+     */
+    MERLIN_EXPORTS const double & operator[](const intvec & index) const;
     /// @}
 
     /// @name Get and set element

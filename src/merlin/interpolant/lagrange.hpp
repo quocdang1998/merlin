@@ -5,6 +5,7 @@
 #include <cstdint>  // std::uint64_t, std::uintptr_t
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Slice
+#include "merlin/cuda_decorator.hpp"  // __cuhostdev__
 #include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
 #include "merlin/env.hpp"  // merlin::Environment
 #include "merlin/interpolant/grid.hpp"  // merlin::interpolant::CartesianGrid
@@ -27,6 +28,30 @@ namespace merlin::interpolant {
 void call_lagrange_coeff_kernel(const interpolant::CartesianGrid * p_grid, const array::Parcel * p_value,
                                 array::Parcel * p_coeff, std::uint64_t shared_mem_size, std::uintptr_t stream_ptr,
                                 std::uint64_t n_thread);
+
+/** @brief Evaluate Lagrange interpolation on a full Cartesian grid.
+ *  @param grid Cartesian grid.
+ *  @param coeff Calculated coefficients.
+ *  @param x Evaluate point, must have the same dimension as grid and coeff.
+ */
+__cuhostdev__ double eval_lagrange_single_core(const interpolant::CartesianGrid & grid, const array::NdData & coeff,
+                                               const Vector<double> & x,
+                                               std::uint64_t * collapsed_index_data = nullptr,
+                                               std::uint64_t * i_point_data = nullptr);
+
+/** @brief Call the GPU kernel evaluating Lagrange interpolation.
+ *  @param p_grid Pointer to Cartesian grid pre-allocated on GPU.
+ *  @param p_coeff Pointer to coefficient array pre-allocated on GPU.
+ *  @param p_points Pointer to coordinates of points array pre-allocated on GPU.
+ *  @param p_result Pointer to result pre-allocated on GPU.
+ *  @param shared_mem_size Size (in bytes) of the block-wise shared memory.
+ *  @param stream_ptr Pointer to the CUDA calculation stream in form of an unsigned integer pointer.
+ *  @param n_thread Number of CUDA threads for parallel execution.
+ *  @note This function is asynchronious. It simply push the CUDA kernel to the stream.
+ */
+void call_lagrange_eval_kernel(const interpolant::CartesianGrid * p_grid, const array::Parcel * p_coeff,
+                               const array::Parcel * p_points, Vector<double> * p_result,
+                               std::uint64_t shared_mem_size, std::uintptr_t stream_ptr, std::uint64_t n_thread);
 
 // Calculate coefficients
 // ----------------------
@@ -70,6 +95,15 @@ void calc_lagrange_coeffs_cpu(const interpolant::SparseGrid & grid, const array:
 double eval_lagrange_cpu(const interpolant::CartesianGrid & grid, const array::Array & coeff,
                          const Vector<double> & x);
 
+/** @brief Evaluate Lagrange interpolation on a full Cartesian grid using GPU.
+ *  @param grid Cartesian grid.
+ *  @param coeff Calculated coefficients.
+ *  @param points 2D array of shape (``npoint``, ``ndim``), storing coordinates of points to interpolate.
+ */
+Vector<double> eval_lagrange_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & coeff,
+                                 const array::Parcel & points, const cuda::Stream & stream = cuda::Stream(),
+                                 std::uint64_t n_thread = Environment::default_block_size);
+
 /** @brief Calculate Lagrange interpolation coefficients on a sparse grid using CPU.
  *  @param grid Sparse grid.
  *  @param coeff Calculated coefficients.
@@ -77,22 +111,6 @@ double eval_lagrange_cpu(const interpolant::CartesianGrid & grid, const array::A
  */
 double eval_lagrange_cpu(const interpolant::SparseGrid & grid, const array::Array & coeff,
                          const Vector<double> & x);
-
-#ifdef __comment
-/** @brief Calculate Lagrage interpolation coefficients on a Cartesian grid using CPU.*/
-void calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::NdData & value,
-                              const Vector<array::Slice> & slices, array::NdData & coeff);
-
-/** @brief Calculate Lagrage interpolation coefficients on a sparse grid using CPU.*/
-void calc_lagrange_coeffs_cpu(const interpolant::SparseGrid & grid, array::NdData & coeff);
-
-/** @brief Evaluate Lagrange interpolation on a Cartesian grid using CPU.*/
-double eval_lagrange_cpu(const interpolant::CartesianGrid & grid, const array::NdData & coeff,
-                         const Vector<array::Slice> & slices, const Vector<double> & x);
-
-/** @brief Evaluate Lagrange interpolation on a Sparse grid using CPU.*/
-double eval_lagrange_cpu(const interpolant::SparseGrid & grid, const array::NdData & coeff, const Vector<double> & x);
-#endif
 
 }  // namespace merlin::interpolant
 

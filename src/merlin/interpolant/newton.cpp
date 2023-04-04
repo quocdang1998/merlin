@@ -13,7 +13,7 @@
 #include "merlin/logger.hpp"  // CUHDERR
 #include "merlin/interpolant/cartesian_grid.hpp"  // merlin::interpolant::CartesianGrid
 #include "merlin/interpolant/sparse_grid.hpp"  // merlin::interpolant::SparseGrid
-#include "merlin/utils.hpp"  // merlin::prod_elements, merlin::contiguous_to_ndim_idx, merlin::decrement_index
+#include "merlin/utils.hpp"  // merlin::prod_elements, merlin::contiguous_to_ndim_idx
 #include "merlin/vector.hpp"  // merlin::Vector
 
 namespace merlin {
@@ -93,6 +93,19 @@ static void calc_newton_coeffs_cpu_recursive(const interpolant::CartesianGrid & 
     }
 }
 
+// Concatenate 3 intvec
+static intvec merge_3vectors(const intvec & v1, std::uint64_t v2, const intvec & v3) {
+    intvec result(v1.size() + 1 + v3.size());
+    for (std::uint64_t i = 0; i < v1.size(); i++) {
+        result[i] = v1[i];
+    }
+    result[v1.size()] = v2;
+    for (std::uint64_t i = 0; i < v3.size(); i++) {
+        result[1+v1.size()+i] = v3[i];
+    }
+    return result;
+}
+
 // Calculate Newton coefficients by a signle CPU or GPU core
 static void calc_newton_coeffs_single_core(const interpolant::CartesianGrid & grid, array::Array & coeff) {
     // loop on each dimension
@@ -117,10 +130,8 @@ static void calc_newton_coeffs_single_core(const interpolant::CartesianGrid & gr
                     // loop on each point in divdiff space
                     for (std::uint64_t i_divdiff_space = 0; i_divdiff_space < size_divdiff_space; i_divdiff_space++) {
                         intvec index_divdiff_space = contiguous_to_ndim_idx(i_divdiff_space, shape_divdiff_space);
-                        intvec point_index_k = interpolant::merge_3vectors(index_previous_dims, k,
-                                                                           index_divdiff_space);
-                        intvec point_index_k_1 = interpolant::merge_3vectors(index_previous_dims, k-1,
-                                                                             index_divdiff_space);
+                        intvec point_index_k = merge_3vectors(index_previous_dims, k, index_divdiff_space);
+                        intvec point_index_k_1 = merge_3vectors(index_previous_dims, k-1, index_divdiff_space);
                         double divdiff_result = (coeff[point_index_k] - coeff[point_index_k_1]);
                         divdiff_result /= grid_vector[k] - grid_vector[k-i];
                         intvec point_index_result = std::move(point_index_k);
@@ -243,39 +254,10 @@ void interpolant::calc_newton_coeffs_cpu(const interpolant::SparseGrid & grid, c
 // Evaluate interpolation
 // --------------------------------------------------------------------------------------------------------------------
 
-// Evaluate Newton interpolation without recursive
+// Evaluate Newton interpolation on a cartesian grid using CPU
 double interpolant::eval_newton_cpu(const interpolant::CartesianGrid & grid, const array::Array & coeff,
                                     const Vector<double> & x) {
-    // initialize storing vector
-    std::uint64_t ndim = grid.ndim(), max_dim = ndim-1;
-    intvec shape = grid.get_grid_shape();
-    intvec begin(ndim, 0), iterator(coeff.end().index());
-    Vector<double> cum(ndim, 0.f);
-    decrement_index(iterator, shape);
-    cum[max_dim] = coeff.get(iterator);
-    // loop over each point in coeff array
-    while (iterator != begin) {
-        std::uint64_t i_dim = decrement_index(iterator, shape);
-        if (i_dim == max_dim) {
-            cum[i_dim] *= x[i_dim] - grid.grid_vectors()[i_dim][iterator[i_dim]];
-            cum[i_dim] += coeff.get(iterator);
-        } else {
-            cum[i_dim] *= x[i_dim] - grid.grid_vectors()[i_dim][iterator[i_dim]+1];
-            for (std::uint64_t i = i_dim+1; i < max_dim; i++) {
-                cum[i_dim] += (x[i] - grid.grid_vectors()[i][0]) * cum[i];
-                cum[i] = 0;
-            }
-            cum[i_dim] += cum[max_dim];
-            cum[max_dim] = coeff.get(iterator);
-        }
-    }
-    // finalize
-    double result = 0.0;
-    for (std::uint64_t i = 0; i < max_dim; i++) {
-        result += (x[i] - grid.grid_vectors()[i][0]) * cum[i];
-    }
-    result += cum[max_dim];
-    return result;
+    return interpolant::eval_newton_single_core(grid, coeff, x);
 }
 
 // Evaluate Newton interpolation on a sparse grid using CPU (function value are preprocessed)

@@ -179,6 +179,20 @@ double interpolant::exclusion_grid(const interpolant::CartesianGrid & grid_paren
     return result;
 }
 
+// Check if point in the grid
+bool interpolant::CartesianGrid::contains(const Vector<double> & point) const {
+    if (point.size() != this->ndim()) {
+        return false;
+    }
+    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+        const Vector<double> & grid_vector = this->grid_vectors_[i_dim];
+        if (std::find(grid_vector.cbegin(), grid_vector.cend(), point[i_dim]) == grid_vector.cend()) {
+            return false;
+        }
+    }
+    return true;
+}
+
 // String representation
 std::string interpolant::CartesianGrid::str(void) const {
     std::ostringstream os;

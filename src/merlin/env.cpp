@@ -21,10 +21,7 @@ Environment::Environment(void) {
 Environment::~Environment(void) {
     Environment::num_instances--;
     if (Environment::num_instances == 0) {
-        if (!Environment::deferred_gpu_pointer.empty()) {
-            WARNING("CUDA memory leak detected (%z memory blocks allocated on GPU not freed "
-                    "at the end of the program).\n", Environment::deferred_gpu_pointer.size());
-        }
+        alarming_cuda_error();
     }
 }
 
@@ -93,6 +90,9 @@ std::vector<std::pair<int, void *>> Environment::deferred_gpu_pointer;
 
 // Initialize CUDA context
 void initialize_cuda_context(void) {}
+
+// Alarm for CUDA error
+void alarming_cuda_error(void) {}
 
 // Deallocate all pointers in deferred pointer array
 void Environment::flush_cuda_deferred_deallocation(void) {}

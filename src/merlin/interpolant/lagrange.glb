@@ -52,11 +52,10 @@ __global__ static void calc_lagrange_kernel(const interpolant::CartesianGrid * p
     // copy meta data to shared memory
     extern __shared__ char share_ptr[];
     auto shared_mem_tuple = cuda::copy_class_to_shared_mem(share_ptr, *p_grid, *p_value, *p_coeff);
-    interpolant::CartesianGrid * p_grid_shared = std::get<0>(shared_mem_tuple);
-    array::Parcel * p_value_shared = std::get<1>(shared_mem_tuple);
-    array::Parcel * p_coeff_shared = std::get<2>(shared_mem_tuple);
-    std::uintptr_t free_shared_mem = reinterpret_cast<std::uintptr_t>(p_coeff_shared) + sizeof(array::Parcel)
-                                     + 2*(p_coeff_shared->ndim())*sizeof(std::uint64_t);
+    interpolant::CartesianGrid * p_grid_shared = std::get<1>(shared_mem_tuple);
+    array::Parcel * p_value_shared = std::get<2>(shared_mem_tuple);
+    array::Parcel * p_coeff_shared = std::get<3>(shared_mem_tuple);
+    std::uintptr_t free_shared_mem = reinterpret_cast<std::uintptr_t>(std::get<0>(shared_mem_tuple));
     // perform the calculation
     calc_lagrange_coefficients(p_grid_shared, p_value_shared, p_coeff_shared, free_shared_mem);
 }
@@ -67,6 +66,38 @@ void interpolant::call_lagrange_coeff_kernel(const interpolant::CartesianGrid * 
                                              std::uintptr_t stream_ptr, std::uint64_t n_thread) {
     ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
     calc_lagrange_kernel<<<1, n_thread, shared_mem_size, cuda_stream>>>(p_grid, p_value, p_coeff);
+}
+
+// Call CUDA kernel calculating coefficients on GPU
+__global__ static void eval_lagrange_kernel(const interpolant::CartesianGrid * p_grid, const array::Parcel * p_coeff,
+                                            const array::Parcel * p_points, Vector<double> * p_result) {
+    // copy meta data to shared memory
+    extern __shared__ char share_ptr[];
+    auto shared_mem_tuple = cuda::copy_class_to_shared_mem(share_ptr, *p_grid, *p_coeff, *p_points);
+    interpolant::CartesianGrid * p_grid_shared = std::get<1>(shared_mem_tuple);
+    array::Parcel * p_coeff_shared = std::get<2>(shared_mem_tuple);
+    array::Parcel * p_points_shared = std::get<3>(shared_mem_tuple);
+    // perform the calculation
+    std::uint64_t ndim = p_grid->ndim();
+    std::uint64_t n_point = p_result->size();
+    std::uint64_t i_thread = flatten_thread_index();
+    std::uint64_t n_thread = size_of_block();
+    for (std::uint64_t i_point = i_thread; i_point < n_point; i_point += n_thread) {
+        Vector<double> point;
+        std::uintptr_t point_ptr = reinterpret_cast<std::uintptr_t>(p_points->data()) + i_point*p_points->strides()[0];
+        point.assign(reinterpret_cast<double *>(point_ptr), ndim);
+        (*p_result)[i_point] = interpolant::eval_lagrange_single_core(*p_grid, *p_coeff, point);
+    }
+    __syncthreads();
+}
+
+// Call the GPU kernel evaluating Lagrange interpolation
+void interpolant::call_lagrange_eval_kernel(const interpolant::CartesianGrid * p_grid, const array::Parcel * p_coeff,
+                                            const array::Parcel * p_points, Vector<double> * p_result,
+                                            std::uint64_t shared_mem_size, std::uintptr_t stream_ptr,
+                                            std::uint64_t n_thread) {
+    ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
+    eval_lagrange_kernel<<<1, n_thread, shared_mem_size, cuda_stream>>>(p_grid, p_coeff, p_points, p_result);
 }
 
 }  // namespace merlin

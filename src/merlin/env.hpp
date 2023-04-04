@@ -115,6 +115,9 @@ MERLINSHARED_EXPORTS extern Environment default_environment;
 /** @brief Initialize CUDA primary contexts.*/
 void initialize_cuda_context(void);
 
+/** @brief Alarm for CUDA error.*/
+void alarming_cuda_error(void);
+
 }  // namespace merlin
 
 #endif  // MERLIN_ENV_HPP_

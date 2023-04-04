@@ -160,6 +160,13 @@ double & array::Array::operator[] (const intvec & index) {
     return *(reinterpret_cast<double *>(data_ptr));
 }
 
+// Get value operator
+const double & array::Array::operator[] (const intvec & index) const {
+    std::uint64_t leap = inner_prod(index, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    return *(reinterpret_cast<const double *>(data_ptr));
+}
+
 // Get value of element at a n-dim index
 double array::Array::get(const intvec & index) const {
     std::uint64_t leap = inner_prod(index, this->strides_);

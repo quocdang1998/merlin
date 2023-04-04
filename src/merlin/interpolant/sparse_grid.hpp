@@ -26,9 +26,11 @@ class interpolant::SparseGrid : interpolant::Grid {
     /** @brief Constructor a full sparse grid from vector of components.*/
     MERLIN_EXPORTS SparseGrid(std::initializer_list<Vector<double>> grid_vectors);
     /** @brief Constructor anisotropic grid from vector of components.*/
-    MERLIN_EXPORTS SparseGrid(std::initializer_list<Vector<double>> grid_vectors, std::uint64_t max, const intvec & weight);
+    MERLIN_EXPORTS SparseGrid(std::initializer_list<Vector<double>> grid_vectors,
+                              std::uint64_t max, const intvec & weight);
     /** @brief Constructor sparse grid from vector of components and level index vectors.*/
-    MERLIN_EXPORTS SparseGrid(std::initializer_list<Vector<double>> grid_vectors, const Vector<intvec> & level_vectors);
+    MERLIN_EXPORTS SparseGrid(std::initializer_list<Vector<double>> grid_vectors,
+                              const Vector<intvec> & level_vectors);
     /// @}
 
     /// @name Copy and Move

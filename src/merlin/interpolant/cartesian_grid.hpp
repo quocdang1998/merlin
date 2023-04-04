@@ -52,6 +52,8 @@ class interpolant::CartesianGrid : public interpolant::Grid {
 
     /// @name Get members and attributes
     /// @{
+    /** @brief Get reference to grid vectors.*/
+    __cuhostdev__ constexpr Vector<Vector<double>> & grid_vectors(void) noexcept {return this->grid_vectors_;}
     /** @brief Get constant reference to grid vectors.*/
     __cuhostdev__ constexpr const Vector<Vector<double>> & grid_vectors(void) const noexcept {
         return this->grid_vectors_;
@@ -124,6 +126,12 @@ class interpolant::CartesianGrid : public interpolant::Grid {
     MERLIN_EXPORTS friend double exclusion_grid(const interpolant::CartesianGrid & grid_parent,
                                                 const interpolant::CartesianGrid & grid_child,
                                                 const Vector<double> & x);
+    /// @}
+
+    /// @name Query
+    /// @{
+    /** @brief Check if point in the grid.*/
+    MERLIN_EXPORTS bool contains(const Vector<double> & point) const;
     /// @}
 
     /// @name Representation
