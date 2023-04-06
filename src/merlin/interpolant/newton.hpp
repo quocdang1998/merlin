@@ -56,8 +56,10 @@ void calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid, const array
  *  @param value Array of function values, must have the same shape as the grid.
  *  @param coeff Array storing interpolation coefficient after the calculation.
  *  @param stream CUDA stream of execution of the CUDA kernel.
+ *  @param n_thread Number of CUDA threads in the execution block.
  *  @note This is asynchronous calculation. User should call ``merlin::cuda::Stream::synchronize(void)`` to force the
- *  CPU to wait until the calculation has finished.
+ *  CPU to wait until the calculation has finished and ``merlin::Environment::flush_cuda_deferred_deallocation(void)``
+ *  to free the (implicitly) allocated memory.
  */
 void calc_newton_coeffs_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
                             array::Parcel & coeff, const cuda::Stream & stream = cuda::Stream(),
@@ -77,6 +79,11 @@ double eval_newton_cpu(const interpolant::CartesianGrid & grid, const array::Arr
  *  @param grid Cartesian grid.
  *  @param coeff Calculated coefficients.
  *  @param points 2D array of shape (``npoint``, ``ndim``), storing coordinates of points to interpolate.
+ *  @param stream CUDA stream of execution of the CUDA kernel.
+ *  @param n_thread Number of CUDA threads in the execution block.
+ *  @note This is asynchronous calculation. User should call ``merlin::cuda::Stream::synchronize(void)`` to force the
+ *  CPU to wait until the calculation has finished and ``merlin::Environment::flush_cuda_deferred_deallocation(void)``
+ *  to free the (implicitly) allocated memory.
  */
 Vector<double> eval_newton_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & coeff,
                                const array::Parcel & points, const cuda::Stream & stream = cuda::Stream(),

@@ -33,11 +33,16 @@ void call_lagrange_coeff_kernel(const interpolant::CartesianGrid * p_grid, const
  *  @param grid Cartesian grid.
  *  @param coeff Calculated coefficients.
  *  @param x Evaluate point, must have the same dimension as grid and coeff.
+ *  @param collapsed_index_data Pointer to pre-allocated memory for storing collapsed index array (minimum size is the
+ *  number of dimension).
+ *  @param whole_coeff_data Same purpose as the former argument.
+ *  @note In case of default arguments (``nullptr`` is passed tot he function), the program will allocate the memory
+ *  automatically at every call, which resulted in a poor performance, especially on GPU.
  */
 __cuhostdev__ double eval_lagrange_single_core(const interpolant::CartesianGrid & grid, const array::NdData & coeff,
                                                const Vector<double> & x,
                                                std::uint64_t * collapsed_index_data = nullptr,
-                                               std::uint64_t * i_point_data = nullptr);
+                                               std::uint64_t * whole_coeff_data = nullptr);
 
 /** @brief Call the GPU kernel evaluating Lagrange interpolation.
  *  @param p_grid Pointer to Cartesian grid pre-allocated on GPU.
@@ -65,12 +70,16 @@ void calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & grid, const arr
                               array::Array & coeff);
 
 /** @brief Calculate Lagrange interpolation coefficients on a full Cartesian grid using GPU.
+ *  @details The execution is performed by one single CUDA block. The number of threads in the block is ``96`` by
+ *  default.
  *  @param grid Cartesian grid.
  *  @param value Array of function values, must have the same shape as the grid.
  *  @param coeff Array storing interpolation coefficient after the calculation.
  *  @param stream CUDA stream of execution of the CUDA kernel.
+ *  @param n_thread Number of CUDA threads in the execution block.
  *  @note This is asynchronous calculation. User should call ``merlin::cuda::Stream::synchronize(void)`` to force the
- *  CPU to wait until the calculation has finished.
+ *  CPU to wait until the calculation has finished and ``merlin::Environment::flush_cuda_deferred_deallocation(void)``
+ *  to free the (implicitly) allocated memory.
  */
 void calc_lagrange_coeffs_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
                               array::Parcel & coeff, const cuda::Stream & stream = cuda::Stream(),
@@ -99,6 +108,11 @@ double eval_lagrange_cpu(const interpolant::CartesianGrid & grid, const array::A
  *  @param grid Cartesian grid.
  *  @param coeff Calculated coefficients.
  *  @param points 2D array of shape (``npoint``, ``ndim``), storing coordinates of points to interpolate.
+ *  @param stream CUDA stream of execution of the CUDA kernel.
+ *  @param n_thread Number of CUDA threads in the execution block.
+ *  @note This is asynchronous calculation. User should call ``merlin::cuda::Stream::synchronize(void)`` to force the
+ *  CPU to wait until the calculation has finished and ``merlin::Environment::flush_cuda_deferred_deallocation(void)``
+ *  to free the (implicitly) allocated memory.
  */
 Vector<double> eval_lagrange_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & coeff,
                                  const array::Parcel & points, const cuda::Stream & stream = cuda::Stream(),

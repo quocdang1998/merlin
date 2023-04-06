@@ -92,6 +92,12 @@ class interpolant::SparseGrid : interpolant::Grid {
     MERLIN_EXPORTS Vector<double> point_at_index(const intvec & index) const;
     /// @}
 
+    /// @name Query
+    /// @{
+    /** @brief Check if point in the grid.*/
+    MERLIN_EXPORTS bool contains(const Vector<double> & point) const;
+    /// @}
+
     /// @name Representation
     /// @{
     MERLIN_EXPORTS std::string str(void) const;

@@ -37,7 +37,7 @@ double * allocate_memory(std::uint64_t size) {
         }
         bool success = ::VirtualLock(result, sizeof(double) * size);
         if (!success) {
-            ::VirtualFree(result, sizeof(double)*size, 0);
+            ::VirtualFree(result, sizeof(double)*size, MEM_RELEASE);
             std::string err_message = throw_windows_last_error(::GetLastError());
             FAILURE(std::runtime_error, "Lock memory failed with message \"%s\".\n", err_message.c_str());
         }
@@ -84,7 +84,7 @@ void free_memory(double * ptr, std::uint64_t size) {
             std::string err_message = throw_windows_last_error(::GetLastError());
             FAILURE(std::runtime_error, "Unlock memory failed with message \"%s\".\n", err_message.c_str());
         }
-        ::VirtualFree(ptr, sizeof(double) * size, 0);
+        ::VirtualFree(ptr, sizeof(double) * size, MEM_RELEASE);
         #elif defined(__MERLIN_LINUX__)
         int err_ = ::munlock(ptr, sizeof(double) * size);
         if (err_ == -1) {

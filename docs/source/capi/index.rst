@@ -5,11 +5,9 @@ C++ API
 
    \setcounter{codelanguage}{1}
 
-Basic functionality
--------------------
 
 Environment
-^^^^^^^^^^^
+-----------
 
 Execution environment:
 
@@ -18,70 +16,6 @@ Execution environment:
 
    merlin::Environment
    merlin::default_environment
-
-Printing log messages
-^^^^^^^^^^^^^^^^^^^^^
-
-Macro functions for printing log messages and throwing an exception:
-
-.. doxysummary::
-   :toctree: generated
-
-   MESSAGE
-   WARNING
-   FAILURE
-   CUDAOUT
-   CUDAERR
-   CUHDERR
-
-Exception classes reserved for errors related to CUDA:
-
-.. doxysummary::
-   :toctree: generated
-
-   cuda_compile_error
-   cuda_runtime_error
-
-1D vector
-^^^^^^^^^
-
-One dimensional sequence of data:
-
-.. doxysummary::
-   :toctree: generated
-
-   merlin::Vector
-   merlin::intvec
-
-File mutex
-^^^^^^^^^^
-
-Lock for preventing data-race when reading or writing a file:
-
-.. doxysummary::
-   :toctree: generated
-
-   merlin::FileLock
-
-Utils
-^^^^^
-
-Get system information:
-
-.. doxysummary::
-   :toctree: generated
-
-   merlin::get_current_process_id
-   merlin::get_time
-
-Flatten loop on multi-dimensional array:
-
-.. doxysummary::
-   :toctree: generated
-
-   merlin::inner_prod
-   merlin::ndim_to_contiguous_idx
-   merlin::contiguous_to_ndim_idx
 
 
 GPU with CUDA
@@ -115,11 +49,21 @@ Print and test the compatibility of GPU and CUDA driver:
 Array API
 ---------
 
+1D vector
+^^^^^^^^^
+
+One dimensional sequence of data:
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::Vector
+   merlin::intvec
+
 Multi-dimensional array
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Classes represent multi-dimensional array on CPU, out-of-core array and GPU
-array:
+Classes represent multi-dimensional array on CPU, out-of-core array and GPU array:
 
 .. doxysummary::
    :toctree: generated
@@ -140,8 +84,12 @@ Utils for array manipulation:
    merlin::array::Slice
    merlin::array::array_copy
 
-Grid API
---------
+
+Interpolant API
+---------------
+
+Grid
+^^^^
 
 .. doxysummary::
    :toctree: generated
@@ -151,3 +99,57 @@ Grid API
    merlin::interpolant::CartesianGrid
    merlin::interpolant::SparseGrid
 
+Lagrange method
+^^^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::interpolant::calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid &grid, const array::Array &value, array::Array &coeff) "calc_lagrange_coeffs_cpu_on_cartgrid"
+   ~merlin::interpolant::calc_lagrange_coeffs_gpu "calc_lagrange_coeffs_gpu"
+   merlin::interpolant::calc_lagrange_coeffs_cpu(const interpolant::SparseGrid &grid, const array::Array &value, array::Array &coeff) "calc_lagrange_coeffs_cpu_on_sparsegrid"
+   merlin::interpolant::eval_lagrange_cpu(const interpolant::CartesianGrid &, const array::Array &, const Vector<double> &) "eval_lagrange_cpu_on_cartgrid"
+   ~merlin::interpolant::eval_lagrange_gpu "eval_lagrange_gpu"
+   merlin::interpolant::eval_lagrange_cpu(const interpolant::SparseGrid &, const array::Array &, const Vector<double> &) "eval_lagrange_cpu_on_sparsegrid"
+
+Newton method
+^^^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::interpolant::calc_newton_coeffs_cpu(const interpolant::CartesianGrid &grid, const array::Array &value, array::Array &coeff) "calc_newton_coeffs_cpu_on_cartgrid"
+   merlin::interpolant::calc_newton_coeffs_gpu "calc_newton_coeffs_gpu"
+   merlin::interpolant::calc_newton_coeffs_cpu(const interpolant::SparseGrid &grid, const array::Array &value, array::Array &coeff) "calc_newton_coeffs_cpu_on_sparsegrid"
+   merlin::interpolant::eval_newton_cpu(const interpolant::CartesianGrid &, const array::Array &, const Vector<double> &) "eval_newton_cpu_on_cartgrid"
+   merlin::interpolant::eval_newton_gpu "eval_newton_gpu"
+   merlin::interpolant::eval_newton_cpu(const interpolant::SparseGrid &, const array::Array &, const Vector<double> &) "eval_newton_cpu_on_sparsegrid"
+
+
+Low level API
+-------------
+
+Printing log messages
+^^^^^^^^^^^^^^^^^^^^^
+
+Macro functions for printing log messages and throwing an exception:
+
+.. doxysummary::
+   :toctree: generated
+
+   MESSAGE
+   WARNING
+   FAILURE
+   CUDAOUT
+   CUDAERR
+   CUHDERR
+
+File mutex
+^^^^^^^^^^
+
+Lock for preventing data-race when reading or writing a file:
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::FileLock

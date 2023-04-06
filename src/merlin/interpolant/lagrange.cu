@@ -43,7 +43,7 @@ Vector<double> interpolant::eval_lagrange_gpu(const interpolant::CartesianGrid &
     array::Parcel * ptr_coeff_on_gpu = mem.get<1>();
     array::Parcel * ptr_points_on_gpu = mem.get<2>();
     Vector<double> * ptr_result_on_gpu = mem.get<3>();
-    std::uint64_t shared_mem_size = mem.get_total_malloc_size();
+    std::uint64_t shared_mem_size = mem.get_total_malloc_size() + n_thread * grid.ndim() * 2 * sizeof(std::uint64_t);
     // call kernel
     interpolant::call_lagrange_eval_kernel(ptr_grid_on_gpu, ptr_coeff_on_gpu, ptr_points_on_gpu, ptr_result_on_gpu,
                                            shared_mem_size, stream.get_stream_ptr(), n_thread);

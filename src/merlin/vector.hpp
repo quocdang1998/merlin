@@ -72,14 +72,14 @@ class Vector {
     __cuhostdev__ Vector<T> & operator=(Vector<T> && src);
     /// @}
 
-    /// @name Direct assignement
+    /// @name Direct assignment
     /// @{
-    /** @brief Assign current vector as sub-vector.
+    /** @brief Assign current vector to pre-allocated pointer.
      *  @param ptr_src Pointer to first element.
      *  @param size Size of the new vector.
      */
     __cuhostdev__ void assign(T * ptr_src, std::uint64_t size);
-    /** @brief Assign current vector as sub-vector.
+    /** @brief Assign current vector to pre-allocated pointer.
      *  @param ptr_first Pointer to first element.
      *  @param ptr_last Pointer to last element.
      */
@@ -131,6 +131,7 @@ class Vector {
     void * copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr, std::uintptr_t stream_ptr = 0) const;
     /** @brief Copy data from GPU to CPU.
      *  @param gpu_ptr Pointer to object on GPU global memory.
+     *  @param stream_ptr Pointer to CUDA stream for asynchronious memory copy.
      */
     void copy_from_gpu(const T * gpu_ptr, std::uintptr_t stream_ptr = 0);
     #ifdef __NVCC__

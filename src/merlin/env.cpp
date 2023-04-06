@@ -43,7 +43,7 @@ std::mutex Environment::mutex;
 // --------------------------------------------------------------------------------------------------------------------
 
 // Size in bytes of maximum allowed allocated memory
-std::uint64_t Environment::cpu_mem_limit = static_cast<std::uint64_t>(20) << 30;
+std::uint64_t Environment::cpu_mem_limit = static_cast<std::uint64_t>(32) << 30;
 
 // --------------------------------------------------------------------------------------------------------------------
 // CPU Parallelism

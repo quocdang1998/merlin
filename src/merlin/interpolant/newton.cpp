@@ -232,9 +232,7 @@ void interpolant::calc_newton_coeffs_cpu(const interpolant::SparseGrid & grid, c
         array::Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid+1]);
         array::Array level_coeff(coeff, {level_slice});
         level_coeff.reshape(level_shape);
-        std::printf("Coeff before is %s\n", level_coeff.str().c_str());
         calc_newton_coeffs_of_added_grid_cpu(accumulated_cart_grid, level_cartgrid, level_coeff, level_coeff);
-        std::printf("Coeff after is %s\n", level_coeff.str().c_str());
         // subtract other points of the grid
         for (std::uint64_t j_subgrid = i_subgrid+1; j_subgrid < num_subgrid; j_subgrid++) {
             std::uint64_t start_index = grid.sub_grid_start_index()[j_subgrid];

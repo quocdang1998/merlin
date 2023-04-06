@@ -95,13 +95,13 @@ __cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & 
     } else {
         index_ = intvec(shape.size());
     }
-    std::uint64_t cum_prod = 1;
     if (shape.size() == 0) {
         return index_;  // empty shape vector
     }
+    std::uint64_t cum_prod = 1;
     index_[shape.size()-1] = index % shape[shape.size()-1];
     for (std::int64_t i = shape.size()-2; i >= 0; i--) {
-        cum_prod = cum_prod * shape[i+1];
+        cum_prod *= shape[i+1];
         index_[i] = (index / cum_prod) % shape[i];
     }
     return index_;
