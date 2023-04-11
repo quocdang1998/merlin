@@ -14,6 +14,7 @@
 #include "cuda.h"  // CUresult, cuGetErrorName
 #endif  // __NVCC__
 
+#include "merlin/exports.hpp"  // MERLINSHARED_EXPORTS
 #include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
 
 #if defined(__MERLIN_WINDOWS__)
@@ -25,8 +26,10 @@
 // Stack tracing
 // -------------
 
+namespace merlin {
 /** @brief Print the stacktrace at the crash moment.*/
-void _merlin_print_stacktrace_(int skip = 1);
+MERLINSHARED_EXPORTS void print_stacktrace(int skip = 1);
+}  // namespace merlin
 
 // Log MESSAGE, WARNING and FAILURE for CPU
 // ----------------------------------------
@@ -58,11 +61,13 @@ void _merlin_print_stacktrace_(int skip = 1);
  *  @param exception Name of the exception class (like ``std::runtime_error``, ``std::invalid_argument``, etc).
  *  @param fmt Formatted string (same syntax as ``std::printf``).
  */
-#define FAILURE(exception, fmt, ...) _merlin_error_<exception>(__FUNCNAME__, fmt, ##__VA_ARGS__)
+#define FAILURE(exception, fmt, ...) ::merlin::__throw_error<exception>(__FUNCNAME__, fmt, ##__VA_ARGS__)
+
+namespace merlin {
 
 // print log for FAILURE + throw exception
 template <class Exception = std::runtime_error>
-void _merlin_error_(const char * func_name, const char * fmt, ...) {
+void __throw_error(const char * func_name, const char * fmt, ...) {
     // save formatted string to a buffer
     char buffer[1024];
     std::va_list args;
@@ -71,9 +76,9 @@ void _merlin_error_(const char * func_name, const char * fmt, ...) {
     va_end(args);
     // print exception message and throw an exception object
     std::fprintf(stderr, "\033[1;31m[FAILURE]\033[0m [%s] %s", func_name, buffer);
-    #if defined(__MERLIN_DEBUG__) && !defined(libmerlinshared_EXPORTS)
+    #if defined(__MERLIN_DEBUG__)
     _merlin_print_stacktrace_(2);  // skip this function and print_stacktrace function
-    #endif   // __MERLIN_DEBUG__ && !libmerlinshared_EXPORTS
+    #endif   // __MERLIN_DEBUG__
     if constexpr(std::is_same<Exception, std::filesystem::filesystem_error>::value) {
         throw std::filesystem::filesystem_error(const_cast<char *>(buffer),
                                                 std::error_code(1, std::iostream_category()));
@@ -96,16 +101,20 @@ class cuda_runtime_error : public std::runtime_error {
     const char * what() const noexcept {return std::runtime_error::what();}
 };
 
+}  // namespace merlin
+
 // Error message from Windows and POSIX
 // ------------------------------------
 
+namespace merlin {
 #if defined(__MERLIN_WINDOWS__)
 // Get error from Windows API
-std::string throw_windows_last_error(unsigned long int last_error);
+MERLINSHARED_EXPORTS std::string throw_windows_last_error(unsigned long int last_error);
 #elif defined(__MERLIN_LINUX__)
 // Get error from Linux
-std::string throw_linux_last_error(void);
+MERLINSHARED_EXPORTS std::string throw_linux_last_error(void);
 #endif
+}  // namespace merlin
 
 // Log CUDAOUT for GPU
 // -------------------

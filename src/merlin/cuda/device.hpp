@@ -6,6 +6,7 @@
 #include <string>  // std::string
 
 #include "merlin/cuda/declaration.hpp"  // merlin::cuda::Device
+#include "merlin/cuda/enum_wrapper.hpp"  // merlin::cuda::DeviceLimit
 #include "merlin/cuda_decorator.hpp"  // __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS, MERLIN_HOSTDEV_EXPORTS
 
@@ -14,20 +15,6 @@ namespace merlin {
 /** @brief Class representing CPU device.*/
 class cuda::Device {
   public:
-    /** @brief Limit to get.*/
-    enum class MERLIN_EXPORTS Limit {
-        /** @brief Size of the stack of each CUDA thread.*/
-        StackSize = 0x00,
-        /** @brief Size of the ``std::printf`` function buffer.*/
-        PrintfSize = 0x01,
-        /** @brief Size of the heap of each CUDA thread.*/
-        HeapSize = 0x02,
-        /** @brief Maximum nesting depth of a grid at which a thread can safely call ``cudaDeviceSynchronize``.*/
-        SyncDepth = 0x03,
-        /** @brief Maximum number of outstanding device runtime launches.*/
-        LaunchPendingCount = 0x04
-    };
-
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
@@ -78,7 +65,7 @@ class cuda::Device {
     /** @brief Get and set limit.
      *  @return Value of current limit if argument ``size`` is not given, and the value of size otherwise.
      */
-    MERLIN_EXPORTS static std::uint64_t limit(cuda::Device::Limit limit, std::uint64_t size = UINT64_MAX);
+    MERLIN_EXPORTS static std::uint64_t limit(cuda::DeviceLimit limit, std::uint64_t size = UINT64_MAX);
     /** @brief Reset GPU.
      *  @details Destroy all allocations and reset all state on the current device in the current process.
      */

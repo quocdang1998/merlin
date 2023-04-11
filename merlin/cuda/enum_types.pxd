@@ -1,8 +1,8 @@
 # Copyright 2022 quocdang1998
 
-cdef extern from "merlin/cuda/device.hpp":
+cdef extern from "merlin/cuda/enum_wrapper.hpp":
 
-    cpdef enum class DeviceLimit "merlin::cuda::Device::Limit":
+    cpdef enum class DeviceLimit "merlin::cuda::DeviceLimit":
         """GPU limit flags.
 
         *Values*
@@ -19,44 +19,38 @@ cdef extern from "merlin/cuda/device.hpp":
         SyncDepth,
         LaunchPendingCount
 
-cdef extern from "merlin/cuda/context.hpp":
-
-    cpdef enum class ContextFlags "merlin::cuda::Context::Flags":
+    cpdef enum class ContextSchedule "merlin::cuda::ContextSchedule":
         """
         CUDA Context setting flags.
 
         *Values*
 
-         - ``AutoSchedule``: Automatic schedule based on the number of context and number of logical process.
-         - ``SpinSchedule``: Actively spins when waiting for results from the GPU.
-         - ``YieldSchedule``: Yield the CPU process when waiting for results from the GPU.
-         - ``BlockSyncSchedule``: Block CPU process until synchronization.
+         - ``Auto``: Automatic schedule based on the number of context and number of logical process.
+         - ``Spin``: Actively spins when waiting for results from the GPU.
+         - ``Yield``: Yield the CPU process when waiting for results from the GPU.
+         - ``BlockSync``: Block CPU process until synchronization.
         """
-        AutoSchedule,
-        SpinSchedule,
-        YieldSchedule,
-        BlockSyncSchedule
+        Auto,
+        Spin,
+        Yield,
+        BlockSync
 
-cdef extern from "merlin/cuda/event.hpp":
-
-    cpdef enum class EventCategory "merlin::cuda::Event::Category":
+    cpdef enum class EventCategory "merlin::cuda::EventCategory":
         """Parameter controlling the behavior of the stream.
 
         *Values*
 
-         - ``Default``: Default event.
-         - ``BlockingSync``: Event meant to be synchronize with CPU (process on CPU blockled until the event occurs).
-         - ``DisableTiming``: Event not recording time data.
-         - ``EventInterprocess``: Event might be used in an interprocess communication.
+         - ``DefaultEvent``: Default event.
+         - ``BlockingSyncEvent``: Event meant to be synchronize with CPU (process on CPU blockled until the event occurs).
+         - ``DisableTimingEvent``: Event not recording time data.
+         - ``InterprocessEvent``: Event might be used in an interprocess communication.
         """
-        Default,
-        BlockingSync,
-        DisableTiming,
-        EventInterprocess
+        DefaultEvent,
+        BlockingSyncEvent,
+        DisableTimingEvent,
+        InterprocessEvent
 
-cdef extern from "merlin/cuda/stream.hpp":
-
-    cpdef enum class StreamSetting "merlin::cuda::Stream::Setting":
+    cpdef enum class StreamSetting "merlin::cuda::StreamSetting":
         """Parameter controlling the behavior of the stream.
 
         *Values*

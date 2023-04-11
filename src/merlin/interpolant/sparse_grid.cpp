@@ -1,7 +1,7 @@
 // Copyright 2022 quocdang1998
 #include "merlin/interpolant/sparse_grid.hpp"
 
-#include <algorithm>  // std::is_sorted, std::stable_sort
+#include <algorithm>  // std::stable_sort
 #include <cinttypes>  // PRIu64
 #include <cstdint>  // std::uint64_t
 #include <cstring>  // std::memcpy
@@ -33,10 +33,6 @@ static inline void check_validity(const Vector<Vector<double>> & grid_vectors) {
         if (!is_valid_size(data[i].size())) {
             FAILURE(std::invalid_argument, "Size of each grid vector must be 2^n + 1, dimension %" PRIu64 " got %"
                     PRIu64 ".\n", i, data[i].size());
-        }
-        // check sorted --> maybe removed in the future
-        if (!std::is_sorted(data[i].cbegin(), data[i].cend())) {
-            FAILURE(std::invalid_argument, "Grid vector of dimension %d is not sorted.\n", i);
         }
     }
 }
@@ -286,6 +282,32 @@ bool interpolant::SparseGrid::contains(const Vector<double> & point) const {
         }
     }
     return false;
+}
+
+// Increase number of grid values on a given dimension.
+void interpolant::SparseGrid::add_points_to_grid(const Vector<double> & new_points, std::uint64_t dimension) {
+    // check for coherent number of points
+    Vector<double> & current_grid_points = this->grid_vectors_[dimension];
+    if (current_grid_points.size() == 1 && new_points.size() != 2) {
+        FAILURE(std::invalid_argument, "Expect number of added points to be 2, got " PRIu64 ".\n", new_points.size());
+    } else if (new_points.size() != current_grid_points.size()-1) {
+        FAILURE(std::invalid_argument, "Invalid number of added points.\n");
+    }
+    // copy old array to new array
+    Vector<double> new_grid_points(new_points.size() + current_grid_points.size());
+    if (current_grid_points.size() == 1) {
+        new_grid_points[1] = current_grid_points[0];
+        new_grid_points[0] = new_points[0];
+        new_grid_points[2] = new_points[1];
+    } else {
+        for (std::uint64_t i_point = 0; i_point < current_grid_points.size(); i_point++) {
+            new_grid_points[2*i_point] = current_grid_points[i_point];
+        }
+        for (std::uint64_t i_point = 0; i_point < new_points.size(); i_point++) {
+            new_grid_points[2*i_point+1] = new_points[i_point];
+        }
+    }
+    this->grid_vectors_[dimension] = std::move(new_grid_points);
 }
 
 // Representation

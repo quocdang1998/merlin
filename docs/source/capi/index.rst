@@ -9,8 +9,6 @@ C++ API
 Environment
 -----------
 
-Execution environment:
-
 .. doxysummary::
    :toctree: generated
 
@@ -21,30 +19,43 @@ Execution environment:
 GPU with CUDA
 -------------
 
-CUDA Runtime API Wrapper
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-C++ wrapper classes for CUDA runtime API and CUDA driver API:
+Device Management
+^^^^^^^^^^^^^^^^^
 
 .. doxysummary::
    :toctree: generated
 
    merlin::cuda::Device
    merlin::cuda::Context
-   merlin::cuda::Event
-   merlin::cuda::Stream
-   merlin::cuda::record_event
+   merlin::cuda::print_all_gpu_specification
+   merlin::cuda::test_all_gpu
 
-GPU query
-^^^^^^^^^
-
-Print and test the compatibility of GPU and CUDA driver:
+Concurrency
+^^^^^^^^^^^
 
 .. doxysummary::
    :toctree: generated
 
-   merlin::cuda::print_all_gpu_specification
-   merlin::cuda::test_all_gpu
+   merlin::cuda::Event
+   merlin::cuda::Stream
+   merlin::cuda::GraphNode
+   merlin::cuda::Graph
+   merlin::cuda::begin_capture_stream
+   merlin::cuda::end_capture_stream
+
+Enum types
+^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::cuda::DeviceLimit
+   merlin::cuda::ContextSchedule
+   merlin::cuda::EventCategory
+   merlin::cuda::EventWaitFlag
+   merlin::cuda::MemcpyKind
+   merlin::cuda::NodeType
+   merlin::cuda::StreamSetting
 
 Array API
 ---------

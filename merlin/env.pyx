@@ -60,7 +60,8 @@ cdef class Environment:
 
     @classmethod
     def flush_cuda_deferred_deallocation(self):
-        """Free all non-automatically deallocated CUDA memory blocks.
+        """flush_cuda_deferred_deallocation(self)
+        Free all non-automatically deallocated CUDA memory blocks.
 
         This functions should be called explicitly after launching asynchronious GPU functions. Any non memory leaks
         at the end of the program will be reported as a warning.

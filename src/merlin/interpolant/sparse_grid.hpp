@@ -98,6 +98,16 @@ class interpolant::SparseGrid : interpolant::Grid {
     MERLIN_EXPORTS bool contains(const Vector<double> & point) const;
     /// @}
 
+    /// @name Modify grid
+    /// @{
+    /** @brief Increase number of grid values on a given dimension.
+     *  @details Add points from the next level at a dimension.
+     *  @param new_points Array of points from next level of the grid.
+     *  @param dimension Dimension of which the new points are added.
+     */
+    MERLIN_EXPORTS void add_points_to_grid(const Vector<double> & new_points, std::uint64_t dimension);
+    /// @}
+
     /// @name Representation
     /// @{
     MERLIN_EXPORTS std::string str(void) const;

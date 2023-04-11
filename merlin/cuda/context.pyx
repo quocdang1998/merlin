@@ -13,11 +13,11 @@ cdef class Context:
         ----------
         gpu: merlin.cuda.Device
             GPU.
-        flag: merlin.cuda.ContextFlags
+        flag: merlin.cuda.ContextSchedule
             Setting flag.
         """
         cdef Device gpu
-        cdef ContextFlags flag
+        cdef ContextSchedule flag
 
         if not kwargs:
             self.core = new CppContext()
@@ -27,7 +27,7 @@ cdef class Context:
                 flag = kwargs.pop("flag")
                 self.core = new CppContext(dereference(<CppDevice*>(gpu.core)), flag)
             else:
-                self.core = new CppContext(dereference(<CppDevice*>(gpu.core)), ContextFlags.AutoSchedule)
+                self.core = new CppContext(dereference(<CppDevice*>(gpu.core)), ContextSchedule.Auto)
 
         if kwargs:
             raise ValueError("Invalid keywords: " + ", ".join(k for k in kwargs.keys()))
@@ -108,8 +108,8 @@ cdef class Context:
         """get_flag_of_current_context(self)
         Get the setting flag of the current context.
         """
-        cdef ContextFlags flag = CppContext.get_flag_of_current_context()
-        return ContextFlags(flag)
+        cdef ContextSchedule flag = CppContext.get_flag_of_current_context()
+        return ContextSchedule(flag)
 
     def __eq__(Context left, Context right):
         return dereference(left.core) == dereference(right.core)
@@ -120,7 +120,7 @@ cdef class Context:
     def __dealloc__(self):
         del self.core
 
-def create_primary_context(Device gpu, ContextFlags flag):
+def create_primary_context(Device gpu, ContextSchedule flag):
     """create_primary_context(gpu, flag)
     Retain the primary context associated to a GPU.
 
@@ -132,7 +132,7 @@ def create_primary_context(Device gpu, ContextFlags flag):
     ----------
     gpu: merlin.cuda.Device
         GPU associated to the primary context.
-    flag: merlin.cuda.ContextFlags
+    flag: merlin.cuda.ContextSchedule
         Flag to set to the primary context.
     """
     result = Context()

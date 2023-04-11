@@ -24,8 +24,7 @@ cdef extern from "merlin/cuda/stream.hpp":
 
         bint is_complete() except +
         void check_cuda_context() except +
+        void record_event(const CppEvent & event) except+
         void synchronize() except +
 
         string str() except +
-
-    cdef void cpp_record_event "merlin::cuda::record_event" (const CppEvent & event, const CppStream & stream)

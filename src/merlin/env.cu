@@ -45,7 +45,7 @@ void initialize_cuda_context(void) {
 }
 
 // Alarm for CUDA error
-void alarming_cuda_error(void) {
+void alarm_cuda_error(void) {
     // check for any CUDA error
     ::cudaError_t err_ = ::cudaPeekAtLastError();
     if (err_ != 0) {

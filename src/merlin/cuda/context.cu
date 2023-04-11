@@ -56,10 +56,11 @@ static inline std::uintptr_t get_current_context_ptr(void) {
 // --------------------------------------------------------------------------------------------------------------------
 
 // Member constructor
-cuda::Context::Context(const cuda::Device & gpu, cuda::Context::Flags flag) {
+cuda::Context::Context(const cuda::Device & gpu, cuda::ContextSchedule schedule) {
     // Create context
     ::CUcontext ctx;
-    ::cudaError_t err_ = static_cast<::cudaError_t>(::cuCtxCreate(&ctx, static_cast<unsigned int>(flag), gpu.id()));
+    ::cudaError_t err_ = static_cast<::cudaError_t>(::cuCtxCreate(&ctx, static_cast<unsigned int>(schedule),
+                                                                  gpu.id()));
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Create context failed with message \"%s\".\n", ::cudaGetErrorString(err_));
     }
@@ -133,14 +134,14 @@ cuda::Device cuda::Context::get_gpu_of_current_context(void) {
 }
 
 // Get flag of the current context.
-cuda::Context::Flags cuda::Context::get_flag_of_current_context(void) {
+cuda::ContextSchedule cuda::Context::get_flag_of_current_context(void) {
     unsigned int flag;
     ::cudaError_t err_ = static_cast<::cudaError_t>(::cuCtxGetFlags(&flag));
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Get flag of current context failed with message \"%s\".\n",
                 ::cudaGetErrorString(err_));
     }
-    return static_cast<cuda::Context::Flags>(flag);
+    return static_cast<cuda::ContextSchedule>(flag);
 }
 
 // Synchronize current context
@@ -167,7 +168,7 @@ cuda::Context::~Context(void) {
 }
 
 // Create a primary context attached to a GPU
-cuda::Context cuda::create_primary_context(const cuda::Device & gpu, cuda::Context::Flags flag) {
+cuda::Context cuda::create_primary_context(const cuda::Device & gpu, cuda::ContextSchedule flag) {
     // check validity of GPU
     if (gpu.id() < 0) {
         FAILURE(cuda_runtime_error, "Invalid GPU ID (id = %d).\n", gpu.id());

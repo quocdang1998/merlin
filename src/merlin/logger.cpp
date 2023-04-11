@@ -21,11 +21,13 @@
     #endif   // __MERLIN_DEBUG__
 #endif
 
-// Pointer to frame
-typedef void * native_frame_ptr_t;
-
 // Max depth of the stacktrace
 #define STACK_TRACE_BUFFER_SIZE 128
+
+namespace merlin {
+
+// Pointer to frame
+typedef void * native_frame_ptr_t;
 
 #if defined(__MERLIN_WINDOWS__)
 
@@ -45,7 +47,7 @@ std::string throw_windows_last_error(unsigned long int last_error) {
 }
 
 // Print stacktrace
-void _merlin_print_stacktrace_(int skip) {
+void print_stacktrace(int skip) {
     #ifdef __MERLIN_DEBUG__
     // get current process
     ::native_frame_ptr_t process = ::GetCurrentProcess();
@@ -83,7 +85,7 @@ std::string throw_linux_last_error(void) {
 }
 
 // Print stacktrace
-void _merlin_print_stacktrace_(int skip) {
+void print_stacktrace(int skip) {
     #ifdef __MERLIN_DEBUG__
     // get number of frame in the stack
     ::native_frame_ptr_t buffer[STACK_TRACE_BUFFER_SIZE];
@@ -118,3 +120,5 @@ void _merlin_print_stacktrace_(int skip) {
 }
 
 #endif
+
+}  // namespace merlin

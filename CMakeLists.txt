@@ -9,6 +9,9 @@ cmake_minimum_required(VERSION 3.25)
 
 # options
 set(MERLIN_CUDA ON CACHE BOOL "Build library using CUDA")  # -DMERLIN_CUDA=OFF
+set(MERLIN_DETECT_CUDA_ARCH ON CACHE BOOL
+    "Automatically detect CUDA architectures of all GPUs \
+    (use CMAKE_CUDA_ARCHITECTURES otherwise)")  # -MERLIN_DETECT_CUDA_ARCH=OFF
 set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
     CACHE STRING "Type of the created library (static or shared)")
 set(MERLIN_TEST OFF CACHE BOOL "Build test executables")  # -DMERLIN_TEST=ON
@@ -24,6 +27,7 @@ list(APPEND MERLIN_SRC_CPP
      cuda/context.cpp
      cuda/device.cpp
      cuda/event.cpp
+     cuda/graph.cpp
      cuda/stream.cpp
      filelock.cpp
      iterator.cpp
@@ -31,6 +35,7 @@ list(APPEND MERLIN_SRC_CPP
      interpolant/grid.cpp
      interpolant/lagrange.cpp
      interpolant/newton.cpp
+     interpolant/nodes.cpp
      interpolant/regular_grid.cpp
      interpolant/sparse_grid.cpp
      # interpolant/interpolant.cpp
@@ -41,6 +46,7 @@ list(APPEND MERLIN_SRC_CU
      cuda/context.cu
      cuda/device.cu
      cuda/event.cu
+     cuda/graph.cu
      cuda/stream.cu
      interpolant/cartesian_grid.cu
      interpolant/lagrange.cu
@@ -62,11 +68,11 @@ list(APPEND MERLIN_SRC_RDC
      interpolant/cartesian_grid.rdc
      interpolant/lagrange.rdc
      interpolant/newton.rdc
-     logger.rdc
      utils.rdc
 )
 list(APPEND MERLIN_SRC_SHR
      env.cpp
+     logger.cpp
 )
 list(APPEND MERLIN_SRC_SHRCU
      env.cu
@@ -150,18 +156,17 @@ if(MERLIN_CUDA)
     endif(NOT CUDA_DRIVER_LIBRARY)
     mark_as_advanced(CUDA_DRIVER_LIBRARY)
     # detect CUDA architechture
-    if(NOT DEFINED $CMAKE_CUDA_ARCHITECTURES)
+    if(MERLIN_DETECT_CUDA_ARCH)
         message(STATUS "Automatically detecting CUDA architechture")
         include(FindCUDA/select_compute_arch)
         CUDA_DETECT_INSTALLED_GPUS(INSTALLED_GPU_CCS_1)
         string(STRIP "${INSTALLED_GPU_CCS_1}" INSTALLED_GPU_CCS_2)
         string(REPLACE " " ";" INSTALLED_GPU_CCS_3 "${INSTALLED_GPU_CCS_2}")
         string(REPLACE "." "" CUDA_ARCH_LIST "${INSTALLED_GPU_CCS_3}")
-        set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCH_LIST})
-        set_property(GLOBAL PROPERTY CUDA_ARCHITECTURES "${CUDA_ARCH_LIST}")
         message(STATUS "Detected CUDA architechtures ${CUDA_ARCH_LIST} on this machine")
     else()
         message(STATUS "CUDA architechtures was manually set as ${CMAKE_CUDA_ARCHITECTURES}")
+        set(CUDA_ARCH_LIST "${CMAKE_CUDA_ARCHITECTURES}")
     endif()
 endif()
 
@@ -188,6 +193,7 @@ function(MerlinSetTargetProperties target_library)
     )
     set_property(TARGET ${target_library} PROPERTY INTERPROCEDURAL_OPTIMIZATION ON)
     if(MERLIN_CUDA)
+        set_property(TARGET ${target_library} PROPERTY CUDA_ARCHITECTURES "${CUDA_ARCH_LIST}")
         target_compile_definitions(${target_library} PUBLIC __MERLIN_CUDA__)
         set(DIAG_SUPPRESS -Xcudafe "--diag_suppress=field_without_dll_interface")
         set(RELAXED_CONSTEXPR --expt-relaxed-constexpr)
@@ -205,10 +211,6 @@ function(MerlinSetTargetProperties target_library)
         if(MSVC)
             target_link_libraries(${target_library} PRIVATE DbgHelp.lib)
         endif(MSVC)
-    else()
-        if(UNIX)
-            target_compile_options(${target_library} PRIVATE -O3)
-        endif(UNIX)
     endif(MERLIN_DEBUG)
     target_link_libraries(${target_library} PRIVATE OpenMP::OpenMP_CXX)
 endfunction(MerlinSetTargetProperties)
@@ -335,10 +337,11 @@ function(CONFIGURE_TESTFILES LANGUAGE)
         get_filename_component(TESTFILENAME ${TESTFILE} NAME)
         string(REPLACE ".${LANGUAGE}" "" TESTNAME ${TESTFILENAME})
         add_executable(${TESTNAME} ${TESTFILE})
-        target_link_libraries(${TESTNAME} libmerlin)
+        target_link_libraries(${TESTNAME} PRIVATE libmerlin OpenMP::OpenMP_CXX)
         set_property(TARGET ${TESTNAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
         set_target_properties(${TESTNAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
                               ${CMAKE_CURRENT_BINARY_DIR}/tests)
+        set_property(TARGET ${TESTNAME} PROPERTY CUDA_ARCHITECTURES "${CUDA_ARCH_LIST}")
     endforeach(TESTFILE ${MERLIN_TESTFILES})
 endfunction(CONFIGURE_TESTFILES)
 
@@ -367,7 +370,7 @@ file(APPEND ${MERLIN_CONFIG} "MERLIN_BIN_DIR = \"${CMAKE_BINARY_DIR}\"\n")
 if(MERLIN_CUDA)
     file(APPEND ${MERLIN_CONFIG} "MERLIN_CUDA = True\n")
     file(APPEND ${MERLIN_CONFIG} "NVCC = \"${CUDA_NVCC_EXECUTABLE}\"\n")
-    string(REPLACE ";" "," CUDA_ARCH_LIST_PYTHON "${CMAKE_CUDA_ARCHITECTURES}")
+    string(REPLACE ";" "," CUDA_ARCH_LIST_PYTHON "${CUDA_ARCH_LIST}")
     file(APPEND ${MERLIN_CONFIG} "CUDA_ARCHITECHTURE = [${CUDA_ARCH_LIST_PYTHON}]\n")
     cmake_path(GET CUDA_cudart_static_LIBRARY PARENT_PATH CUDALIB)
     file(APPEND ${MERLIN_CONFIG} "CUDALIB = \"${CUDALIB}\"\n")

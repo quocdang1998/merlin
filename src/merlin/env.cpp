@@ -21,7 +21,7 @@ Environment::Environment(void) {
 Environment::~Environment(void) {
     Environment::num_instances--;
     if (Environment::num_instances == 0) {
-        alarming_cuda_error();
+        alarm_cuda_error();
     }
 }
 

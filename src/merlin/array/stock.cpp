@@ -14,6 +14,17 @@
 #include "merlin/utils.hpp"  // merlin::get_current_process_id, merlin::get_time
 #include "merlin/vector.hpp"  // merlin::intvec
 
+// Acquire lockfile if thread safe
+#define EXCLUSIVE_LOCK_THREADSAFE() if (this->thread_safe_) this->flock_.lock()
+
+// Acquire shared lockfile if thread safe
+#define SHARED_LOCK_THREADSAFE() if (this->thread_safe_) this->flock_.lock_shared()
+
+// Unlock file if thread safe
+#define UNLOCK_THREADSAFE() if (this->thread_safe_) this->flock_.unlock()
+
+namespace merlin {
+
 // --------------------------------------------------------------------------------------------------------------------
 // Data read/write
 // --------------------------------------------------------------------------------------------------------------------
@@ -46,20 +57,9 @@ static inline bool check_file_exist(const char * name) noexcept {
     }
 }
 
-// Acquire lockfile if thread safe
-#define EXCLUSIVE_LOCK_THREADSAFE() if (this->thread_safe_) this->flock_.lock()
-
-// Acquire shared lockfile if thread safe
-#define SHARED_LOCK_THREADSAFE() if (this->thread_safe_) this->flock_.lock_shared()
-
-// Unlock file if thread safe
-#define UNLOCK_THREADSAFE() if (this->thread_safe_) this->flock_.unlock()
-
 // --------------------------------------------------------------------------------------------------------------------
 // Stock
 // --------------------------------------------------------------------------------------------------------------------
-
-namespace merlin {
 
 // Read metadata from file
 std::uint64_t array::Stock::read_metadata(void) {

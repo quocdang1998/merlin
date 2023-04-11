@@ -17,6 +17,8 @@
 #include "merlin/logger.hpp"  // FAILURE
 #include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::inner_prod
 
+namespace merlin {
+
 // --------------------------------------------------------------------------------------------------------------------
 // Read data
 // --------------------------------------------------------------------------------------------------------------------
@@ -29,8 +31,6 @@ static inline void read_from_file(double * dest, std::FILE * file, double * src,
         FAILURE(std::ios_base::failure, "Read file error.\n");
     }
 }
-
-namespace merlin {
 
 // --------------------------------------------------------------------------------------------------------------------
 // Array

@@ -46,7 +46,7 @@ class cuda::Memory {
     template <std::uint64_t index>
     typename std::tuple_element<index, std::tuple<Args * ...>>::type get(void);
 
-    /** @brief Defer the CUDA free on pointer for asynchronious launch on GPU.*/
+    /** @brief Defer the CUDA free on pointer for asynchronous launch on GPU.*/
     void defer_allocation(void);
 
     /** @brief Destructor.*/
@@ -67,6 +67,14 @@ class cuda::Memory {
 
 namespace cuda {
 
+/** @brief Copy a list of object to GPU shared memory.
+ *  @details This function provides a simple compile-time API function for call the method ``copy_to_shared_mem`` of
+ *  each object in the list.
+ *  @param share_ptr Pointer to available shared memory.
+ *  @param args List of objects to be copied to shred memory.
+ *  @returns A tuple of pointers. The first pointer points to the address of available free data after all objects
+ *  have been copied. The rest is the list of pointers to copied objects on shared memory.
+ */
 template <typename ... Args>
 __cudevice__ std::tuple<void *, Args * ...> copy_class_to_shared_mem(void * share_ptr, const Args & ... args);
 

@@ -28,3 +28,5 @@ PREDEFINED             = "__cuhost__=__host__" \
                          "MERLIN_HOSTDEV_EXPORTS=1" \
                          "MERLIN_NO_EXPORT=1" \
                          "MERLIN_DEPRECATED=1"
+SORT_MEMBER_DOCS       = NO
+SORT_GROUP_NAMES       = YES

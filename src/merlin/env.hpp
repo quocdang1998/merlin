@@ -116,7 +116,7 @@ MERLINSHARED_EXPORTS extern Environment default_environment;
 void initialize_cuda_context(void);
 
 /** @brief Alarm for CUDA error.*/
-void alarming_cuda_error(void);
+void alarm_cuda_error(void);
 
 }  // namespace merlin
 

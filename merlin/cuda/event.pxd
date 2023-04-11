@@ -11,12 +11,12 @@ cdef extern from "merlin/cuda/event.hpp":
 
     cdef cppclass CppEvent "merlin::cuda::Event":
         CppEvent() except +
-        CppEvent(EventCategory category) except +
+        CppEvent(unsigned int category) except +
 
         # CppEvent(const CppEvent & src) except +
 
         uintptr_t get_event_ptr()
-        EventCategory category()
+        unsigned int category()
         const CppContext & get_context() except +
         const CppDevice & get_gpu()
 
