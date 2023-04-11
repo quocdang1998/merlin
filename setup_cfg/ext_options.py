@@ -34,7 +34,7 @@ def get_extension_options():
     # dependancies
     depends = glob.glob(os.path.join(module_dir, "setup_cfg", "*.py"))
     if sys.platform == "linux":
-        depends += glob.glob(os.path.join(module_dir, "build", "libmerlin.*"))
+        depends += glob.glob(os.path.join(module_dir, "build", "libmerlin*.so"))
     elif sys.platform == "win32":
         depends += [os.path.join(module_dir, "build", "merlin.lib")]
         if MERLIN_LIBKIND == "SHARED":
@@ -48,9 +48,9 @@ def get_extension_options():
 
     # link librairies
     ext_options["libraries"] = ["merlin"]
-    if MERLIN_LIBKIND == "SHARED" and MERLIN_CUDA:
-        ext_options["libraries"] += ["merlinglobal", "merlincuda"]
-    ext_options["libraries"] += ["merlinshared"]
+    if MERLIN_CUDA:
+        ext_options["libraries"] += ["merlincuda"]
+    ext_options["libraries"] += ["merlinrdc", "merlinshared"]
     if MERLIN_CUDA:
         ext_options["libraries"] += ["cudart_static", "cudadevrt", "cuda"]
     if MERLIN_DEBUG and (sys.platform == "win32"):

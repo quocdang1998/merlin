@@ -3,17 +3,17 @@
 #define MERLIN_ARRAY_STOCK_HPP_
 
 #include <cstdint>  // std::uint64_t, std::uintptr_t
-#include <cstdio>  // std::FILE
-#include <string>  // std::string
+#include <cstdio>   // std::FILE
+#include <string>   // std::string
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array
-#include "merlin/array/nddata.hpp"  // merlin::array::NdData
-#include "merlin/array/slice.hpp"  // merlin::array::Slice
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/filelock.hpp"  // merlin::FileLock
-#include "merlin/vector.hpp"  // merlin::Vector
+#include "merlin/array/nddata.hpp"       // merlin::array::NdData
+#include "merlin/array/slice.hpp"        // merlin::array::Slice
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/filelock.hpp"           // merlin::FileLock
+#include "merlin/vector.hpp"             // merlin::Vector
 
-namespace merlin::array {
+namespace merlin {
 
 /** @brief Multi-dimensional array exported to a file.
  *  @details The read/write is garanteed to the threadsafe by the member merlin::array::Stock::thread_safe_. When it is
@@ -22,7 +22,7 @@ namespace merlin::array {
  *  (respectively reading) threads/processes finished their jobs. By switching off this option, user is responsible for
  *  assuring that concurrent I/O operations do not crash one another.
  */
-class Stock : public NdData {
+class array::Stock : public array::NdData {
   public:
     /// @name Constructors
     /// @{
@@ -54,25 +54,25 @@ class Stock : public NdData {
     /// @name Copy and Move
     /// @{
     /** @brief Copy constructor (deleted).*/
-    Stock(const Stock & src) = delete;
+    Stock(const array::Stock & src) = delete;
     /** @brief Copy assignment (deleted).*/
-    Stock & operator=(const Stock & src) = delete;
+    array::Stock & operator=(const array::Stock & src) = delete;
     /** @brief Move constructor.*/
-    Stock(Stock && src) = default;
+    Stock(array::Stock && src) = default;
     /** @brief Move assignment.*/
-    Stock & operator=(Stock && src) = default;
+    array::Stock & operator=(array::Stock && src) = default;
     /// @}
 
     /// @name Get members
     /// @{
     /** @brief Get filename.*/
-    constexpr const std::string & filename(void) const noexcept {return this->filename_;}
+    constexpr const std::string & filename(void) const noexcept { return this->filename_; }
     /** @brief Get pointer to file.*/
-    std::FILE * get_file_ptr(void) const noexcept {return this->file_ptr_;}
+    std::FILE * get_file_ptr(void) const noexcept { return this->file_ptr_; }
     /** @brief Get filelock.*/
-    FileLock & get_file_lock(void) const noexcept {return this->flock_;}
+    FileLock & get_file_lock(void) const noexcept { return this->flock_; }
     /** @brief Check if the policy is thread safe.*/
-    constexpr bool is_thread_safe(void) const noexcept {return this->thread_safe_;}
+    constexpr bool is_thread_safe(void) const noexcept { return this->thread_safe_; }
     /// @}
 
     /// @name Get and set element
@@ -97,6 +97,8 @@ class Stock : public NdData {
      *  @param i_dim Index of dimension to collapse.
      */
     MERLIN_EXPORTS void remove_dim(std::uint64_t i_dim = 0);
+    /** @brief Set value of all elements.*/
+    MERLIN_EXPORTS void fill(double value);
     /// @}
 
     /// @name Write to file
@@ -132,6 +134,6 @@ class Stock : public NdData {
     std::uint64_t write_metadata(void);
 };
 
-}  // namespace merlin::array
+}  // namespace merlin
 
 #endif  // MERLIN_ARRAY_STOCK_HPP_

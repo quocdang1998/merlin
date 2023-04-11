@@ -4,7 +4,7 @@
 #include <cstdlib>  // std::abs, div_t, div
 
 #include "merlin/logger.hpp"  // FAILURE
-#include "merlin/utils.hpp"  // merlin::inner_prod, merlin::contiguous_to_ndim_idx, merlin::ndim_to_contiguous_idx
+#include "merlin/utils.hpp"   // merlin::inner_prod, merlin::contiguous_to_ndim_idx, merlin::ndim_to_contiguous_idx
 
 namespace merlin {
 
@@ -20,7 +20,7 @@ Iterator::Iterator(std::uint64_t index, const intvec & shape) : item_ptr_(index)
 
 // Pre-increment operator
 Iterator & Iterator::operator++(void) {
-    this->index_[this->index_.size()-1]++;
+    this->index_[this->index_.size() - 1]++;
     std::uint64_t current_dim = this->index_.size() - 1;
     while (this->index_[current_dim] >= this->shape_[current_dim]) {
         if (current_dim == 0) {

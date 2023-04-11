@@ -2,12 +2,13 @@
 #ifndef MERLIN_ENV_HPP_
 #define MERLIN_ENV_HPP_
 
-#include <atomic>  // std::atomic_uint, std::atomic_uint64_t
+#include <atomic>   // std::atomic_uint, std::atomic_uint64_t
 #include <cstdint>  // std::uintptr_t
-#include <map>  // std::map
-#include <mutex>  // std::mutex
+#include <map>      // std::map
+#include <mutex>    // std::mutex
+#include <random>   // std::mt19937_64
 #include <utility>  // std::pair
-#include <vector>  // std::vector
+#include <vector>   // std::vector
 
 #include "merlin/exports.hpp"  // MERLINSHARED_EXPORTS
 
@@ -22,22 +23,16 @@ class MERLINSHARED_EXPORTS Environment {
     Environment(void);
     /// @}
 
-    /// @name Environment class-bounded properties
+    /// @name Shared variables
     /// @{
     /** @brief Check if the environment is initialized or not.*/
     static bool is_initialized;
-    /** @brief Number of instances.*/
+    /** @brief Number of Environment instances created.*/
     static std::atomic_uint num_instances;
     /** @brief Mutex for locking threads.*/
     static std::mutex mutex;
-    /// @}
-
-    /// @name Array allocation limit
-    /// @{
-    /** @brief Memory limit of a process for allocating ``merlin::array::Array``.
-     *  @details Default value: 32GB.
-     */
-    static std::uint64_t cpu_mem_limit;
+    /** @brief Random generator.*/
+    static std::mt19937_64 random_generator;
     /// @}
 
     /// @name CPU parallelism
@@ -50,24 +45,22 @@ class MERLINSHARED_EXPORTS Environment {
 
     /// @name CUDA related settings
     /// @{
-    /** @brief ID of default GPU.*/
-    static int default_gpu;
     /** @brief Attributes of the context.*/
-    struct MERLINSHARED_EXPORTS ContextAttribute {
+    struct ContextAttribute {
         /// @name Constructor
         /// @{
         /** @brief Default constructor.*/
         ContextAttribute(void) = default;
         /** @brief Member constructor.*/
-        ContextAttribute(std::uint64_t ref_count, int gpu_id);
+        MERLINSHARED_EXPORTS ContextAttribute(std::uint64_t ref_count, int gpu_id);
         /// @}
 
         /// @name Copy and move
         /// @{
         /** @brief Copy constructor.*/
-        ContextAttribute(const Environment::ContextAttribute & src);
+        MERLINSHARED_EXPORTS ContextAttribute(const Environment::ContextAttribute & src);
         /** @brief Copy assignment.*/
-        Environment::ContextAttribute & operator=(const Environment::ContextAttribute & src);
+        MERLINSHARED_EXPORTS Environment::ContextAttribute & operator=(const Environment::ContextAttribute & src);
         /// @}
 
         /// @name Members
@@ -90,16 +83,12 @@ class MERLINSHARED_EXPORTS Environment {
     };
     /** @brief Map from context pointers to their attributes.*/
     static std::map<std::uintptr_t, Environment::ContextAttribute> attribute;
-    /** @brief CUDA primary contexts.*/
+    /** @brief Map from GPU ID to its corresponding primary contexts.*/
     static std::map<int, std::uintptr_t> primary_contexts;
     /** @brief Default CUDA kernel block size.
      *  @details Should be multiple of 32.
      */
     static std::uint64_t default_block_size;
-    /** @brief CUDA deferred pointers.*/
-    static std::vector<std::pair<int, void *>> deferred_gpu_pointer;
-    /** @brief Deallocate all pointers in deferred pointer array.*/
-    static void flush_cuda_deferred_deallocation(void);
     /// @}
 
     /// @name Destructor
@@ -112,11 +101,13 @@ class MERLINSHARED_EXPORTS Environment {
 /** @brief Default environment.*/
 MERLINSHARED_EXPORTS extern Environment default_environment;
 
-/** @brief Initialize CUDA primary contexts.*/
+/** @brief Initialize the default CUDA context.*/
 void initialize_cuda_context(void);
 
-/** @brief Alarm for CUDA error.*/
-void alarming_cuda_error(void);
+/** @brief Alarm for CUDA error.
+ *  @details Double-check if CUDA operations have an unthrown error.
+ */
+void alarm_cuda_error(void);
 
 }  // namespace merlin
 

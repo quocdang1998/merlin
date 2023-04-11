@@ -1,18 +1,50 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/array.hpp"
 
+#include <cinttypes>   // PRIu64
 #include <functional>  // std::bind, std::placeholders
 
-#include "merlin/array/copy.hpp"  // merlin::array::array_copy
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/cuda/device.hpp"  // merlin::cuda::Device
-#include "merlin/logger.hpp"  // FAILURE
+#include "merlin/array/operation.hpp"  // merlin::array::array_copy
+#include "merlin/array/parcel.hpp"     // merlin::array::Parcel
+#include "merlin/cuda/device.hpp"      // merlin::cuda::Device
+#include "merlin/logger.hpp"           // FAILURE
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
+// Memory lock (allocated array always stays in the RAM)
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Allocate non pageable memory
+double * array::allocate_memory(std::uint64_t size) {
+    double * result = nullptr;
+    ::cudaError_t err_ = ::cudaMallocHost(&result, sizeof(double) * size);
+    if (err_ != 0) {
+        FAILURE(cuda_runtime_error, "Allocate non-pageable memory failed with message \"%s\".\n",
+                ::cudaGetErrorString(err_));
+    }
+    return result;
+}
+
+// Pin memory to RAM
+void array::cuda_pin_memory(double * ptr, std::uint64_t n_elem) {
+    ::cudaError_t err_ = ::cudaHostRegister(ptr, sizeof(double) * n_elem, cudaHostRegisterDefault);
+    if (err_ != 0) {
+        FAILURE(cuda_runtime_error, "Pin pageable memory failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+    }
+}
+
+// Free non pageable memory
+void array::free_memory(double * ptr) {
+    ::cudaError_t err_ = ::cudaFreeHost(ptr);
+    if (err_ != 0) {
+        FAILURE(cuda_runtime_error, "Free non-pageable memory failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Array
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Copy data from GPU array
 void array::Array::clone_data_from_gpu(const array::Parcel & src, const cuda::Stream & stream) {

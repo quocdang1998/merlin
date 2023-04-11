@@ -4,26 +4,21 @@ Installation
 System requirements
 -------------------
 
-Before compiling the package, ensure that these prerequisites have already been
-installed:
+Prior to compiling the package, make sure that you have already installed these prerequisites:
 
--  C++ compiler: GNU ``g++>=9.3.0`` on **Linux** or Visual Studio 2022
-   ``cl.exe`` on **Windows**, with OpenMP enabled.
+-  C++ compiler: GNU ``g++>=9.3.0`` on **Linux** or Visual Studio 2022 ``cl.exe`` on **Windows**, with OpenMP enabled.
 
--  Cmake: ``cmake>=3.21.0`` (detect ``-std=c++17`` flag on CUDA).
+-  Cmake: ``cmake>=3.25.0``
 
--  Build-tool: GNU ``make`` on **Linux** or ``ninja`` on **Windows** (Ninja
-   extenstion of MSVC).
+-  Build-tool: GNU ``make`` on **Linux** or ``ninja`` on **Windows** (Ninja extenstion of MSVC).
 
--  CUDA ``nvcc>=11.4`` (optional, required if GPU parallelization option is
-   ``ON``).
+-  CUDA ``nvcc>=11.4`` (optional, required if GPU parallelization option is ``ON``).
 
 .. _setup_script_build_dependancies:
 
-To compile the Python interface by using the ``setup`` script, install these
-following modules:
+To compile the Python interface by using the ``setup.py`` script, ensure the installation of the following modules:
 
--  |Cython|_ (support enum class)
+-  |Cython|_
 
 -  |Numpy|_
 
@@ -49,15 +44,14 @@ following modules:
 
    By default, ``pip`` will install the newest release version of ``Cython``,
    which is ``0.29``, but the ``setup`` script requires the pre-release one.
-   Thus, the argument ``--pre`` **must be passed** to the ``pip install``
-   command.
+   Thus, the argument ``--pre`` **is mandatory**.
 
 To compile the documentation, install the following packages:
 
 -  |Doxygen|_
 
--  |Sphinx|_ + extensions (|sphinx_rtd_theme|_, |sphinx_design|_,
-   |breathe|_ and |sphinx_doxysummary|_)
+-  |Sphinx|_ + extensions (|sphinx_rtd_theme|_, |sphinx_design|_, |sphinxcontrib-bibtex|_, |breathe|_ and
+   |sphinx_doxysummary|_)
 
    .. code-block:: sh
 
@@ -72,6 +66,8 @@ To compile the documentation, install the following packages:
 .. _sphinx_rtd_theme: https://sphinx-rtd-theme.readthedocs.io/en/stable/
 .. |sphinx_design| replace:: ``sphinx_design``
 .. _sphinx_design: https://sphinx-design.readthedocs.io/en/latest/
+.. |sphinxcontrib-bibtex| replace:: ``sphinxcontrib-bibtex``
+.. _sphinxcontrib-bibtex: https://sphinxcontrib-bibtex.readthedocs.io/en/latest/
 .. |breathe| replace:: ``breathe``
 .. _breathe: https://breathe.readthedocs.io/en/latest/
 .. |sphinx_doxysummary| replace:: ``sphinx_doxysummary``
@@ -92,10 +88,8 @@ On Linux, open a terminal and execute:
    cd build
    make -j
 
-On Windows, because MSVC pre-defines environment variables, compilation inside
-Visual Studio application is strongly recommended.
-
-Inside the application:
+On Windows, it is highly recommended to compile the library within the Visual Studio application. Inside the
+application:
 
 1. Configure CMake: **Project** :fa:`caret-right` **Configure merlin**
 
@@ -107,10 +101,9 @@ Inside the application:
    .. image:: _img/installation_Build.png
       :width: 100%
 
-It is possible to compile the package from the terminal (cmd or Powershell), but
-user are responsible for assuring that enviroment variables are correctly set
-before the compilation, depending on location and version of Visual Studio
-installed on the machine (see also `Building on the command line
+It is possible to compile the package from terminal (cmd or Powershell). However, users are responsible for ensuring the
+correct configuration of environment variables before the compilation process, based on location and version of Visual
+Studio installed on their machines (see also `Building on the command line
 <https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170#path_and_environment>`_
 and `Developper command prompt
 <https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170#developer_command_prompt_shortcuts>`_).
@@ -121,8 +114,8 @@ and `Developper command prompt
    cd build
    ninja
 
-To customize the settings of the compilation of the library (e.g. compiling
-without CUDA), checkout :ref:`installation:CMake build options`.
+To customize the settings of the compilation of the library (e.g. compiling without CUDA), checkout
+:ref:`installation:CMake build options`.
 
 After the compilation step, executables, libraries and C++ header files can be
 installed using CMake command (note that in the example below, current working
@@ -155,27 +148,29 @@ the package:
    .. code-block:: cmake
 
       # suppose the package installed in "/path/to/install/folder"
-      include_directories("/path/to/install/folder/include")
-      link_directories("/path/to/install/folder/lib")
+      find_package(libmerlin REQUIRED PATHS "/path/to/install/folder/lib/cmake")
+
+.. note::
+
+   When compiling C++/CUDA source linking to ``libmerlin`` with CUDA option, ensure that the macro ``__MERLIN_CUDA__`` is
+   defined.
 
 Python package
 ^^^^^^^^^^^^^^
 
-The Python interface is a module with C++ extensions calling classes and
-functions from the C++/CUDA library. Thus, before compiling the Python
-interface, **check that the C++/CUDA interface has been compiled**.
+The Python interface is a wrapper around the C++/CUDA library. Therefore, prior to compiling the Python interface,
+verify that **the C++/CUDA interface has been successfully compiled**.
 
-In case of compiling the Python module "inplace" (compiled extensions are copied
-to the source directory), :ref:`build dependancies <setup_script_build_dependancies>`
-must be installed. Next, run the setup script with options:
+When compiling the Python module "inplace" (compiled extensions are copied to the source directory),
+:ref:`build dependancies <setup_script_build_dependancies>` must be installed. Next, run the setup script with:
 
 .. code-block:: sh
 
    python setup.py build_ext --inplace
 
-The package can also be installed using ``pip``. By using ``setuptools>=30``,
-build dependancies are installed automatically on the run (according to
-the `PEP 517 <https://peps.python.org/pep-0517/>`_). User simply has to run:
+The package can also be installed using ``pip``. If ``setuptools>=30``, the necessary build dependencies are
+automatically installed during execution (in accordance with `PEP 517 <https://peps.python.org/pep-0517/>`_). Therefore
+users are relieved from the obligation of manual pre-installation of these dependencies.
 
 .. code-block:: sh
 
@@ -190,6 +185,15 @@ Options for customizing the compilation of C++/CUDA interface:
 .. envvar:: MERLIN_CUDA
 
    Build C++ Merlin library with or without CUDA ``nvcc``.
+
+   :Type: ``BOOL``
+   :Value: ``ON``, ``OFF``
+   :Default: ``ON``
+
+.. envvar:: MERLIN_DETECT_CUDA_ARCH
+
+   Automatically detect architechtures of all GPUs connected to the CPU employed for compilation. Otherwise, the
+   architechtures fallback to the cache variable ``CMAKE_CUDA_ARCHITECTURES``.
 
    :Type: ``BOOL``
    :Value: ``ON``, ``OFF``
@@ -216,10 +220,9 @@ Options for customizing the compilation of C++/CUDA interface:
 Build documentation
 -------------------
 
-The C++/CUDA documentation is retrieved by Doxygen and formatted in form of XML
-files under ``docs/source/xml``. Next, ``Sphinx`` will read these files and
-merge the C++/CUDA documentation with RST files and Python documentation,
-forming a single result (can be HTML or PDF).
+The C++/CUDA documentation is generated by Doxygen and organized as XML files in the directory ``docs/source/xml``. Next,
+``Sphinx`` conbines the C++/CUDA documentation and Python docstrings with RST files and creates a unified output, which
+can be in the form of HTML or PDF.
 
 .. code-block:: sh
 
@@ -229,5 +232,5 @@ forming a single result (can be HTML or PDF).
 
 .. note::
 
-   In order to build the documentation, the Python interface must have already
-   been built or installed, which requires the compilation of C++/CUDA library.
+   In order to build the documentation, the Python interface must have already been built or installed, which requires
+   the compilation of C++/CUDA library.

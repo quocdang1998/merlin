@@ -2,12 +2,13 @@
 #ifndef MERLIN_CUDA_EVENT_HPP_
 #define MERLIN_CUDA_EVENT_HPP_
 
-#include <string>  // std::string
+#include <string>   // std::string
 #include <utility>  // std::exchange
 
-#include "merlin/cuda/context.hpp"  // merlin::cuda::Context
-#include "merlin/cuda/device.hpp"  // merlin::cuda::Device
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/cuda/context.hpp"       // merlin::cuda::Context
+#include "merlin/cuda/device.hpp"        // merlin::cuda::Device
+#include "merlin/cuda/enum_wrapper.hpp"  // merlin::cuda::EventCategory
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
 
 namespace merlin {
 
@@ -16,25 +17,13 @@ namespace merlin {
  */
 class cuda::Event {
   public:
-    /** @brief Parameter describing the purpose of the event.*/
-    enum class MERLIN_EXPORTS Category : unsigned int {
-        /** Default event.*/
-        Default = 0x00,
-        /** Event meant to be synchronize with CPU (process on CPU blocked until the event occurs).*/
-        BlockingSync = 0x01,
-        /** Event not recording time data.*/
-        DisableTiming = 0x02,
-        /** Event might be used in an interprocess communication.*/
-        EventInterprocess = 0x04
-    };
-
     /// @name Constructor
     /// @{
     /** @brief Constructor from flag.
      *  @details Construct a CUDA event with a specific flag.
-     *  @param category %Event flag.
+     *  @param category Event flag.
      */
-    MERLIN_EXPORTS Event(cuda::Event::Category category = cuda::Event::Category::Default);
+    MERLIN_EXPORTS Event(unsigned int category = cuda::EventCategory::DefaultEvent);
     /// @}
 
     /// @name Copy and Move
@@ -61,13 +50,13 @@ class cuda::Event {
     /// @name Get attributes
     /// @{
     /** @brief Get event pointer.*/
-    constexpr std::uintptr_t get_event_ptr(void) const noexcept {return this->event_;}
+    constexpr std::uintptr_t get_event_ptr(void) const noexcept { return this->event_; }
     /** @brief Get setting flag of the event.*/
-    constexpr cuda::Event::Category category(void) const {return this->category_;}
+    constexpr unsigned int category(void) const { return this->category_; }
     /** @brief Get context associated to event.*/
-    constexpr const cuda::Context & get_context(void) const noexcept {return this->context_;};
+    constexpr const cuda::Context & get_context(void) const noexcept { return this->context_; };
     /** @brief Get GPU.*/
-    constexpr const cuda::Device & get_gpu(void) const noexcept {return this->device_;}
+    constexpr const cuda::Device & get_gpu(void) const noexcept { return this->device_; }
     /// @}
 
     /// @name Query
@@ -108,7 +97,7 @@ class cuda::Event {
     /** @brief Pointer to ``CUevent_st`` object.*/
     std::uintptr_t event_ = 0;
     /** @brief Creation flag of the event.*/
-    Category category_;
+    unsigned int category_;
     /** @brief GPU associated to the event.*/
     cuda::Device device_;
     /** @brief Context associated to the event.*/

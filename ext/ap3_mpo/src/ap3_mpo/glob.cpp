@@ -1,13 +1,13 @@
 // Copyright 2022 quocdang1998
 #include "ap3_mpo/glob.hpp"
 
-#include <cstddef>  // std::size_t
-#include <cctype>   // std::isalnum
+#include <cctype>      // std::isalnum
+#include <cstddef>     // std::size_t
 #include <filesystem>  // std::filesystem
-#include <regex>  // std::regex, std::regex::ECMAScript, std::regex_match
+#include <regex>       // std::regex, std::regex::ECMAScript, std::regex_match
 
+#include "merlin/logger.hpp"    // FAILURE
 #include "merlin/platform.hpp"  // __MERLIN_WINDOWS__, __MERLIN_LINUX__
-#include "merlin/logger.hpp"  // FAILURE
 
 // Short hand for filesystem
 namespace stdfs = std::filesystem;
@@ -32,63 +32,53 @@ static std::string glob_to_regex(const std::string & pattern) {
     while (i < n) {
         char c = pattern[i++];
         switch (c) {
-        case '*':
-            result_string += ".*";
-            break;
-        case '?':
-            result_string += ".";
-            break;
-        case '[':
-            j = i;
-            // skip "[]" and "[!]" (pattern with zero size)
-            if (j < n && pattern[j] == '!') {
-                ++j;
-            }
-            if (j < n && pattern[j] == ']') {
-                ++j;
-            }
-            // find the closing "]"
-            while (j < n && pattern[j] != ']') {
-                ++j;
-            }
-            if (j < n) {
-                std::string stuff = std::string(&pattern[i], j-i);
-                string_replace(stuff, "\\", "\\\\");
-                char first_char = pattern[i];
-                i = j + 1;
-                result_string += "[";
-                switch (first_char) {
-                case '!':
-                    result_string += "^" + stuff.substr(1);
-                    break;
-                case '^':
-                    result_string += "\\" + stuff;
-                    break;
-                default:
-                    result_string += stuff;
+            case '*' :
+                result_string += ".*";
+                break;
+            case '?' :
+                result_string += ".";
+                break;
+            case '[' :
+                j = i;
+                // skip "[]" and "[!]" (pattern with zero size)
+                if (j < n && pattern[j] == '!') {
+                    ++j;
                 }
-                result_string += "]";
-            } else {
-                result_string += "\\[";
-            }
-            break;
-        default:
-            if (std::isalnum(c)) {
-                result_string += c;
-            } else {
-                // replace / with \ on Windows
-                /*
-                #if defined(__MERLIN_WINDOWS__)
-                if ((i > 0)) {
-                    if ((c == '/') && (pattern[i-2] != '\\')) {
-                        c = '\\';
+                if (j < n && pattern[j] == ']') {
+                    ++j;
+                }
+                // find the closing "]"
+                while (j < n && pattern[j] != ']') {
+                    ++j;
+                }
+                if (j < n) {
+                    std::string stuff = std::string(&pattern[i], j - i);
+                    string_replace(stuff, "\\", "\\\\");
+                    char first_char = pattern[i];
+                    i = j + 1;
+                    result_string += "[";
+                    switch (first_char) {
+                        case '!' :
+                            result_string += "^" + stuff.substr(1);
+                            break;
+                        case '^' :
+                            result_string += "\\" + stuff;
+                            break;
+                        default :
+                            result_string += stuff;
                     }
+                    result_string += "]";
+                } else {
+                    result_string += "\\[";
                 }
-                #endif  // __MERLIN_WINDOWS__
-                */
-                result_string += "\\";
-                result_string += c;
-            }
+                break;
+            default :
+                if (std::isalnum(c)) {
+                    result_string += c;
+                } else {
+                    result_string += "\\";
+                    result_string += c;
+                }
         }
     }
     // assert end of string
@@ -100,8 +90,8 @@ static std::string expand_tilde(const std::string & path) {
     if (path.empty()) {
         return std::string();
     }
-    // get home variable
-    #if defined(__MERLIN_WINDOWS__)
+// get home variable
+#if defined(__MERLIN_WINDOWS__)
     const char * homedrive_c_str = std::getenv("HOMEDRIVE");
     if (homedrive_c_str == nullptr) {
         FAILURE(std::invalid_argument, "Unable to expand `~` because HOMEDRIVE environment variable not set.\n");
@@ -111,13 +101,13 @@ static std::string expand_tilde(const std::string & path) {
         FAILURE(std::invalid_argument, "Unable to expand `~` because HOMEPATH environment variable not set.\n");
     }
     std::string home = std::string(homedrive_c_str) + std::string(homepath_c_str);
-    #elif defined(__MERLIN_LINUX__)
+#elif defined(__MERLIN_LINUX__)
     const char * home_c_str = std::getenv("HOME");
     if (home_c_str == nullptr) {
         FAILURE(std::invalid_argument, "Unable to expand `~` because HOME environment variable not set.\n");
     }
     std::string home(home_c_str);
-    #endif  // __MERLIN_WINDOWS__ || __MERLIN_LINUX__
+#endif  // __MERLIN_WINDOWS__ || __MERLIN_LINUX__
     // replace home to path
     if (path[0] != '~') {
         return path;
@@ -127,7 +117,7 @@ static std::string expand_tilde(const std::string & path) {
 }
 
 // Check if current pathname contains wilcard characters
-static bool has_magic(const std::string &pathname) {
+static bool has_magic(const std::string & pathname) {
     static const std::regex magic_check = std::regex("([*?[])");
     return std::regex_search(pathname, magic_check);
 }

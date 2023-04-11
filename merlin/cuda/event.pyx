@@ -14,7 +14,7 @@ cdef class Event:
         category: merlin.cuda.EventCategory
             Setting flag of the event.
         """
-        cdef EventCategory category
+        cdef unsigned int category
 
         if not kwargs:
             self.core = new CppEvent()
@@ -59,7 +59,7 @@ cdef class Event:
         """category(self)
         Return the setting flag of the event.
         """
-        return EventCategory(self.core.category())
+        return self.core.category()
 
     def get_context(self):
         """get_context(self)

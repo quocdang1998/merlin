@@ -9,7 +9,7 @@
         #error MinGW on Windows not supported, use MSVC compiler instead.
     #else
         #error Unknown Windows compiler, use MSVC compiler to suppress this error.
-    #endif  // _MSC_VER
+    #endif                                         // _MSC_VER
 #elif defined(__linux__) && !defined(__ANDROID__)  // On Linux, detect GCC
     #if defined(__clang__)
         #error Clang not supported, switch to GNU g++ instead.
@@ -21,7 +21,7 @@
         #error Unknown Linux compiler, use GNU g++ to suppress this error.
     #endif  // __linux__ && !__ANDROID__
 #else
-    #error Platforms other than MSVC on Windows and GCC on Linux are not supported.
+    #error Compilers other than MSVC on Windows and GCC on Linux are not supported.
 #endif
 
 #endif  // MERLIN_PLATFORM_HPP_

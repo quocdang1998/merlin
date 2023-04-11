@@ -1,11 +1,11 @@
 // Copyright 2022 quocdang1998
-#ifndef EXT_AP3_MPO_SRC_AP3_MPO_PROPERTIES_HPP_
-#define EXT_AP3_MPO_SRC_AP3_MPO_PROPERTIES_HPP_
+#ifndef AP3_MPO_PROPERTIES_HPP_
+#define AP3_MPO_PROPERTIES_HPP_
 
 #include <cstdint>  // std::uint64_t
-#include <map>  // std::map
-#include <string>  // std::string
-#include <vector>  // std::vector
+#include <map>      // std::map
+#include <string>   // std::string
+#include <vector>   // std::vector
 
 #include "H5Cpp.h"  // H5::File
 
@@ -16,7 +16,7 @@ namespace ap3_mpo {
 
 struct Ap3Geometry {
     Ap3Geometry(void) = default;
-    Ap3Geometry(const std::string & name, H5::H5File & mpo_file);
+    Ap3Geometry(const std::string & name, H5::H5File & mpo_file, bool verbose = false);
 
     Ap3Geometry(const Ap3Geometry & src) = default;
     Ap3Geometry & operator=(const Ap3Geometry & src) = default;
@@ -31,7 +31,7 @@ struct Ap3Geometry {
 
 struct Ap3EnergyMesh {
     Ap3EnergyMesh(void) = default;
-    Ap3EnergyMesh(const std::string & name, H5::H5File & mpo_file);
+    Ap3EnergyMesh(const std::string & name, H5::H5File & mpo_file, bool verbose = false);
 
     Ap3EnergyMesh(const Ap3EnergyMesh & src) = default;
     Ap3EnergyMesh & operator=(const Ap3EnergyMesh & src) = default;
@@ -46,7 +46,7 @@ struct Ap3EnergyMesh {
 
 struct Ap3StateParam {
     Ap3StateParam(void) = default;
-    Ap3StateParam(H5::H5File & mpo_file);
+    Ap3StateParam(H5::H5File & mpo_file, bool verbose = false);
 
     Ap3StateParam(const Ap3StateParam & src) = default;
     Ap3StateParam & operator=(const Ap3StateParam & src) = default;
@@ -62,7 +62,7 @@ struct Ap3StateParam {
 
 struct Ap3Isotope {
     Ap3Isotope(void) = default;
-    Ap3Isotope(const std::string & name, H5::H5File & mpo_file);
+    Ap3Isotope(const std::string & name, H5::H5File & mpo_file, bool verbose = false);
 
     Ap3Isotope(const Ap3Isotope & src) = default;
     Ap3Isotope & operator=(const Ap3Isotope & src) = default;
@@ -75,7 +75,7 @@ struct Ap3Isotope {
 
 struct Ap3Reaction {
     Ap3Reaction(void) = default;
-    Ap3Reaction(const std::string & name, H5::H5File & mpo_file);
+    Ap3Reaction(const std::string & name, H5::H5File & mpo_file, bool verbose = false);
 
     Ap3Reaction(const Ap3Reaction & src) = default;
     Ap3Reaction & operator=(const Ap3Reaction & src) = default;
@@ -88,4 +88,4 @@ struct Ap3Reaction {
 
 }  // namespace ap3_mpo
 
-#endif  // EXT_AP3_MPO_SRC_AP3_MPO_PROPERTIES_HPP_
+#endif  // AP3_MPO_PROPERTIES_HPP_

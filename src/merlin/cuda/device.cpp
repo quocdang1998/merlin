@@ -5,9 +5,9 @@
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Device
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 #ifndef __MERLIN_CUDA__
 
@@ -28,7 +28,7 @@ void cuda::Device::set_as_current(void) const {
 }
 
 // Get and set limit
-std::uint64_t cuda::Device::limit(cuda::Device::Limit limit, std::uint64_t size) {
+std::uint64_t cuda::Device::limit(cuda::DeviceLimit limit, std::uint64_t size) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
     return 0;
 }

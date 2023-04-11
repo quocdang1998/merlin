@@ -3,15 +3,15 @@
 #define MERLIN_CUDA_CONTEXT_HPP_
 
 #include <cstdint>  // std::uintptr_t
-#include <map>  // std::map
-#include <string>  // std::string
+#include <map>      // std::map
+#include <string>   // std::string
 #include <utility>  // std::exchange, std::pair
-#include <vector>  // std::vector
+#include <vector>   // std::vector
 
-#include "merlin/cuda/declaration.hpp"  // merlin::cuda::Context, merlin::cuda::Device
-#include "merlin/env.hpp"  // merlin::Environment
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/logger.hpp"  // cuda_runtime_error, FAILURE
+#include "merlin/cuda/declaration.hpp"   // merlin::cuda::Context, merlin::cuda::Device
+#include "merlin/cuda/enum_wrapper.hpp"  // merlin::cuda::ContextSchedule
+#include "merlin/env.hpp"                // merlin::Environment
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
 
 namespace merlin {
 
@@ -23,24 +23,12 @@ namespace merlin {
  */
 class cuda::Context {
   public:
-    /** @brief Parameter controlling how the CPU process schedules tasks when waiting for results from the GPU.*/
-    enum class MERLIN_EXPORTS Flags : unsigned int {
-        /** Automatic schedule based on the number of context and number of logical process.*/
-        AutoSchedule = 0x00,
-        /** Actively spins when waiting for results from the GPU.*/
-        SpinSchedule = 0x01,
-        /** Yield the CPU process when waiting for results from the GPU.*/
-        YieldSchedule = 0x02,
-        /** Block CPU process until synchronization.*/
-        BlockSyncSchedule = 0x04
-    };
-
     /// @name Constructor
     /// @{
     /** @brief Construct a context referencing to the current context.*/
     Context(void) = default;
     /** @brief Construct a context assigned to a GPU and attached to the current CPU process.*/
-    MERLIN_EXPORTS Context(const cuda::Device & gpu, cuda::Context::Flags flag = cuda::Context::Flags::AutoSchedule);
+    MERLIN_EXPORTS Context(const cuda::Device & gpu, cuda::ContextSchedule schedule = cuda::ContextSchedule::Auto);
     /** @brief Construct a context from context pointer.
      *  @note The context will be destroyed after the instance is deleted.
      */
@@ -55,16 +43,16 @@ class cuda::Context {
     }
     /** @brief Copy assignment (deleted).*/
     cuda::Context & operator=(const cuda::Context & src) {
+        this->~Context();
         this->context_ = src.context_;
         Environment::attribute[src.context_].reference_count += 1;
         return *this;
     }
     /** @brief Move constructor.*/
-    Context(cuda::Context && src) {
-        this->context_ = std::exchange(src.context_, 0);
-    }
+    Context(cuda::Context && src) { this->context_ = std::exchange(src.context_, 0); }
     /** @brief Move assignment.*/
     cuda::Context & operator=(cuda::Context && src) {
+        this->~Context();
         this->context_ = std::exchange(src.context_, 0);
         return *this;
     }
@@ -73,7 +61,13 @@ class cuda::Context {
     /// @name Get attributes
     /// @{
     /** @brief Get pointer to Context object.*/
-    constexpr std::uintptr_t get_context_ptr(void) const noexcept {return this->context_;}
+    constexpr std::uintptr_t get_context_ptr(void) const noexcept { return this->context_; }
+    /** @brief Assign the current context to a context pointer.
+     *  @details Assign the new context pointer to the object. The old context will not be destroyed, and the newly
+     *  assigned context will be destroyed in destructor.
+     *  @param context_ptr New CUDA context pointer.
+     */
+    constexpr void assign(std::uintptr_t context_ptr) noexcept { this->context_ = context_ptr; }
     /** @brief Get number of instances representing the context.*/
     std::uint64_t get_reference_count(void) const noexcept {
         return Environment::attribute[this->context_].reference_count;
@@ -98,14 +92,14 @@ class cuda::Context {
     /** @brief Get GPU attached to current context.*/
     MERLIN_EXPORTS static cuda::Device get_gpu_of_current_context(void);
     /** @brief Get flag of the current context.*/
-    MERLIN_EXPORTS static cuda::Context::Flags get_flag_of_current_context(void);
+    MERLIN_EXPORTS static cuda::ContextSchedule get_flag_of_current_context(void);
     /** @brief Block for a context's tasks to complete.*/
     MERLIN_EXPORTS static void synchronize(void);
     /// @}
 
     /// @name Primary context
     /// @{
-    MERLIN_EXPORTS friend cuda::Context create_primary_context(const cuda::Device & gpu, cuda::Context::Flags flag);
+    MERLIN_EXPORTS friend cuda::Context create_primary_context(const cuda::Device & gpu, cuda::ContextSchedule flag);
     /// @}
 
     /// @name Comparison
@@ -144,7 +138,7 @@ namespace cuda {
  *  @param flag Setting flag to apply to the primary context.
  */
 MERLIN_EXPORTS cuda::Context create_primary_context(const cuda::Device & gpu,
-                                                    cuda::Context::Flags flag = cuda::Context::Flags::AutoSchedule);
+                                                    cuda::ContextSchedule flag = cuda::ContextSchedule::Auto);
 
 }  // namespace cuda
 

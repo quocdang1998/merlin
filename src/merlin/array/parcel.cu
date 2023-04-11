@@ -3,20 +3,20 @@
 
 #include <functional>  // std::bind, std::placeholders
 
-#include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides, merlin::array::array_copy
-#include "merlin/array/slice.hpp"  // merlin::array::Slice
-#include "merlin/logger.hpp"  // FAILURE
-#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::inner_prod
+#include "merlin/array/array.hpp"      // merlin::array::Array
+#include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::copy, merlin::array::fill
+#include "merlin/array/slice.hpp"      // merlin::array::Slice
+#include "merlin/logger.hpp"           // FAILURE
+#include "merlin/utils.hpp"            // merlin::contiguous_to_ndim_idx, merlin::inner_prod
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Parcel
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Free old data
-void array::Parcel::free_current_data(void) {
+void array::Parcel::free_current_data(const cuda::Stream & stream) {
     // lock mutex
     array::Parcel::mutex_.lock();
     // switch to appropriate context
@@ -27,7 +27,7 @@ void array::Parcel::free_current_data(void) {
     }
     // free data
     if ((this->data_ != nullptr) && this->release_) {
-        ::cudaFree(this->data_);
+        ::cudaFreeAsync(this->data_, reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr()));
         this->data_ = nullptr;
     }
     // finalize: set back the original GPU and unlock the mutex
@@ -38,10 +38,11 @@ void array::Parcel::free_current_data(void) {
 }
 
 // Constructor from shape vector
-array::Parcel::Parcel(const intvec & shape) : array::NdData(shape) {
+array::Parcel::Parcel(const intvec & shape, const cuda::Stream & stream) : array::NdData(shape) {
     // allocate data
     this->release_ = true;
-    ::cudaError_t err_ = ::cudaMalloc(&(this->data_), sizeof(double) * this->size());
+    ::cudaError_t err_ = ::cudaMallocAsync(&(this->data_), sizeof(double) * this->size(),
+                                           reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr()));
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
@@ -65,8 +66,8 @@ array::Parcel::Parcel(const array::Parcel & src) : array::NdData(src) {
     }
     // create copy function and copy data to GPU
     if (this->device_ != src.device_) {
-        auto copy_func = std::bind(::cudaMemcpyPeer, std::placeholders::_1, this->device_.id(),
-                                   std::placeholders::_2, src.device_.id(), std::placeholders::_3);
+        auto copy_func = std::bind(::cudaMemcpyPeer, std::placeholders::_1, this->device_.id(), std::placeholders::_2,
+                                   src.device_.id(), std::placeholders::_3);
         array::array_copy(this, &src, copy_func);
     } else {
         auto copy_func = std::bind(::cudaMemcpy, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
@@ -93,8 +94,8 @@ array::Parcel & array::Parcel::operator=(const array::Parcel & src) {
     }
     // create copy function and copy data to GPU
     if (this->device_ != src.device_) {
-        auto copy_func = std::bind(::cudaMemcpyPeer, std::placeholders::_1, this->device_.id(),
-                                   std::placeholders::_2, src.device_.id(), std::placeholders::_3);
+        auto copy_func = std::bind(::cudaMemcpyPeer, std::placeholders::_1, this->device_.id(), std::placeholders::_2,
+                                   src.device_.id(), std::placeholders::_3);
         array::array_copy(this, &src, copy_func);
     } else {
         auto copy_func = std::bind(::cudaMemcpy, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
@@ -149,9 +150,7 @@ double array::Parcel::get(const intvec & index) const {
 }
 
 // Get value of element at a C-contiguous index
-double array::Parcel::get(std::uint64_t index) const {
-    return this->get(contiguous_to_ndim_idx(index, this->shape()));
-}
+double array::Parcel::get(std::uint64_t index) const { return this->get(contiguous_to_ndim_idx(index, this->shape())); }
 
 // Set value of element at a n-dim index
 void array::Parcel::set(const intvec index, double value) {
@@ -175,6 +174,13 @@ void array::Parcel::set(std::uint64_t index, double value) {
     this->set(contiguous_to_ndim_idx(index, this->shape()), value);
 }
 
+// Set value of all elements
+void array::Parcel::fill(double value) {
+    auto copy_func = std::bind(::cudaMemcpy, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                               ::cudaMemcpyHostToDevice);
+    array::fill(this, value, copy_func);
+}
+
 // Transfer data to GPU
 void array::Parcel::transfer_data_to_gpu(const array::Array & cpu_array, const cuda::Stream & stream) {
     // get device id
@@ -185,7 +191,7 @@ void array::Parcel::transfer_data_to_gpu(const array::Array & cpu_array, const c
     auto copy_func = std::bind(::cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                                ::cudaMemcpyHostToDevice, copy_stream);
     // copy data to GPU
-    array::array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&cpu_array), copy_func);
+    array::array_copy(this, &cpu_array, copy_func);
 }
 
 // Copy data to a pre-allocated memory
@@ -194,7 +200,7 @@ void * array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_
     array::Parcel copy_on_gpu;
     // shallow copy of the current object
     copy_on_gpu.data_ = this->data_;
-    copy_on_gpu.ndim_ = this->ndim_;
+    copy_on_gpu.size_ = this->size_;
     copy_on_gpu.device_ = this->device_;
     copy_on_gpu.context_ = this->context_;
     // copy temporary object to GPU
@@ -210,17 +216,7 @@ void * array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_
     return result_ptr;
 }
 
-// Defer deallocation
-void array::Parcel::defer_allocation(void) {
-    if (this->data_ != nullptr) {
-        Environment::deferred_gpu_pointer.push_back(std::make_pair(this->device_.id(), this->data_));
-        this->release_ = false;
-    }
-}
-
 // Destructor
-array::Parcel::~Parcel(void) {
-    this->free_current_data();
-}
+array::Parcel::~Parcel(void) { this->free_current_data(); }
 
 }  // namespace merlin

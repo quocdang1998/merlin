@@ -27,19 +27,6 @@ cdef class Environment:
         return CppEnvironment_num_instances.load()
 
     @classmethod
-    def cpu_mem_limit(self, uint64_t limit = UINT64_MAX):
-        """cpu_mem_limit(self, limit=UINT64_MAX)
-        Get or set CPU maximum allocatable memory.
-
-        Since allocated arrays are page locked (data in RAM cannot be swapped to secondary memory) to enhance CUDA
-        asynchronization, memory resource is limited. By default, user are only allowed to use upto 32GB of RAM.
-        """
-        global CppEnvironment_cpu_mem_limit
-        if limit != UINT64_MAX:
-            CppEnvironment_cpu_mem_limit = limit
-        return CppEnvironment_cpu_mem_limit
-
-    @classmethod
     def parallel_chunk(self, uint64_t n_chunks = UINT64_MAX):
         """parallel_chunk(self, n_chunks=UINT64_MAX)
         Get or set the minimum size of loops so CPU parallelization is applied.
@@ -51,27 +38,8 @@ cdef class Environment:
             CppEnvironment_parallel_chunk = n_chunks
         return CppEnvironment_parallel_chunk
 
-    @classmethod
-    def default_gpu(self):
-        """default_gpu(self)
-        Set ID of default GPU.
-        """
-        return CppEnvironment_default_gpu
-
-    @classmethod
-    def flush_cuda_deferred_deallocation(self):
-        """Free all non-automatically deallocated CUDA memory blocks.
-
-        This functions should be called explicitly after launching asynchronious GPU functions. Any non memory leaks
-        at the end of the program will be reported as a warning.
-
-        Note
-        ----
-        This function is synchronious. Call this function right after an asynchronious launch with force the CPU to
-        wait for the GPU to finish the task before launching another aynchronious GPU task, thus losing concurrency of
-        the launch.
-        """
-        return CppEnvironment.flush_cuda_deferred_deallocation()
+    def __repr__(self):
+        return "<Merlin execution Environment>"
 
     def __dealloc__(self):
         del self.core

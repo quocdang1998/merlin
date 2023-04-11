@@ -111,21 +111,22 @@ class custom_du_build_ext(_du_build_ext):
                                  for p in sys_libpath
                                  if p.startswith("/LIBPATH:")]
                 # linked library to dlink
-                if MERLIN_LIBKIND == "SHARED":
-                    lib_dlink = ["merlinglobal.lib", "merlincuda.lib"]
-                else:
-                    lib_dlink = ["merlin.lib"]
+                lib_dlink = []
+                if MERLIN_LIBKIND == "STATIC":
+                    lib_dlink += ["merlin.lib"]
+                lib_dlink += ["merlincuda.lib", "merlinrdc.lib"]
                 lib_dlink += [CUDADRIVER, CUDART, CUDADEVRT]
+                lib_dlink += CUDA_STANDARD_LIBRARIES.strip().split()
             elif sys.platform == "linux":
                 # dlink option
                 dlink_option += ["-O3", "-DNDEBUG", "-Xcompiler=-fPIC"]
                 dlink_option += [f"-L\"{os.path.dirname(CUDALIB)}\""]
                 # linked library to dlink
                 dlink_option += [f"-L\"{MERLIN_BIN_DIR}\""]
-                if MERLIN_LIBKIND == "SHARED":
-                    lib_dlink = ["-lmerlinglobal", "-lmerlincuda"]
-                else:
-                    lib_dlink = ["-lmerlin"]
+                lib_dlink = []
+                if MERLIN_LIBKIND == "STATIC":
+                    lib_dlink += ["-lmerlin"]
+                lib_dlink += ["-lmerlincuda", "-lmerlinrdc"]
                 lib_dlink += ["-lcuda", "-lcudart_static", "-lcudadevrt"]
             self.spawn([NVCC] + dlink_option + objects
                        + ["-o", device_linker] + lib_dlink)

@@ -3,44 +3,34 @@
 #define MERLIN_CUDA_DEVICE_HPP_
 
 #include <cstdint>  // std::uint64_t, UINT64_MAX
-#include <string>  // std::string
+#include <string>   // std::string
 
-#include "merlin/cuda/declaration.hpp"  // merlin::cuda::Device
-#include "merlin/cuda_decorator.hpp"  // __cuhostdev__
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS, MERLIN_HOSTDEV_EXPORTS
+#include "merlin/cuda/declaration.hpp"   // merlin::cuda::Device
+#include "merlin/cuda/enum_wrapper.hpp"  // merlin::cuda::DeviceLimit
+#include "merlin/cuda_interface.hpp"     // __cuhostdev__
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
 
 namespace merlin {
 
-/** @brief Class representing CPU device.*/
+/** @brief GPU device.
+ *  @details Each GPU attached to the system is identified by an integer ranging from 0 (default GPU) to the number of
+ *  GPUs. This class is a thin C++ wrapper around CUDA operations on GPU devices.
+ */
 class cuda::Device {
   public:
-    /** @brief Limit to get.*/
-    enum class MERLIN_EXPORTS Limit {
-        /** @brief Size of the stack of each CUDA thread.*/
-        StackSize = 0x00,
-        /** @brief Size of the ``std::printf`` function buffer.*/
-        PrintfSize = 0x01,
-        /** @brief Size of the heap of each CUDA thread.*/
-        HeapSize = 0x02,
-        /** @brief Maximum nesting depth of a grid at which a thread can safely call ``cudaDeviceSynchronize``.*/
-        SyncDepth = 0x03,
-        /** @brief Maximum number of outstanding device runtime launches.*/
-        LaunchPendingCount = 0x04
-    };
-
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
     __cuhostdev__ Device(void) {}
     /** @brief Constructor from GPU ID.*/
-    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS Device(int id);
+    __cuhostdev__ Device(int id);
     /// @}
 
     /// @name Copy and Move
     /// @details Move constructor and Move assignment are deleted because they are not necessary.
     /// @{
     /** @brief Copy constructor.*/
-    __cuhostdev__ Device(const cuda::Device & src) {this->id_ = src.id_;}
+    __cuhostdev__ Device(const cuda::Device & src) { this->id_ = src.id_; }
     /** @brief Copy assignment.*/
     __cuhostdev__ cuda::Device & operator=(const cuda::Device & src) {
         this->id_ = src.id_;
@@ -51,36 +41,39 @@ class cuda::Device {
     /// @name Get members
     /// @{
     /** @brief Get reference to GPU ID.*/
-    __cuhostdev__ int & id(void) noexcept {return this->id_;}
+    __cuhostdev__ constexpr int & id(void) noexcept { return this->id_; }
     /** @brief Get constant reference to GPU ID.*/
-    __cuhostdev__ constexpr const int & id(void) const noexcept {return this->id_;}
+    __cuhostdev__ constexpr const int & id(void) const noexcept { return this->id_; }
     /// @}
 
-    /// @name GPU query
+    /// @name Query
     /// @{
     /** @brief Get current GPU.*/
-    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS static cuda::Device get_current_gpu(void);
+    __cuhostdev__ static cuda::Device get_current_gpu(void);
     /** @brief Get total number of CUDA capable GPU.*/
-    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS static std::uint64_t get_num_gpu(void);
+    __cuhostdev__ static std::uint64_t get_num_gpu(void);
     /** @brief Print GPU specifications.*/
     MERLIN_EXPORTS void print_specification(void) const;
     /** @brief Test functionality of GPU.
      *  @details This function tests if the installed CUDA is compatible with the GPU driver by perform an addition of
-     *  two integers on GPU.
+     *  two integers on the specified GPU.
      */
     MERLIN_EXPORTS bool test_gpu(void) const;
     /// @}
 
-    /// @name GPU action
+    /// @name Action
     /// @{
-    /** @brief Set device ass current device.*/
-    MERLIN_EXPORTS void set_as_current(void) const;
-    /** @brief Get and set limit.
-     *  @return Value of current limit if argument ``size`` is not given, and the value of size otherwise.
+    /** @brief Set the GPU as current device.
+     *  @details Replace the current CUDA context by the primary context associated the GPU.
      */
-    MERLIN_EXPORTS static std::uint64_t limit(cuda::Device::Limit limit, std::uint64_t size = UINT64_MAX);
+    MERLIN_EXPORTS void set_as_current(void) const;
+    /** @brief Get and set setting limits of the current GPU.
+     *  @return Value of the limit of the current GPU if argument ``size`` is not given, and the value of size
+     *  otherwise.
+     */
+    MERLIN_EXPORTS static std::uint64_t limit(cuda::DeviceLimit limit, std::uint64_t size = UINT64_MAX);
     /** @brief Reset GPU.
-     *  @details Destroy all allocations and reset all state on the current device in the current process.
+     *  @details Destroy all allocations and reset the state of the current GPU.
      */
     MERLIN_EXPORTS static void reset_all(void);
     /// @}
@@ -106,7 +99,7 @@ class cuda::Device {
     /// @name Destructor
     /// @{
     /** @brief Default destructor.*/
-    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS ~Device(void);
+    __cuhostdev__ ~Device(void);
     /// @}
 
   protected:
@@ -125,12 +118,12 @@ void add_integers_on_gpu(int * p_a, int * p_b, int * p_result);
 
 /** @brief Print GPU specifications.
  *  @details Print GPU specifications (number of threads, total global memory, max shared memory) and API limitation
- *  (max thread per block, max block per grid).
+ *  (max thread per block, max block per grid) of all CUDA capable GPUs.
  */
 MERLIN_EXPORTS void print_all_gpu_specification(void);
 
-/** @brief Perform an addition of two integers on GPU.
- *  @details This function tests if the installed CUDA is compatible with the GPU.
+/** @brief Test if the compiled library is compatible with all CUDA capable GPUs.
+ *  @details Perform an addition of two integers on each CUDA capable GPU.
  *  @return ``true`` if all tests on all GPU pass.
  */
 MERLIN_EXPORTS bool test_all_gpu(void);

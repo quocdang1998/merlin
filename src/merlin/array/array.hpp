@@ -3,19 +3,22 @@
 #define MERLIN_ARRAY_ARRAY_HPP_
 
 #include <cstdint>  // std::uint64_t, std::uintptr_t
-#include <string>  // std::string
+#include <string>   // std::string
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Parcel
-#include "merlin/array/nddata.hpp"  // merlin::array::NdData
-#include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/iterator.hpp"  // merlin::Iterator
-#include "merlin/vector.hpp"  // merlin::intvec
+#include "merlin/array/nddata.hpp"       // merlin::array::NdData
+#include "merlin/cuda/stream.hpp"        // merlin::cuda::Stream
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/iterator.hpp"           // merlin::Iterator
+#include "merlin/shuffle.hpp"            // merlin::Shuffle
+#include "merlin/vector.hpp"             // merlin::intvec
 
 namespace merlin {
 
 // Allocate non-pageable memory
 // ----------------------------
+
+namespace array {
 
 /** @brief Allocate non pageable memory.
  *  @param size Number of element in the allocated array.
@@ -26,7 +29,9 @@ double * allocate_memory(std::uint64_t size);
 void cuda_pin_memory(double * ptr, std::uint64_t n_elem);
 
 /** @brief Free array allocated in non pageable memory.*/
-void free_memory(double * ptr, std::uint64_t size);
+void free_memory(double * ptr);
+
+}  // namespace array
 
 // Array class
 // -----------
@@ -89,17 +94,18 @@ class array::Array : public array::NdData {
         double & operator*(void) const {
             return this->data_ptr_[this->item_ptr_];  // not counting non contiguous
         }
+
       private:
         mutable double * data_ptr_ = nullptr;
     };
     /** @brief Begin iterator.
      *  @details Vector of index \f$(0, 0, ..., 0)\f$.
      */
-    constexpr const array::Array::iterator & begin(void) const noexcept {return this->begin_;}
+    constexpr const array::Array::iterator & begin(void) const noexcept { return this->begin_; }
     /** @brief End iterator.
      *  @details Vector of index \f$(d_0, 0, ..., 0)\f$.
      */
-    constexpr const array::Array::iterator & end(void) const noexcept {return this->end_;}
+    constexpr const array::Array::iterator & end(void) const noexcept { return this->end_; }
     /** @brief Sciling operator.
      *  @details Get an element at a given index.
      *  @param index Vector of indices along each dimension.
@@ -136,6 +142,8 @@ class array::Array : public array::NdData {
      *  @param i_dim Index of dimension to collapse.
      */
     MERLIN_EXPORTS void remove_dim(std::uint64_t i_dim = 0);
+    /** @brief Set value of all elements.*/
+    MERLIN_EXPORTS void fill(double value);
     /// @}
 
     /// @name Transfer data
@@ -164,6 +172,19 @@ class array::Array : public array::NdData {
     /** @brief Initialize begin and end iterators.*/
     void initialize_iterator(void) noexcept;
 };
+
+namespace array {
+
+// Random shuffle
+// --------------
+
+/** @brief %Shuffle array.*/
+array::Array shuffle_array(const array::Array & src, const Shuffle & suffle_index);
+
+/** @brief Read an array with shuffled index.*/
+array::Array shuffled_read(const array::Stock & src, const Shuffle & suffle_index);
+
+}  // namespace array
 
 }  // namespace merlin
 

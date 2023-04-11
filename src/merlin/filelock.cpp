@@ -1,32 +1,30 @@
 // Copyright 2022 quocdang1998
 #include "merlin/filelock.hpp"
 
-#include <ios>  // std::ios_base::failure
+#include <ios>      // std::ios_base::failure
 #include <sstream>  // std::ostringstream
 
+#include "merlin/logger.hpp"    // FAILURE
 #include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
-#include "merlin/logger.hpp"  // FAILURE
 
 #if defined(__MERLIN_WINDOWS__)
-#include <cstring>  // std::memset
-#include <windows.h>  // LockFileEx, UnlockFileEx, GetLastError
-#include <io.h>  // _get_osfhandle
+    #include <cstring>    // std::memset
+    #include <io.h>       // _get_osfhandle
+    #include <windows.h>  // LockFileEx, UnlockFileEx, GetLastError
 #elif defined(__MERLIN_LINUX__)
-#include <fcntl.h>  // flock
+    #include <fcntl.h>  // flock
 #endif
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // FileLock (Windows)
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 #if defined(__MERLIN_WINDOWS__)
 
 // Constructor from file pointer
-FileLock::FileLock(std::FILE * file_ptr) {
-    this->file_descriptor = ::_fileno(file_ptr);
-}
+FileLock::FileLock(std::FILE * file_ptr) { this->file_descriptor = ::_fileno(file_ptr); }
 
 // Exclusively lock file handle
 void FileLock::lock(void) {
@@ -120,24 +118,22 @@ bool FileLock::try_lock_shared(void) {
 
 #endif  // __MERLIN_WINDOWS__
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // FileLock (Linux)
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 #if defined(__MERLIN_LINUX__)
 
 // Constructor from file pointer
-FileLock::FileLock(std::FILE * file_ptr) {
-    this->file_descriptor = ::fileno(file_ptr);
-}
+FileLock::FileLock(std::FILE * file_ptr) { this->file_descriptor = ::fileno(file_ptr); }
 
 // Exclusively lock file handle
 void FileLock::lock(void) {
     ::flock lock_;
-    lock_.l_type    = F_WRLCK;
-    lock_.l_whence  = SEEK_SET;
-    lock_.l_start   = 0;
-    lock_.l_len     = 0;
+    lock_.l_type = F_WRLCK;
+    lock_.l_whence = SEEK_SET;
+    lock_.l_start = 0;
+    lock_.l_len = 0;
     int err_ = ::fcntl(this->file_descriptor, F_SETLKW, &lock_);
     if (err_ == -1) {
         std::string err_message = throw_linux_last_error();
@@ -148,10 +144,10 @@ void FileLock::lock(void) {
 // Attemp to exclusively lock file
 bool FileLock::try_lock(void) {
     ::flock lock_;
-    lock_.l_type    = F_WRLCK;
-    lock_.l_whence  = SEEK_SET;
-    lock_.l_start   = 0;
-    lock_.l_len     = 0;
+    lock_.l_type = F_WRLCK;
+    lock_.l_whence = SEEK_SET;
+    lock_.l_start = 0;
+    lock_.l_len = 0;
     int err_ = ::fcntl(this->file_descriptor, F_SETLK, &lock_);
     if (err_ == -1) {
         if (errno == EAGAIN || errno == EACCES) {
@@ -166,10 +162,10 @@ bool FileLock::try_lock(void) {
 // Exclusively unlock file handle
 void FileLock::unlock(void) {
     ::flock lock_;
-    lock_.l_type    = F_UNLCK;
-    lock_.l_whence  = SEEK_SET;
-    lock_.l_start   = 0;
-    lock_.l_len     = 0;
+    lock_.l_type = F_UNLCK;
+    lock_.l_whence = SEEK_SET;
+    lock_.l_start = 0;
+    lock_.l_len = 0;
     int err_ = ::fcntl(this->file_descriptor, F_SETLK, &lock_);
     if (err_ == -1) {
         std::string err_message = throw_linux_last_error();
@@ -180,10 +176,10 @@ void FileLock::unlock(void) {
 // Sharable lock file handle
 void FileLock::lock_shared(void) {
     ::flock lock_;
-    lock_.l_type    = F_RDLCK;
-    lock_.l_whence  = SEEK_SET;
-    lock_.l_start   = 0;
-    lock_.l_len     = 0;
+    lock_.l_type = F_RDLCK;
+    lock_.l_whence = SEEK_SET;
+    lock_.l_start = 0;
+    lock_.l_len = 0;
     int err_ = ::fcntl(this->file_descriptor, F_SETLKW, &lock_);
     if (err_ == -1) {
         std::string err_message = throw_linux_last_error();
@@ -194,10 +190,10 @@ void FileLock::lock_shared(void) {
 // Attemp to sharably lock file
 bool FileLock::try_lock_shared(void) {
     ::flock lock_;
-    lock_.l_type    = F_RDLCK;
-    lock_.l_whence  = SEEK_SET;
-    lock_.l_start   = 0;
-    lock_.l_len     = 0;
+    lock_.l_type = F_RDLCK;
+    lock_.l_whence = SEEK_SET;
+    lock_.l_start = 0;
+    lock_.l_len = 0;
     int err_ = ::fcntl(this->file_descriptor, F_SETLK, &lock_);
     if (err_ == -1) {
         if (errno == EAGAIN || errno == EACCES) {

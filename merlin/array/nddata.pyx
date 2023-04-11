@@ -60,12 +60,12 @@ cdef class NdData:
     @property
     def shape(self):
         """Get shape of array."""
-        return tuple_from_intvec(self.core.shape())
+        return tuple(list_from_intvec(self.core.shape()))
 
     @property
     def strides(self):
         """Get strides of array."""
-        return tuple_from_intvec(self.core.strides())
+        return tuple(list_from_intvec(self.core.strides()))
 
     @property
     def size(self):
@@ -76,7 +76,7 @@ cdef class NdData:
         cdef CppIntvec idx_vector
         cdef uint64_t idx_int
         if isinstance(index, tuple):
-            idx_vector = intvec_from_tuple(index)
+            idx_vector = intvec_from_iteratable(index)
             return self.core.get(idx_vector)
         elif isinstance(index, int):
             idx_int = index
@@ -88,7 +88,7 @@ cdef class NdData:
         cdef CppIntvec idx_vector
         cdef uint64_t idx_int
         if isinstance(index, tuple):
-            idx_vector = intvec_from_tuple(index)
+            idx_vector = intvec_from_iteratable(index)
             return self.core.set(idx_vector, value)
         elif isinstance(index, int):
             idx_int = index

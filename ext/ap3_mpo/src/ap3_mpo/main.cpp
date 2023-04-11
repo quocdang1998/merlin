@@ -1,21 +1,23 @@
 // Copyright 2022 quocdang1998
+#include <cmath>     // std::nan
 #include <iterator>  // std::make_move_iterator
-#include <string>  // std::string
-#include <vector>  // std::vector
+#include <string>    // std::string
+#include <vector>    // std::vector
 
 #include "merlin/array/stock.hpp"  // merlin::array::Stock
-#include "merlin/logger.hpp"  // MESSAGE
+#include "merlin/logger.hpp"       // MESSAGE
 
-#include "ap3_mpo/ap3_xs.hpp"  // ap3_mpo::Ap3HomogXS
+#include "ap3_mpo/ap3_xs.hpp"        // ap3_mpo::Ap3HomogXS
+#include "ap3_mpo/glob.hpp"          // ap3_mpo::glob
 #include "ap3_mpo/help_message.hpp"  // ap3_mpo::help_message
-#include "ap3_mpo/glob.hpp"  // ap3_mpo::glob
-#include "ap3_mpo/query_mpo.hpp"  // ap3_mpo::query_mpo
+#include "ap3_mpo/query_mpo.hpp"     // ap3_mpo::query_mpo
 
 int main(int argc, char * argv[]) {
     // parse argument
     unsigned int mode = 0;
     std::string geometry, energymesh, isotope, reaction, output = "output.txt", xstype = "micro";
     bool thread_safe = true;
+    bool verbose = false;
     std::vector<std::string> filenames;
     for (int i = 1; i < argc; i++) {
         std::string argument(argv[i]);
@@ -44,6 +46,9 @@ int main(int argc, char * argv[]) {
         } else if (!argument.compare("--no-thread-safe")) {
             thread_safe = false;
             mode |= 4;
+        } else if (!argument.compare("-v") || !argument.compare("--verbose")) {
+            verbose = true;
+            mode |= 4;
         } else {
             std::vector<std::string> glob_expanded = ap3_mpo::glob(argument);
             filenames.insert(filenames.end(), std::make_move_iterator(glob_expanded.begin()),
@@ -67,11 +72,12 @@ int main(int argc, char * argv[]) {
     if (mode == 4) {
         // build combined object
         ap3_mpo::Ap3HomogXS combined_mpo;
+        combined_mpo.verbose = verbose;
         std::vector<ap3_mpo::Ap3HomogXS *> component_ptr;
         for (int i = 0; i < filenames.size(); i++) {
             const std::string & filename = filenames[i];
             MESSAGE("Reading MPO file \"%s\"...\n", filename.c_str());
-            auto mpofile = new ap3_mpo::Ap3HomogXS(filename, geometry, energymesh, isotope, reaction);
+            auto mpofile = new ap3_mpo::Ap3HomogXS(filename, geometry, energymesh, isotope, reaction, verbose);
             component_ptr.push_back(mpofile);
             combined_mpo += *component_ptr[i];
         }
@@ -86,6 +92,7 @@ int main(int argc, char * argv[]) {
         }
         // write data to file
         merlin::array::Stock stock(output, combined_mpo.get_output_shape(), 0, thread_safe);
+        stock.fill(std::nan(""));
         combined_mpo.assign_destination_array(stock);
         combined_mpo.write_to_stock(combined_mpo.state_param(), xstype);
         // deallocate memory

@@ -3,13 +3,20 @@
 
 #include <cuda.h>  // ::cuCtxGetCurrent, ::cuDeviceGetCount, ::cuInit
 
-#include "merlin/logger.hpp"  // FAILURE
+#include "merlin/logger.hpp"    // FAILURE
 #include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
 
 namespace merlin {
 
+// ---------------------------------------------------------------------------------------------------------------------
+// CUDA environment
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Initialize CUDA context
 void initialize_cuda_context(void) {
+    // initialize context
+    ::cuInit(0);
+    // get number of CUDA capable GPUs
     int num_gpu;
     ::cudaError_t err_ = ::cudaGetDeviceCount(&num_gpu);
     if (err_ != 0) {
@@ -20,58 +27,15 @@ void initialize_cuda_context(void) {
         WARNING("No GPU was found. Return empty CUDA context (GPU functions will have no effect).\n");
         return;
     }
-    // try to get current context
-    ::CUcontext current_ctx;
-    err_ = static_cast<::cudaError_t>(::cuCtxGetCurrent(&current_ctx));
-    if ((err_ != 3) && (err_ != 0)) {
-        FAILURE(cuda_runtime_error, "Get current context failed with message \"%s\".\n", ::cudaGetErrorString(err_));
-    }
-    // initialized case (return success)
-    if ((err_ == 0) && (current_ctx != nullptr)) {
-        return;
-    }
-    // uninitialized or undefined
-    for (int i_gpu = 0; i_gpu < num_gpu; i_gpu++) {
-        err_ = ::cudaSetDevice(i_gpu);
-        if (err_ != 0) {
-            FAILURE(cuda_runtime_error, "Initialize primary context for GPU of ID %d failed with message \"%s\".\n",
-                    i_gpu, ::cudaGetErrorString(err_));
-        }
-        ::cuCtxGetCurrent(&current_ctx);
-        Environment::primary_contexts[i_gpu] = reinterpret_cast<std::uintptr_t>(current_ctx);
-    }
-    // set back to default device
-    ::cudaSetDevice(Environment::default_gpu);
 }
 
 // Alarm for CUDA error
-void alarming_cuda_error(void) {
+void alarm_cuda_error(void) {
     // check for any CUDA error
     ::cudaError_t err_ = ::cudaPeekAtLastError();
     if (err_ != 0) {
-        WARNING("A CUDA error has occurred somewhere int he program with message \"%s\"", ::cudaGetErrorString(err_));
+        WARNING("A CUDA error has occurred somewhere in the program with message \"%s\"", ::cudaGetErrorString(err_));
     }
-    // check for unreleased memory
-    if (!Environment::deferred_gpu_pointer.empty()) {
-            WARNING("CUDA memory leak detected (%zu memory blocks allocated on GPU not freed "
-                    "at the end of the program).\n", Environment::deferred_gpu_pointer.size());
-        }
-}
-
-// Deallocate all pointers in deferred pointer array
-void Environment::flush_cuda_deferred_deallocation(void) {
-    Environment::mutex.lock();
-    for (auto & [gpu, pointer] : Environment::deferred_gpu_pointer) {
-        ::CUcontext gpu_context = reinterpret_cast<::CUcontext>(Environment::primary_contexts[gpu]);
-        ::cuCtxPushCurrent(gpu_context);
-        ::cudaError_t err_ = ::cudaFree(pointer);
-        if (err_ != 0) {
-            FAILURE(cuda_runtime_error, "CUDA free failed with error \"%s\"\n", ::cudaGetErrorString(err_));
-        }
-        ::cuCtxPopCurrent(&gpu_context);
-    }
-    Environment::deferred_gpu_pointer.clear();
-    Environment::mutex.unlock();
 }
 
 }  // namespace merlin

@@ -1,8 +1,10 @@
 // Copyright 2022 quocdang1998
-#ifndef HDF5_UTILS_TPP_
-#define HDF5_UTILS_TPP_
+#ifndef AP3_MPO_HDF5_UTILS_TPP_
+#define AP3_MPO_HDF5_UTILS_TPP_
 
 #include <iterator>  // std::distance
+
+#include "merlin/logger.hpp"  // FAILURE
 
 namespace ap3_mpo {
 
@@ -43,11 +45,11 @@ std::pair<std::vector<T>, merlin::intvec> get_dset(H5::Group * group, char const
     std::vector<T> data(npoint);
     if constexpr (std::is_same_v<T, std::string>) {
         // read data to buffer
-        std::vector<char> buffer(element_size*npoint);
+        std::vector<char> buffer(element_size * npoint);
         dset.read(buffer.data(), dset.getDataType());
         // convert to vector of std::string
         for (int i = 0; i < npoint; i++) {
-            data[i].assign(buffer.data() + i*element_size, element_size);
+            data[i].assign(buffer.data() + i * element_size, element_size);
         }
     } else {
         // read data directly
@@ -63,7 +65,8 @@ std::pair<std::vector<T>, merlin::intvec> get_dset(H5::Group * group, char const
 // Find index by value
 template <typename ArrayType, typename Sample>
 std::uint64_t find_element(const std::vector<ArrayType> & array, const Sample & element) {
-    auto it = std::find(array.cbegin(), array.cend(), element);
+    auto predicate = [&element] (const ArrayType & array_element) { return is_near(array_element, element); };
+    auto it = std::find_if(array.cbegin(), array.cend(), predicate);
     if (it == array.cend()) {
         return UINT64_MAX;
     }
@@ -72,4 +75,4 @@ std::uint64_t find_element(const std::vector<ArrayType> & array, const Sample & 
 
 }  // namespace ap3_mpo
 
-#endif  // HDF5_UTILS_TPP_
+#endif  // AP3_MPO_HDF5_UTILS_TPP_

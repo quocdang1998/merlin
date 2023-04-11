@@ -9,6 +9,9 @@ cmake_minimum_required(VERSION 3.25)
 
 # options
 set(MERLIN_CUDA ON CACHE BOOL "Build library using CUDA")  # -DMERLIN_CUDA=OFF
+set(MERLIN_DETECT_CUDA_ARCH ON CACHE BOOL
+    "Automatically detect CUDA architectures of all GPUs \
+    (use CMAKE_CUDA_ARCHITECTURES otherwise)")  # -MERLIN_DETECT_CUDA_ARCH=OFF
 set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
     CACHE STRING "Type of the created library (static or shared)")
 set(MERLIN_TEST OFF CACHE BOOL "Build test executables")  # -DMERLIN_TEST=ON
@@ -20,55 +23,88 @@ list(APPEND MERLIN_SRC_CPP
      array/parcel.cpp
      array/slice.cpp
      array/stock.cpp
-     # src/autodiff.cpp
+     candy/optmz/adam.cpp
+     candy/optmz/adagrad.cpp
+     candy/optmz/grad_descent.cpp
+     candy/launcher.cpp
+     candy/loss.cpp
+     candy/model.cpp
+     candy/optimizer.cpp
+     candy/partition.cpp
      cuda/context.cpp
      cuda/device.cpp
      cuda/event.cpp
+     cuda/graph.cpp
      cuda/stream.cpp
      filelock.cpp
      iterator.cpp
-     interpolant/cartesian_grid.cpp
-     interpolant/grid.cpp
-     interpolant/lagrange.cpp
-     interpolant/newton.cpp
-     interpolant/regular_grid.cpp
-     interpolant/sparse_grid.cpp
-     # interpolant/interpolant.cpp
+     intpl/cartesian_grid.cpp
+     intpl/grid.cpp
+     intpl/interpolant.cpp
+     intpl/lagrange.cpp
+     intpl/newton.cpp
+     intpl/nodes.cpp
+     intpl/regular_grid.cpp
+     intpl/sparse_grid.cpp
+     linalg/qr_solve.cpp
+     linalg/matrix.cpp
+     shuffle.cpp
+     statistics/moment.cpp
 )
 list(APPEND MERLIN_SRC_CU
      array/array.cu
      array/parcel.cu
+     candy/launcher.cu
+     #candy/loss.cu
+     candy/model.cu
      cuda/context.cu
      cuda/device.cu
      cuda/event.cu
+     cuda/graph.cu
      cuda/stream.cu
-     interpolant/cartesian_grid.cu
-     interpolant/lagrange.cu
-     interpolant/newton.cu
-     # interpolant/interpolant.cu
+     intpl/cartesian_grid.cu
+     intpl/lagrange.cu
+     intpl/newton.cu
+     statistics/moment.cu
 )
 list(APPEND MERLIN_SRC_GLB
+     candy/optimizer.glb
+     candy/optmz/adam.glb
+     candy/optmz/adagrad.glb
+     candy/optmz/grad_descent.glb
+     candy/launcher.glb
+     candy/loss.glb
      cuda/device.glb
-     interpolant/lagrange.glb
-     interpolant/newton.glb
+     intpl/lagrange.glb
+     intpl/newton.glb
 )
 list(APPEND MERLIN_SRC_RDC
-     array/array.rdc
-     array/copy.rdc
+     array/operation.rdc
      array/nddata.rdc
      array/parcel.rdc
      array/slice.rdc
+     candy/launcher.rdc
+     candy/loss.rdc
+     candy/model.rdc
+     candy/optimizer.rdc
+     candy/optmz/adam.rdc
+     candy/optmz/adagrad.rdc
+     candy/optmz/grad_descent.rdc
      cuda/device.rdc
-     interpolant/cartesian_grid.rdc
-     interpolant/lagrange.rdc
-     interpolant/newton.rdc
-     logger.rdc
+     intpl/cartesian_grid.rdc
+     intpl/lagrange.rdc
+     intpl/newton.rdc
+     linalg/qr_solve.rdc
+     linalg/matrix.rdc
      utils.rdc
 )
 list(APPEND MERLIN_SRC_SHR
+     cuda_interface.cpp
      env.cpp
+     logger.cpp
 )
 list(APPEND MERLIN_SRC_SHRCU
+     cuda_interface.cu
      env.cu
 )
 
@@ -150,24 +186,23 @@ if(MERLIN_CUDA)
     endif(NOT CUDA_DRIVER_LIBRARY)
     mark_as_advanced(CUDA_DRIVER_LIBRARY)
     # detect CUDA architechture
-    if(NOT DEFINED $CMAKE_CUDA_ARCHITECTURES)
+    if(MERLIN_DETECT_CUDA_ARCH)
         message(STATUS "Automatically detecting CUDA architechture")
         include(FindCUDA/select_compute_arch)
         CUDA_DETECT_INSTALLED_GPUS(INSTALLED_GPU_CCS_1)
         string(STRIP "${INSTALLED_GPU_CCS_1}" INSTALLED_GPU_CCS_2)
         string(REPLACE " " ";" INSTALLED_GPU_CCS_3 "${INSTALLED_GPU_CCS_2}")
         string(REPLACE "." "" CUDA_ARCH_LIST "${INSTALLED_GPU_CCS_3}")
-        set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCH_LIST})
-        set_property(GLOBAL PROPERTY CUDA_ARCHITECTURES "${CUDA_ARCH_LIST}")
         message(STATUS "Detected CUDA architechtures ${CUDA_ARCH_LIST} on this machine")
     else()
         message(STATUS "CUDA architechtures was manually set as ${CMAKE_CUDA_ARCHITECTURES}")
+        set(CUDA_ARCH_LIST "${CMAKE_CUDA_ARCHITECTURES}")
     endif()
 endif()
 
 # OpenMP
 find_package(OpenMP QUIET REQUIRED)
-if (MSVC)  # patch the MSVC OpenMP default 2.0 version
+if(MSVC)  # patch the MSVC OpenMP default 2.0 version
     set_property(TARGET OpenMP::OpenMP_CXX PROPERTY
                  INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CXX>:-openmp:experimental>)
 endif(MSVC)
@@ -188,12 +223,10 @@ function(MerlinSetTargetProperties target_library)
     )
     set_property(TARGET ${target_library} PROPERTY INTERPROCEDURAL_OPTIMIZATION ON)
     if(MERLIN_CUDA)
+        set_property(TARGET ${target_library} PROPERTY CUDA_ARCHITECTURES "${CUDA_ARCH_LIST}")
         target_compile_definitions(${target_library} PUBLIC __MERLIN_CUDA__)
-        set(DIAG_SUPPRESS -Xcudafe "--diag_suppress=field_without_dll_interface")
-        set(RELAXED_CONSTEXPR --expt-relaxed-constexpr)
-        set(MERLIN_CUDA_OPTION ${DIAG_SUPPRESS} ${RELAXED_CONSTEXPR})
         target_compile_options(${target_library} PUBLIC
-                               $<$<COMPILE_LANGUAGE:CUDA>: ${MERLIN_CUDA_OPTION} >)
+                               $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
         target_link_libraries(${target_library} PUBLIC ${CUDA_DRIVER_LIBRARY} ${CUDA_DEVRT_LIBRARY})
         set_property(TARGET ${target_library} PROPERTY CUDA_RUNTIME_LIBRARY Static)
     endif(MERLIN_CUDA)
@@ -205,10 +238,6 @@ function(MerlinSetTargetProperties target_library)
         if(MSVC)
             target_link_libraries(${target_library} PRIVATE DbgHelp.lib)
         endif(MSVC)
-    else()
-        if(UNIX)
-            target_compile_options(${target_library} PRIVATE -O3)
-        endif(UNIX)
     endif(MERLIN_DEBUG)
     target_link_libraries(${target_library} PRIVATE OpenMP::OpenMP_CXX)
 endfunction(MerlinSetTargetProperties)
@@ -227,24 +256,23 @@ MerlinSetTargetProperties(libmerlinshared)
 # set_property(TARGET libmerlinshared PROPERTY EXPORT_PROPERTIES CUDA_SEPARABLE_COMPILATION)
 
 # setting library for device code if compiling a shared library with CUDA
-if(MERLIN_CUDA AND MERLIN_LIBKIND MATCHES "SHARED")
-    set(BUILD_MERLINCUDA_LIB ON)
-    add_library(libmerlincuda STATIC ${MERLIN_SRC_RDC})
+add_library(libmerlinrdc STATIC ${MERLIN_SRC_RDC})
+set_property(TARGET libmerlinrdc PROPERTY OUTPUT_NAME merlinrdc)
+set_property(TARGET libmerlinrdc PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS OFF)
+set_property(TARGET libmerlinrdc PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+target_compile_definitions(libmerlinrdc PRIVATE __LIBMERLINCUDA__)
+target_link_libraries(libmerlinrdc PUBLIC libmerlinshared)
+MerlinSetTargetProperties(libmerlinrdc)
+
+# add library of CUDA global function
+if(MERLIN_CUDA)
+    add_library(libmerlincuda STATIC ${MERLIN_SRC_GLB})
     set_property(TARGET libmerlincuda PROPERTY OUTPUT_NAME merlincuda)
-    set_property(TARGET libmerlincuda PROPERTY CUDA_RESOLVE_DEVICE_SYMBOLS OFF)
     set_property(TARGET libmerlincuda PROPERTY CUDA_SEPARABLE_COMPILATION ON)
     target_compile_definitions(libmerlincuda PRIVATE __LIBMERLINCUDA__)
-    target_link_libraries(libmerlincuda PUBLIC libmerlinshared)
+    target_link_libraries(libmerlincuda PUBLIC libmerlinshared libmerlinrdc)
     MerlinSetTargetProperties(libmerlincuda)
-    add_library(libmerlinglobal STATIC ${MERLIN_SRC_GLB})
-    set_property(TARGET libmerlinglobal PROPERTY OUTPUT_NAME merlinglobal)
-    set_property(TARGET libmerlinglobal PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-    target_compile_definitions(libmerlinglobal PRIVATE __LIBMERLINCUDA__)
-    target_link_libraries(libmerlinglobal PUBLIC libmerlinshared libmerlincuda)
-    MerlinSetTargetProperties(libmerlinglobal)
-else()
-    set(BUILD_MERLINCUDA_LIB OFF)
-endif()
+endif(MERLIN_CUDA)
 
 # concatenate source lists
 list(APPEND MERLIN_SRC ${MERLIN_SRC_CPP})
@@ -252,13 +280,6 @@ set_source_files_properties(${MERLIN_SRC_CPP} PROPERTIES LANGUAGE CXX)
 if(MERLIN_CUDA)
     list(APPEND MERLIN_SRC ${MERLIN_SRC_CU})
     set_source_files_properties(${MERLIN_SRC_CU} PROPERTIES LANGUAGE CUDA)
-    if(NOT BUILD_MERLINCUDA_LIB)
-        list(APPEND MERLIN_SRC ${MERLIN_SRC_RDC} ${MERLIN_SRC_GLB})
-        set_source_files_properties(${MERLIN_SRC_RDC} PROPERTIES LANGUAGE CUDA)
-    endif(NOT BUILD_MERLINCUDA_LIB)
-else()
-    list(APPEND MERLIN_SRC ${MERLIN_SRC_RDC})
-    set_source_files_properties(${MERLIN_SRC_RDC} PROPERTIES LANGUAGE CXX)
 endif()
 
 # main library
@@ -273,20 +294,19 @@ else()
     message(FATAL_ERROR "Library build mode not found")
 endif()
 set_property(TARGET libmerlin PROPERTY OUTPUT_NAME merlin)
-target_link_libraries(libmerlin PUBLIC libmerlinshared)
+target_link_libraries(libmerlin PUBLIC libmerlinrdc libmerlinshared)
 if(MERLIN_CUDA)
     set_property(TARGET libmerlin PROPERTY CUDA_RUNTIME_LIBRARY Static)
     set_property(TARGET libmerlin PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-    if(BUILD_MERLINCUDA_LIB)
-        if(UNIX)
-            target_link_libraries(libmerlin PUBLIC libmerlincuda)
-            target_link_libraries(libmerlin INTERFACE libmerlinglobal)
-        endif(UNIX)
-        if(MSVC)
-            target_link_libraries(libmerlin PUBLIC libmerlinglobal libmerlincuda)
-        endif(MSVC)
+    if(UNIX)
+        target_link_libraries(libmerlin INTERFACE libmerlincuda)
+    endif(UNIX)
+    if(MSVC)
+        target_link_libraries(libmerlin PUBLIC libmerlincuda)
+    endif(MSVC)
+    if(MERLIN_LIBKIND MATCHES "SHARED")
         set_property(TARGET libmerlin PROPERTY CUDA_SEPARABLE_COMPILATION OFF)
-    endif(BUILD_MERLINCUDA_LIB)
+    endif()
 endif(MERLIN_CUDA)
 MerlinSetTargetProperties(libmerlin)
 
@@ -307,11 +327,11 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/
         FILES_MATCHING PATTERN "*.[ht]pp")
 
 # install to library to lib
-if(BUILD_MERLINCUDA_LIB)
-    list(APPEND MERLIN_LIBS_LIST libmerlin libmerlinglobal libmerlincuda libmerlinshared)
-else()
-    list(APPEND MERLIN_LIBS_LIST libmerlin libmerlinshared)
+list(APPEND MERLIN_LIBS_LIST libmerlin)
+if(MERLIN_CUDA)
+    list(APPEND MERLIN_LIBS_LIST libmerlincuda)
 endif()
+list(APPEND MERLIN_LIBS_LIST libmerlinrdc libmerlinshared)
 install(TARGETS ${MERLIN_LIBS_LIST}
         EXPORT limerlin-cmake
         LIBRARY DESTINATION "lib"
@@ -335,10 +355,12 @@ function(CONFIGURE_TESTFILES LANGUAGE)
         get_filename_component(TESTFILENAME ${TESTFILE} NAME)
         string(REPLACE ".${LANGUAGE}" "" TESTNAME ${TESTFILENAME})
         add_executable(${TESTNAME} ${TESTFILE})
-        target_link_libraries(${TESTNAME} libmerlin)
+        target_link_libraries(${TESTNAME} PRIVATE libmerlin OpenMP::OpenMP_CXX)
         set_property(TARGET ${TESTNAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+        set_property(TARGET ${TESTNAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION ON)
         set_target_properties(${TESTNAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
                               ${CMAKE_CURRENT_BINARY_DIR}/tests)
+        set_property(TARGET ${TESTNAME} PROPERTY CUDA_ARCHITECTURES "${CUDA_ARCH_LIST}")
     endforeach(TESTFILE ${MERLIN_TESTFILES})
 endfunction(CONFIGURE_TESTFILES)
 
@@ -367,7 +389,7 @@ file(APPEND ${MERLIN_CONFIG} "MERLIN_BIN_DIR = \"${CMAKE_BINARY_DIR}\"\n")
 if(MERLIN_CUDA)
     file(APPEND ${MERLIN_CONFIG} "MERLIN_CUDA = True\n")
     file(APPEND ${MERLIN_CONFIG} "NVCC = \"${CUDA_NVCC_EXECUTABLE}\"\n")
-    string(REPLACE ";" "," CUDA_ARCH_LIST_PYTHON "${CMAKE_CUDA_ARCHITECTURES}")
+    string(REPLACE ";" "," CUDA_ARCH_LIST_PYTHON "${CUDA_ARCH_LIST}")
     file(APPEND ${MERLIN_CONFIG} "CUDA_ARCHITECHTURE = [${CUDA_ARCH_LIST_PYTHON}]\n")
     cmake_path(GET CUDA_cudart_static_LIBRARY PARENT_PATH CUDALIB)
     file(APPEND ${MERLIN_CONFIG} "CUDALIB = \"${CUDALIB}\"\n")
@@ -377,6 +399,7 @@ if(MERLIN_CUDA)
     file(APPEND ${MERLIN_CONFIG} "CUDADEVRT = \"${CUDADEVRT}\"\n")
     cmake_path(GET CUDA_DRIVER_LIBRARY FILENAME CUDADRIVER)
     file(APPEND ${MERLIN_CONFIG} "CUDADRIVER = \"${CUDADRIVER}\"\n")
+    file(APPEND ${MERLIN_CONFIG} "CUDA_STANDARD_LIBRARIES = \"${CMAKE_CUDA_STANDARD_LIBRARIES}\"\n")
 else()
     file(APPEND ${MERLIN_CONFIG} "MERLIN_CUDA = False\n")
 endif(MERLIN_CUDA)

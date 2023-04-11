@@ -13,3 +13,5 @@ for i in range(num_gpu):
     gpu.print_specification()
     gpu.test_gpu()
 
+current_context = merlin.cuda.Context.get_current()
+print(current_context)

@@ -3,11 +3,13 @@
 
 #include <sstream>  // std::ostringstream
 
+#include "merlin/logger.hpp"  // cuda_compile_error, FAILURE
+
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Event
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // String representation
 std::string cuda::Event::str(void) const {
@@ -19,7 +21,7 @@ std::string cuda::Event::str(void) const {
 #ifndef __MERLIN_CUDA__
 
 // Contruct an event with a given flag
-cuda::Event::Event(cuda::Event::Category category) {}
+cuda::Event::Event(unsigned int category) {}
 
 // Query the status of works
 bool cuda::Event::is_complete(void) const {

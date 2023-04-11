@@ -8,14 +8,7 @@ cdef extern from "merlin/env.hpp":
     cdef cppclass CppEnvironment "merlin::Environment":
         CppEnvironment() except +
 
-        @staticmethod
-        void flush_cuda_deferred_deallocation() except +
-
     cdef bint CppEnvironment_is_initialized "merlin::Environment::is_initialized"
     cdef atomic[unsigned int] CppEnvironment_num_instances "merlin::Environment::num_instances"
 
-    cdef uint64_t CppEnvironment_cpu_mem_limit "merlin::Environment::cpu_mem_limit"
-
     cdef uint64_t CppEnvironment_parallel_chunk "merlin::Environment::parallel_chunk"
-
-    cdef int CppEnvironment_default_gpu "merlin::Environment::default_gpu"

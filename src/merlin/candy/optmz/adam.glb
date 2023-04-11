@@ -1,0 +1,25 @@
+// Copyright 2023 quocdang1998
+#include "merlin/candy/optmz/adam.hpp"
+
+namespace merlin {
+
+// Kernel creating object on GPU
+__global__ static void create_kernel(candy::optmz::Adam ** p_ref_adam, double learning_rate, double beta_m,
+                                     double beta_v, std::uint64_t model_size, double bias) {
+    *p_ref_adam = new candy::optmz::Adam(learning_rate, beta_m, beta_v, model_size, bias);
+}
+
+// Create an object on GPU by the GPU
+candy::Optimizer * candy::optmz::Adam::new_gpu(void) const {
+    ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(0);
+    candy::optmz::Adam ** p_ref_adam_gpu;
+    ::cudaMalloc(&p_ref_adam_gpu, sizeof(candy::optmz::Adam *));
+    create_kernel<<<1, 1, 0, stream>>>(p_ref_adam_gpu, this->learning_rate_, this->beta_m_, this->beta_v_,
+                                       this->register_moments_.size() / 2, this->bias_);
+    candy::optmz::Adam * result;
+    ::cudaMemcpy(&result, p_ref_adam_gpu, sizeof(candy::optmz::Adam *), ::cudaMemcpyDeviceToHost);
+    ::cudaFree(p_ref_adam_gpu);
+    return result;
+}
+
+}  // namespace merlin

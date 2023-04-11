@@ -109,6 +109,12 @@ cdef class Stream:
         """
         self.core.check_cuda_context()
 
+    def record_event(self, Event event):
+        """record_event(self, event)
+        Record an event to CUDA stream.
+        """
+        self.core.record_event(dereference(event.core))
+
     def synchronize(self):
         """synchronize(self)
         Pause the CPU process until all operations on the stream has finished.
@@ -117,16 +123,3 @@ cdef class Stream:
 
     def __dealloc__(self):
         del self.core
-
-def record_event(Event event, Stream stream = Stream()):
-    """record_event(event, stream = Stream())
-    Record (register) an event on CUDA stream.
-
-    Parameters
-    ----------
-    event: merlin.cuda.Event
-        CUDA event to be recorded.
-    stream: merlin.cuda.Stream
-        CUDA stream on which the event is recorded (default value is the null stream).
-    """
-    cpp_record_event(dereference(event.core), dereference(stream.core))

@@ -3,11 +3,11 @@
 #define MERLIN_ARRAY_DECLARATION_HPP_
 
 namespace merlin::array {
-class Slice;  // Array slice
+class Slice;   // Array slice
 class NdData;  // Basic ndim array
-class Array;  // CPU Array, defined in array.hpp
+class Array;   // CPU Array, defined in array.hpp
 class Parcel;  // GPU Array, defined in parcel.hpp
-class Stock;  // Out of core array, defined in stock.hpp
+class Stock;   // Out of core array, defined in stock.hpp
 }  // namespace merlin::array
 
 #endif  // MERLIN_ARRAY_DECLARATION_HPP_

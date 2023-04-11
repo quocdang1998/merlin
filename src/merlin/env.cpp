@@ -21,13 +21,13 @@ Environment::Environment(void) {
 Environment::~Environment(void) {
     Environment::num_instances--;
     if (Environment::num_instances == 0) {
-        alarming_cuda_error();
+        alarm_cuda_error();
     }
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Class bounded properties
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Check if environment is initialized
 bool Environment::is_initialized = false;
@@ -38,26 +38,19 @@ std::atomic_uint Environment::num_instances = 0;
 // Mutex
 std::mutex Environment::mutex;
 
-// --------------------------------------------------------------------------------------------------------------------
-// Array allocation limit
-// --------------------------------------------------------------------------------------------------------------------
+// Random generator
+std::mt19937_64 Environment::random_generator;
 
-// Size in bytes of maximum allowed allocated memory
-std::uint64_t Environment::cpu_mem_limit = static_cast<std::uint64_t>(32) << 30;
-
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // CPU Parallelism
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Minimum size over which the loop is parallelized
 std::uint64_t Environment::parallel_chunk = static_cast<std::uint64_t>(96);
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // CUDA environment
-// --------------------------------------------------------------------------------------------------------------------
-
-// ID of default GPU
-int Environment::default_gpu = 0;
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Constructor from elements
 Environment::ContextAttribute::ContextAttribute(std::uint64_t ref_count, int gpu_id) :
@@ -83,28 +76,21 @@ std::map<int, std::uintptr_t> Environment::primary_contexts;
 // Default CUDA kernel block size
 std::uint64_t Environment::default_block_size = 64;
 
-// CUDA deferred pointers
-std::vector<std::pair<int, void *>> Environment::deferred_gpu_pointer;
-
 #ifndef __MERLIN_CUDA__
 
 // Initialize CUDA context
 void initialize_cuda_context(void) {}
 
 // Alarm for CUDA error
-void alarming_cuda_error(void) {}
-
-// Deallocate all pointers in deferred pointer array
-void Environment::flush_cuda_deferred_deallocation(void) {}
+void alarm_cuda_error(void) {}
 
 #endif  // __MERLIN_CUDA__
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Default environment instance
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Default environment
 Environment default_environment;
-
 
 }  // namespace merlin

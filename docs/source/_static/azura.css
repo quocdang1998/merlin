@@ -47,6 +47,34 @@
     font-display: auto;
     font-variant-ligatures: none;
 }
+@font-face {
+    font-family: 'Bitter';
+    src: url("./Bitter-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: auto;
+}
+@font-face {
+    font-family: 'Bitter';
+    src: url("./Bitter-Italic.woff2") format("woff2");
+    font-weight: 400;
+    font-style: italic;
+    font-display: auto;
+}
+@font-face {
+    font-family: 'Bitter';
+    src: url("./Bitter-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: auto;
+}
+@font-face {
+    font-family: 'Bitter';
+    src: url("./Bitter-BoldItalic.woff2") format("woff2");
+    font-weight: 700;
+    font-style: italic;
+    font-display: auto;
+}
 
 /* custom colors */
 :root {
@@ -76,7 +104,9 @@
     --nav-l1:                     hsl(var(--hue),  79%, 95%);  /* link level 1 */
     --nav-l1-active-background:   hsl(var(--hue),  63%, 84%);  /* background active l1 */
     --nav-l1-hover-background:    hsl(var(--hue),  76%, 75%);  /* background hovered l1 */
-    --nav-l23-background:         hsl(var(--hpl), 100%, 94%);  /* sublink bakcground */
+    --nav-l2-background:          hsl(var(--hue),  20%, 89%);  /* background l2 */
+    --nav-l2-hover-background:    hsl(var(--hue),  20%, 80%);  /* background hovered l2 */
+    --nav-l23-active-background:  hsl(var(--hpl), 100%, 94%);  /* sublink active bakcground */
 
     --itembox-background:         hsl(var(--hue),  79%, 95%);  /* item box background */
     --itembox-topborder:          hsl(var(--hue), 100%, 42%);  /* item topborder */
@@ -84,7 +114,7 @@
     --subitem-background:         hsl(var(--hue),  10%, 94%);  /* subitem box background */
 
     --item-name:                  hsl(var(--hue), 100%, 40%);  /* item name */
-    --attribute:                  hsl(var(--hls),  85%, 55%);  /* attribute */
+    --attribute:                  hsl(var(--hue),  98%, 26%);  /* attribute */
     --keyword:                    hsl(var(--hpl), 100%, 35%);  /* keyworks of code language */
     --inherited:                  hsl(var(--hpl),  59%, 47%);  /* interrnal reference to other classes */
     --type:                       hsl(var(--hmn),  53%, 55%);  /* type */
@@ -106,7 +136,7 @@
 /* default font */
 body {
     margin:0;
-    font-family: 'Nunito', sans-serif;
+    font-family: 'Nunito';
     color: var(--text-color);
 }
 
@@ -117,7 +147,7 @@ body {
 
 /* content body width */
 .wy-nav-content {
-    max-width: 800px !important;
+    max-width: 850px !important;
     min-height: 100vh;
     background: var(--content-background);
 }
@@ -125,6 +155,7 @@ body {
 /* header color */
 .rst-content h1, .rst-content h2, .rst-content h3, .rst-content h4, .rst-content h5, .rst-content h6 {
     color: var(--header-color);
+    font-family: 'Bitter';
 }
 
 /* link color */
@@ -157,6 +188,11 @@ body {
 .rst-content code, .rst-content tt, code  {
     background: var(--literal-background);
     border-color: var(--table-border);
+}
+
+/* extent last column to 100% */
+.rst-content table.docutils td:last-child {
+    width: 100%;
 }
 
 /* table row odd */
@@ -218,13 +254,20 @@ dl > dt.field-odd::after, dl > dt.field-even::after {
     background: var(--nav-l1-hover-background);
 }
 
-.wy-menu-vertical li.toctree-l2.current > a, .wy-menu-vertical li.toctree-l2.current li.toctree-l3 > a{
-    background: var(--nav-l23-background);
+.wy-menu-vertical li.toctree-l2 a {
+    background: var(--nav-l2-background);
 }
 
-.wy-menu-vertical li.toctree-l3.current>a,
-.wy-menu-vertical li.toctree-l3.current li.toctree-l4>a {
-    background: var(--nav-l23-background);
+.wy-menu-vertical li.toctree-l2 a:hover {
+    background: var(--nav-l2-hover-background);
+}
+
+.wy-menu-vertical li.toctree-l2.current > a, .wy-menu-vertical li.toctree-l2.current li.toctree-l3 > a {
+    background: var(--nav-l23-active-background);
+}
+
+.wy-menu-vertical li.toctree-l3.current>a, .wy-menu-vertical li.toctree-l3.current li.toctree-l4>a {
+    background: var(--nav-l23-active-background);
 }
 
 /* search link */

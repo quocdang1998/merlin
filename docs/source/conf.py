@@ -33,6 +33,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.autosummary',
     'sphinx.ext.autosectionlabel',
+    'sphinxcontrib.bibtex',
     'sphinx_design',
     'breathe',
     'sphinx_doxysummary'
@@ -51,12 +52,16 @@ exclude_patterns = []
 autosectionlabel_prefix_document = True
 
 # Doxygen generated XML files
-breathe_projects = { "merlin": os.path.abspath("./xml") }
+breathe_projects = {"merlin": os.path.abspath("./xml")}
 breathe_default_project = "merlin"
 doxygen_xml = [breathe_projects[breathe_default_project]]
 
 # Sphinx-panel settings
-sd_fontawesome_latex = True
+sd_fontawesome_latex = False
+
+# Citation
+bibtex_bibfiles = [os.path.abspath('./citations.bib')]
+bibtex_default_style = 'unsrt'
 
 # -- Pygments style ----------------------------------------------------------
 
@@ -72,7 +77,7 @@ html_theme = 'sphinx_rtd_theme'
 html_theme_options = {'navigation_depth': 4}
 html_favicon = '_static/merlin_favicon.svg'
 html_css_files = ['azura.css']
-html_js_files = [('azura.js', {'defer': 'defer'}), 'hsl_rgb.js']
+html_js_files = [('azura.js', {'defer': 'defer'})]
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

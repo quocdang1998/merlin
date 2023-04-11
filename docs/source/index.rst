@@ -1,7 +1,5 @@
-.. Merlin documentation master file, created by
-   sphinx-quickstart on Mon Jul  4 11:20:05 2022.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. Merlin documentation master file, created by sphinx-quickstart on Mon Jul  4 11:20:05 2022.
+   You can adapt this file completely to your liking, but it should at least contain the root `toctree` directive.
 
 Welcome to Merlin's documentation!
 ==================================
@@ -10,18 +8,30 @@ Welcome to Merlin's documentation!
 
    \chapter{Introduction}
 
-Merlin is a package written in C++, with Python wrapper package made possible by
-`Cython <https://cython.readthedocs.io/en/latest/>`_ for processing, evaluating
-and interpolating multidimensional dataset. It fastens calculations by
-exploiting the parallelism of CPU and HPC system equipped with multiple GPUs.
-The tool-kit is scalable to big dataset thanks to its support for thread-safe
-out-of-core array.
+Merlin is a C++ / `CUDA <https://docs.nvidia.com/cuda/index.html>`_ library for processing and interpolation of
+multi-parameterized cross sections resulting from lattice calculations in the two-step approach
+:cite:p:`galia2020dynamic`. The library also supports a Python interface facilitated by
+`Cython <https://cython.readthedocs.io/en/latest/>`_.
+
+Major features include:
+
+-  **Multidimensional array**: supports multidimensional array of double precision on CPU, GPU (CUDA) and out-of-core.
+
+-  **Polynomial interpolation**: interpolate a dataset over a multidimensional Cartesian grid and hierarchical grids
+   :cite:p:`garcke2006sparse` by Lagrange :cite:p:`berrut2004barycentric` and Newton method
+   :cite:p:`neidinger2019multivariate`.
+
+-  **Tensor decomposition**: decompose multidimensional array to sum of tensor products of one-dimensional vectors by
+   gradient approach :cite:p:`acar2011scalable`.
+
+-  **Parallelism**: accelerate the calculation of coefficients and evaluation of the interpolation by transporting the
+   workload to GPUs.
 
 .. raw:: html
 
    <h2>Where to go from here ?</h2>
 
-.. grid:: 3 
+.. grid:: 3
    :gutter: 1
    :class-container: .container-lg
 
@@ -57,3 +67,5 @@ out-of-core array.
    capi/index
    pyapi/index
    developer/index
+
+.. bibliography::

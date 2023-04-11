@@ -3,15 +3,15 @@
 #define MERLIN_ARRAY_PARCEL_HPP_
 
 #include <cstdint>  // std::uint64_t, std::uintptr_t
-#include <mutex>  // std::mutex
+#include <mutex>    // std::mutex
 
-#include "merlin/array/nddata.hpp"  // merlin::array::Array, merlin::array::NdData
-#include "merlin/cuda_decorator.hpp"  // __cudevice__, __cuhostdev__
-#include "merlin/cuda/device.hpp"  // merlin::cuda::Device
-#include "merlin/cuda/context.hpp"  // merlin::cuda::Context
-#include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS, MERLIN_HOSTDEV_EXPORTS
-#include "merlin/vector.hpp"  // merlin::intvec
+#include "merlin/array/nddata.hpp"    // merlin::array::Array, merlin::array::NdData
+#include "merlin/cuda/context.hpp"    // merlin::cuda::Context
+#include "merlin/cuda/device.hpp"     // merlin::cuda::Device
+#include "merlin/cuda/stream.hpp"     // merlin::cuda::Stream
+#include "merlin/cuda_interface.hpp"  // __cudevice__, __cuhostdev__
+#include "merlin/exports.hpp"         // MERLIN_EXPORTS
+#include "merlin/vector.hpp"          // merlin::intvec
 
 namespace merlin {
 
@@ -23,12 +23,12 @@ class array::Parcel : public array::NdData {
     /** @brief Default constructor (do nothing).*/
     __cuhostdev__ Parcel(void) {}
     /** @brief Construct a contiguous array from shape on GPU.*/
-    MERLIN_EXPORTS Parcel(const intvec & shape);
+    MERLIN_EXPORTS Parcel(const intvec & shape, const cuda::Stream & stream = cuda::Stream());
     /** @brief Constructor from a slice.
      *  @param whole merlin::array::NdData of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS Parcel(const array::Parcel & whole, const Vector<array::Slice> & slices);
+    __cuhostdev__ Parcel(const array::Parcel & whole, const Vector<array::Slice> & slices);
     /// @}
 
     /// @name Copy and Move
@@ -46,12 +46,12 @@ class array::Parcel : public array::NdData {
     /// @name Get members
     /// @{
     /** @brief Get constant reference to ID of device containing data of a constant instance.*/
-    __cuhostdev__ constexpr const cuda::Device & device(void) const noexcept {return this->device_;}
-    /// @}
+    __cuhostdev__ constexpr const cuda::Device & device(void) const noexcept { return this->device_; }
+/// @}
 
-    /// @name Atributes
-    /// @{
-    #ifdef __NVCC__
+/// @name Atributes
+/// @{
+#ifdef __NVCC__
     /** @brief Get reference to element at a given ndim index.*/
     __cudevice__ double & operator[](const intvec & index);
     /** @brief Get reference to element at a given C-contiguous index.*/
@@ -60,7 +60,7 @@ class array::Parcel : public array::NdData {
     __cudevice__ const double & operator[](const intvec & index) const;
     /** @brief Get const reference to element at a given C-contiguous index.*/
     __cudevice__ const double & operator[](std::uint64_t index) const;
-    #endif  // __NVCC__
+#endif  // __NVCC__
     /// @}
 
     /// @name Get and set element
@@ -85,6 +85,8 @@ class array::Parcel : public array::NdData {
      *  @param i_dim Index of dimension to collapse.
      */
     MERLIN_EXPORTS void remove_dim(std::uint64_t i_dim = 0);
+    /** @brief Set value of all elements.*/
+    MERLIN_EXPORTS void fill(double value);
     /// @}
 
     /// @name Transfer data to GPU
@@ -99,40 +101,44 @@ class array::Parcel : public array::NdData {
     /// @name GPU related features
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the object and its data.*/
-    std::uint64_t malloc_size(void) const {return sizeof(array::Parcel) + 2*this->ndim_*sizeof(std::uint64_t);}
+    std::uint64_t cumalloc_size(void) const noexcept {
+        return sizeof(array::Parcel) + 2 * this->ndim() * sizeof(std::uint64_t);
+    }
     /** @brief Copy meta-data (shape and strides) from CPU to a pre-allocated memory on GPU.
      *  @details The meta-data should be to the memory region that comes right after the copied object.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
      *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and
      *  stride vector.
-     *  @param stream_ptr Pointer to CUDA sytream for asynchronious copy.
+     *  @param stream_ptr Pointer to CUDA sytream for asynchronous copy.
      */
     MERLIN_EXPORTS void * copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr,
                                       std::uintptr_t stream_ptr = 0) const;
-    #ifdef __NVCC__
-    /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
-     *  @note This operation is single-threaded.
-     *  @param share_ptr Dynamically allocated shared pointer on GPU.
-     *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and
-     *  stride vector.
+    /** @brief Calculate the minimum number of bytes to allocate in CUDA shared memory to store the array.*/
+    std::uint64_t sharedmem_size(void) const noexcept { return this->cumalloc_size(); }
+#ifdef __NVCC__
+    /** @brief Copy metadata to a pre-allocated memory region by a GPU block of threads.
+     *  @details The copy action is performed by the whole CUDA thread block.
+     *  @param dest_ptr Pre-allocated memory region storing the new object on GPU.
+     *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``std::uint64_t[2*this->ndim()]``,
+     *  storing data of shape and stride vector.
+     *  @param thread_idx Flatten ID of the current CUDA thread in the block.
+     *  @param block_size Number of threads in the current CUDA block.
      */
-    __cudevice__ void * copy_to_shared_mem(array::Parcel * share_ptr, void * shape_strides_ptr) const;
-    /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
-     *  @param share_ptr Dynamically allocated shared pointer on GPU.
-     *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and
-     *  stride vector.
+    __cudevice__ void * copy_by_block(array::Parcel * dest_ptr, void * shape_strides_ptr, std::uint64_t thread_idx,
+                                      std::uint64_t block_size) const;
+    /** @brief Copy metadata to a pre-allocated memory region by a single GPU threads.
+     *  @param dest_ptr Memory region where the new object resides.
+     *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ```std::uint64_t[2*this->ndim()]``,
+     *  storing data of shape and stride vector.
      */
-    __cudevice__ void * copy_to_shared_mem_single(array::Parcel * share_ptr, void * shape_strides_ptr) const;
-    #endif  // __NVCC__
+    __cudevice__ void * copy_by_thread(array::Parcel * dest_ptr, void * shape_strides_ptr) const;
+#endif  // __NVCC__
     /// @}
 
     /// @name Destructor
     /// @{
-    /** @brief Defer deallocation.
-     *  @details Delay CUDA memory deallocation until the end of program, or until
-     *  ``merlin::Environment::flush_cuda_deferred_deallocation`` is called.
-     */
-    MERLIN_EXPORTS void defer_allocation(void);
+    /** @brief Free current data hold by the object.*/
+    MERLIN_EXPORTS void free_current_data(const cuda::Stream & stream = cuda::Stream());
     /** @brief Destructor.*/
     MERLIN_EXPORTS ~Parcel(void);
     /// @}
@@ -144,10 +150,6 @@ class array::Parcel : public array::NdData {
     cuda::Context context_;
     /** @brief Mutex lock at destruction time.*/
     static std::mutex & mutex_;
-
-  private:
-    /** @brief Free current data hold by the object.*/
-    void free_current_data(void);
 };
 
 }  // namespace merlin

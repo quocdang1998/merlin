@@ -1,0 +1,29 @@
+// Copyright 2023 quocdang1998
+#include "merlin/linalg/matrix.hpp"
+
+namespace merlin {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Matrix
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Create a matrix from pre-allocated pointer, shape and strides
+__cuhostdev__ linalg::Matrix::Matrix(double * data, const std::array<std::uint64_t, 2> & shape,
+                                     const std::array<std::uint64_t, 2> & strides, bool free_in_destructor) :
+data_(data), shape_(shape), strides_(strides), force_free_(free_in_destructor) {}
+
+// Create an empty matrix of a given shape
+__cuhostdev__ linalg::Matrix::Matrix(std::uint64_t nrow, std::uint64_t ncol) : shape_({nrow, ncol}) {
+    this->data_ = new double[nrow * ncol];
+    this->strides_ = {ncol * sizeof(double), sizeof(double)};
+    this->force_free_ = true;
+}
+
+// Default destructor
+__cuhostdev__ linalg::Matrix::~Matrix(void) {
+    if (this->force_free_ && (this->data_ != nullptr)) {
+        delete[] this->data_;
+    }
+}
+
+}  // namespace merlin

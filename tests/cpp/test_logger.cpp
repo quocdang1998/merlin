@@ -3,7 +3,9 @@
 #include <iostream>
 
 void foo3 (void) {
-    _merlin_print_stacktrace_();
+    try {
+        FAILURE(std::runtime_error, "Foo error.\n");
+    } catch (std::exception & e) {};
 }
 
 void foo2 (int i = 1) {
@@ -28,7 +30,7 @@ int main (void) {
         FAILURE(std::runtime_error, "Fatal error: %s.\n", "Runtime error");
     } catch (std::exception & e) {}
     try {
-        FAILURE(cuda_compile_error, "CUDA compile error.\n");
+        FAILURE(merlin::cuda_compile_error, "CUDA compile error.\n");
     } catch (std::exception & e) {}
     foo1();
 }

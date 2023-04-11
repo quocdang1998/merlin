@@ -1,0 +1,13 @@
+// Copyright 2023 quocdang1998
+#include "merlin/candy/optimizer.hpp"
+
+namespace merlin {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Optimizer
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Destructor
+__cuhostdev__ candy::Optimizer::~Optimizer(void) {}
+
+}  // namespace merlin

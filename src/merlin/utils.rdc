@@ -2,29 +2,32 @@
 #include "merlin/utils.hpp"
 
 #include <cinttypes>  // PRIu64
-#include <ctime>  // std::localtime, std::time, std::time_t, std::tm
-#include <sstream>  // std::ostringstream
+#include <ctime>      // std::localtime, std::time, std::time_t, std::tm
+#include <sstream>    // std::ostringstream
+
+#include "merlin/logger.hpp"    // CUHDERR
+#include "merlin/platform.hpp"  // __MERLIN_WINDOWS__, __MERLIN_LINUX__
 
 #if defined(__MERLIN_WINDOWS__)
-#include <windows.h>  // ::GetCurrentProcessId
+    #include <windows.h>  // ::GetCurrentProcessId
 #elif defined(__MERLIN_LINUX__)
-#include <unistd.h>  // ::getpid
+    #include <unistd.h>  // ::getpid
 #endif
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // System
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Get process ID in form of a string
 std::string get_current_process_id(void) {
     std::ostringstream output;
-    #if defined(__MERLIN_WINDOWS__)
+#if defined(__MERLIN_WINDOWS__)
     output << ::GetCurrentProcessId();
-    #elif defined(__MERLIN_LINUX__)
+#elif defined(__MERLIN_LINUX__)
     output << ::getpid();
-    #endif
+#endif
     return output.str();
 }
 
@@ -33,14 +36,14 @@ std::string get_time(void) {
     std::ostringstream output;
     std::time_t current_carlendar_time = std::time(nullptr);
     std::tm * now = std::localtime(&current_carlendar_time);
-    output << (now->tm_year + 1900) << '-' << (now->tm_mon + 1) << '-' <<  now->tm_mday << '_'
-           << now->tm_hour << ':' << now->tm_min << ':' << now->tm_sec;
+    output << (now->tm_year + 1900) << '-' << (now->tm_mon + 1) << '-' << now->tm_mday << '_' << now->tm_hour << ':'
+           << now->tm_min << ':' << now->tm_sec;
     return output.str();
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Multi-dimensional Index
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Product of all elements of the vector
 __cuhostdev__ std::uint64_t prod_elements(const intvec & v) {
@@ -78,10 +81,10 @@ __cuhostdev__ std::uint64_t ndim_to_contiguous_idx(const intvec & index, const i
     if (index.size() == 0) {
         CUHDERR(std::invalid_argument, "Size of index and shape vectors are 0.\n");
     }
-    result += index[index.size()-1] * cum_prod;
-    for (std::int64_t i = index.size()-2; i >= 0; i--) {
-        cum_prod = cum_prod * shape[i+1];
-        result += index[i]*cum_prod;
+    result += index[index.size() - 1] * cum_prod;
+    for (std::int64_t i = index.size() - 2; i >= 0; i--) {
+        cum_prod = cum_prod * shape[i + 1];
+        result += index[i] * cum_prod;
     }
     return result;
 }
@@ -99,9 +102,9 @@ __cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & 
         return index_;  // empty shape vector
     }
     std::uint64_t cum_prod = 1;
-    index_[shape.size()-1] = index % shape[shape.size()-1];
-    for (std::int64_t i = shape.size()-2; i >= 0; i--) {
-        cum_prod *= shape[i+1];
+    index_[shape.size() - 1] = index % shape[shape.size() - 1];
+    for (std::int64_t i = shape.size() - 2; i >= 0; i--) {
+        cum_prod *= shape[i + 1];
         index_[i] = (index / cum_prod) % shape[i];
     }
     return index_;
@@ -168,9 +171,9 @@ __cuhostdev__ std::uint64_t decrement_index(intvec & index, const intvec & shape
     return result;
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Sparse Grid
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Get size of a sub-grid given its level vector
 __cuhostdev__ std::uint64_t calc_subgrid_size(const intvec & level_vector) noexcept {
@@ -180,7 +183,7 @@ __cuhostdev__ std::uint64_t calc_subgrid_size(const intvec & level_vector) noexc
         if (dim_level == 0) {
             continue;
         }
-        subgrid_size *= ((dim_level == 1) ? 2 : (1 << (dim_level-1)));
+        subgrid_size *= ((dim_level == 1) ? 2 : (1 << (dim_level - 1)));
     }
     return subgrid_size;
 }
@@ -194,28 +197,37 @@ __cuhostdev__ intvec get_level_shape(const intvec & level_vector) {
         } else if (level_vector[i] == 1) {
             grid_shape[i] = 2;
         } else {
-            grid_shape[i] = 1 << (level_vector[i]-1);
+            grid_shape[i] = 1 << (level_vector[i] - 1);
         }
     }
     return grid_shape;
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Canonical Decomposition
+// ---------------------------------------------------------------------------------------------------------------------
 
-
-
-
-// Get the level from a given valid size of a 1D grid
-/*
-__cuhostdev__ static inline std::uint64_t get_level_from_valid_size(std::uint64_t size) noexcept {
-    size -= 1;
-    std::uint64_t level = 0;
-    while (size >>= 1) {
-        ++level;
+// Get flattened index from model index
+__cuhostdev__ std::uint64_t model_to_contiguous_index(std::uint64_t i_dim, std::uint64_t i_pt, std::uint64_t i_rank,
+                                                      std::uint64_t rank, const intvec & shape) {
+    std::uint64_t result = 0;
+    for (std::uint64_t i = 0; i < i_dim; i++) {
+        result += shape[i];
     }
-    return level;
+    return result + rank * i_pt + i_rank;
 }
-*/
 
-
+// Get model index from flattened index
+__cuhostdev__ std::array<std::uint64_t, 3> contiguous_to_model_idx(std::uint64_t index, std::uint64_t rank,
+                                                                   const intvec & shape) {
+    std::uint64_t dimension = 0;
+    std::int64_t index_ = index;
+    for (std::uint64_t i_dim = 0; i_dim < shape.size(); i_dim++) {
+        index_ -= shape[i_dim];
+        dimension += (index_ >= 0) ? 1 : 0;
+        index = (index_ >= 0) ? index_ : index;
+    }
+    return {dimension, index / rank, index % rank};
+}
 
 }  // namespace merlin

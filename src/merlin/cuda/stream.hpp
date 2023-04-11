@@ -4,33 +4,26 @@
 
 #include <cstddef>  // nullptr
 #include <cstdint>  // std::uintptr_t
-#include <string>  // std::string
+#include <string>   // std::string
 #include <utility>  // std::exchange
 
-#include "merlin/cuda/declaration.hpp"  // merlin::cuda::Event
-#include "merlin/cuda/device.hpp"  // merlin::cuda::Device
+#include "merlin/cuda/declaration.hpp"   // merlin::cuda::Event
+#include "merlin/cuda/device.hpp"        // merlin::cuda::Device
+#include "merlin/cuda/enum_wrapper.hpp"  // merlin::cuda::StreamSetting, merlin::cuda::EventWaitFlag
 
-namespace merlin::cuda {
-#ifdef __NVCC__
-/** @brief Type of CPU callback function.*/
-typedef cudaStreamCallback_t CudaStreamCallback;
-#else
-typedef void(* CudaStreamCallback)(std::uintptr_t, int, void *);
-#endif  // __NVCC__
-}  // namespace merlin::cuda
+namespace merlin::cuda {}  // namespace merlin::cuda
 
 namespace merlin {
 
 /** @brief CUDA stream of tasks.*/
 class cuda::Stream {
   public:
-    /** @brief Parameter controlling the behavior of the stream.*/
-    enum class MERLIN_EXPORTS Setting : unsigned int {
-        /** Default stream creation flag (synchonized with the null stream).*/
-        Default = 0x00,
-        /** Works may run concurrently with null stream.*/
-        NonBlocking = 0x01
-    };
+#ifdef __NVCC__
+    /** @brief Type of CPU callback function.*/
+    typedef cudaStreamCallback_t CudaStreamCallback;
+#else
+    typedef void (*CudaStreamCallback)(std::uintptr_t, int, void *);
+#endif  // __NVCC__
 
     /// @name Constructor
     /// @{
@@ -41,7 +34,7 @@ class cuda::Stream {
      *  @param setting %Stream creation flag.
      *  @param priority %Stream task priority (lower number means higher priority).
      */
-    MERLIN_EXPORTS Stream(cuda::Stream::Setting setting, int priority = 0);
+    MERLIN_EXPORTS Stream(cuda::StreamSetting setting, int priority = 0);
     /// @}
 
     /// @name Copy and Move
@@ -66,15 +59,15 @@ class cuda::Stream {
     /// @name Get attributes
     /// @{
     /** @brief Get stream pointer.*/
-    constexpr std::uintptr_t get_stream_ptr(void) const noexcept {return this->stream_;}
+    constexpr std::uintptr_t get_stream_ptr(void) const noexcept { return this->stream_; }
     /** @brief Get setting flag of the stream.*/
-    MERLIN_EXPORTS cuda::Stream::Setting setting(void) const;
+    MERLIN_EXPORTS cuda::StreamSetting setting(void) const;
     /** @brief Get priority of the stream.*/
     MERLIN_EXPORTS int priority(void) const;
     /** @brief Get context associated to stream.*/
     MERLIN_EXPORTS cuda::Context get_context(void) const;
     /** @brief Get GPU.*/
-    constexpr const cuda::Device & get_gpu(void) const noexcept {return this->device_;}
+    constexpr const cuda::Device & get_gpu(void) const noexcept { return this->device_; }
     /// @}
 
     /// @name Query
@@ -83,6 +76,8 @@ class cuda::Stream {
      *  @details ``true`` if all operations in the stream have completed.
      */
     MERLIN_EXPORTS bool is_complete(void) const;
+    /** @brief Check if the stream is being captured.*/
+    MERLIN_EXPORTS bool is_capturing(void) const;
     /** @brief Check validity of GPU and context.
      * @details Check if the current CUDA context and active GPU is valid for the stream.
      */
@@ -111,7 +106,17 @@ class cuda::Stream {
      *  Callback argument: 1
      *  @endcode
      */
-    MERLIN_EXPORTS void add_callback(cuda::CudaStreamCallback func, void * arg);
+    MERLIN_EXPORTS void add_callback(cuda::Stream::CudaStreamCallback func, void * arg) const;
+    /** @brief Record (register) an event on CUDA stream.
+     *  @param event CUDA event to be recorded.
+     */
+    MERLIN_EXPORTS void record_event(const cuda::Event & event) const;
+    /** @brief Make CUDA stream wait on an event.
+     *  @param event CUDA event to be synchronized.
+     *  @param flag Flag of the event wait.
+     */
+    MERLIN_EXPORTS void wait_event(const cuda::Event & event,
+                                   cuda::EventWaitFlag flag = cuda::EventWaitFlag::Default) const;
     /** @brief Synchronize the stream.
      *  @details Pause the CPU process until all operations on the stream has finished.
      */
@@ -139,11 +144,27 @@ class cuda::Stream {
 
 namespace cuda {
 
-/** @brief Record (register) an event on CUDA stream.
- *  @param event CUDA event to be recorded.
- *  @param stream CUDA stream on which the event is recorded (default value is the null stream).
+/** @brief Capture mode.*/
+enum class MERLIN_EXPORTS StreamCaptureMode : unsigned int {
+    /** Global capture mode.*/
+    Global = 0x0,
+    /** Thread local capture mode.*/
+    ThreadLocal = 0x1,
+    /** Relaxed capture.*/
+    Relaxed = 0x2
+};
+
+/** @brief Capturing stream for CUDA graph.
+ *  @details When a CUDA stream is in capture mode, execution orders will not be launch. It is enqueued in an execution
+ *  CUDA graph to be retrieved later.
  */
-MERLIN_EXPORTS void record_event(const cuda::Event & event, const cuda::Stream & stream = cuda::Stream());
+MERLIN_EXPORTS void begin_capture_stream(const cuda::Stream & stream,
+                                         StreamCaptureMode mode = StreamCaptureMode::Global);
+
+/** @brief End capturing a stream and returning a graph.
+ *  @details Stop CUDA stream capture mode and return a CUDA graph representing enqueued works.
+ */
+MERLIN_EXPORTS cuda::Graph end_capture_stream(const cuda::Stream & stream);
 
 }  // namespace cuda
 

@@ -2,27 +2,28 @@
 #ifndef MERLIN_ARRAY_SLICE_HPP_
 #define MERLIN_ARRAY_SLICE_HPP_
 
-#include <array>  // std::array
-#include <cstdint>  // std::uint64_t, UINT64_MAX
+#include <array>             // std::array
+#include <cstdint>           // std::uint64_t, UINT64_MAX
 #include <initializer_list>  // std::initializer_list
-#include <string>  // std::string
+#include <string>            // std::string
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Slice
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/cuda_decorator.hpp"  // __cuhostdev__
+#include "merlin/cuda_interface.hpp"     // __cuhostdev__
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/vector.hpp"             // merlin::Vector
 
 namespace merlin {
 
-/** @brief Slice of an Array.*/
+/** @brief %Slice of an array.*/
 class array::Slice {
   public:
     /// @name Constructors
     /// @{
     /** @brief Member constructor.
-     *  @details Construct Slice object from values of its members.
-     *  @param start Start position (must be positive).
-     *  @param stop Stop position (must be positive).
-     *  @param step Step (must be positive).
+     *  @details Construct object from values of its members.
+     *  @param start Start position.
+     *  @param stop Stop position.
+     *  @param step Step.
      */
     __cuhostdev__ Slice(std::uint64_t start = 0, std::uint64_t stop = UINT64_MAX, std::uint64_t step = 1);
     /** @brief Constructor from initializer list.
@@ -60,17 +61,17 @@ class array::Slice {
     /// @name Get members
     /// @{
     /** @brief Get reference to start value.*/
-    __cuhostdev__ constexpr std::uint64_t & start(void) noexcept {return this->start_;}
+    __cuhostdev__ constexpr std::uint64_t & start(void) noexcept { return this->start_; }
     /** @brief Get constant reference to start value.*/
-    __cuhostdev__ constexpr const std::uint64_t & start(void) const noexcept {return this->start_;}
+    __cuhostdev__ constexpr const std::uint64_t & start(void) const noexcept { return this->start_; }
     /** @brief Get reference to stop value.*/
-    __cuhostdev__ constexpr std::uint64_t & stop(void) noexcept {return this->stop_;}
+    __cuhostdev__ constexpr std::uint64_t & stop(void) noexcept { return this->stop_; }
     /** @brief Get constant reference to stop value.*/
-    __cuhostdev__ constexpr const std::uint64_t & stop(void) const noexcept {return this->stop_;}
+    __cuhostdev__ constexpr const std::uint64_t & stop(void) const noexcept { return this->stop_; }
     /** @brief Get reference to step value.*/
-    __cuhostdev__ constexpr std::uint64_t & step(void) noexcept {return this->step_;}
+    __cuhostdev__ constexpr std::uint64_t & step(void) noexcept { return this->step_; }
     /** @brief Get constant reference to step value.*/
-    __cuhostdev__ constexpr const std::uint64_t & step(void) const noexcept {return this->step_;}
+    __cuhostdev__ constexpr const std::uint64_t & step(void) const noexcept { return this->step_; }
     /// @}
 
     /// @name Utilities
@@ -119,6 +120,9 @@ class array::Slice {
     /** @brief Check validity of values inputted in the Slice.*/
     __cuhostdev__ void check_validity(void) const;
 };
+
+/** @brief %Vector of slices.*/
+using slicevec = Vector<array::Slice>;
 
 }  // namespace merlin
 

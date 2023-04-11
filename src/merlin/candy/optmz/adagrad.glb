@@ -1,0 +1,25 @@
+// Copyright 2023 quocdang1998
+#include "merlin/candy/optmz/adagrad.hpp"
+
+namespace merlin {
+
+// Kernel creating object on GPU
+__global__ static void create_kernel(candy::optmz::AdaGrad ** p_ref_ada_grad, double learning_rate,
+                                     std::uint64_t model_size, double bias) {
+    *p_ref_ada_grad = new candy::optmz::AdaGrad(learning_rate, model_size, bias);
+}
+
+// Create an object on GPU by the GPU
+candy::Optimizer * candy::optmz::AdaGrad::new_gpu(void) const {
+    ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(0);
+    candy::optmz::AdaGrad ** p_ref_ada_grad_gpu;
+    ::cudaMalloc(&p_ref_ada_grad_gpu, sizeof(candy::optmz::AdaGrad *));
+    create_kernel<<<1, 1, 0, stream>>>(p_ref_ada_grad_gpu, this->learning_rate_, this->grad_history_.size(),
+                                       this->bias_);
+    candy::optmz::AdaGrad * result;
+    ::cudaMemcpy(&result, p_ref_ada_grad_gpu, sizeof(candy::optmz::AdaGrad *), ::cudaMemcpyDeviceToHost);
+    ::cudaFree(p_ref_ada_grad_gpu);
+    return result;
+}
+
+}  // namespace merlin

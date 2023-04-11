@@ -42,7 +42,7 @@ Manage CUDA Context
    :template: pyclass.rst
 
    merlin.cuda.Context
-   merlin.cuda.ContextFlags
+   merlin.cuda.ContextSchedule
    merlin.cuda.create_primary_context
 
 CUDA Stream and Event
@@ -57,7 +57,6 @@ CUDA Stream and Event
    merlin.cuda.StreamSetting
    merlin.cuda.Event
    merlin.cuda.EventCategory
-   merlin.cuda.record_event
 
 
 Array API

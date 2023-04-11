@@ -2,7 +2,7 @@
 #include "merlin/cuda/context.hpp"
 #include "merlin/cuda/stream.hpp"
 #include "merlin/array/array.hpp"
-#include "merlin/array/copy.hpp"
+#include "merlin/array/operation.hpp"
 #include "merlin/array/parcel.hpp"
 #include "merlin/array/slice.hpp"
 #include "merlin/logger.hpp"
@@ -31,7 +31,7 @@ int main(void) {
     for (std::int64_t i_gpu = 0; i_gpu < num_gpu; i_gpu++) {
         merlin::cuda::Device gpu(i_gpu);
         gpu.set_as_current();
-        merlin::cuda::Stream s(merlin::cuda::Stream::Setting::Default, 0);
+        merlin::cuda::Stream s(merlin::cuda::StreamSetting::Default, 0);
         merlin::array::Array sliced_array(A_array, {{}, {}, {static_cast<std::uint64_t>(i_gpu)}});
         merlin::array::Parcel array_on_gpu(sliced_array.shape());
         array_on_gpu.transfer_data_to_gpu(sliced_array, s);

@@ -1,20 +1,20 @@
 // Copyright 2022 quocdang1998
 #include "merlin/cuda/device.hpp"
 
-#include <cstdio>  // std::printf
-#include <map>  // std::map
+#include <cstdio>   // std::printf
+#include <map>      // std::map
 #include <sstream>  // std::ostringstream
 
 #include "cuda.h"  // cuCtxGetCurrent, cuDeviceGetName
 
 #include "merlin/cuda/context.hpp"  // merlin::cuda::Context
-#include "merlin/logger.hpp"  // WARNING, FAILURE, cuda_runtime_error
+#include "merlin/logger.hpp"        // WARNING, FAILURE, cuda_runtime_error
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Get GPU core
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Convert GPU major.minor version to number of CUDA core
 // Adapted from function _ConvertSMVer2Cores
@@ -37,6 +37,7 @@ static int convert_SM_version_to_core(int major, int minor) {
         {0x80,  64},
         {0x86, 128},
         {0x87, 128},
+        {0x89, 128},
         {0x90, 128}
     };
     int SM = (major << 4) + minor;
@@ -46,9 +47,9 @@ static int convert_SM_version_to_core(int major, int minor) {
     return num_gpu_arch_cores_per_SM[SM];
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Device
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Print limit of device
 void cuda::Device::print_specification(void) const {
@@ -66,24 +67,30 @@ void cuda::Device::print_specification(void) const {
     // Number of CUDA core
     int core_per_multiprocessor = convert_SM_version_to_core(prop.major, prop.minor);
     std::printf("    Number of CUDA core per multiprocessor: %d.\n", core_per_multiprocessor);
-    std::printf("    Total number of CUDA core: %d.\n", core_per_multiprocessor*prop.multiProcessorCount);
+    std::printf("    Total number of CUDA core: %d.\n", core_per_multiprocessor * prop.multiProcessorCount);
     // Max thread per multi-processor
     std::printf("    Maximum resident threads per multiprocessor: %d.\n", prop.maxThreadsPerMultiProcessor);
+    // Warp size
+    std::printf("    Thread-warp size: %d.\n", prop.warpSize);
 
     // Max threads per block
     std::printf("    Maximum number of threads per block: %d.\n", prop.maxThreadsPerBlock);
     // Max blockDim
-    std::printf("    Maximum (x,y,z)-dimension of a block: (%d, %d, %d).\n",
-                prop.maxThreadsDim[0], prop.maxThreadsDim[1], prop.maxThreadsDim[2]);
+    std::printf("    Maximum (x,y,z)-dimension of a block: (%d, %d, %d).\n", prop.maxThreadsDim[0],
+                prop.maxThreadsDim[1], prop.maxThreadsDim[2]);
     // Max gridDim
-    std::printf("    Maximum (x,y,z)-dimension of a grid: (%d, %d, %d).\n",
-                prop.maxGridSize[0], prop.maxGridSize[1], prop.maxGridSize[2]);
+    std::printf("    Maximum (x,y,z)-dimension of a grid: (%d, %d, %d).\n", prop.maxGridSize[0], prop.maxGridSize[1],
+                prop.maxGridSize[2]);
 
     // Total global memory
-    std::printf("    Total amount of global memory: %f GB.\n", static_cast<float>(prop.totalGlobalMem)/1073741824.0f);
+    std::printf("    Total amount of global memory: %f GB.\n", static_cast<float>(prop.totalGlobalMem) / 1073741824.0f);
     // Max shared memory per block
     std::printf("    Maximum amount of shared memory available to a thread block: %zu bytes.\n",
                 prop.sharedMemPerBlock);
+    // Max register memory per block
+    std::printf("    Maximum number of 32-bit register available to a thread block: %d bytes.\n", prop.regsPerBlock);
+    // Managed memory support
+    std::printf("    Support for managed memory: %s.\n", ((prop.managedMemory == 1) ? "true" : "false"));
     // Max constant memory
     std::printf("    Memory available on device for __constant__ variables in a CUDA C kernel: %zu bytes.\n",
                 prop.totalConstMem);
@@ -96,37 +103,46 @@ bool cuda::Device::test_gpu(void) const {
     int * gpu_int;
     ::cudaError_t err_;
     int reference = cpu_int[0] + cpu_int[1];
-    // set device
+    // clone current context
+    cuda::Context current_ctx = cuda::Context::get_current();
+    if (current_ctx.get_context_ptr() != 0) {
+        current_ctx.push_current();
+    }
+    // set device (also change the current context)
     err_ = ::cudaSetDevice(this->id_);
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "cudaSetDevice for id = %d failed with message \"%s\".\n",
-                this->id_, ::cudaGetErrorName(err_));
+        FAILURE(cuda_runtime_error, "cudaSetDevice for id = %d failed with message \"%s\".\n", this->id_,
+                ::cudaGetErrorName(err_));
+    }
+    if (current_ctx.get_context_ptr() != 0) {
+        cuda::Context current_gpu_ctx = cuda::Context::get_current();
+        current_gpu_ctx.pop_current();
     }
     // malloc
-    err_ = ::cudaMalloc(&gpu_int, 3*sizeof(int));
+    err_ = ::cudaMalloc(&gpu_int, 3 * sizeof(int));
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "cudaMalloc failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // copy to gpu
-    err_ = ::cudaMemcpy(gpu_int, cpu_int, 3*sizeof(int), cudaMemcpyHostToDevice);
+    err_ = ::cudaMemcpy(gpu_int, cpu_int, 3 * sizeof(int), cudaMemcpyHostToDevice);
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "cudaMemcpyHostToDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // launch kernel
-    cuda::add_integers_on_gpu(gpu_int, gpu_int+1, gpu_int+2);
+    cuda::add_integers_on_gpu(gpu_int, gpu_int + 1, gpu_int + 2);
     err_ = ::cudaGetLastError();
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Launch kernel failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // copy to cpu
-    err_ = ::cudaMemcpy(cpu_int, gpu_int, 3*sizeof(int), cudaMemcpyDeviceToHost);
+    err_ = ::cudaMemcpy(cpu_int, gpu_int, 3 * sizeof(int), cudaMemcpyDeviceToHost);
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "cudaMemcpyDeviceToHost failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // check result
     if (cpu_int[2] != reference) {
-        WARNING("Expected result of adding %d and %d on GPU ID %d is %d, got %d.\n",
-                cpu_int[0], cpu_int[1], this->id_, reference, cpu_int[2]);
+        WARNING("Expected result of adding %d and %d on GPU ID %d is %d, got %d.\n", cpu_int[0], cpu_int[1], this->id_,
+                reference, cpu_int[2]);
         return false;
     }
     return true;
@@ -139,15 +155,15 @@ void cuda::Device::set_as_current(void) const {
 }
 
 // Get and set GPU limit
-std::uint64_t cuda::Device::limit(cuda::Device::Limit limit, std::uint64_t size) {
+std::uint64_t cuda::Device::limit(cuda::DeviceLimit limit, std::uint64_t size) {
     std::uint64_t result;
     if (size == UINT64_MAX) {
         size_t limit_value;
-        ::cudaDeviceGetLimit(&limit_value, static_cast<cudaLimit>(limit));
+        ::cudaDeviceGetLimit(&limit_value, static_cast<::cudaLimit>(limit));
         result = static_cast<std::uint64_t>(limit_value);
     } else {
         size_t limit_value = static_cast<size_t>(size);
-        ::cudaError_t err_ = ::cudaDeviceSetLimit(static_cast<cudaLimit>(limit), limit_value);
+        ::cudaError_t err_ = ::cudaDeviceSetLimit(static_cast<::cudaLimit>(limit), limit_value);
         if (err_ != 0) {
             FAILURE(cuda_runtime_error, "cudaDeviceSetLimit failed with message \"%s\".\n", ::cudaGetErrorName(err_));
         }
@@ -157,9 +173,7 @@ std::uint64_t cuda::Device::limit(cuda::Device::Limit limit, std::uint64_t size)
 }
 
 // Reset all GPU
-void cuda::Device::reset_all(void) {
-    ::cudaDeviceReset();
-}
+void cuda::Device::reset_all(void) { ::cudaDeviceReset(); }
 
 // String representation
 std::string cuda::Device::str(void) const {
@@ -175,9 +189,8 @@ void cuda::print_all_gpu_specification(void) {
     int tot_device = cuda::Device::get_num_gpu();
     for (int i = 0; i < tot_device; i++) {
         std::printf("GPU Id: %d.\n", i);
-        ::cudaSetDevice(i);
-        cuda::Device current_device(i);
-        current_device.print_specification();
+        cuda::Device gpu(i);
+        gpu.print_specification();
     }
 }
 
@@ -187,9 +200,8 @@ bool cuda::test_all_gpu(void) {
     bool result = true;
     for (int i = 0; i < tot_device; i++) {
         std::printf("Checking device: %d...", i);
-        ::cudaSetDevice(i);
-        cuda::Device current_device(i);
-        result = result && current_device.test_gpu();
+        cuda::Device gpu(i);
+        result = result && gpu.test_gpu();
         if (!result) {
             WARNING("\rCheck on device %d has failed.\n", i);
         } else {

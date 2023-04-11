@@ -2,10 +2,8 @@
 #ifndef MERLIN_VECTOR_TPP_
 #define MERLIN_VECTOR_TPP_
 
-#include <sstream>  // std::ostringstream
+#include <sstream>      // std::ostringstream
 #include <type_traits>  // std::is_arithmetic_v, std::is_constructible_v, std::is_copy_assignable_v
-
-#include "merlin/logger.hpp"  // FAILURE
 
 namespace merlin {
 
@@ -69,7 +67,7 @@ __cuhostdev__ Vector<T>::Vector(const Vector<T> & src) : size_(src.size_) {
 template <typename T>
 __cuhostdev__ Vector<T> & Vector<T>::operator=(const Vector<T> & src) {
     // free old data
-    if (this->data_ != nullptr) {
+    if ((!this->assigned_) && (this->data_ != nullptr)) {
         delete[] this->data_;
     }
     // copy new data
@@ -90,7 +88,7 @@ __cuhostdev__ Vector<T>::Vector(Vector<T> && src) : data_(src.data_), size_(src.
 // Move assignment
 template <typename T>
 __cuhostdev__ Vector<T> & Vector<T>::operator=(Vector<T> && src) {
-    if (this->data_ != nullptr) {
+    if ((!this->assigned_) && (this->data_ != nullptr)) {
         delete[] this->data_;
     }
     this->size_ = src.size_;
@@ -116,84 +114,70 @@ __cuhostdev__ void Vector<T>::assign(T * ptr_first, T * ptr_last) {
     this->assigned_ = true;
 }
 
-#ifndef __MERLIN_CUDA__
-
-// Copy data from CPU to a global memory on GPU
-template <typename T>
-void * Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr, std::uintptr_t stream_ptr) const {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access this feature.\n");
-    return nullptr;
-}
-
-// Copy data from GPU to CPU
-template <typename T>
-void Vector<T>::copy_from_gpu(const T * gpu_ptr, std::uintptr_t stream_ptr) {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access this feature.\n");
-}
-
-#elif defined(__NVCC__)
-
 // Copy data from CPU to a global memory on GPU
 template <typename T>
 void * Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr, std::uintptr_t stream_ptr) const {
     // initialize buffer to store data of the copy before cloning it to GPU
     Vector<T> copy_on_gpu;
     // copy data
-    ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
-    ::cudaMemcpyAsync(data_ptr, this->data_, this->size_*sizeof(T), ::cudaMemcpyHostToDevice, stream);
+    cuda_mem_cpy_host_to_device(data_ptr, this->data_, this->size_ * sizeof(T), stream_ptr);
     // copy metadata
     copy_on_gpu.data_ = reinterpret_cast<T *>(data_ptr);
     copy_on_gpu.size_ = this->size_;
-    ::cudaMemcpyAsync(gpu_ptr, &copy_on_gpu, sizeof(Vector<T>), ::cudaMemcpyHostToDevice, stream);
+    cuda_mem_cpy_host_to_device(gpu_ptr, &copy_on_gpu, sizeof(Vector<T>), stream_ptr);
     // nullify data on copy to avoid deallocate memory on CPU
     copy_on_gpu.data_ = nullptr;
-    std::uintptr_t ptr_end = reinterpret_cast<std::uintptr_t>(data_ptr) + this->size_*sizeof(T);
+    std::uintptr_t ptr_end = reinterpret_cast<std::uintptr_t>(data_ptr) + this->size_ * sizeof(T);
     return reinterpret_cast<void *>(ptr_end);
 }
 
 // Copy data from GPU to CPU
 template <typename T>
-void Vector<T>::copy_from_gpu(const T * gpu_ptr, std::uintptr_t stream_ptr) {
-    // copy data
-    ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
-    ::cudaMemcpyAsync(this->data_, gpu_ptr, this->size_*sizeof(T),
-                      cudaMemcpyDeviceToHost, stream);
+void * Vector<T>::copy_from_gpu(Vector<T> * gpu_ptr, std::uintptr_t stream_ptr) {
+    // create a temporary object to get pointer to data
+    Vector<T> gpu_object;
+    cuda_mem_cpy_device_to_host(&gpu_object, gpu_ptr, sizeof(Vector<T>), stream_ptr);
+    T * gpu_data_ptr = gpu_object.data();
+    // copy data from GPU
+    cuda_mem_cpy_device_to_host(this->data_, gpu_data_ptr, this->size_ * sizeof(T), stream_ptr);
+    // avoid de-allocate gpu_object pointer
+    gpu_object.data_ = nullptr;
+    return reinterpret_cast<void *>(gpu_data_ptr + this->size_);
 }
-
-#endif  // !__MERLIN_CUDA__
 
 #ifdef __NVCC__
 
 // Copy to shared memory
 template <typename T>
-__cudevice__ void * Vector<T>::copy_to_shared_mem(Vector<T> * share_ptr, void * data_ptr) const {
-    bool check_zeroth_thread = (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
-    if (check_zeroth_thread) {
-        // copy size
-        share_ptr->size_ = this->size_;
-        share_ptr->data_ = reinterpret_cast<T *>(data_ptr);
-        // copy data
-        for (std::uint64_t i = 0; i < this->size_; i++) {
-            share_ptr->data_[i] = this->data_[i];
-        }
+__cudevice__ void * Vector<T>::copy_by_block(Vector<T> * dest_ptr, void * data_ptr, std::uint64_t thread_idx,
+                                             std::uint64_t block_size) const {
+    T * new_data = reinterpret_cast<T *>(data_ptr);
+    // copy meta data
+    if (thread_idx == 0) {
+        dest_ptr->size_ = this->size_;
+        dest_ptr->data_ = new_data;
     }
     __syncthreads();
-    std::uintptr_t ptr_end = reinterpret_cast<std::uint64_t>(data_ptr) + this->size_*sizeof(T);
-    return reinterpret_cast<void *>(ptr_end);
+    // copy data
+    for (std::uint64_t i = thread_idx; i < this->size_; i += block_size) {
+        new_data[i] = this->data_[i];
+    }
+    __syncthreads();
+    return reinterpret_cast<void *>(new_data + this->size_);
 }
 
 // Copy to shared memory by current thread
 template <typename T>
-__cudevice__ void * Vector<T>::copy_to_shared_mem_single(Vector<T> * share_ptr, void * data_ptr) const {
-    // copy size
-    share_ptr->size_ = this->size_;
-    share_ptr->data_ = reinterpret_cast<T *>(data_ptr);
+__cudevice__ void * Vector<T>::copy_by_thread(Vector<T> * dest_ptr, void * data_ptr) const {
+    // copy meta data
+    T * new_data = reinterpret_cast<T *>(data_ptr);
+    dest_ptr->size_ = this->size_;
+    dest_ptr->data_ = new_data;
     // copy data
     for (std::uint64_t i = 0; i < this->size_; i++) {
-        share_ptr->data_[i] = this->data_[i];
+        new_data[i] = this->data_[i];
     }
-    std::uintptr_t ptr_end = reinterpret_cast<std::uint64_t>(data_ptr) + this->size_*sizeof(T);
-    return reinterpret_cast<void *>(ptr_end);
+    return reinterpret_cast<void *>(new_data + this->size_);
 }
 
 #endif  // __NVCC__
@@ -209,7 +193,7 @@ std::string Vector<T>::str(const char * sep) const {
         } else {
             os << this->data_[i].str();
         }
-        if (i != this->size_-1) {
+        if (i != this->size_ - 1) {
             os << sep;
         }
     }
@@ -265,9 +249,9 @@ __cuhostdev__ Vector<T>::~Vector(void) {
 }
 
 // Create vector from constrcutor arguments
-template <typename T, typename ... Args>
-Vector<T> make_vector(std::uint64_t size, Args ... args) noexcept {
-    static_assert(std::is_constructible_v<T, Args ...>, "Desired type is not constructible from provided arg.\n");
+template <typename T, typename... Args>
+Vector<T> make_vector(std::uint64_t size, Args... args) noexcept {
+    static_assert(std::is_constructible_v<T, Args...>, "Desired type is not constructible from provided arg.\n");
     Vector<T> result;
     result.data() = new T[size];
     result.size() = size;
