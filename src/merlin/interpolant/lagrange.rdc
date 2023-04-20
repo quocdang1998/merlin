@@ -11,8 +11,7 @@ namespace merlin {
 
 // Calculate multi-dim index with some skipped dimension
 __cuhostdev__ static void contiguous_to_ndim_idx_collapsed(const std::uint64_t & index, const intvec & full_shape,
-                                                             const intvec & collapsed_index,
-                                                             std::uint64_t * data_ptr) {
+                                                           const intvec & collapsed_index, std::uint64_t * data_ptr) {
     // calculate non collapsed ndim
     std::uint64_t non_collapsed_ndim = 0, i_dim_last_collapsed = UINT64_MAX;
     for (std::uint64_t i_dim = 0; i_dim < full_shape.size(); i_dim++) {

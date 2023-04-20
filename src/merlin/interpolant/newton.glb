@@ -71,8 +71,8 @@ __cudevice__ static void calc_newton_coeffs_2(const Vector<double> & grid_vector
 }
 
 // Calculate divide difference algorithm
-__device__ static void calc_newton_coeffs_single_core(const interpolant::CartesianGrid & grid, array::Parcel & coeff,
-                                                      std::uintptr_t free_shared_mem) {
+__cudevice__ static void calc_newton_coeffs_single_core(const interpolant::CartesianGrid & grid, array::Parcel & coeff,
+                                                        std::uintptr_t free_shared_mem) {
     // get thread index and n_thread
     std::uint64_t thrd_idx = flatten_thread_index();
     std::uint64_t n_th = size_of_block();

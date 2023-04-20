@@ -1,5 +1,6 @@
 // Copyright 2022 quocdang1998
-#include "merlin/cuda/graph.hpp"
+#ifndef MERLIN_CUDA_GRAPH_TPP_
+#define MERLIN_CUDA_GRAPH_TPP_
 
 #include "merlin/logger.hpp"  // FAILURE
 
@@ -50,3 +51,5 @@ cuda::GraphNode cuda::Graph::add_kernel_node(Function * kernel, std::uint64_t n_
 #endif  // __MERLIN_CUDA__
 
 }  // namespace merlin
+
+#endif  // MERLIN_CUDA_GRAPH_TPP_

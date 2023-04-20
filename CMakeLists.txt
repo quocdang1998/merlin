@@ -39,6 +39,7 @@ list(APPEND MERLIN_SRC_CPP
      interpolant/regular_grid.cpp
      interpolant/sparse_grid.cpp
      # interpolant/interpolant.cpp
+     statistics/moment.cpp
 )
 list(APPEND MERLIN_SRC_CU
      array/array.cu

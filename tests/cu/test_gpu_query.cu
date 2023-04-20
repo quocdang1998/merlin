@@ -29,17 +29,17 @@ void graph_callback(void * data) {
 
 int main(void) {
     merlin::cuda::print_all_gpu_specification();
-    std::uint64_t stack_size = merlin::cuda::Device::limit(merlin::cuda::Device::Limit::StackSize);
+    std::uint64_t stack_size = merlin::cuda::Device::limit(merlin::cuda::DeviceLimit::StackSize);
     MESSAGE("Stack size: %" PRIu64 ".\n", stack_size);
     merlin::cuda::test_all_gpu();
 
-    merlin::cuda::Context new_ctx(0, merlin::cuda::Context::Schedule::BlockSync);
+    merlin::cuda::Context new_ctx(0, merlin::cuda::ContextSchedule::BlockSync);
     merlin::cuda::Context c = merlin::cuda::Context::get_current();
     MESSAGE("Current context: %s.\n", c.str().c_str());
 
-    merlin::cuda::Event ev(merlin::cuda::Event::Category::BlockingSyncEvent | merlin::cuda::Event::Category::DisableTimingEvent);
+    merlin::cuda::Event ev(merlin::cuda::EventCategory::BlockingSyncEvent | merlin::cuda::EventCategory::DisableTimingEvent);
 
-    merlin::cuda::Stream s(merlin::cuda::Stream::Setting::Default);
+    merlin::cuda::Stream s(merlin::cuda::StreamSetting::Default);
     MESSAGE("Default stream: %s.\n", s.str().c_str());
     int data = 1;
     s.check_cuda_context();

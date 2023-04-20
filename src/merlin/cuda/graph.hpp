@@ -5,7 +5,7 @@
 #include <cstdint>  // std::uintptr_t
 #include <array>  // std::array
 #include <mutex>  // std::mutex
-#include <string>// std::string
+#include <string>  // std::string
 #include <tuple>  // std::tuple
 
 #include "merlin/cuda/declaration.hpp"  // merlin::cuda::Graph
@@ -172,4 +172,4 @@ class cuda::Graph {
 
 #include "merlin/cuda/graph.tpp"
 
-#endif  // MERLIN_CUDA_EVENT_HPP_
+#endif  // MERLIN_CUDA_GRAPH_HPP_

@@ -137,6 +137,16 @@ Newton method
    merlin::interpolant::eval_newton_cpu(const interpolant::SparseGrid &, const array::Array &, const Vector<double> &) "eval_newton_cpu_on_sparsegrid"
 
 
+Statistics API
+--------------
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::statistics::powered_mean
+   merlin::statistics::moment_cpu
+
+
 Low level API
 -------------
 
