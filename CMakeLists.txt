@@ -33,12 +33,12 @@ list(APPEND MERLIN_SRC_CPP
      iterator.cpp
      interpolant/cartesian_grid.cpp
      interpolant/grid.cpp
+     interpolant/interpolant.cpp
      interpolant/lagrange.cpp
      interpolant/newton.cpp
      interpolant/nodes.cpp
      interpolant/regular_grid.cpp
      interpolant/sparse_grid.cpp
-     # interpolant/interpolant.cpp
      statistics/moment.cpp
 )
 list(APPEND MERLIN_SRC_CU

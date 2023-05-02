@@ -101,6 +101,13 @@ class cuda_runtime_error : public std::runtime_error {
     const char * what() const noexcept {return std::runtime_error::what();}
 };
 
+/** @brief Exception class to be thrown when a feature that is not yet implemented.*/
+class not_implemented_error : public std::runtime_error {
+  public:
+    not_implemented_error(const char * message) : std::runtime_error(message) {}
+    const char * what() const noexcept {return std::runtime_error::what();}
+};
+
 }  // namespace merlin
 
 // Error message from Windows and POSIX

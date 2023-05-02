@@ -205,7 +205,7 @@ std::string interpolant::CartesianGrid::str(void) const {
 }
 
 // Destructor
-__cuhostdev__ interpolant::CartesianGrid::~CartesianGrid(void) {}
+interpolant::CartesianGrid::~CartesianGrid(void) {}
 
 // Union of 2 Cartesian grid
 interpolant::CartesianGrid interpolant::operator+(const interpolant::CartesianGrid & grid_1,

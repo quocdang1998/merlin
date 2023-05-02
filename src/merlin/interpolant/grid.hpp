@@ -24,7 +24,7 @@ class interpolant::Grid {
     /** @brief Default constructor.*/
     __cuhostdev__ Grid(void) {}
     /** @brief Destructor.*/
-    MERLIN_EXPORTS ~Grid(void);
+    virtual MERLIN_EXPORTS ~Grid(void);
 
   protected:
     /** @brief Array holding coordinates of points in the Grid.*/

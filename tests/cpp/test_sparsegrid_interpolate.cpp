@@ -5,8 +5,7 @@
 #include "merlin/array/slice.hpp"
 #include "merlin/interpolant/cartesian_grid.hpp"
 #include "merlin/interpolant/sparse_grid.hpp"
-#include "merlin/interpolant/lagrange.hpp"
-#include "merlin/interpolant/newton.hpp"
+#include "merlin/interpolant/interpolant.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/vector.hpp"
 
@@ -23,16 +22,13 @@ int main(void) {
         std::printf("    Level %" PRIu64 ": %s\n", level_index, grid.level_index(level_index).str().c_str());
     }
     MESSAGE("Subgrid start index: %s\n", grid.sub_grid_start_index().str().c_str());
-    merlin::array::Array coeff(merlin::intvec({grid.size()}));
-    merlin::interpolant::calc_lagrange_coeffs_cpu(grid, value, coeff);
-    // merlin::interpolant::calc_newton_coeffs_cpu(grid, value, coeff);
-    MESSAGE("Coefficients are: %s\n", coeff.str().c_str());
+
+    merlin::interpolant::PolynomialInterpolant plm_int(grid, value, merlin::interpolant::Method::Lagrange);
+    MESSAGE("Coefficients are: %s\n", plm_int.get_coeff().str().c_str());
 
     merlin::interpolant::CartesianGrid c_grid({{0.0, 1.0, 2.0}, {0.0, 1.0, 2.0}});
     for (std::uint64_t i = 0; i < c_grid.size(); i ++) {
         merlin::Vector<double> point = c_grid[i];
-        double f_x = merlin::interpolant::eval_lagrange_cpu(grid, coeff, point);
-        // double f_x = merlin::interpolant::eval_newton_cpu(grid, coeff, point);
-        MESSAGE("Value calculated at %s is %.6f.\n", point.str().c_str(), f_x);
+        MESSAGE("Value calculated at %s is %.6f.\n", point.str().c_str(), plm_int(point));
     }
 }

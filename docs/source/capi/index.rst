@@ -110,31 +110,14 @@ Grid
    merlin::interpolant::CartesianGrid
    merlin::interpolant::SparseGrid
 
-Lagrange method
-^^^^^^^^^^^^^^^
+Polynomial interpolant
+^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxysummary::
    :toctree: generated
 
-   merlin::interpolant::calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid &grid, const array::Array &value, array::Array &coeff) "calc_lagrange_coeffs_cpu_on_cartgrid"
-   ~merlin::interpolant::calc_lagrange_coeffs_gpu "calc_lagrange_coeffs_gpu"
-   merlin::interpolant::calc_lagrange_coeffs_cpu(const interpolant::SparseGrid &grid, const array::Array &value, array::Array &coeff) "calc_lagrange_coeffs_cpu_on_sparsegrid"
-   merlin::interpolant::eval_lagrange_cpu(const interpolant::CartesianGrid &, const array::Array &, const Vector<double> &) "eval_lagrange_cpu_on_cartgrid"
-   ~merlin::interpolant::eval_lagrange_gpu "eval_lagrange_gpu"
-   merlin::interpolant::eval_lagrange_cpu(const interpolant::SparseGrid &, const array::Array &, const Vector<double> &) "eval_lagrange_cpu_on_sparsegrid"
-
-Newton method
-^^^^^^^^^^^^^^^
-
-.. doxysummary::
-   :toctree: generated
-
-   merlin::interpolant::calc_newton_coeffs_cpu(const interpolant::CartesianGrid &grid, const array::Array &value, array::Array &coeff) "calc_newton_coeffs_cpu_on_cartgrid"
-   merlin::interpolant::calc_newton_coeffs_gpu "calc_newton_coeffs_gpu"
-   merlin::interpolant::calc_newton_coeffs_cpu(const interpolant::SparseGrid &grid, const array::Array &value, array::Array &coeff) "calc_newton_coeffs_cpu_on_sparsegrid"
-   merlin::interpolant::eval_newton_cpu(const interpolant::CartesianGrid &, const array::Array &, const Vector<double> &) "eval_newton_cpu_on_cartgrid"
-   merlin::interpolant::eval_newton_gpu "eval_newton_gpu"
-   merlin::interpolant::eval_newton_cpu(const interpolant::SparseGrid &, const array::Array &, const Vector<double> &) "eval_newton_cpu_on_sparsegrid"
+   merlin::interpolant::PolynomialInterpolant
+   merlin::interpolant::Method
 
 
 Statistics API

@@ -15,7 +15,7 @@
 namespace merlin {
 
 /** @brief A set of multi-dimensional points.*/
-class interpolant::RegularGrid : interpolant::Grid {
+class interpolant::RegularGrid : public interpolant::Grid {
   public:
     /// @name Constructor
     /// @{

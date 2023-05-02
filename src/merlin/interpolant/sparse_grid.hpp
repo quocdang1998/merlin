@@ -17,7 +17,7 @@ namespace merlin {
  *  of disjointed union of many multi-dimensional Cartesian grids, each associated with a level index vector (an array
  *  of level on each dimension). Each point in the grid belongs to a sub-grid, and associated to an index in the grid.
  */
-class interpolant::SparseGrid : interpolant::Grid {
+class interpolant::SparseGrid : public interpolant::Grid {
   public:
     /// @name Constructor
     /// @{

@@ -143,7 +143,7 @@ class interpolant::CartesianGrid : public interpolant::Grid {
     /// @name Destructor
     /// @{
     /** @brief Default destructor.*/
-    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS ~CartesianGrid(void);
+    MERLIN_EXPORTS ~CartesianGrid(void);
     /// @}
 
   protected:
