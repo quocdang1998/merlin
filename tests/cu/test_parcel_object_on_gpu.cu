@@ -27,7 +27,7 @@ int main(void) {
 
     // copy data to GPU and print each element of the tensor
     MESSAGE("Initialize Parcel object with elements: 1.0 3.0 5.0 6.0 8.0 10.0.\n");
-    merlin::cuda::Stream s(merlin::cuda::Stream::Setting::Default);
+    merlin::cuda::Stream s(merlin::cuda::StreamSetting::Default);
     merlin::array::Parcel B(A.shape());
     B.transfer_data_to_gpu(A, s);
     merlin::array::Parcel * B_gpu;

@@ -340,6 +340,7 @@ function(CONFIGURE_TESTFILES LANGUAGE)
         add_executable(${TESTNAME} ${TESTFILE})
         target_link_libraries(${TESTNAME} PRIVATE libmerlin OpenMP::OpenMP_CXX)
         set_property(TARGET ${TESTNAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+        set_property(TARGET ${TESTNAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION ON)
         set_target_properties(${TESTNAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY
                               ${CMAKE_CURRENT_BINARY_DIR}/tests)
         set_property(TARGET ${TESTNAME} PROPERTY CUDA_ARCHITECTURES "${CUDA_ARCH_LIST}")

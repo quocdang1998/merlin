@@ -24,23 +24,21 @@ void cuda::Graph::destroy_graph(void) {
 cuda::Graph::Graph(int flag) {}
 
 // Copy constructor
-cuda::Graph::Graph(const cuda::Graph & src) {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for graph management.\n");
-}
+cuda::Graph::Graph(const cuda::Graph & src) : graph_ptr_(src.graph_ptr_) {}
 
 // Copy assignment
 cuda::Graph & cuda::Graph::operator=(const cuda::Graph & src) {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for graph management.\n");
+    this->graph_ptr_ = src.graph_ptr_;
+    return *this;
 }
 
 // Move constructor
-cuda::Graph::Graph(cuda::Graph && src) {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for graph management.\n");
-}
+cuda::Graph::Graph(cuda::Graph && src) : graph_ptr_(src.graph_ptr_) {}
 
 // Move assignment
 cuda::Graph & cuda::Graph::operator=(cuda::Graph && src) {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for graph management.\n");
+    this->graph_ptr_ = src.graph_ptr_;
+    return *this;
 }
 
 // Execute a graph

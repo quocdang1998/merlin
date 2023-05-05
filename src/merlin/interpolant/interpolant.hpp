@@ -105,8 +105,11 @@ class interpolant::PolynomialInterpolant {
     /// @}
 
   protected:
+    /** @brief Pointer to grid.*/
     interpolant::Grid * grid_ = nullptr;
+    /** @brief Pointer to array of coefficients.*/
     array::NdData * coeff_ = nullptr;
+    /** @brief Interpolation method.*/
     interpolant::Method method_;
 };
 

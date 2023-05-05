@@ -68,7 +68,7 @@ interpolant::PolynomialInterpolant::PolynomialInterpolant(const interpolant::Car
     this->grid_ = new interpolant::CartesianGrid(grid);
     this->method_ = method;
     // calculate coefficients
-    this->coeff_ = new array::Parcel(values.shape());
+    this->coeff_ = new array::Parcel(values.shape(), stream);
     array::Parcel * p_coeff_array = static_cast<array::Parcel *>(this->coeff_);
     if (method == interpolant::Method::Lagrange) {
         interpolant::calc_lagrange_coeffs_gpu(grid, values, *p_coeff_array, stream, n_threads);

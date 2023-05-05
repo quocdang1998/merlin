@@ -65,8 +65,10 @@ template <typename ... Args>
 cuda::Memory<Args ...>::Memory(std::uintptr_t stream_ptr, const Args & ... args) {
     // allocate data
     this->offset_.fill(0);
+    this->stream_ptr_ = stream_ptr;
     this->total_malloc_size_ = total_malloc_size(this->offset_.data(), 1, args...);
-    ::cudaError_t err_ = ::cudaMalloc(&(this->gpu_ptr_), this->total_malloc_size_);
+    ::cudaError_t err_ = ::cudaMallocAsync(&(this->gpu_ptr_), this->total_malloc_size_,
+                                           reinterpret_cast<::cudaStream_t>(stream_ptr));
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Alloc data faile with message \"%s\"\n", ::cudaGetErrorString(err_));
     }
@@ -103,7 +105,7 @@ void cuda::Memory<Args ...>::defer_allocation(void) {
 template <typename ... Args>
 cuda::Memory<Args ...>::~Memory(void) {
     if ((this->gpu_ptr_ != nullptr) && !(this->deferred_dealloc_)) {
-        ::cudaFree(this->gpu_ptr_);
+        ::cudaFreeAsync(this->gpu_ptr_, reinterpret_cast<::cudaStream_t>(this->stream_ptr_));
     }
 }
 

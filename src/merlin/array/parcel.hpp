@@ -23,7 +23,7 @@ class array::Parcel : public array::NdData {
     /** @brief Default constructor (do nothing).*/
     __cuhostdev__ Parcel(void) {}
     /** @brief Construct a contiguous array from shape on GPU.*/
-    MERLIN_EXPORTS Parcel(const intvec & shape);
+    MERLIN_EXPORTS Parcel(const intvec & shape, const cuda::Stream & stream = cuda::Stream());
     /** @brief Constructor from a slice.
      *  @param whole merlin::array::NdData of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
@@ -133,6 +133,8 @@ class array::Parcel : public array::NdData {
      *  ``merlin::Environment::flush_cuda_deferred_deallocation`` is called.
      */
     MERLIN_EXPORTS void defer_allocation(void);
+    /** @brief Free current data hold by the object.*/
+    MERLIN_EXPORTS void free_current_data(const cuda::Stream & stream = cuda::Stream());
     /** @brief Destructor.*/
     MERLIN_EXPORTS ~Parcel(void);
     /// @}
@@ -144,10 +146,6 @@ class array::Parcel : public array::NdData {
     cuda::Context context_;
     /** @brief Mutex lock at destruction time.*/
     static std::mutex & mutex_;
-
-  private:
-    /** @brief Free current data hold by the object.*/
-    void free_current_data(void);
 };
 
 }  // namespace merlin

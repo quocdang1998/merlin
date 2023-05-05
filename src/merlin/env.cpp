@@ -92,7 +92,7 @@ std::vector<std::pair<int, void *>> Environment::deferred_gpu_pointer;
 void initialize_cuda_context(void) {}
 
 // Alarm for CUDA error
-void alarming_cuda_error(void) {}
+void alarm_cuda_error(void) {}
 
 // Deallocate all pointers in deferred pointer array
 void Environment::flush_cuda_deferred_deallocation(void) {}

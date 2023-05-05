@@ -248,6 +248,29 @@ void interpolant::calc_newton_coeffs_cpu(const interpolant::SparseGrid & grid, c
     }
 }
 
+#ifndef __MERLIN_CUDA__
+
+// Call CUDA kernel calculating coefficients on GPU
+void call_newton_coeff_kernel(const interpolant::CartesianGrid * p_grid, const array::Parcel * p_value,
+                              array::Parcel * p_coeff, std::uint64_t shared_mem_size, std::uintptr_t stream_ptr,
+                              std::uint64_t n_thread) {}
+
+// Calculate Newton interpolation coefficients on a full Cartesian grid using GPU
+void interpolant::calc_newton_coeffs_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & value,
+                                         array::Parcel & coeff, const cuda::Stream & stream, std::uint64_t n_thread) {
+    FAILURE(cuda_compile_error, "Compile the package with CUDA option enabled to access this feature.\n");
+}
+
+// Evaluate Newton interpolation on a full Cartesian grid using GPU
+Vector<double> interpolant::eval_newton_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & coeff,
+                                            const array::Parcel & points, const cuda::Stream & stream,
+                                            std::uint64_t n_thread) {
+    FAILURE(cuda_compile_error, "Compile the package with CUDA option enabled to access this feature.\n");
+    return Vector<double>();
+}
+
+#endif  // __MERLIN_CUDA__
+
 // --------------------------------------------------------------------------------------------------------------------
 // Evaluate interpolation
 // --------------------------------------------------------------------------------------------------------------------

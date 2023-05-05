@@ -16,7 +16,7 @@ class KernelLock {
      *  @details Allocate an `int` on GPU to indicate wwhether the block are executed or not.
      */
     KernelLock(void) {
-        ::cudaMalloc(&this->state_, sizeof(int));
+        ::cudaMallocAsync(&this->state_, sizeof(int), nullptr);
         int temp = 0;
         ::cudaMemcpy(this->state_, &temp, sizeof(int), ::cudaMemcpyHostToDevice);
         this->reference_count_ = 1;
@@ -63,7 +63,7 @@ class KernelLock {
     /// @{
     ~KernelLock(void) {
         if (this->reference_count_ == 1) {
-            ::cudaFree(this->state_);
+            ::cudaFreeAsync(this->state_, nullptr);
         }
     }
     /// @}

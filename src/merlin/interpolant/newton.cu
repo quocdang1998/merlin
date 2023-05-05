@@ -15,7 +15,7 @@
 namespace merlin {
 
 // --------------------------------------------------------------------------------------------------------------------
-// Utils
+// Calculate coefficients
 // --------------------------------------------------------------------------------------------------------------------
 
 // Calculate Newton interpolation coefficients on a full Cartesian grid using GPU
@@ -40,7 +40,6 @@ void interpolant::calc_newton_coeffs_gpu(const interpolant::CartesianGrid & grid
     }
     // copy data to GPU
     cuda::Memory mem(stream.get_stream_ptr(), grid, coeff);
-    mem.defer_allocation();
     interpolant::CartesianGrid * ptr_grid_on_gpu = mem.get<0>();
     array::Parcel * ptr_coeff_on_gpu = mem.get<1>();
     std::uint64_t total_malloc_size = mem.get_total_malloc_size() + n_thread * grid.ndim() * sizeof(std::uint64_t);
@@ -58,7 +57,6 @@ Vector<double> interpolant::eval_newton_gpu(const interpolant::CartesianGrid & g
     // copy data to GPU
     Vector<double> result(points.shape()[0]);
     cuda::Memory mem(stream.get_stream_ptr(), grid, coeff, points, result);
-    mem.defer_allocation();
     interpolant::CartesianGrid * ptr_grid_on_gpu = mem.get<0>();
     array::Parcel * ptr_coeff_on_gpu = mem.get<1>();
     array::Parcel * ptr_points_on_gpu = mem.get<2>();

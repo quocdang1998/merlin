@@ -59,6 +59,8 @@ class cuda::Memory {
     std::array<std::uintptr_t, sizeof...(Args)> offset_;
     /** @brief Total malloc size.*/
     std::uint64_t total_malloc_size_;
+    /** @brief CUDA stream pointer.*/
+    std::uintptr_t stream_ptr_ = 0;
     /** @brief Tuple of pointers to elements for storing class type.*/
     std::tuple<Args * ...> type_ptr_;
     /** @brief Deferred deallocation.*/

@@ -62,6 +62,14 @@ void call_lagrange_coeff_kernel(const interpolant::CartesianGrid * p_grid, const
                                 array::Parcel * p_coeff, std::uint64_t shared_mem_size, std::uintptr_t stream_ptr,
                                 std::uint64_t n_thread) {}
 
+// Evaluate Lagrange interpolation on a full Cartesian grid using GPU
+Vector<double> interpolant::eval_lagrange_gpu(const interpolant::CartesianGrid & grid, const array::Parcel & coeff,
+                                            const array::Parcel & points, const cuda::Stream & stream,
+                                            std::uint64_t n_thread) {
+    FAILURE(cuda_compile_error, "Compile the package with CUDA option enabled to access this feature.\n");
+    return Vector<double>();
+}
+
 #endif  // __MERLIN_CUDA__
 
 // Calculate max_level from old max_level and new_max_level

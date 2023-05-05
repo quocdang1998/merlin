@@ -26,6 +26,11 @@ void array::Parcel::remove_dim(std::uint64_t i_dim) {
 
 #ifndef __MERLIN_CUDA__
 
+// Constructor from shape vector
+array::Parcel::Parcel(const intvec & shape) {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
+}
+
 // Copy constructor
 array::Parcel::Parcel(const array::Parcel & src) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
@@ -82,7 +87,7 @@ void * array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_
 }
 
 // Free old data
-void array::Parcel::free_current_data(void) {
+void array::Parcel::free_current_data(const cuda::Stream & stream) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 

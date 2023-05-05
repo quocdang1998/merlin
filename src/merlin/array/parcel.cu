@@ -16,7 +16,7 @@ namespace merlin {
 // --------------------------------------------------------------------------------------------------------------------
 
 // Free old data
-void array::Parcel::free_current_data(void) {
+void array::Parcel::free_current_data(const cuda::Stream & stream) {
     // lock mutex
     array::Parcel::mutex_.lock();
     // switch to appropriate context
@@ -27,7 +27,7 @@ void array::Parcel::free_current_data(void) {
     }
     // free data
     if ((this->data_ != nullptr) && this->release_) {
-        ::cudaFree(this->data_);
+        ::cudaFreeAsync(this->data_, reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr()));
         this->data_ = nullptr;
     }
     // finalize: set back the original GPU and unlock the mutex
@@ -38,10 +38,11 @@ void array::Parcel::free_current_data(void) {
 }
 
 // Constructor from shape vector
-array::Parcel::Parcel(const intvec & shape) : array::NdData(shape) {
+array::Parcel::Parcel(const intvec & shape, const cuda::Stream & stream) : array::NdData(shape) {
     // allocate data
     this->release_ = true;
-    ::cudaError_t err_ = ::cudaMalloc(&(this->data_), sizeof(double) * this->size());
+    ::cudaError_t err_ = ::cudaMallocAsync(&(this->data_), sizeof(double) * this->size(),
+                                           reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr()));
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
