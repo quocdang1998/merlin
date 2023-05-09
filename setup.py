@@ -30,6 +30,8 @@ extensions = [
     Extension("merlin.cuda", [abspath_wrt_package("merlin/cuda/core.pyx")],
               language="c++", **ext_options),
     Extension("merlin.array", [abspath_wrt_package("merlin/array/core.pyx")],
+              language="c++", **ext_options),
+    Extension("merlin.interpolant", [abspath_wrt_package("merlin/interpolant/core.pyx")],
               language="c++", **ext_options)
 ]
 

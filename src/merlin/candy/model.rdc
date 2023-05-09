@@ -1,0 +1,64 @@
+// Copyright 2023 quocdang1998
+#include "merlin/candy/model.hpp"
+
+namespace merlin {
+
+// Get shape
+__cuhostdev__ intvec candy::Model::get_model_shape(std::uint64_t * data_ptr) const noexcept {
+    intvec result;
+    if (data_ptr != nullptr) {
+        result.assign(data_ptr, this->ndim());
+    } else {
+        result = intvec(this->parameters_.size());
+    }
+    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+        result[i_dim] = this->parameters_[i_dim].size();
+    }
+    return result;
+}
+
+// Number of elements
+__cuhostdev__ std::uint64_t candy::Model::size(void) const noexcept {
+    std::uint64_t size = 0;
+    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+        size += this->parameters_[i_dim].size();
+    }
+    return size;
+}
+
+// Get reference to element from flattened index
+__cuhostdev__ const double & candy::Model::get(std::uint64_t index) const noexcept {
+    std::uint64_t i_dim = 0, upper_bound = this->rank_*this->parameters_[0].size();
+    while (index >= upper_bound) {
+        i_dim += 1;
+        upper_bound += this->rank_*this->parameters_[i_dim].size();
+    }
+    index -= (upper_bound - this->rank_*this->parameters_[i_dim].size());
+    return this->parameters_[i_dim][index];
+}
+
+// Set value of element from flattened index
+__cuhostdev__ void candy::Model::set(std::uint64_t index, double && value) noexcept {
+    std::uint64_t i_dim = 0, upper_bound = this->rank_*this->parameters_[0].size();
+    while (index >= upper_bound) {
+        i_dim += 1;
+        upper_bound += this->rank_*this->parameters_[i_dim].size();
+    }
+    index -= (upper_bound - this->rank_*this->parameters_[i_dim].size());
+    this->parameters_[i_dim][index] = value;
+}
+
+// Evaluate result of the model at a given index
+__cuhostdev__ double candy::Model::eval(const intvec & index) const noexcept {
+    double result = 0.0;
+    for (std::uint64_t r = 0; r < this->rank_; r++) {
+        double rank_eval = 1.0;
+        for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+            rank_eval *= this->get(i_dim, index[i_dim], r);
+        }
+        result += rank_eval;
+    }
+    return result;
+}
+
+}  // namespace merlin

@@ -200,22 +200,30 @@ __cuhostdev__ intvec get_level_shape(const intvec & level_vector) {
     return grid_shape;
 }
 
+// --------------------------------------------------------------------------------------------------------------------
+// Canonical Decomposition
+// --------------------------------------------------------------------------------------------------------------------
 
-
-
-
-// Get the level from a given valid size of a 1D grid
-/*
-__cuhostdev__ static inline std::uint64_t get_level_from_valid_size(std::uint64_t size) noexcept {
-    size -= 1;
-    std::uint64_t level = 0;
-    while (size >>= 1) {
-        ++level;
+// Get flattened index from model index
+__cuhostdev__ std::uint64_t model_to_contiguous_index(std::uint64_t i_dim, std::uint64_t i_pt, std::uint64_t i_rank,
+                                                      std::uint64_t rank, const intvec & shape) {
+    std::uint64_t result = 0;
+    for (std::uint64_t i = 0; i < i_dim; i++) {
+        result += shape[i];
     }
-    return level;
+    return result + rank*i_pt + i_rank;
 }
-*/
 
-
+// Get model index from flattened index
+__cuhostdev__ std::array<std::uint64_t, 3> contiguous_to_model_idx(std::uint64_t index, std::uint64_t rank,
+                                                                   const intvec & shape) {
+    std::uint64_t i_dim = 0, upper_bound = shape[0];
+    while (index >= upper_bound) {
+        i_dim += 1;
+        upper_bound += shape[i_dim];
+    }
+    index -= upper_bound - shape[i_dim];
+    return {i_dim, index / rank, index % rank};
+}
 
 }  // namespace merlin

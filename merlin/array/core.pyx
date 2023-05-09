@@ -8,7 +8,7 @@ from libcpp.string cimport string
 
 cimport numpy as np
 
-from merlin.vector cimport CppVector, CppIntvec, intvec_from_tuple, tuple_from_intvec
+from merlin.vector cimport CppVector, CppIntvec, intvec_from_iteratable, tuple_from_intvec
 from merlin.cuda.device cimport CppDevice
 from merlin.cuda.stream cimport CppStream
 

@@ -35,9 +35,7 @@ cdef class Stock(NdData):
             filename = pyfilename.encode('UTF-8')
             if kwargs.get("shape") is not None:
                 shape_arg = kwargs.pop("shape")
-                if not isinstance(shape_arg, tuple):
-                    raise TypeError("Expected \"shape\" argument has type tuple.")
-                shape = intvec_from_tuple(shape_arg)
+                shape = intvec_from_iteratable(shape_arg)
                 self.core = new CppStock(filename, shape, offset, thread_safe)
             else:
                 self.core = new CppStock(filename, offset, thread_safe)

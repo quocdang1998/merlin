@@ -8,7 +8,7 @@
 
 #include "merlin/array/declaration.hpp"  // merlin::array::NdData, merlin::array::Slice
 #include "merlin/cuda_decorator.hpp"  // __cuhost__, __cuhostdev__
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS, MERLIN_HOSTDEV_EXPORTS
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/vector.hpp"  // merlin::intvec
 
 
@@ -34,7 +34,7 @@ class array::NdData {
      *  @param whole merlin::array::NdData of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS NdData(const array::NdData & whole, const Vector<array::Slice> & slices);
+    __cuhostdev__ NdData(const array::NdData & whole, const Vector<array::Slice> & slices);
     /// @}
 
     /// @name Copy and move
@@ -64,7 +64,7 @@ class array::NdData {
     /// @name Atributes
     /// @{
     /** @brief Number of element.*/
-    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS std::uint64_t size(void) const noexcept;
+    __cuhostdev__ std::uint64_t size(void) const noexcept;
     /// @}
 
     /// @name Get and set element

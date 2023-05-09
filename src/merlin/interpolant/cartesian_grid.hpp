@@ -8,7 +8,7 @@
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array
 #include "merlin/cuda_decorator.hpp"  // __cuhostdev__
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS, MERLIN_HOSTDEV_EXPORTS
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/interpolant/grid.hpp"  //  merlin::interpolant::Grid
 #include "merlin/iterator.hpp"  // merlin::Iterator
 #include "merlin/vector.hpp"  // merlin::Vector, merlin::intvec
@@ -59,13 +59,13 @@ class interpolant::CartesianGrid : public interpolant::Grid {
         return this->grid_vectors_;
     }
     /** @brief Get shape of the grid.*/
-    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS intvec get_grid_shape(std::uint64_t * data_ptr = nullptr) const noexcept;
+    __cuhostdev__ intvec get_grid_shape(std::uint64_t * data_ptr = nullptr) const noexcept;
     /** @brief Full tensor of each point in the CartesianGrid in form of 2D table.*/
     MERLIN_EXPORTS array::Array grid_points(void) const;
     /** @brief Number of dimension of the CartesianGrid.*/
     __cuhostdev__ std::uint64_t ndim(void) const {return this->grid_vectors_.size();}
     /** @brief Number of points in the CartesianGrid.*/
-    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS std::uint64_t size(void) const;
+    __cuhostdev__ std::uint64_t size(void) const;
     /// @}
 
     /// @name Iterator
@@ -82,11 +82,11 @@ class interpolant::CartesianGrid : public interpolant::Grid {
     /** @brief Get element at a given index.
      *  @param index Index of point in the CartesianGrid::grid_points table.
      */
-    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS Vector<double> operator[](std::uint64_t index) const noexcept;
+    __cuhostdev__ Vector<double> operator[](std::uint64_t index) const noexcept;
     /** @brief Get element at a given index vector.
      *  @param index Vector of index on each dimension.
      */
-    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS Vector<double> operator[](const intvec & index) const noexcept;
+    __cuhostdev__ Vector<double> operator[](const intvec & index) const noexcept;
     /// @}
 
     /// @name GPU related features

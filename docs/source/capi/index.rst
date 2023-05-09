@@ -6,8 +6,11 @@ C++ API
    \setcounter{codelanguage}{1}
 
 
-Environment
+Preliminary
 -----------
+
+Environment
+^^^^^^^^^^^
 
 .. doxysummary::
    :toctree: generated
@@ -123,12 +126,25 @@ Polynomial interpolant
 Statistics API
 --------------
 
+Statistical moments
+^^^^^^^^^^^^^^^^^^^
+
 .. doxysummary::
    :toctree: generated
 
    merlin::statistics::powered_mean
    merlin::statistics::moment_cpu
 
+Canonical decomposition API
+---------------------------
+
+CP decomposition model
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::candy::Model
 
 Low level API
 -------------

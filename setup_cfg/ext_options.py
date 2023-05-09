@@ -29,7 +29,7 @@ def get_extension_options():
                                              "-Wno-unused-but-set-variable"]
     elif sys.platform == "win32":
         ext_options["extra_compile_args"] = ["-std:c++17",
-                                             "/wd4251", "/wd4551"]
+                                             "/wd4251", "/wd4551", "/wd4273"]
 
     # dependancies
     depends = glob.glob(os.path.join(module_dir, "setup_cfg", "*.py"))
@@ -49,8 +49,8 @@ def get_extension_options():
     # link librairies
     ext_options["libraries"] = ["merlin"]
     if MERLIN_LIBKIND == "SHARED" and MERLIN_CUDA:
-        ext_options["libraries"] += ["merlinglobal", "merlincuda"]
-    ext_options["libraries"] += ["merlinshared"]
+        ext_options["libraries"] += ["merlinglobal"]
+    ext_options["libraries"] += ["merlinrdc", "merlinshared"]
     if MERLIN_CUDA:
         ext_options["libraries"] += ["cudart_static", "cudadevrt", "cuda"]
     if MERLIN_DEBUG and (sys.platform == "win32"):

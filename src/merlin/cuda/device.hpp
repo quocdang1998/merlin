@@ -8,7 +8,7 @@
 #include "merlin/cuda/declaration.hpp"  // merlin::cuda::Device
 #include "merlin/cuda/enum_wrapper.hpp"  // merlin::cuda::DeviceLimit
 #include "merlin/cuda_decorator.hpp"  // __cuhostdev__
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS, MERLIN_HOSTDEV_EXPORTS
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS
 
 namespace merlin {
 
@@ -20,7 +20,7 @@ class cuda::Device {
     /** @brief Default constructor.*/
     __cuhostdev__ Device(void) {}
     /** @brief Constructor from GPU ID.*/
-    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS Device(int id);
+    __cuhostdev__ Device(int id);
     /// @}
 
     /// @name Copy and Move
@@ -46,9 +46,9 @@ class cuda::Device {
     /// @name GPU query
     /// @{
     /** @brief Get current GPU.*/
-    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS static cuda::Device get_current_gpu(void);
+    __cuhostdev__ static cuda::Device get_current_gpu(void);
     /** @brief Get total number of CUDA capable GPU.*/
-    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS static std::uint64_t get_num_gpu(void);
+    __cuhostdev__ static std::uint64_t get_num_gpu(void);
     /** @brief Print GPU specifications.*/
     MERLIN_EXPORTS void print_specification(void) const;
     /** @brief Test functionality of GPU.
@@ -93,7 +93,7 @@ class cuda::Device {
     /// @name Destructor
     /// @{
     /** @brief Default destructor.*/
-    __cuhostdev__ MERLIN_HOSTDEV_EXPORTS ~Device(void);
+    __cuhostdev__ ~Device(void);
     /// @}
 
   protected:

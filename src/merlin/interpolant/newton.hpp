@@ -25,7 +25,15 @@ namespace merlin::interpolant {
 void call_newton_coeff_kernel(const interpolant::CartesianGrid * p_grid, array::Parcel * p_coeff,
                               std::uint64_t shared_mem_size, std::uintptr_t stream_ptr, std::uint64_t n_thread);
 
-/** @brief Evaluate Newton interpolation on a full Cartesian grid.*/
+/** @brief Evaluate Newton interpolation on a full Cartesian grid.
+ *  @param grid Cartesian grid.
+ *  @param coeff Array of coefficients (must be an Array in CPU code, or a Parcel in GPU code).
+ *  @param x Coordinates of point to evaluate.
+ *  @param iterator_data Pointer to pre-allocated memory needed to operate the calculation.
+ *  @param cummulative_register_data Pointer to pre-allocated memory needed to operate the calculation.
+ *  @note The last two arguments can be a ``nullptr``. In this case, the function will allocate its own memory for
+ *  calculation.
+ */
 __cuhostdev__ double eval_newton_single_core(const interpolant::CartesianGrid & grid, const array::NdData & coeff,
                                              const Vector<double> & x, std::uint64_t * iterator_data = nullptr,
                                              double * cummulative_register_data = nullptr);

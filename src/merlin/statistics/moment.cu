@@ -1,6 +1,7 @@
 // Copyright 2023 quocdang1998
 #include "merlin/statistics/moment.hpp"
 
+#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/utils.hpp"  // merlin::flatten_thread_index, merlin::size_of_block
 
 namespace merlin {
@@ -9,19 +10,17 @@ namespace merlin {
 // Mean
 // --------------------------------------------------------------------------------------------------------------------
 
-#ifdef __NVCC__
-
 __cudevice__ double statistics::mean_gpu(const array::Parcel & data, double * buffer) {
     // get thread index and total number of threads
     std::uint64_t thrd_idx = flatten_thread_index();
     std::uint64_t n_th = size_of_block();
     // initialize storing vector
     Vector<double> storing;
-    storing.assign(index_buffer, n_th);
+    storing.assign(buffer, n_th);
     storing[thrd_idx] = 0.0;
     // initialize index vector
     std::uint64_t * index_buffer_start = reinterpret_cast<std::uint64_t *>(storing.end());
-    Vector<double> index;
+    intvec index;
     index.assign(index_buffer_start + thrd_idx*data.ndim(), data.ndim());
     std::uint64_t size = data.size();
     // add to storing vector
@@ -39,7 +38,5 @@ __cudevice__ double statistics::mean_gpu(const array::Parcel & data, double * bu
     }
     return storing[0];
 }
-
-#endif  // __NVCC__
 
 }  // namespace merlin

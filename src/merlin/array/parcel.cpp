@@ -27,7 +27,7 @@ void array::Parcel::remove_dim(std::uint64_t i_dim) {
 #ifndef __MERLIN_CUDA__
 
 // Constructor from shape vector
-array::Parcel::Parcel(const intvec & shape) {
+array::Parcel::Parcel(const intvec & shape, const cuda::Stream & stream) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 

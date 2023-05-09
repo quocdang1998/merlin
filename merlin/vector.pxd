@@ -37,16 +37,16 @@ cdef extern from "merlin/vector.hpp":
     ctypedef CppVector[uint64_t, np.npy_intp] CppIntvec "merlin::intvec"
 
 
-cdef inline CppIntvec intvec_from_tuple(tuple values):
+cdef inline CppIntvec intvec_from_iteratable(object values):
     cdef CppIntvec result = CppIntvec(len(values), 0)
-    for i in range(len(values)):
-        if values[i] < 0:
+    for i, element in enumerate(values):
+        if element < 0:
             raise ValueError("Expected non-negative tuple of integers.")
-        result[i] = <uint64_t>(values[i])
+        result[i] = <uint64_t>(element)
     return result
 
-cdef inline tuple tuple_from_intvec(const CppIntvec & values):
+cdef inline list tuple_from_intvec(const CppIntvec & values):
     cdef list result = []
     for i in range(values.size()):
         result.append(values[i])
-    return tuple(result)
+    return result

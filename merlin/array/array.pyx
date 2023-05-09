@@ -54,9 +54,7 @@ cdef class Array(NdData):
                 Py_INCREF(self.reference_array)
         elif kwargs.get("shape") is not None:
             shape_arg = kwargs.pop("shape")
-            if not isinstance(shape_arg, tuple):
-                raise TypeError("Expected \"shape\" argument has type tuple.")
-            array_shape = intvec_from_tuple(shape_arg)
+            array_shape = intvec_from_iteratable(shape_arg)
             self.core = new CppArray(array_shape)
 
         if kwargs:

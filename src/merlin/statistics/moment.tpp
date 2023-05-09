@@ -43,7 +43,7 @@ std::array<double, order> statistics::powered_mean(const array::Array & data, st
     std::array<double, order> result;
     result.fill(0.0);
     #pragma omp parallel for num_threads(nthreads)
-    for (std::uint64_t i_order = 0; i_order < order; i_order++) {
+    for (std::int64_t i_order = 0; i_order < order; i_order++) {
         for (std::uint64_t i_thread = 0; i_thread < nthreads; i_thread++) {
             result[i_order] += storing[i_thread*order + i_order];
         }

@@ -19,25 +19,14 @@
 
 #if defined(__MERLIN_BUILT_AS_STATIC__) || defined(__LIBMERLINCUDA__) || defined(__MERLIN_LINUX__)
     #define MERLIN_EXPORTS
-    #define MERLIN_HOSTDEV_EXPORTS
     #define MERLIN_NO_EXPORT
 #else
     // define MERLIN_EXPORTS to export extern variables, classes and functions to WIndows DLL library
     #ifndef MERLIN_EXPORTS
         #if defined(libmerlin_EXPORTS)
             #define MERLIN_EXPORTS __declspec(dllexport)
-            #if !defined(__MERLIN_CUDA__)
-                #define MERLIN_HOSTDEV_EXPORTS __declspec(dllexport)
-            #else
-                #define MERLIN_HOSTDEV_EXPORTS
-            #endif  // __MERLIN_CUDA__
         #else
             #define MERLIN_EXPORTS __declspec(dllimport)
-            #if !defined(__MERLIN_CUDA__)
-                #define MERLIN_HOSTDEV_EXPORTS __declspec(dllimport)
-            #else
-                #define MERLIN_HOSTDEV_EXPORTS
-            #endif  // __MERLIN_CUDA__
         #endif  // libmerlin_EXPORTS
     #endif  // MERLIN_EXPORTS
     // define MERLIN_NO_EXPORT as regular "static" objects
