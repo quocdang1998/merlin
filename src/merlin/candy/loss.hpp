@@ -10,6 +10,9 @@
 
 namespace merlin::candy {
 
+/** @brief Calculate loss function with CPU parallelism.*/
+MERLIN_EXPORTS double calc_loss_function_cpu(const candy::Model & model, const array::Array & train_data);
+
 /** @brief Convert contiguous index to ndim index with a dimension fixed.*/
 __cuhostdev__ intvec contiguous_to_ndim_idx_1(std::uint64_t index, const intvec & shape, std::uint64_t skip_dim,
                                               std::uint64_t * data_ptr = nullptr);
@@ -22,11 +25,14 @@ MERLIN_EXPORTS Vector<double> calc_gradient_vector_cpu(const candy::Model & mode
 
 #ifdef __NVCC__
 
+/** @brief Calculate loss function with GPU parallelism.*/
+__cudevice__ void calc_loss_function_gpu(const candy::Model * p_model, const array::Parcel * p_train_data,
+                                         std::uint64_t * cache_memory, double * temporary_storage);
+
 /** @brief Calculate gradient of a model over dataset on GPU.
  *  @param p_model Pointer to canonical decomposition model.
  *  @param p_train_data Pointer to target data to fit the model.
- *  @param cache_memory Pointer to cache memory for calculation (must be able to hold model shape vector and index
- *  vectors of each thread).
+ *  @param cache_memory Pointer to cache memory for calculation (must be able to hold index vectors of each thread).
  *  @param gradient_vector Pointer to memory where the gradient is stored.
  */
 __cudevice__ void calc_gradient_vector_gpu(const candy::Model * p_model, const array::Parcel * p_train_data,

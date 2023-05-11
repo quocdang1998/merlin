@@ -46,6 +46,7 @@ list(APPEND MERLIN_SRC_CU
      array/array.cu
      array/parcel.cu
      candy/loss.cu
+     candy/model.cu
      cuda/context.cu
      cuda/device.cu
      cuda/event.cu

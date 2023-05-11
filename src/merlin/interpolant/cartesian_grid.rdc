@@ -82,7 +82,7 @@ __cudevice__ void * interpolant::CartesianGrid::copy_to_shared_mem_single(interp
     std::uintptr_t dptr = reinterpret_cast<std::uintptr_t>(grid_vector_data_ptr) + this->ndim()*sizeof(Vector<double>);
     void * data_ptr = reinterpret_cast<void *>(dptr);
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
-        data_ptr = this->grid_vectors_[i_dim].copy_to_shared_mem(&(share_ptr->grid_vectors_[i_dim]), data_ptr);
+        data_ptr = this->grid_vectors_[i_dim].copy_to_shared_mem_single(&(share_ptr->grid_vectors_[i_dim]), data_ptr);
     }
     return data_ptr;
 }

@@ -127,8 +127,9 @@ void * Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr, std::uintptr
 
 // Copy data from GPU to CPU
 template <typename T>
-void Vector<T>::copy_from_gpu(const T * gpu_ptr, std::uintptr_t stream_ptr) {
+void * Vector<T>::copy_from_gpu(T * gpu_ptr, std::uintptr_t stream_ptr) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access this feature.\n");
+    return nullptr;
 }
 
 #elif defined(__NVCC__)
@@ -153,11 +154,12 @@ void * Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr, std::uintptr
 
 // Copy data from GPU to CPU
 template <typename T>
-void Vector<T>::copy_from_gpu(const T * gpu_ptr, std::uintptr_t stream_ptr) {
+void * Vector<T>::copy_from_gpu(T * gpu_ptr, std::uintptr_t stream_ptr) {
     // copy data
     ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
     ::cudaMemcpyAsync(this->data_, gpu_ptr, this->size_*sizeof(T),
                       cudaMemcpyDeviceToHost, stream);
+    return reinterpret_cast<void *>(gpu_ptr + this->size_);
 }
 
 #endif  // !__MERLIN_CUDA__

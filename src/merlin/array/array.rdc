@@ -60,7 +60,7 @@ double * allocate_memory(std::uint64_t size) {
         FAILURE(cuda_runtime_error, "Allocate non-pageable memory failed with message \"%s\".\n",
                 ::cudaGetErrorString(err_));
     }
-    #endif  // __MERLIN_CUDA__
+    #endif  // !__MERLIN_CUDA__
     Environment::cpu_mem_limit -= size * sizeof(double);
     return result;
 }
@@ -78,7 +78,7 @@ void cuda_pin_memory(double * ptr, std::uint64_t n_elem) {
 // Free non pageable memory
 void free_memory(double * ptr, std::uint64_t size) {
     #ifndef __MERLIN_CUDA__
-    #if defined(__MERLIN_WINDOWS__)
+        #if defined(__MERLIN_WINDOWS__)
         bool success = ::VirtualUnlock(ptr, sizeof(double) * size);
         if (!success) {
             std::string err_message = throw_windows_last_error(::GetLastError());

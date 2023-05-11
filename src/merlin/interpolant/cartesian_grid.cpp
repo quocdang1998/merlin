@@ -118,9 +118,9 @@ interpolant::CartesianGrid::iterator interpolant::CartesianGrid::end(void) {
 
 // Calculate minimum size to allocate to store the object
 std::uint64_t interpolant::CartesianGrid::malloc_size(void) const {
-    std::uint64_t size = sizeof(CartesianGrid) + this->ndim()*sizeof(Vector<double>);
-    for (std::uint64_t i = 0; i < this->ndim(); i++) {
-        size += this->grid_vectors_[i].size() * sizeof(double);
+    std::uint64_t size = sizeof(interpolant::CartesianGrid) + this->ndim()*sizeof(Vector<double>);
+    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+        size += this->grid_vectors_[i_dim].size() * sizeof(double);
     }
     return size;
 }

@@ -74,7 +74,7 @@ __cudevice__ void * array::Parcel::copy_to_shared_mem_single(array::Parcel * sha
     share_ptr->data_ = this->data_;
     share_ptr->ndim_ = this->ndim_;
     // copy shape and strides
-    void * strides_data_ptr = this->shape_.copy_to_shared_mem(&(share_ptr->shape_), shape_strides_ptr);
+    void * strides_data_ptr = this->shape_.copy_to_shared_mem_single(&(share_ptr->shape_), shape_strides_ptr);
     void * result = this->strides_.copy_to_shared_mem(&(share_ptr->strides_), strides_data_ptr);
     return result;
 }

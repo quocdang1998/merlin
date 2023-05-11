@@ -217,13 +217,14 @@ __cuhostdev__ std::uint64_t model_to_contiguous_index(std::uint64_t i_dim, std::
 // Get model index from flattened index
 __cuhostdev__ std::array<std::uint64_t, 3> contiguous_to_model_idx(std::uint64_t index, std::uint64_t rank,
                                                                    const intvec & shape) {
-    std::uint64_t i_dim = 0, upper_bound = shape[0];
-    while (index >= upper_bound) {
-        i_dim += 1;
-        upper_bound += shape[i_dim];
+    std::uint64_t dimension = 0;
+    std::int64_t index_ = index;
+    for (std::uint64_t i_dim = 0; i_dim < shape.size(); i_dim++) {
+        index_ -= shape[i_dim];
+        dimension += (index_ >= 0) ? 1 : 0;
+        index = (index_ >= 0) ? index_ : index;
     }
-    index -= upper_bound - shape[i_dim];
-    return {i_dim, index / rank, index % rank};
+    return {dimension, index / rank, index % rank};
 }
 
 }  // namespace merlin

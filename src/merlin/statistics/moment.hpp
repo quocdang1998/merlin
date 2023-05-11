@@ -53,7 +53,7 @@ MERLIN_EXPORTS array::Array mean_cpu(const array::Array & data, const intvec & d
  *  @param data Array of data to calculate the mean.
  *  @param buffer Buffer memory for calculation.
  */
-__cudevice__ double mean_gpu(const array::Parcel & data, double * buffer);
+__cudevice__ void mean_gpu(const array::Parcel & data, double * buffer);
 
 #endif  // __NVCC__
 

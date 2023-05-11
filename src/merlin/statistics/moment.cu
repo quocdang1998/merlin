@@ -10,33 +10,36 @@ namespace merlin {
 // Mean
 // --------------------------------------------------------------------------------------------------------------------
 
-__cudevice__ double statistics::mean_gpu(const array::Parcel & data, double * buffer) {
+__cudevice__ void statistics::mean_gpu(const array::Parcel & data, double * buffer) {
     // get thread index and total number of threads
-    std::uint64_t thrd_idx = flatten_thread_index();
-    std::uint64_t n_th = size_of_block();
+    std::uint64_t thread_idx = flatten_thread_index();
+    std::uint64_t n_threads = size_of_block();
     // initialize storing vector
     Vector<double> storing;
-    storing.assign(buffer, n_th);
-    storing[thrd_idx] = 0.0;
+    storing.assign(buffer, n_threads);
+    storing[thread_idx] = 0.0;
     // initialize index vector
     std::uint64_t * index_buffer_start = reinterpret_cast<std::uint64_t *>(storing.end());
     intvec index;
-    index.assign(index_buffer_start + thrd_idx*data.ndim(), data.ndim());
+    index.assign(index_buffer_start + thread_idx*data.ndim(), data.ndim());
     std::uint64_t size = data.size();
     // add to storing vector
-    for (std::uint64_t i_point = thrd_idx; i_point < size; i_point += n_th) {
+    for (std::uint64_t i_point = thread_idx; i_point < size; i_point += n_threads) {
         contiguous_to_ndim_idx(i_point, data.shape(), index.data());
-        storing[thrd_idx] += data[index];
+        storing[thread_idx] += data[index];
     }
     __syncthreads();
     // reduce the sum
-    for (std::uint64_t s = n_th/2; s > 0; s >>= 1) {
-        if (thrd_idx < s) {
-            storing[thrd_idx] += storing[thrd_idx + s];
+    if (thread_idx < 8) {
+        for (std::uint64_t i = thread_idx+8; i < n_threads; i += 8) {
+            storing[thread_idx] += storing[i];
         }
-        __syncthreads();
     }
-    return storing[0];
+    __syncthreads();
+    if (thread_idx == 0) {
+        storing[0] += storing[1] + storing[2] + storing[3] + storing[4] + storing[5] + storing[6] + storing[7];
+    }
+    __syncthreads();
 }
 
 }  // namespace merlin

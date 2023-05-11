@@ -133,7 +133,7 @@ class Vector {
      *  @param gpu_ptr Pointer to object on GPU global memory.
      *  @param stream_ptr Pointer to CUDA stream for asynchronious memory copy.
      */
-    void copy_from_gpu(const T * gpu_ptr, std::uintptr_t stream_ptr = 0);
+    void * copy_from_gpu(T * gpu_ptr, std::uintptr_t stream_ptr = 0);
     #ifdef __NVCC__
     /** @brief Copy data from GPU global memory to shared memory of a kernel.
      *  @note This operation is single-threaded.

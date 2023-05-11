@@ -1,6 +1,11 @@
 // Copyright 2023 quocdang1998
 #include "merlin/candy/loss.hpp"
 
+#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
+#include "merlin/candy/model.hpp"  // merlin::candy::Model
+#include "merlin/logger.hpp"  // FAILURE
+#include "merlin/utils.hpp"  // merlin::flatten_thread_index, merlin::size_of_block
+
 namespace merlin {
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -29,5 +34,80 @@ __cuhostdev__ intvec candy::contiguous_to_ndim_idx_1(std::uint64_t index, const 
     }
     return index_;
 }
+
+#ifdef __NVCC__
+
+// Calculate gradient of a model over dataset on GPU
+__cudevice__ void candy::calc_gradient_vector_gpu(const candy::Model * p_model,
+                                                  const array::Parcel * p_train_data,
+                                                  std::uint64_t * cache_memory, double * gradient_vector) {
+    // calculate model shape
+    std::uint64_t n_threads = size_of_block(), thread_idx = flatten_thread_index();
+    std::uint64_t n_param = p_model->size(), n_point = p_train_data->size(), n_dim = p_train_data->ndim();
+    // loop for each parameter
+    const intvec & data_shape = p_train_data->shape();
+    for (std::uint64_t i_param = thread_idx; i_param < n_param; i_param += n_threads) {
+        gradient_vector[i_param] = 0.0;
+        auto [param_dim, param_index] = p_model->convert_contiguous(i_param);
+        std::uint64_t param_rank = param_index % p_model->rank();
+        param_index /= p_model->rank();
+        // loop over each point in the dataset
+        std::uint64_t n_subset = n_point / data_shape[param_dim];
+        for (std::uint64_t i_point = 0; i_point < n_subset; i_point++) {
+            intvec index_data = candy::contiguous_to_ndim_idx_1(i_point, data_shape, param_dim,
+                                                                cache_memory + thread_idx*n_dim);
+            index_data[param_dim] = param_index;
+            const double & data = (*p_train_data)[index_data];
+            double gradient = 1.0;
+            // divide by 1/data^2
+            gradient /= data*data;
+            // multiply by coefficient of the same rank from other dimension
+            for (std::uint64_t i_dim = 0; i_dim < n_dim; i_dim++) {
+                if (i_dim == param_dim) {
+                    continue;
+                }
+                gradient *= p_model->get(i_dim, index_data[i_dim], param_rank);
+            }
+            // multiply by value evaluation
+            double eval = p_model->eval(index_data);
+            gradient *= eval - data;
+            // add gradient to gradient vector
+            gradient_vector[i_param] += gradient;
+        }
+    }
+    __syncthreads();
+}
+
+// Calculate loss function with GPU parallelism.*/
+__cudevice__ void candy::calc_loss_function_gpu(const candy::Model * p_model, const array::Parcel * p_train_data,
+                                                std::uint64_t * cache_memory, double * temporary_storage) {
+    // get thread index
+    std::uint64_t n_threads = size_of_block(), thread_idx = flatten_thread_index();
+    std::uint64_t size = p_train_data->size();
+    temporary_storage[thread_idx] = 0.0;
+    // loop over each point in data
+    for (std::uint64_t i_point = thread_idx; i_point < size; i_point += n_threads) {
+        intvec index = contiguous_to_ndim_idx(i_point, p_train_data->shape(),
+                                              cache_memory + thread_idx * p_train_data->ndim());
+        double error = p_model->eval(index) / (*p_train_data)[index] - 1.f;
+        temporary_storage[thread_idx] += error * error;
+    }
+    __syncthreads();
+    // sum over all points
+    if (thread_idx < 8) {
+        for (std::uint64_t i = thread_idx+8; i < n_threads; i += 8) {
+            temporary_storage[thread_idx] += temporary_storage[i];
+        }
+    }
+    __syncthreads();
+    if (thread_idx == 0) {
+        temporary_storage[0] += temporary_storage[1] + temporary_storage[2] + temporary_storage[3]
+                              + temporary_storage[4] + temporary_storage[5] + temporary_storage[6]
+                              + temporary_storage[7];
+    }
+    __syncthreads();
+}
+
+#endif  // __NVCC__
 
 }  // namespace merlin

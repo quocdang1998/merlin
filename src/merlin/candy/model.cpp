@@ -40,6 +40,32 @@ rank_(rank) {
     }
 }
 
+// Calculate minimum size to allocate to store the object
+std::uint64_t candy::Model::malloc_size(void) const {
+    std::uint64_t size = sizeof(candy::Model) + this->ndim()*sizeof(Vector<double>);
+    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+        size += this->parameters_[i_dim].size() * sizeof(double);
+    }
+    return size;
+}
+
+#ifndef __MERLIN_CUDA__
+
+// Copy data to a pre-allocated memory
+void * candy::Model::copy_to_gpu(candy::Model * gpu_ptr, void * grid_vector_data_ptr,
+                                 std::uintptr_t stream_ptr) const {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
+    return nullptr;
+}
+
+// Copy data from GPU to CPU
+void * candy::Model::copy_from_gpu(void * gpu_ptr, std::uintptr_t stream_ptr) {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
+    return nullptr;
+}
+
+#endif  // __MERLIN_CUDA__
+
 // String representation
 std::string candy::Model::str(void) const {
     std::ostringstream out_stream;

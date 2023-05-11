@@ -69,6 +69,8 @@ void cuda::Device::print_specification(void) const {
     std::printf("    Total number of CUDA core: %d.\n", core_per_multiprocessor*prop.multiProcessorCount);
     // Max thread per multi-processor
     std::printf("    Maximum resident threads per multiprocessor: %d.\n", prop.maxThreadsPerMultiProcessor);
+    // Warp size
+    std::printf("    Thread-warp size: %d.\n", prop.warpSize);
 
     // Max threads per block
     std::printf("    Maximum number of threads per block: %d.\n", prop.maxThreadsPerBlock);
@@ -84,6 +86,11 @@ void cuda::Device::print_specification(void) const {
     // Max shared memory per block
     std::printf("    Maximum amount of shared memory available to a thread block: %zu bytes.\n",
                 prop.sharedMemPerBlock);
+    // Max register memory per block
+    std::printf("    Maximum number of 32-bit register available to a thread block: %d bytes.\n",
+                prop.regsPerBlock);
+    // Managed memory support
+    std::printf("    Support for managed memory: %s.\n", ((prop.managedMemory == 1) ? "true" : "false"));
     // Max constant memory
     std::printf("    Memory available on device for __constant__ variables in a CUDA C kernel: %zu bytes.\n",
                 prop.totalConstMem);

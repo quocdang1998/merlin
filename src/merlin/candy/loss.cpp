@@ -9,9 +9,31 @@
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/candy/model.hpp"  // merlin::candy::Model
 #include "merlin/logger.hpp"  // FAILURE
-#include "merlin/utils.hpp"  // merlin::contiguous_to_model_idx
+#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::contiguous_to_model_idx
 
 namespace merlin {
+
+// --------------------------------------------------------------------------------------------------------------------
+// Loss function
+// --------------------------------------------------------------------------------------------------------------------
+
+// Calculate loss function with CPU parallelism
+double candy::calc_loss_function_cpu(const candy::Model & model, const array::Array & train_data) {
+    Vector<double> loss_vector(::omp_get_max_threads(), 0.0);
+    std::uint64_t size = train_data.size();
+    #pragma omp parallel for
+    for (std::int64_t i_point = 0; i_point < size; i_point++) {
+        intvec index = contiguous_to_ndim_idx(i_point, train_data.shape());
+        double error = model.eval(index) / train_data.get(index) - 1.f;
+        error *= error;
+        loss_vector[i_point % loss_vector.size()] += error;
+    }
+    double result = 0.0;
+    for (std::uint64_t i_thread = 0; i_thread < loss_vector.size(); i_thread++) {
+        result += loss_vector[i_thread];
+    }
+    return result;
+}
 
 // --------------------------------------------------------------------------------------------------------------------
 // Model gradient
