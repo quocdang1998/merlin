@@ -10,23 +10,23 @@
 
 namespace merlin {
 
-/** @brief Mutex for file.
- *  @details Force the current thread/process to wait if the file is locked by another process. The execution is
- *  continued once the lock on the file is released. It works similar to a ``std::shared_mutex`` using directly the file as
- *  the mutex for interprocess communication.
+/** @brief Interprocess file lock.
+ *  @details Pause the current thread/process if the target file is currently used by another process. The execution is
+ *  continued when the lock is released. It works similar to a ``std::shared_mutex``, but utilizes the file as the
+ *  indicator in interprocess communication.
  *
  *  Two types of locks are provided:
- *  - **shared** : multiple threads and processes can access the file at a time, but exclusive lock must wait until all
- *  shared locks are released. **Use this type of lock for reading file**.
- *  - **exclusive** : only one thread of a process can access the file at a time, tasks with share locks must wait
- *  until the exclusive lock is released. **Use this type of lock for writing file**.
- *  @note Locking mecanism depends on operating system:
- *   - On **Windows**, the lock is binded to read/write permission. Shared lock only blocks write permission, but
- *  exclusive lock blocks both. If another file stream ``std::FILE`` binded to the locked file is created by the same
- *  thread (or another thread of the same process, or another process) ``fread`` and ``fwrite`` will successfully
- *  return, but **file content cannot be read/write**.
- *   - On **Linux**, the lock is not binded to read/write permission. A thread/process **without locking can read/write
- *  the file normally** even if the file is locked by another.
+ *  - **shared** : multiple threads/processes with shared lock can access the file at the same time, but those with
+ *  exclusive lock must wait until all shared locks are released. **This type of lock is used for processes reading
+ *  the target file**.
+ *  - **exclusive** : only one thread/process can access the file at a time, and all other tasks must wait until the
+ *  lock is released. **Use this type of lock for processes writing the target file**.
+ *  @note Locking mechanism depends on operating system:
+ *   - On **Windows**, the lock is bound to read/write permission. Shared lock only blocks write permission, but
+ *  exclusive lock blocks both. If another file stream ``std::FILE`` associated to the locked file is created,
+ *  read/write operations during the lock will successfully return, but the operation will have no effect.
+ *   - On **Linux**, the lock is not bound to read/write permission. A thread/process can read/write the file normally
+ *  even when the file is locked by another process.
  */
 class FileLock {
   public:
@@ -34,40 +34,57 @@ class FileLock {
     /// @{
     /** @brief Default constructor.*/
     FileLock(void) = default;
-    /** @brief Constructor from C file stream pointer.*/
+    /** @brief Constructor from C file stream pointer.
+     *  @details Create a file lock and associate it with the file stream pointer provided.
+     *  @param file_ptr File stream pointer to associate the file lock with.
+     */
     MERLIN_EXPORTS FileLock(std::FILE * file_ptr);
     /// @}
 
     /// @name Exclusive lock
     /// @{
-    /** @brief Exclusively lock file.*/
+    /** @brief Exclusively lock file.
+     *  @details Lock the file so that only the current process can access the file. This type of lock should be used
+     *  to avoid race condition of writing processes.
+     *  @warning Double lock a file may lead to an infinite loop.
+     */
     MERLIN_EXPORTS void lock(void);
-    /** @brief Attemp to exclusively lock file.
-     * @return ``True`` if lock succeeds and file is locked. ``False`` otherwise.
+    /** @brief Attempt to exclusively lock file.
+     *  @details Lock the file with exclusive lock and fail immediately if the file is currently locked by another
+     *  process.
+     *  @return ``True`` if lock succeeds and file is locked. ``False`` otherwise.
      */
     MERLIN_EXPORTS bool try_lock(void);
     /// @}
 
-    /// @name Share lock
+    /// @name Shared lock
     /// @{
-    /** @brief Sharable lock file.*/
+    /** @brief Shared lock file.
+     *  @details Only processes with shared lock can access the file. Exclusive locks are paused until all shared locks
+     *  are released. This type of lock should be used to avoid race condition of reading processes.
+     */
     MERLIN_EXPORTS void lock_shared(void);
-    /** @brief Attemp to sharable lock file.
-     * @return ``True`` if lock succeeds and file is locked. ``False`` otherwise.
+    /** @brief Attempt to shared lock file.
+     *  @details Lock the file with shared lock and fail immediately if the file is currently locked by another
+     *  process.
+     *  @return ``True`` if lock succeeds and file is locked. ``False`` otherwise.
      */
     MERLIN_EXPORTS bool try_lock_shared(void);
     /// @}
 
     /// @name Unlock
     /// @{
-    /** @brief Exclusively unlock file.*/
+    /** @brief Unlock the file.
+     *  @details Unlock both exclusive lock and shared lock imposed on the file by the current process.
+     */
     MERLIN_EXPORTS void unlock(void);
     /// @}
 
-    /// @name String representation
+    /// @name Representation
     /// @{
     /** @brief String representation.*/
     MERLIN_EXPORTS std::string str() const;
+    /// @}
 
     /// @name Destructor
     /// @{
@@ -76,7 +93,10 @@ class FileLock {
     /// @}
 
   private:
-    /** @brief POSIX file descriptor.*/
+    /** @brief POSIX file descriptor.
+     *  @details Under POSIX norm, each file stream invoked by the OS is associated to an integer called the file
+     *  descriptor. The descriptor is used to indicate the file to be locked to the OS.
+     */
     int file_descriptor = 0;
 };
 

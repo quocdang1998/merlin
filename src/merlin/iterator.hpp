@@ -9,18 +9,16 @@
 
 namespace merlin {
 
-/** @brief Iterator of multi-dimensional array and grid.
- *  @details Callable only on CPU.
- */
+/** @brief Iterator of multi-dimensional objects.*/
 class Iterator {
   public:
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
     Iterator(void) = default;
-    /** @brief Constructor from multi-dimensional index and container.*/
+    /** @brief Constructor from multi-dimensional index and shape of the container.*/
     MERLIN_EXPORTS Iterator(const intvec & index, const intvec & shape);
-    /** @brief Constructor from C-contiguous index.*/
+    /** @brief Constructor from contiguous index and shape of the container.*/
     MERLIN_EXPORTS Iterator(std::uint64_t index, const intvec & shape);
     /// @}
 
@@ -38,9 +36,9 @@ class Iterator {
 
     /// @name Get members
     /// @{
-    /** @brief Get constant multi-dimensional index.*/
+    /** @brief Get constant reference to multi-dimensional index.*/
     constexpr const intvec & index(void) const noexcept {return this->index_;}
-    /** @brief Get contiguous index.*/
+    /** @brief Get constant reference to contiguous index.*/
     constexpr const std::uint64_t & contiguous_index(void) const noexcept {return this->item_ptr_;}
     /// @}
 
@@ -67,7 +65,7 @@ class Iterator {
     std::uint64_t item_ptr_ = 0;
     /** @brief Index vector.*/
     intvec index_;
-    /** @brief Pointer to NdData object possessing the item.*/
+    /** @brief Shape of the object.*/
     intvec shape_;
 
   private:

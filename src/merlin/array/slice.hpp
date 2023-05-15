@@ -13,16 +13,16 @@
 
 namespace merlin {
 
-/** @brief Slice of an Array.*/
+/** @brief %Slice of an array.*/
 class array::Slice {
   public:
     /// @name Constructors
     /// @{
     /** @brief Member constructor.
-     *  @details Construct Slice object from values of its members.
-     *  @param start Start position (must be positive).
-     *  @param stop Stop position (must be positive).
-     *  @param step Step (must be positive).
+     *  @details Construct object from values of its members.
+     *  @param start Start position.
+     *  @param stop Stop position.
+     *  @param step Step.
      */
     __cuhostdev__ Slice(std::uint64_t start = 0, std::uint64_t stop = UINT64_MAX, std::uint64_t step = 1);
     /** @brief Constructor from initializer list.

@@ -20,7 +20,7 @@ namespace merlin::interpolant {
  *  @param shared_mem_size Size (in bytes) of the block-wise shared memory.
  *  @param stream_ptr Pointer to the CUDA calculation stream in form of an unsigned integer pointer.
  *  @param n_thread Number of CUDA threads for parallel execution.
- *  @note This function is asynchronious. It simply push the CUDA kernel to the stream.
+ *  @note This function is asynchronous. It simply push the CUDA kernel to the stream.
  */
 void call_newton_coeff_kernel(const interpolant::CartesianGrid * p_grid, array::Parcel * p_coeff,
                               std::uint64_t shared_mem_size, std::uintptr_t stream_ptr, std::uint64_t n_thread);
@@ -46,7 +46,7 @@ __cuhostdev__ double eval_newton_single_core(const interpolant::CartesianGrid & 
  *  @param shared_mem_size Size (in bytes) of the block-wise shared memory.
  *  @param stream_ptr Pointer to the CUDA calculation stream in form of an unsigned integer pointer.
  *  @param n_thread Number of CUDA threads for parallel execution.
- *  @note This function is asynchronious. It simply push the CUDA kernel to the stream.
+ *  @note This function is asynchronous. It simply push the CUDA kernel to the stream.
  */
 void call_newton_eval_kernel(const interpolant::CartesianGrid * p_grid, const array::Parcel * p_coeff,
                              const array::Parcel * p_points, Vector<double> * p_result,

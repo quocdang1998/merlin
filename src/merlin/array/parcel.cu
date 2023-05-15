@@ -195,7 +195,7 @@ void * array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_
     array::Parcel copy_on_gpu;
     // shallow copy of the current object
     copy_on_gpu.data_ = this->data_;
-    copy_on_gpu.ndim_ = this->ndim_;
+    copy_on_gpu.size_ = this->size_;
     copy_on_gpu.device_ = this->device_;
     copy_on_gpu.context_ = this->context_;
     // copy temporary object to GPU

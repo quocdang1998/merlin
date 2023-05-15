@@ -33,6 +33,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.autosummary',
     'sphinx.ext.autosectionlabel',
+    'sphinxcontrib.bibtex',
     'sphinx_design',
     'breathe',
     'sphinx_doxysummary'
@@ -51,12 +52,16 @@ exclude_patterns = []
 autosectionlabel_prefix_document = True
 
 # Doxygen generated XML files
-breathe_projects = { "merlin": os.path.abspath("./xml") }
+breathe_projects = {"merlin": os.path.abspath("./xml")}
 breathe_default_project = "merlin"
 doxygen_xml = [breathe_projects[breathe_default_project]]
 
 # Sphinx-panel settings
 sd_fontawesome_latex = True
+
+# Citation
+bibtex_bibfiles = [os.path.abspath('./citations.bib')]
+bibtex_default_style = 'unsrt'
 
 # -- Pygments style ----------------------------------------------------------
 

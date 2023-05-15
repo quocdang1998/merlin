@@ -21,24 +21,26 @@ namespace merlin {
 // --------------------------------------------------------------------------------------------------------------------
 
 // Member initialization for C++ interface
-array::NdData::NdData(double * data, const intvec & shape, const intvec & strides) :
-data_(data), ndim_(shape.size()), shape_(shape), strides_(strides) {
+array::NdData::NdData(double * data, const intvec & shape, const intvec & strides) : data_(data), shape_(shape),
+strides_(strides) {
+    this->calc_array_size();
     if (!is_same_size(shape, strides)) {
         FAILURE(std::invalid_argument, "Expected size of shape (%" PRIu64 ") equals to size of strides (%" PRIu64
                 ").\n", shape.size(), strides.size());
     }
-    if (this->ndim_ > array::max_allowed_dim) {
-        FAILURE(std::invalid_argument, "Only allow array up to %" PRIu64 " dimension, got %" PRIu64 ".\n", this->ndim_,
-                array::max_allowed_dim);
+    if (this->ndim() > array::max_allowed_dim) {
+        FAILURE(std::invalid_argument, "Only allow array up to %" PRIu64 " dimension, got %" PRIu64 ".\n",
+                this->ndim(), array::max_allowed_dim);
     }
 }
 
 // Constructor from shape vector
-array::NdData::NdData(const intvec & shape) : ndim_(shape.size()), shape_(shape) {
+array::NdData::NdData(const intvec & shape) : shape_(shape) {
     this->strides_ = array::contiguous_strides(shape, sizeof(double));
-    if (this->ndim_ > array::max_allowed_dim) {
-        FAILURE(std::invalid_argument, "Only allow array up to %" PRIu64 " dimension, got %" PRIu64 ".\n", this->ndim_,
-                array::max_allowed_dim);
+    this->calc_array_size();
+    if (this->ndim() > array::max_allowed_dim) {
+        FAILURE(std::invalid_argument, "Only allow array up to %" PRIu64 " dimension, got %" PRIu64 ".\n",
+                this->ndim(), array::max_allowed_dim);
     }
 }
 
@@ -59,7 +61,7 @@ Vector<Vector<array::Slice>> array::NdData::partite(std::uint64_t max_memory) {
     // if memory fit in, skip
     std::uint64_t data_size = this->size() * sizeof(double);
     if (data_size < max_memory) {
-        return Vector<Vector<array::Slice>>(1, Vector<array::Slice>(this->ndim_));
+        return Vector<Vector<array::Slice>>(1, Vector<array::Slice>(this->ndim()));
     }
     // find dimension at which index = 1 -> memory just fit
     intvec size_per_dimension = array::contiguous_strides(this->shape_, sizeof(double));
@@ -74,7 +76,7 @@ Vector<Vector<array::Slice>> array::NdData::partite(std::uint64_t max_memory) {
     }
     // get slices for each partition
     intvec divident_shape(this->shape_.cbegin(), divide_dimension);  // shape of array of which elements are sub-arrays
-    Vector<Vector<array::Slice>> result(num_partition, Vector<array::Slice>(this->ndim_));
+    Vector<Vector<array::Slice>> result(num_partition, Vector<array::Slice>(this->ndim()));
     for (std::uint64_t i_partition = 0; i_partition < num_partition; i_partition++) {
         // slices of dividing index
         intvec index = contiguous_to_ndim_idx(i_partition, divident_shape);
@@ -87,7 +89,7 @@ Vector<Vector<array::Slice>> array::NdData::partite(std::uint64_t max_memory) {
 
 // Reshape
 void array::NdData::reshape(const intvec & new_shape) {
-    if (this->ndim_ != 1) {
+    if (this->ndim() != 1) {
         FAILURE(std::invalid_argument, "Cannot reshape array of n-dim bigger than 1.\n");
     }
     std::uint64_t new_size = 1;
@@ -98,7 +100,6 @@ void array::NdData::reshape(const intvec & new_shape) {
         FAILURE(std::invalid_argument, "Cannot reshape to an array with different size (current size %" PRIu64
                 ", new size %" PRIu64 ").\n", this->shape_[0], new_size);
     }
-    this->ndim_ = new_shape.size();
     this->shape_ = new_shape;
     this->strides_ = array::contiguous_strides(new_shape, this->strides_[0]);
 }
@@ -108,13 +109,12 @@ void array::NdData::remove_dim(std::uint64_t i_dim) {
     if (this->shape_[i_dim] != 1) {
         return;
     }
-    this->ndim_ -= 1;
-    intvec new_shape(this->ndim_), new_strides(this->ndim_);
+    intvec new_shape(this->ndim()-1), new_strides(this->ndim()-1);
     for (std::uint64_t i = 0; i < i_dim; i++) {
         new_shape[i] = this->shape_[i];
         new_strides[i] = this->strides_[i];
     }
-    for (std::uint64_t i = i_dim; i < this->ndim_; i++) {
+    for (std::uint64_t i = i_dim; i < this->ndim(); i++) {
         new_shape[i] = this->shape_[i+1];
         new_strides[i] = this->strides_[i+1];
     }
@@ -126,7 +126,7 @@ void array::NdData::remove_dim(std::uint64_t i_dim) {
 std::string array::NdData::str(bool first_call) const {
     std::ostringstream os;
     // trivial case
-    if (this->ndim_ == 1) {
+    if (this->ndim() == 1) {
         os << "<";
         for (std::uint64_t i = 0; i < this->shape_[0]; i++) {
             if (i > 0) {
@@ -154,7 +154,7 @@ std::string array::NdData::str(bool first_call) const {
         if (i > 0) {
             os << " ";
         }
-        Vector<array::Slice> slice_i(this->ndim_);
+        Vector<array::Slice> slice_i(this->ndim());
         slice_i[0] = array::Slice({i});
         array::NdData * p_sliced = array::slice_on(*this, slice_i);
         p_sliced->remove_dim(0);

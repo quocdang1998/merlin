@@ -126,12 +126,12 @@ class Vector {
      *  @details The object and its data is copied to the global memory of the GPU.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory storing the object.
      *  @param data_ptr Pre-allocated pointer to memory region storing data of the vector.
-     *  @param stream_ptr Pointer to CUDA stream for asynchronious copy.
+     *  @param stream_ptr Pointer to CUDA stream for asynchronous copy.
      */
     void * copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr, std::uintptr_t stream_ptr = 0) const;
     /** @brief Copy data from GPU to CPU.
      *  @param gpu_ptr Pointer to object on GPU global memory.
-     *  @param stream_ptr Pointer to CUDA stream for asynchronious memory copy.
+     *  @param stream_ptr Pointer to CUDA stream for asynchronous memory copy.
      */
     void * copy_from_gpu(T * gpu_ptr, std::uintptr_t stream_ptr = 0);
     #ifdef __NVCC__
@@ -190,6 +190,11 @@ class Vector {
  *  @details This class is reserved for storing array indices, array shape and array strides.
  */
 using intvec = Vector<std::uint64_t>;
+
+/** @brief Vector of floating-point type.
+ *  @details This class is reserved for storing grid vectors.
+ */
+using floatvec = Vector<double>;
 
 /** @brief Create a vector from its arguments.*/
 template <typename T, typename ... Args>

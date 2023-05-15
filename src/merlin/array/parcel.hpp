@@ -99,13 +99,13 @@ class array::Parcel : public array::NdData {
     /// @name GPU related features
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the object and its data.*/
-    std::uint64_t malloc_size(void) const {return sizeof(array::Parcel) + 2*this->ndim_*sizeof(std::uint64_t);}
+    std::uint64_t malloc_size(void) const {return sizeof(array::Parcel) + 2*this->ndim()*sizeof(std::uint64_t);}
     /** @brief Copy meta-data (shape and strides) from CPU to a pre-allocated memory on GPU.
      *  @details The meta-data should be to the memory region that comes right after the copied object.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
      *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and
      *  stride vector.
-     *  @param stream_ptr Pointer to CUDA sytream for asynchronious copy.
+     *  @param stream_ptr Pointer to CUDA sytream for asynchronous copy.
      */
     MERLIN_EXPORTS void * copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr,
                                       std::uintptr_t stream_ptr = 0) const;

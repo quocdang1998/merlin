@@ -38,12 +38,8 @@ std::atomic_uint Environment::num_instances = 0;
 // Mutex
 std::mutex Environment::mutex;
 
-// --------------------------------------------------------------------------------------------------------------------
-// Array allocation limit
-// --------------------------------------------------------------------------------------------------------------------
-
-// Size in bytes of maximum allowed allocated memory
-std::uint64_t Environment::cpu_mem_limit = static_cast<std::uint64_t>(32) << 30;
+// Random generator
+std::mt19937_64 Environment::random_generator;
 
 // --------------------------------------------------------------------------------------------------------------------
 // CPU Parallelism

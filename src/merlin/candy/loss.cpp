@@ -8,7 +8,7 @@
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/candy/model.hpp"  // merlin::candy::Model
-#include "merlin/logger.hpp"  // FAILURE
+#include "merlin/logger.hpp"  // FAILURE, merlin::cuda_compile_error
 #include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::contiguous_to_model_idx
 
 namespace merlin {
@@ -20,11 +20,11 @@ namespace merlin {
 // Calculate loss function with CPU parallelism
 double candy::calc_loss_function_cpu(const candy::Model & model, const array::Array & train_data) {
     Vector<double> loss_vector(::omp_get_max_threads(), 0.0);
-    std::uint64_t size = train_data.size();
     #pragma omp parallel for
-    for (std::int64_t i_point = 0; i_point < size; i_point++) {
+    for (std::int64_t i_point = 0; i_point < train_data.size(); i_point++) {
         intvec index = contiguous_to_ndim_idx(i_point, train_data.shape());
-        double error = model.eval(index) / train_data.get(index) - 1.f;
+        double data_point = train_data.get(index);
+        double error = (data_point == 0) ? 0.0 : (model.eval(index) / data_point - 1.f);
         error *= error;
         loss_vector[i_point % loss_vector.size()] += error;
     }
@@ -35,11 +35,21 @@ double candy::calc_loss_function_cpu(const candy::Model & model, const array::Ar
     return result;
 }
 
+#ifndef __MERLIN_CUDA__
+
+// Calculate loss function with GPU parallelism
+double candy::calc_loss_function_gpu(const candy::Model & model, const array::Parcel & train_data,
+                                     const cuda::Stream & stream, std::uint64_t n_thread) {
+    FAILURE(cuda_compile_error, "Compile the package with CUDA option enabled to access this feature.\n");
+}
+
+#endif  // __MERLIN_CUDA__
+
 // --------------------------------------------------------------------------------------------------------------------
 // Model gradient
 // --------------------------------------------------------------------------------------------------------------------
 
-// Perform update parametric values by gradient method
+// Calculate gradient of canonical decomposition model with CPU parallelism
 Vector<double> candy::calc_gradient_vector_cpu(const candy::Model & model, const array::Array & train_data) {
     // check shape
     intvec model_shape = model.get_model_shape();
@@ -64,6 +74,9 @@ Vector<double> candy::calc_gradient_vector_cpu(const candy::Model & model, const
             intvec index_data = candy::contiguous_to_ndim_idx_1(i_point, data_shape, param_dim);
             index_data[param_dim] = param_index;
             double data = train_data.get(index_data);
+            if (data == 0) {
+                continue;
+            }
             double gradient = 1.0;
             // divide by 1/data^2
             gradient /= data*data;

@@ -16,7 +16,9 @@ namespace merlin {
 /** @brief Get process ID in form of a string.*/
 std::string get_current_process_id(void);
 
-/** @brief Get current time in form of a string.*/
+/** @brief Get current time in form of a string.
+ *  @details Return datetime in form of ``{year}-{month}-{day}_{hour}:{minute}:{second}``.
+ */
 std::string get_time(void);
 
 // CUDA kernel
@@ -29,25 +31,33 @@ __cuhostdev__ constexpr std::uint64_t get_block_count(std::uint64_t block_size, 
 
 #ifdef __NVCC__
 
-/** @brief Flatten index of the current thread in block.*/
+/** @brief Thread index in block.
+ *  @details Get the three-dimensional flattened index of the current thread in the current block.
+ */
 __cudevice__ constexpr std::uint64_t flatten_thread_index(void) {
     std::uint64_t result = threadIdx.x + threadIdx.y*blockDim.x + threadIdx.z*blockDim.x*blockDim.y;
     return result;
 }
 
-/** @brief Size of thread block.*/
+/** @brief Size of block.
+ *  @details Get the number of threads in the current block.
+ */
 __cudevice__ constexpr std::uint64_t size_of_block(void) {
     std::uint64_t result = blockDim.x*blockDim.y*blockDim.z;
     return result;
 }
 
-/** @brief Flatten index of the current grid block.*/
+/** @brief Block index in grid.
+ *  @details Get the three-dimensional flattened index of the current block in the current grid.
+ */
 __cudevice__ constexpr std::uint64_t flatten_block_index(void) {
     std::uint64_t result = blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y;
     return result;
 }
 
-/** @brief Flatten index of the current thread block.*/
+/** @brief Thread index in grid.
+ *  @details Get the index of the current thread in the current grid.
+ */
 __cudevice__ constexpr std::uint64_t flatten_kernel_index(void) {
     std::uint64_t index_in_block = threadIdx.x + threadIdx.y*blockDim.x + threadIdx.z*blockDim.x*blockDim.y;
     std::uint64_t index_of_block = blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y;

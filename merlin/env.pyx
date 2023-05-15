@@ -27,19 +27,6 @@ cdef class Environment:
         return CppEnvironment_num_instances.load()
 
     @classmethod
-    def cpu_mem_limit(self, uint64_t limit = UINT64_MAX):
-        """cpu_mem_limit(self, limit=UINT64_MAX)
-        Get or set CPU maximum allocatable memory.
-
-        Since allocated arrays are page locked (data in RAM cannot be swapped to secondary memory) to enhance CUDA
-        asynchronization, memory resource is limited. By default, user are only allowed to use upto 32GB of RAM.
-        """
-        global CppEnvironment_cpu_mem_limit
-        if limit != UINT64_MAX:
-            CppEnvironment_cpu_mem_limit = limit
-        return CppEnvironment_cpu_mem_limit
-
-    @classmethod
     def parallel_chunk(self, uint64_t n_chunks = UINT64_MAX):
         """parallel_chunk(self, n_chunks=UINT64_MAX)
         Get or set the minimum size of loops so CPU parallelization is applied.

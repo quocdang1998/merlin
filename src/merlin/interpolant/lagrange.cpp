@@ -26,11 +26,10 @@ void interpolant::calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & gr
                                            array::Array & coeff) {
     std::uint64_t ndim = grid.ndim();
     intvec grid_shape = grid.get_grid_shape();
-    std::uint64_t size = value.size();
     // parallel loop calculation
-    bool parallel_exec = size > 2*omp_get_num_threads();
+    bool parallel_exec = value.size() > 2*omp_get_num_threads();
     #pragma omp parallel for if (parallel_exec)
-    for (std::int64_t i = 0; i < size; i++) {
+    for (std::int64_t i = 0; i < value.size(); i++) {
         intvec index = contiguous_to_ndim_idx(i, grid_shape);
         // calculate the denomiantor (product of diferences of node values)
         long double denominator = 1.0;
@@ -88,8 +87,7 @@ static void calc_lagrange_coeffs_of_added_grid_cpu(const interpolant::CartesianG
     // update coefficient by a factor
     std::uint64_t ndim = grid.ndim();
     intvec grid_shape = grid.get_grid_shape();
-    std::uint64_t size = value.size();
-    for (std::uint64_t i_point = 0; i_point < size; i_point++) {
+    for (std::uint64_t i_point = 0; i_point < value.size(); i_point++) {
         intvec index = contiguous_to_ndim_idx(i_point, grid_shape);
         Vector<double> point = grid[index];
         coeff[index] /= interpolant::exclusion_grid(accumulated_grid, grid, point);

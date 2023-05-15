@@ -41,7 +41,7 @@ MERLINSHARED_EXPORTS void print_stacktrace(int skip = 1);
  *  @endcode
  *  @param fmt Formatted string (same syntax as ``std::printf``).
  */
-#define MESSAGE(fmt, ...) std::printf("\033[1;34m[MESSAGE]\033[0m [%s] " fmt, __FUNCNAME__, ##__VA_ARGS__)
+#define MESSAGE(fmt, ...) std::fprintf(stdout, "\033[1;34m[MESSAGE]\033[0m [%s] " fmt, __FUNCNAME__, ##__VA_ARGS__)
 /** @brief Print warning to the standard error.
  *  @details Example:
  *  @code {.cpp}
@@ -110,8 +110,8 @@ class not_implemented_error : public std::runtime_error {
 
 }  // namespace merlin
 
-// Error message from Windows and POSIX
-// ------------------------------------
+// Get error message from Windows and Unix
+// ---------------------------------------
 
 namespace merlin {
 #if defined(__MERLIN_WINDOWS__)

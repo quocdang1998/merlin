@@ -22,9 +22,8 @@ __cudevice__ void statistics::mean_gpu(const array::Parcel & data, double * buff
     std::uint64_t * index_buffer_start = reinterpret_cast<std::uint64_t *>(storing.end());
     intvec index;
     index.assign(index_buffer_start + thread_idx*data.ndim(), data.ndim());
-    std::uint64_t size = data.size();
     // add to storing vector
-    for (std::uint64_t i_point = thread_idx; i_point < size; i_point += n_threads) {
+    for (std::uint64_t i_point = thread_idx; i_point < data.size(); i_point += n_threads) {
         contiguous_to_ndim_idx(i_point, data.shape(), index.data());
         storing[thread_idx] += data[index];
     }

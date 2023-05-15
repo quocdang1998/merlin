@@ -6,6 +6,7 @@
 #include <cstdint>  // std::uintptr_t
 #include <map>  // std::map
 #include <mutex>  // std::mutex
+#include <random>  // std::mt19937_64
 #include <utility>  // std::pair
 #include <vector>  // std::vector
 
@@ -30,14 +31,8 @@ class MERLINSHARED_EXPORTS Environment {
     static std::atomic_uint num_instances;
     /** @brief Mutex for locking threads.*/
     static std::mutex mutex;
-    /// @}
-
-    /// @name Array allocation limit
-    /// @{
-    /** @brief Memory limit of a process for allocating ``merlin::array::Array``.
-     *  @details Default value: 32GB.
-     */
-    static std::uint64_t cpu_mem_limit;
+    /** @brief Random generator.*/
+    static std::mt19937_64 random_generator;
     /// @}
 
     /// @name CPU parallelism
@@ -53,21 +48,21 @@ class MERLINSHARED_EXPORTS Environment {
     /** @brief ID of default GPU.*/
     static int default_gpu;
     /** @brief Attributes of the context.*/
-    struct MERLINSHARED_EXPORTS ContextAttribute {
+    struct ContextAttribute {
         /// @name Constructor
         /// @{
         /** @brief Default constructor.*/
         ContextAttribute(void) = default;
         /** @brief Member constructor.*/
-        ContextAttribute(std::uint64_t ref_count, int gpu_id);
+        MERLINSHARED_EXPORTS ContextAttribute(std::uint64_t ref_count, int gpu_id);
         /// @}
 
         /// @name Copy and move
         /// @{
         /** @brief Copy constructor.*/
-        ContextAttribute(const Environment::ContextAttribute & src);
+        MERLINSHARED_EXPORTS ContextAttribute(const Environment::ContextAttribute & src);
         /** @brief Copy assignment.*/
-        Environment::ContextAttribute & operator=(const Environment::ContextAttribute & src);
+        MERLINSHARED_EXPORTS Environment::ContextAttribute & operator=(const Environment::ContextAttribute & src);
         /// @}
 
         /// @name Members

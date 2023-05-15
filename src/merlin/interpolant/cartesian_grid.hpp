@@ -97,7 +97,7 @@ class interpolant::CartesianGrid : public interpolant::Grid {
      *  @details Values of vectors should be copied to the memory region that comes right after the copied object.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
      *  @param grid_vector_data_ptr Pointer to a pre-allocated GPU memory storing data of grid vectors.
-     *  @param stream_ptr Pointer to CUDA stream for asynchronious copy.
+     *  @param stream_ptr Pointer to CUDA stream for asynchronous copy.
      */
     MERLIN_EXPORTS void * copy_to_gpu(interpolant::CartesianGrid * gpu_ptr, void * grid_vector_data_ptr,
                                       std::uintptr_t stream_ptr = 0) const;
@@ -158,12 +158,12 @@ class interpolant::CartesianGrid : public interpolant::Grid {
 namespace interpolant {
 
 /** @brief Union of 2 Cartesian grids.*/
-interpolant::CartesianGrid operator+(const interpolant::CartesianGrid & grid_1,
-                                     const interpolant::CartesianGrid & grid_2);
+MERLIN_EXPORTS interpolant::CartesianGrid operator+(const interpolant::CartesianGrid & grid_1,
+                                                    const interpolant::CartesianGrid & grid_2);
 
 /** @brief Exclusion on each dimension of 2 Cartesian grids.*/
-double exclusion_grid(const interpolant::CartesianGrid & grid_parent, const interpolant::CartesianGrid & grid_child,
-                      const Vector<double> & x);
+MERLIN_EXPORTS double exclusion_grid(const interpolant::CartesianGrid & grid_parent,
+                                     const interpolant::CartesianGrid & grid_child, const Vector<double> & x);
 
 }  // namespace interpolant
 

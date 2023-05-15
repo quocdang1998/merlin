@@ -10,18 +10,30 @@ Welcome to Merlin's documentation!
 
    \chapter{Introduction}
 
-Merlin is a package written in C++, with Python wrapper package made possible by
-`Cython <https://cython.readthedocs.io/en/latest/>`_ for processing, evaluating
-and interpolating multidimensional dataset. It fastens calculations by
-exploiting the parallelism of CPU and HPC system equipped with multiple GPUs.
-The tool-kit is scalable to big dataset thanks to its support for thread-safe
-out-of-core array.
+Merlin is a library written in C++ / `CUDA <https://docs.nvidia.com/cuda/index.html>`_
+, with a Python interface made possible by
+`Cython <https://cython.readthedocs.io/en/latest/>`_ for processing and
+interpolating multi-parameterized cross sections resulted from the lattice
+calculation step in the two-step scheme :cite:p:`galia2020dynamic`.
+
+Here are some major features:
+
+-  **Polynomial interpolation**: interpolate a dataset over a multidimensional
+   Cartesian grid by Lagrange :cite:p:`berrut2004barycentric` and Newton
+   method :cite:p:`neidinger2019multivariate`.
+
+-  **Sparse grid**: apply the polynomial interpolation over a hierarchical
+   grid :cite:p:`garcke2006sparse`.
+
+-  **Parallelism**: accelerate the calculation of coefficients and evaluation
+   of the interpolation by transporting the workload to GPUs.
+
 
 .. raw:: html
 
    <h2>Where to go from here ?</h2>
 
-.. grid:: 3 
+.. grid:: 3
    :gutter: 1
    :class-container: .container-lg
 
@@ -57,3 +69,5 @@ out-of-core array.
    capi/index
    pyapi/index
    developer/index
+
+.. bibliography::

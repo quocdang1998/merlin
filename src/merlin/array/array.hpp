@@ -10,12 +10,15 @@
 #include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/iterator.hpp"  // merlin::Iterator
+#include "merlin/shuffle.hpp"  // merlin::Shuffle
 #include "merlin/vector.hpp"  // merlin::intvec
 
 namespace merlin {
 
 // Allocate non-pageable memory
 // ----------------------------
+
+namespace array {
 
 /** @brief Allocate non pageable memory.
  *  @param size Number of element in the allocated array.
@@ -26,7 +29,9 @@ double * allocate_memory(std::uint64_t size);
 void cuda_pin_memory(double * ptr, std::uint64_t n_elem);
 
 /** @brief Free array allocated in non pageable memory.*/
-void free_memory(double * ptr, std::uint64_t size);
+void free_memory(double * ptr);
+
+}  // namespace array
 
 // Array class
 // -----------
@@ -164,6 +169,19 @@ class array::Array : public array::NdData {
     /** @brief Initialize begin and end iterators.*/
     void initialize_iterator(void) noexcept;
 };
+
+namespace array {
+
+// Random shuffle
+// --------------
+
+/** @brief %Shuffle array.*/
+array::Array shuffle_array(const array::Array & src, const Shuffle & suffle_index);
+
+/** @brief Read an array with shuffled index.*/
+array::Array shuffled_read(const array::Stock & src, const Shuffle & suffle_index);
+
+}  // namespace array
 
 }  // namespace merlin
 

@@ -43,7 +43,7 @@ __cuhostdev__ std::tuple<std::uint64_t, std::int64_t> lcseg_and_brindex(const me
  *  @param copy Name of the copy function.
  */
 template <class CopyFunction>
-void array_copy(NdData * dest, const NdData * src, CopyFunction copy);
+void array_copy(array::NdData * dest, const array::NdData * src, CopyFunction copy);
 
 }  // namespace merlin::array
 

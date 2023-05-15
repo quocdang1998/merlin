@@ -22,11 +22,10 @@ __cudevice__ static void calc_lagrange_coefficients(const interpolant::Cartesian
     std::uint64_t ndim = p_grid->ndim();
     const intvec & shape = p_value->shape();
     // calculate the denomiantor (product of diferences of node values)
-    std::uint64_t size = p_value->size();
     std::uint64_t i_thread = flatten_thread_index();
     std::uint64_t n_thread = size_of_block();
     std::uint64_t * index_data = reinterpret_cast<std::uint64_t *>(free_shared_mem) + i_thread * ndim;
-    for (std::uint64_t i = i_thread; i < size; i += n_thread) {
+    for (std::uint64_t i = i_thread; i < p_value->size(); i += n_thread) {
         intvec index = contiguous_to_ndim_idx(i, shape, index_data);
         double denominator = 1.0;
         for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {

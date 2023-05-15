@@ -1,10 +1,8 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/array.hpp"
 
-#include <cstdlib>  // div_t, div
 #include <cstdio>  // std::fread, std::fseek
 #include <cstring>  // std::memcpy
-#include <fstream>  // std::ofstream
 #include <functional>  // std::bind, std::placeholders
 #include <ios>  // std::ios_base::failure
 #include <mutex>  // std::mutex
@@ -18,6 +16,28 @@
 #include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::inner_prod
 
 namespace merlin {
+
+// --------------------------------------------------------------------------------------------------------------------
+// Memory lock (allocated array always stays in the RAM)
+// --------------------------------------------------------------------------------------------------------------------
+
+#ifndef __MERLIN_CUDA__
+
+// Allocate non pageable memory
+double * array::allocate_memory(std::uint64_t size) {
+    double * result = new double[size];
+    return result;
+}
+
+// Pin memory to RAM
+void array::cuda_pin_memory(double * ptr, std::uint64_t n_elem) {}
+
+// Free non pageable memory
+void array::free_memory(double * ptr) {
+    delete[] ptr;
+}
+
+#endif  // __MERLIN_CUDA__
 
 // --------------------------------------------------------------------------------------------------------------------
 // Read data
@@ -38,10 +58,10 @@ static inline void read_from_file(double * dest, std::FILE * file, double * src,
 
 // Initialize begin and end iterator
 void array::Array::initialize_iterator(void) noexcept {
-    if (this->ndim_ == 0) {
+    if (this->ndim() == 0) {
         return;
     }
-    intvec index(this->ndim_, 0);
+    intvec index(this->ndim(), 0);
     this->begin_ = array::Array::iterator(index, this->shape_, this->data_);
     index[0] = this->shape_[0];
     this->end_ = array::Array::iterator(index, this->shape_, this->data_);
@@ -50,11 +70,11 @@ void array::Array::initialize_iterator(void) noexcept {
 // Constructor Array of one element
 array::Array::Array(double value) {
     // allocate data
-    this->data_ = allocate_memory(1);
+    this->data_ = array::allocate_memory(1);
     this->data_[0] = value;
 
     // set metadata
-    this->ndim_ = 1;
+    this->size_ = 1;
     this->strides_ = intvec({sizeof(double)});
     this->shape_ = intvec({1});
     this->release_ = true;
@@ -64,7 +84,7 @@ array::Array::Array(double value) {
 // Construct empty Array from shape vector
 array::Array::Array(const intvec & shape) : array::NdData(shape) {
     // initialize data
-    this->data_ = allocate_memory(this->size());
+    this->data_ = array::allocate_memory(this->size());
     // other meta data
     this->release_ = true;
     this->initialize_iterator();
@@ -73,12 +93,12 @@ array::Array::Array(const intvec & shape) : array::NdData(shape) {
 // Construct Array from Numpy array
 array::Array::Array(double * data, const intvec & shape, const intvec & strides, bool copy) {
     this->shape_ = shape;
-    this->ndim_ = shape.size();
+    this->calc_array_size();
     this->release_ = copy;
     // copy / assign data
     if (copy) {  // copy data
         // allocate a new tensor
-        this->data_ = allocate_memory(this->size());
+        this->data_ = array::allocate_memory(this->size());
         // reform the stride tensor (force into C shape)
         this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
         // copy data from old tensor to new tensor (optimized with memcpy)
@@ -87,14 +107,13 @@ array::Array::Array(double * data, const intvec & shape, const intvec & strides,
     } else {
         this->strides_ = strides;
         this->data_ = data;
-        cuda_pin_memory(this->data_, this->size());
+        array::cuda_pin_memory(this->data_, this->size());
     }
     this->initialize_iterator();
 }
 
 // Constructor from a slice
-array::Array::Array(const array::Array & whole, const Vector<array::Slice> & slices) :
-array::NdData(whole, slices) {
+array::Array::Array(const array::Array & whole, const Vector<array::Slice> & slices) : array::NdData(whole, slices) {
     this->release_ = false;
     this->initialize_iterator();
 }
@@ -105,7 +124,7 @@ array::Array::Array(const array::Array & src) : array::NdData(src) {
     this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
     this->release_ = true;
     // copy data
-    this->data_ = allocate_memory(this->size());
+    this->data_ = array::allocate_memory(this->size());
     array::array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), std::memcpy);
     this->initialize_iterator();
 }
@@ -121,7 +140,7 @@ array::Array & array::Array::operator=(const array::Array & src) {
     }
     this->release_ = true;
     // copy data
-    this->data_ = allocate_memory(this->size());
+    this->data_ = array::allocate_memory(this->size());
     array::array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), std::memcpy);
     this->initialize_iterator();
     return *this;
@@ -141,7 +160,7 @@ array::Array::Array(array::Array && src) : array::NdData(src) {
 array::Array & array::Array::operator=(array::Array && src) {
     // disable release_ of the source and free current data
     if (this->release_) {
-        free_memory(this->data_, this->size());
+        array::free_memory(this->data_);
     }
     // copy meta data
     this->array::NdData::operator=(src);
@@ -226,8 +245,36 @@ void array::Array::extract_data_from_file(const array::Stock & src) {
 // Destructor
 array::Array::~Array(void) {
     if (this->release_) {
-        free_memory(this->data_, this->size());
+        array::free_memory(this->data_);
     }
+}
+
+// --------------------------------------------------------------------------------------------------------------------
+// Shuffle array
+// --------------------------------------------------------------------------------------------------------------------
+
+// Shuffle array
+array::Array array::shuffle_array(const array::Array & src, const Shuffle & suffle_index) {
+    array::Array result(src.shape());
+    std::uint64_t size = src.size();
+    for (std::uint64_t i_data = 0; i_data < size; i_data++) {
+        intvec index_data = contiguous_to_ndim_idx(i_data, src.shape());
+        intvec new_index_data = suffle_index[index_data];
+        result[new_index_data] = src.get(index_data);
+    }
+    return result;
+}
+
+/** @brief Read an array with shuffled index.*/
+array::Array array::shuffled_read(const array::Stock & src, const Shuffle & suffle_index) {
+    array::Array result(src.shape());
+    std::uint64_t size = src.size();
+    for (std::uint64_t i_data = 0; i_data < size; i_data++) {
+        intvec index_data = contiguous_to_ndim_idx(i_data, src.shape());
+        intvec new_index_data = suffle_index[index_data];
+        result[new_index_data] = src.get(index_data);
+    }
+    return result;
 }
 
 }  // namespace merlin

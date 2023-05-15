@@ -18,6 +18,22 @@ Environment
    merlin::Environment
    merlin::default_environment
 
+One dimensional sequence of data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::Vector
+   merlin::intvec
+
+Shuffle elements
+^^^^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::Shuffle
 
 GPU with CUDA
 -------------
@@ -63,21 +79,8 @@ Enum types
 Array API
 ---------
 
-1D vector
-^^^^^^^^^
-
-One dimensional sequence of data:
-
-.. doxysummary::
-   :toctree: generated
-
-   merlin::Vector
-   merlin::intvec
-
 Multi-dimensional array
 ^^^^^^^^^^^^^^^^^^^^^^^
-
-Classes represent multi-dimensional array on CPU, out-of-core array and GPU array:
 
 .. doxysummary::
    :toctree: generated
@@ -90,13 +93,13 @@ Classes represent multi-dimensional array on CPU, out-of-core array and GPU arra
 Array manipulation
 ^^^^^^^^^^^^^^^^^^
 
-Utils for array manipulation:
-
 .. doxysummary::
    :toctree: generated
 
    merlin::array::Slice
    merlin::array::array_copy
+   merlin::array::shuffle_array
+   merlin::array::shuffled_read
 
 
 Interpolant API
@@ -145,6 +148,8 @@ CP decomposition model
    :toctree: generated
 
    merlin::candy::Model
+   merlin::candy::calc_loss_function_cpu
+   merlin::candy::calc_gradient_vector_cpu
 
 Low level API
 -------------
@@ -167,9 +172,27 @@ Macro functions for printing log messages and throwing an exception:
 File mutex
 ^^^^^^^^^^
 
-Lock for preventing data-race when reading or writing a file:
-
 .. doxysummary::
    :toctree: generated
 
    merlin::FileLock
+
+Get system information
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::get_current_process_id
+   merlin::get_time
+
+CUDA kernel thread index
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::flatten_thread_index
+   merlin::size_of_block
+   merlin::flatten_block_index
+   merlin::flatten_kernel_index

@@ -193,8 +193,7 @@ static void calc_newton_coeffs_of_added_grid_cpu(const interpolant::CartesianGri
     // update coefficient by a factor
     std::uint64_t ndim = grid.ndim();
     intvec grid_shape = grid.get_grid_shape();
-    std::uint64_t size = value.size();
-    for (std::uint64_t i_point = 0; i_point < size; i_point++) {
+    for (std::uint64_t i_point = 0; i_point < value.size(); i_point++) {
         intvec index = contiguous_to_ndim_idx(i_point, grid_shape);
         Vector<double> point = grid[index];
         coeff[index] /= interpolant::exclusion_grid(accumulated_grid, grid, point);

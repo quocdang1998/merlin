@@ -49,7 +49,7 @@ if __name__ == "__main__":
           install_requires=["numpy>1.19"],
           extras_require={
               "docs": ["Sphinx>5.0", "sphinx_rtd_theme>=1.2.0",
-                       "sphinx_design>=0.3.0",
+                       "sphinxcontrib-bibtex", "sphinx_design>=0.3.0",
                        "breathe>=4.34.0", "sphinx-doxysummary>=2.3.2"]
           },
           cmdclass={"build_ext": build_ext})

@@ -64,23 +64,25 @@ static inline bool check_file_exist(const char * name) noexcept {
 // Read metadata from file
 std::uint64_t array::Stock::read_metadata(void) {
     // read ndim and shape data from file at position offset
+    std::uint64_t ndim;
     SHARED_LOCK_THREADSAFE();
     std::fseek(this->file_ptr_, this->offset_, SEEK_SET);
-    if (std::fread(&(this->ndim_), sizeof(std::uint64_t), 1, this->file_ptr_) != 1) {
+    if (std::fread(&ndim, sizeof(std::uint64_t), 1, this->file_ptr_) != 1) {
         FAILURE(std::ios_base::failure, "Read file error.\n");
     }
-    this->shape_ = intvec(this->ndim_, 0);
-    if (std::fread(this->shape_.data(), sizeof(std::uint64_t), this->ndim_, this->file_ptr_) != this->ndim_) {
+    this->shape_ = intvec(ndim, 0);
+    if (std::fread(this->shape_.data(), sizeof(std::uint64_t), ndim, this->file_ptr_) != ndim) {
         FAILURE(std::ios_base::failure, "Read file error.\n");
     }
     std::uint64_t cursor = std::ftell(this->file_ptr_);
     UNLOCK_THREADSAFE();
     // calculate stride and assign data pointer
+    this->calc_array_size();
     this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
     this->data_ = reinterpret_cast<double *>(cursor);
     // check file size
     std::uint64_t file_size = std::filesystem::file_size(this->filename_);
-    std::uint64_t expected_size = this->offset_ + (1+this->ndim_)*sizeof(std::uint64_t) + this->size()*sizeof(double);
+    std::uint64_t expected_size = this->offset_ + (1+ndim)*sizeof(std::uint64_t) + this->size()*sizeof(double);
     if (file_size < expected_size) {
         FAILURE(std::filesystem::filesystem_error, "Expected filesize of at least %" PRIu64 ", got %" PRIu64 ".\n",
                 expected_size, file_size);
@@ -91,12 +93,13 @@ std::uint64_t array::Stock::read_metadata(void) {
 // Write metadata to file at offset position
 std::uint64_t array::Stock::write_metadata(void) {
     // write ndim and shape data to file at position offset
+    std::uint64_t ndim = this->ndim();
     EXCLUSIVE_LOCK_THREADSAFE();
     std::fseek(this->file_ptr_, this->offset_, SEEK_SET);
-    if (std::fwrite(&(this->ndim_), sizeof(std::uint64_t), 1, this->file_ptr_) != 1) {
+    if (std::fwrite(&ndim, sizeof(std::uint64_t), 1, this->file_ptr_) != 1) {
         FAILURE(std::ios_base::failure, "Write file error.\n");
     }
-    if (std::fwrite(this->shape_.data(), sizeof(std::uint64_t), this->ndim_, this->file_ptr_) != this->ndim_) {
+    if (std::fwrite(this->shape_.data(), sizeof(std::uint64_t), ndim, this->file_ptr_) != ndim) {
         FAILURE(std::ios_base::failure, "Write file error.\n");
     }
     std::uint64_t cursor = std::ftell(this->file_ptr_);
@@ -117,7 +120,7 @@ array::NdData(shape), filename_(filename), offset_(0), thread_safe_(thread_safe)
     }
     // resize file
     std::uint64_t file_size = std::filesystem::file_size(filename);
-    std::uint64_t new_file_size = (1+this->ndim_)*sizeof(std::uint64_t) + this->size()*sizeof(double);
+    std::uint64_t new_file_size = (1+this->ndim())*sizeof(std::uint64_t) + this->size()*sizeof(double);
     if (offset + new_file_size > file_size) {
         if (offset < file_size) {
             new_file_size += file_size - offset;
