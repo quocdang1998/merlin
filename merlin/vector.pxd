@@ -45,7 +45,7 @@ cdef inline CppIntvec intvec_from_iteratable(object values):
         result[i] = <uint64_t>(element)
     return result
 
-cdef inline list tuple_from_intvec(const CppIntvec & values):
+cdef inline list list_from_intvec(const CppIntvec & values):
     cdef list result = []
     for i in range(values.size()):
         result.append(values[i])

@@ -4,6 +4,10 @@
 
 namespace merlin::candy {
 class Model;
+class Optimizer;
+class GradDescent;
+class AdaGrad;
+class Adam;
 }
 
 #endif  // MERLIN_CANDY_DECLARATION_HPP_

@@ -77,7 +77,7 @@ void __throw_error(const char * func_name, const char * fmt, ...) {
     // print exception message and throw an exception object
     std::fprintf(stderr, "\033[1;31m[FAILURE]\033[0m [%s] %s", func_name, buffer);
     #if defined(__MERLIN_DEBUG__)
-    _merlin_print_stacktrace_(2);  // skip this function and print_stacktrace function
+    print_stacktrace(2);  // skip this function and print_stacktrace function
     #endif   // __MERLIN_DEBUG__
     if constexpr(std::is_same<Exception, std::filesystem::filesystem_error>::value) {
         throw std::filesystem::filesystem_error(const_cast<char *>(buffer),

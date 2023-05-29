@@ -28,7 +28,7 @@ std::array<double, order> statistics::powered_mean(const array::Array & data, st
     double * storing = new double[nthreads*order];
     std::memset(storing, 0, nthreads*order*sizeof(double));
     #pragma omp parallel for num_threads(nthreads)
-    for (std::int64_t i_point = 0; i_point < data.size(); i_point+=nthreads) {
+    for (std::int64_t i_point = 0; i_point < data.size(); i_point++) {
         std::uint64_t i_thread = ::omp_get_thread_num();
         intvec index = contiguous_to_ndim_idx(i_point, data.shape());
         double element = data.get(index);

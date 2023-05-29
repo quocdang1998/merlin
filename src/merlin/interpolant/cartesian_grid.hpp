@@ -11,7 +11,7 @@
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/interpolant/grid.hpp"  //  merlin::interpolant::Grid
 #include "merlin/iterator.hpp"  // merlin::Iterator
-#include "merlin/vector.hpp"  // merlin::Vector, merlin::intvec
+#include "merlin/vector.hpp"  // merlin::Vector, merlin::intvec, merlin::floatvec
 
 namespace merlin {
 
@@ -23,9 +23,9 @@ class interpolant::CartesianGrid : public interpolant::Grid {
     /** @brief Default constructor.*/
     CartesianGrid(void) = default;
     /** @brief Constructor from a vector of values.*/
-    MERLIN_EXPORTS CartesianGrid(const Vector<Vector<double>> & grid_vectors);
+    MERLIN_EXPORTS CartesianGrid(const Vector<floatvec> & grid_vectors);
     /** @brief Constructor from an r-value reference to a vector of values.*/
-    MERLIN_EXPORTS CartesianGrid(Vector<Vector<double>> && grid_vectors);
+    MERLIN_EXPORTS CartesianGrid(Vector<floatvec> && grid_vectors);
     /** @brief Get a subgrid from original grid.*/
     MERLIN_EXPORTS CartesianGrid(const interpolant::CartesianGrid & whole, const Vector<array::Slice> & slices);
     /** @brief Constructor from the number of dimension.*/
@@ -53,9 +53,9 @@ class interpolant::CartesianGrid : public interpolant::Grid {
     /// @name Get members and attributes
     /// @{
     /** @brief Get reference to grid vectors.*/
-    __cuhostdev__ constexpr Vector<Vector<double>> & grid_vectors(void) noexcept {return this->grid_vectors_;}
+    __cuhostdev__ constexpr Vector<floatvec> & grid_vectors(void) noexcept {return this->grid_vectors_;}
     /** @brief Get constant reference to grid vectors.*/
-    __cuhostdev__ constexpr const Vector<Vector<double>> & grid_vectors(void) const noexcept {
+    __cuhostdev__ constexpr const Vector<floatvec> & grid_vectors(void) const noexcept {
         return this->grid_vectors_;
     }
     /** @brief Get shape of the grid.*/
@@ -82,11 +82,11 @@ class interpolant::CartesianGrid : public interpolant::Grid {
     /** @brief Get element at a given index.
      *  @param index Index of point in the CartesianGrid::grid_points table.
      */
-    __cuhostdev__ Vector<double> operator[](std::uint64_t index) const noexcept;
+    __cuhostdev__ floatvec operator[](std::uint64_t index) const noexcept;
     /** @brief Get element at a given index vector.
      *  @param index Vector of index on each dimension.
      */
-    __cuhostdev__ Vector<double> operator[](const intvec & index) const noexcept;
+    __cuhostdev__ floatvec operator[](const intvec & index) const noexcept;
     /// @}
 
     /// @name GPU related features
@@ -125,13 +125,13 @@ class interpolant::CartesianGrid : public interpolant::Grid {
                                                                const interpolant::CartesianGrid & grid_2);
     MERLIN_EXPORTS friend double exclusion_grid(const interpolant::CartesianGrid & grid_parent,
                                                 const interpolant::CartesianGrid & grid_child,
-                                                const Vector<double> & x);
+                                                const floatvec & x);
     /// @}
 
     /// @name Query
     /// @{
     /** @brief Check if point in the grid.*/
-    MERLIN_EXPORTS bool contains(const Vector<double> & point) const;
+    MERLIN_EXPORTS bool contains(const floatvec & point) const;
     /// @}
 
     /// @name Representation
@@ -148,7 +148,7 @@ class interpolant::CartesianGrid : public interpolant::Grid {
 
   protected:
     /** @brief List of vector of values.*/
-    Vector<Vector<double>> grid_vectors_;
+    Vector<floatvec> grid_vectors_;
     /** @brief Begin iterator.*/
     interpolant::CartesianGrid::iterator begin_;
     /** @brief End iterator.*/
@@ -163,7 +163,7 @@ MERLIN_EXPORTS interpolant::CartesianGrid operator+(const interpolant::Cartesian
 
 /** @brief Exclusion on each dimension of 2 Cartesian grids.*/
 MERLIN_EXPORTS double exclusion_grid(const interpolant::CartesianGrid & grid_parent,
-                                     const interpolant::CartesianGrid & grid_child, const Vector<double> & x);
+                                     const interpolant::CartesianGrid & grid_child, const floatvec & x);
 
 }  // namespace interpolant
 

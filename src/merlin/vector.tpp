@@ -69,7 +69,7 @@ __cuhostdev__ Vector<T>::Vector(const Vector<T> & src) : size_(src.size_) {
 template <typename T>
 __cuhostdev__ Vector<T> & Vector<T>::operator=(const Vector<T> & src) {
     // free old data
-    if (this->data_ != nullptr) {
+    if ((!this->assigned_) && (this->data_ != nullptr)) {
         delete[] this->data_;
     }
     // copy new data
@@ -90,7 +90,7 @@ __cuhostdev__ Vector<T>::Vector(Vector<T> && src) : data_(src.data_), size_(src.
 // Move assignment
 template <typename T>
 __cuhostdev__ Vector<T> & Vector<T>::operator=(Vector<T> && src) {
-    if (this->data_ != nullptr) {
+    if ((!this->assigned_) && (this->data_ != nullptr)) {
         delete[] this->data_;
     }
     this->size_ = src.size_;

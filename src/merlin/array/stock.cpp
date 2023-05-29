@@ -70,7 +70,7 @@ std::uint64_t array::Stock::read_metadata(void) {
     if (std::fread(&ndim, sizeof(std::uint64_t), 1, this->file_ptr_) != 1) {
         FAILURE(std::ios_base::failure, "Read file error.\n");
     }
-    this->shape_ = intvec(ndim, 0);
+    this->shape_ = intvec(ndim);
     if (std::fread(this->shape_.data(), sizeof(std::uint64_t), ndim, this->file_ptr_) != ndim) {
         FAILURE(std::ios_base::failure, "Read file error.\n");
     }

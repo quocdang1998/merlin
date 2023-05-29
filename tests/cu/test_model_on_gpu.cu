@@ -46,7 +46,7 @@ int main(void) {
     cudaDeviceSynchronize();
 
     // Copy model from GPU
-    merlin::candy::Model model_cpu({{0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}}, 2);
+    merlin::candy::Model model_cpu({{0.1, 0.1, 0.1, 0.1}, {0.2, 0.2, 0.2, 0.2, 0.2, 0.2}}, 2);
     model_cpu.copy_from_gpu(gpu_model+1);
     MESSAGE("Model copied from GPU: %s\n", model_cpu.str().c_str());
     cudaFree(gpu_model);

@@ -60,12 +60,12 @@ cdef class NdData:
     @property
     def shape(self):
         """Get shape of array."""
-        return tuple_from_intvec(self.core.shape())
+        return tuple(list_from_intvec(self.core.shape()))
 
     @property
     def strides(self):
         """Get strides of array."""
-        return tuple_from_intvec(self.core.strides())
+        return tuple(list_from_intvec(self.core.strides()))
 
     @property
     def size(self):

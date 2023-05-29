@@ -57,7 +57,7 @@ void call_newton_eval_kernel(const interpolant::CartesianGrid * p_grid, const ar
 
 /** @brief Calculate Newton coefficients using CPU.*/
 void calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::Array & value,
-                             array::Array & coeff);
+                             array::Array & coeff, std::uint64_t nthreads = 1);
 
 /** @brief Calculate Newton interpolation coefficients on a full Cartesian grid using GPU.
  *  @param grid Cartesian grid.

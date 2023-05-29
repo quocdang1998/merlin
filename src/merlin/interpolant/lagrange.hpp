@@ -65,9 +65,10 @@ void call_lagrange_eval_kernel(const interpolant::CartesianGrid * p_grid, const 
  *  @param grid Cartesian grid.
  *  @param value Array of function values, must have the same shape as the grid.
  *  @param coeff Array storing interpolation coefficient after the calculation.
+ *  @param nthreads Number of parallel threads.
  */
 void calc_lagrange_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::Array & value,
-                              array::Array & coeff);
+                              array::Array & coeff, std::uint64_t nthreads = 1);
 
 /** @brief Calculate Lagrange interpolation coefficients on a full Cartesian grid using GPU.
  *  @details The execution is performed by one single CUDA block. The number of threads in the block is ``96`` by

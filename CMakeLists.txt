@@ -23,8 +23,10 @@ list(APPEND MERLIN_SRC_CPP
      array/parcel.cpp
      array/slice.cpp
      array/stock.cpp
+     candy/grad_descent.cpp
      candy/loss.cpp
      candy/model.cpp
+     candy/optimizer.cpp
      cuda/context.cpp
      cuda/device.cpp
      cuda/event.cpp
@@ -46,6 +48,7 @@ list(APPEND MERLIN_SRC_CPP
 list(APPEND MERLIN_SRC_CU
      array/array.cu
      array/parcel.cu
+     candy/grad_descent.cu
      candy/loss.cu
      candy/model.cu
      cuda/context.cu
@@ -69,6 +72,7 @@ list(APPEND MERLIN_SRC_RDC
      array/nddata.rdc
      array/parcel.rdc
      array/slice.rdc
+     candy/grad_descent.rdc
      candy/loss.rdc
      candy/model.rdc
      cuda/device.rdc

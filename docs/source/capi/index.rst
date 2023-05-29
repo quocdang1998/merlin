@@ -26,6 +26,7 @@ One dimensional sequence of data
 
    merlin::Vector
    merlin::intvec
+   merlin::floatvec
 
 Shuffle elements
 ^^^^^^^^^^^^^^^^
@@ -148,8 +149,20 @@ CP decomposition model
    :toctree: generated
 
    merlin::candy::Model
+   merlin::candy::RandomInitializer
    merlin::candy::calc_loss_function_cpu
+   merlin::candy::calc_loss_function_gpu
    merlin::candy::calc_gradient_vector_cpu
+   merlin::candy::calc_gradient_vector_gpu
+
+Model training algorithm
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::candy::Optimizer
+   merlin::candy::GradDescent
 
 Low level API
 -------------

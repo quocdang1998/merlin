@@ -114,7 +114,7 @@ void array::NdData::remove_dim(std::uint64_t i_dim) {
         new_shape[i] = this->shape_[i];
         new_strides[i] = this->strides_[i];
     }
-    for (std::uint64_t i = i_dim; i < this->ndim(); i++) {
+    for (std::uint64_t i = i_dim; i < this->ndim()-1; i++) {
         new_shape[i] = this->shape_[i+1];
         new_strides[i] = this->strides_[i+1];
     }

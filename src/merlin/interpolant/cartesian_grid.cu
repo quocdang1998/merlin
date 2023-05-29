@@ -14,10 +14,10 @@ void * interpolant::CartesianGrid::copy_to_gpu(interpolant::CartesianGrid * gpu_
     // initialize buffer to store data of the copy before cloning it to GPU
     interpolant::CartesianGrid copy_on_gpu;
     // shallow copy of grid vector
-    copy_on_gpu.grid_vectors_.data() = reinterpret_cast<Vector<double> *>(grid_vector_data_ptr);
+    copy_on_gpu.grid_vectors_.data() = reinterpret_cast<floatvec *>(grid_vector_data_ptr);
     copy_on_gpu.grid_vectors_.size() = this->ndim();
     // copy data of each grid vector
-    std::uintptr_t dptr = reinterpret_cast<std::uintptr_t>(grid_vector_data_ptr) + this->ndim()*sizeof(Vector<double>);
+    std::uintptr_t dptr = reinterpret_cast<std::uintptr_t>(grid_vector_data_ptr) + this->ndim()*sizeof(floatvec);
     void * data_ptr = reinterpret_cast<void *>(dptr);
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
         data_ptr = this->grid_vectors_[i_dim].copy_to_gpu(&(copy_on_gpu.grid_vectors_[i_dim]), data_ptr, stream_ptr);

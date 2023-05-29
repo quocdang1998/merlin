@@ -11,7 +11,7 @@ int main(void) {
     merlin::array::Array value(data, dims, strides);
     MESSAGE("Data: %s.\n", value.str().c_str());
 
-    std::array<double, 2> moments = merlin::statistics::powered_mean<2>(value);
+    std::array<double, 2> moments = merlin::statistics::powered_mean<2>(value, 24);
     MESSAGE("Mean of whole array: %f.\n", moments[0]);
     MESSAGE("Variance of whole array: %f.\n", merlin::statistics::moment_cpu(moments));
 

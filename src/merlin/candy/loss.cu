@@ -44,7 +44,7 @@ void candy::calc_loss_function_gpu(const candy::Model & model, const array::Parc
 
 // Calculate gradient of canonical decomposition model with CPU parallelism
 void candy::calc_gradient_vector_gpu(const candy::Model & model, const array::Parcel & train_data, floatvec & result,
-                                    const cuda::Stream & stream, std::uint64_t n_thread) {
+                                     const cuda::Stream & stream, std::uint64_t n_thread) {
     // check stream validity
     stream.check_cuda_context();
     // check size of vector

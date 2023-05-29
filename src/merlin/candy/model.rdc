@@ -45,7 +45,7 @@ __cuhostdev__ const double & candy::Model::get(std::uint64_t index) const noexce
 }
 
 // Set value of element from flattened index
-__cuhostdev__ void candy::Model::set(std::uint64_t index, double && value) noexcept {
+__cuhostdev__ void candy::Model::set(std::uint64_t index, double value) noexcept {
     auto [dimension, idx] = this->convert_contiguous(index);
     this->parameters_[dimension][idx] = value;
 }
@@ -70,19 +70,19 @@ __cudevice__ void * candy::Model::copy_to_shared_mem(candy::Model * share_ptr, v
     // shallow copy of parameters vector
     bool check_zeroth_thread = (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
     if (check_zeroth_thread) {
-        share_ptr->parameters_.data() = reinterpret_cast<Vector<double> *>(parameters_data_ptr);
+        share_ptr->parameters_.data() = reinterpret_cast<floatvec *>(parameters_data_ptr);
         share_ptr->parameters_.size() = this->ndim();
         share_ptr->rank_ = this->rank_;
         std::uintptr_t dptr = reinterpret_cast<std::uintptr_t>(parameters_data_ptr);
         for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
-            Vector<double> * p_parameter_dim = reinterpret_cast<Vector<double> *>(dptr);
+            floatvec * p_parameter_dim = reinterpret_cast<floatvec *>(dptr);
             p_parameter_dim->data() = const_cast<double *>(this->parameters_[i_dim].data());
             p_parameter_dim->size() = this->parameters_[i_dim].size();
             dptr = reinterpret_cast<std::uintptr_t>(p_parameter_dim+1);
         }
     }
     __syncthreads();
-    Vector<double> * result = reinterpret_cast<Vector<double> *>(parameters_data_ptr);
+    floatvec * result = reinterpret_cast<floatvec *>(parameters_data_ptr);
     return reinterpret_cast<void *>(result + this->ndim());
 }
 
@@ -90,17 +90,17 @@ __cudevice__ void * candy::Model::copy_to_shared_mem(candy::Model * share_ptr, v
 __cudevice__ void * candy::Model::copy_to_shared_mem_single(candy::Model * share_ptr,
                                                             void * parameters_data_ptr) const {
     // shallow copy of parameters vector
-    share_ptr->parameters_.data() = reinterpret_cast<Vector<double> *>(parameters_data_ptr);
+    share_ptr->parameters_.data() = reinterpret_cast<floatvec *>(parameters_data_ptr);
     share_ptr->parameters_.size() = this->ndim();
     share_ptr->rank_ = this->rank_;
     std::uintptr_t dptr = reinterpret_cast<std::uintptr_t>(parameters_data_ptr);
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
-        Vector<double> * p_parameter_dim = reinterpret_cast<Vector<double> *>(dptr);
+        floatvec * p_parameter_dim = reinterpret_cast<floatvec *>(dptr);
         p_parameter_dim->data() = const_cast<double *>(this->parameters_[i_dim].data());
         p_parameter_dim->size() = this->parameters_[i_dim].size();
         dptr = reinterpret_cast<std::uintptr_t>(p_parameter_dim+1);
     }
-    Vector<double> * result = reinterpret_cast<Vector<double> *>(parameters_data_ptr);
+    floatvec * result = reinterpret_cast<floatvec *>(parameters_data_ptr);
     return reinterpret_cast<void *>(result + this->ndim());
 }
 

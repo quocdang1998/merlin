@@ -21,7 +21,7 @@ namespace merlin {
 // --------------------------------------------------------------------------------------------------------------------
 
 // Get sorted index
-static std::vector<std::uint64_t> sorted_index(const Vector<double> & input) {
+static std::vector<std::uint64_t> sorted_index(const floatvec & input) {
     std::vector<std::uint64_t> result(input.size());
     std::iota(result.begin(), result.end(), 0);
     std::stable_sort(result.begin(), result.end(),
@@ -30,7 +30,7 @@ static std::vector<std::uint64_t> sorted_index(const Vector<double> & input) {
 }
 
 // Check for duplicated element in a vector
-static bool has_duplicated_element(const Vector<double> & input) {
+static bool has_duplicated_element(const floatvec & input) {
     std::vector<std::uint64_t> sorted_idx = sorted_index(input);
     for (std::uint64_t i = 1; i < sorted_idx.size(); i++) {
         if (input[sorted_idx[i]] == input[sorted_idx[i-1]]) {
@@ -45,7 +45,7 @@ static bool has_duplicated_element(const Vector<double> & input) {
 // --------------------------------------------------------------------------------------------------------------------
 
 // Construct from a vector of values
-interpolant::CartesianGrid::CartesianGrid(const Vector<Vector<double>> & grid_vectors) : grid_vectors_(grid_vectors) {
+interpolant::CartesianGrid::CartesianGrid(const Vector<floatvec> & grid_vectors) : grid_vectors_(grid_vectors) {
     for (std::uint64_t i = 0; i < this->ndim(); i++) {
         if (has_duplicated_element(this->grid_vectors_[i])) {
             FAILURE(std::invalid_argument, "Found duplicated element at dimension %" PRIu64 ".\n", i);
@@ -54,7 +54,7 @@ interpolant::CartesianGrid::CartesianGrid(const Vector<Vector<double>> & grid_ve
 }
 
 // Constructor from an r-value reference to a vector of values
-interpolant::CartesianGrid::CartesianGrid(Vector<Vector<double>> && grid_vectors) : grid_vectors_(grid_vectors) {
+interpolant::CartesianGrid::CartesianGrid(Vector<floatvec> && grid_vectors) : grid_vectors_(grid_vectors) {
     for (std::uint64_t i = 0; i < this->ndim(); i++) {
         if (has_duplicated_element(this->grid_vectors_[i])) {
             FAILURE(std::invalid_argument, "Found duplicated element at dimension %" PRIu64 ".\n", i);
@@ -71,11 +71,11 @@ interpolant::CartesianGrid::CartesianGrid(const interpolant::CartesianGrid & who
                 static_cast<unsigned int>(whole.ndim()), static_cast<unsigned int>(slices.size()));
     }
     // create result
-    this->grid_vectors_ = Vector<Vector<double>>(whole.ndim());
+    this->grid_vectors_ = Vector<floatvec>(whole.ndim());
     intvec original_shape = whole.get_grid_shape();
     for (std::uint64_t i_dim = 0; i_dim < whole.ndim(); i_dim++) {
         auto [_, new_shape, __] = slices[i_dim].slice_on(original_shape[i_dim], {sizeof(double)});
-        this->grid_vectors_[i_dim] = Vector<double>(new_shape);
+        this->grid_vectors_[i_dim] = floatvec(new_shape);
         for (std::uint64_t i_shape = 0; i_shape < new_shape; i_shape++) {
             std::uint64_t in_wrt_original = slices[i_dim].start() + i_shape * slices[i_dim].step();
             this->grid_vectors_[i_dim][i_shape] = whole.grid_vectors()[i_dim][in_wrt_original];
@@ -92,7 +92,7 @@ array::Array interpolant::CartesianGrid::grid_points(void) const {
     intvec shape_ = this->get_grid_shape();
     for (std::uint64_t i_point = 0; i_point < npoint; i_point++) {
         intvec index_ = contiguous_to_ndim_idx(i_point, shape_);
-        Vector<double> value_;
+        floatvec value_;
         value_.assign(&(result[{i_point, 0}]), this->ndim());
         for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
             value_[i_dim] = this->grid_vectors_[i_dim][index_[i_dim]];
@@ -118,7 +118,7 @@ interpolant::CartesianGrid::iterator interpolant::CartesianGrid::end(void) {
 
 // Calculate minimum size to allocate to store the object
 std::uint64_t interpolant::CartesianGrid::malloc_size(void) const {
-    std::uint64_t size = sizeof(interpolant::CartesianGrid) + this->ndim()*sizeof(Vector<double>);
+    std::uint64_t size = sizeof(interpolant::CartesianGrid) + this->ndim()*sizeof(floatvec);
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
         size += this->grid_vectors_[i_dim].size() * sizeof(double);
     }
@@ -144,8 +144,8 @@ interpolant::CartesianGrid & interpolant::CartesianGrid::operator+=(const interp
     // unify 2 grid on each dimension
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
         // push_back if not duplicated
-        const Vector<double> & this_grid_vector = this->grid_vectors_[i_dim];
-        const Vector<double> & other_grid_vector = grid.grid_vectors_[i_dim];
+        const floatvec & this_grid_vector = this->grid_vectors_[i_dim];
+        const floatvec & other_grid_vector = grid.grid_vectors_[i_dim];
         std::vector<double> buffer(this_grid_vector.begin(), this_grid_vector.end());
         for (const double & node : other_grid_vector) {
             if (std::find(this_grid_vector.begin(), this_grid_vector.end(), node) == this_grid_vector.end()) {
@@ -153,14 +153,14 @@ interpolant::CartesianGrid & interpolant::CartesianGrid::operator+=(const interp
             }
         }
         // record to this instance
-        this->grid_vectors_[i_dim] = Vector<double>(buffer.data(), buffer.size());
+        this->grid_vectors_[i_dim] = floatvec(buffer.data(), buffer.size());
     }
     return *this;
 }
 
 // Exclusion on each dimension of 2 Cartesian grids
 double interpolant::exclusion_grid(const interpolant::CartesianGrid & grid_parent,
-                                   const interpolant::CartesianGrid & grid_child, const Vector<double> & x) {
+                                   const interpolant::CartesianGrid & grid_child, const floatvec & x) {
     // check n-dim of 2 grids
     if (grid_parent.ndim() != grid_child.ndim()) {
         FAILURE(std::invalid_argument, "Cannot get exclusion of 2 grids with different n-dim.\n");
@@ -168,8 +168,8 @@ double interpolant::exclusion_grid(const interpolant::CartesianGrid & grid_paren
     // get exclusion of 2 grid on each dimension
     double result = 1.0;
     for (std::uint64_t i_dim = 0; i_dim < grid_parent.ndim(); i_dim++) {
-        const Vector<double> & parent_vector = grid_parent.grid_vectors_[i_dim];
-        const Vector<double> & child_vector = grid_child.grid_vectors_[i_dim];
+        const floatvec & parent_vector = grid_parent.grid_vectors_[i_dim];
+        const floatvec & child_vector = grid_child.grid_vectors_[i_dim];
         for (const double & node : parent_vector) {
             if (std::find(child_vector.cbegin(), child_vector.cend(), node) == child_vector.cend()) {
                 result *= (x[i_dim] - node);
@@ -180,12 +180,12 @@ double interpolant::exclusion_grid(const interpolant::CartesianGrid & grid_paren
 }
 
 // Check if point in the grid
-bool interpolant::CartesianGrid::contains(const Vector<double> & point) const {
+bool interpolant::CartesianGrid::contains(const floatvec & point) const {
     if (point.size() != this->ndim()) {
         return false;
     }
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
-        const Vector<double> & grid_vector = this->grid_vectors_[i_dim];
+        const floatvec & grid_vector = this->grid_vectors_[i_dim];
         if (std::find(grid_vector.cbegin(), grid_vector.cend(), point[i_dim]) == grid_vector.cend()) {
             return false;
         }

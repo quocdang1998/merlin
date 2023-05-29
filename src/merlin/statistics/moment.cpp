@@ -29,8 +29,29 @@ double statistics::variance_cpu(const array::Array & data, std::uint64_t nthread
     return statistics::moment_cpu<2>(means);
 }
 
+// Calculate max element of the array.
+double statistics::max_cpu(const array::Array & data, std::uint64_t nthreads) {
+    // parallel get max element in array
+    double * storing = new double[nthreads];
+    std::memset(storing, 0, nthreads * sizeof(double));
+    #pragma omp parallel for num_threads(nthreads)
+    for (std::int64_t i_point = 0; i_point < data.size(); i_point++) {
+        std::uint64_t i_thread = ::omp_get_thread_num();
+        intvec index = contiguous_to_ndim_idx(i_point, data.shape());
+        double element = data.get(index);
+        storing[i_thread] = (element > storing[i_thread]) ? element : storing[i_thread];
+    }
+    // return max
+    double result = 0.0;
+    for (std::int64_t i_thread = 0; i_thread < nthreads; i_thread++) {
+        result = (storing[i_thread] > result) ? storing[i_thread] : result;
+    }
+    delete[] storing;
+    return result;
+}
+
 // Calculate mean for a given set of dimensions
-array::Array statistics::mean_cpu(const array::Array & data, const intvec & dims, const std::uint64_t nthreads) {
+array::Array statistics::mean_cpu(const array::Array & data, const intvec & dims, std::uint64_t nthreads) {
     // check the dimension vector
     std::set<std::uint64_t> dim_set(dims.cbegin(), dims.cend());
     if (dim_set.size() < dims.size()) {

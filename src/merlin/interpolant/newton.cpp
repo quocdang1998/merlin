@@ -24,10 +24,10 @@ namespace merlin {
 
 // Calculate divide diference between 2 arrays
 static void divide_difference_cpu_parallel(const array::Array & a1, const array::Array & a2, double x1,
-                                           double x2, array::Array & result) {
+                                           double x2, array::Array & result, std::uint64_t nthreads) {
     long double denominator = x1 - x2;
     std::uint64_t size = a1.size();
-    #pragma omp parallel for schedule(guided, Environment::parallel_chunk)
+    #pragma omp parallel for schedule(guided, Environment::parallel_chunk) num_threads(nthreads)
     for (std::int64_t i = 0; i < size; i++) {
         intvec index = contiguous_to_ndim_idx(i, a1.shape());
         double div_diff = (a1.get(index) - a2.get(index)) / denominator;
@@ -38,7 +38,7 @@ static void divide_difference_cpu_parallel(const array::Array & a1, const array:
 // Calculate coefficients for cartesian grid (supposed shape value == shape of coeff)
 static void calc_newton_coeffs_cpu_recursive(const interpolant::CartesianGrid & grid, array::Array & coeff,
                                              std::uint64_t max_dimension, merlin::Vector<array::Array> & sub_slices,
-                                             std::uint64_t start_index) {
+                                             std::uint64_t start_index, std::uint64_t nthreads) {
     // get associated 1D grid to calculate on
     std::uint64_t ndim = grid.ndim();
     std::uint64_t current_dim = ndim - coeff.ndim();
@@ -67,7 +67,8 @@ static void calc_newton_coeffs_cpu_recursive(const interpolant::CartesianGrid & 
             const array::Array array_k_1(coeff, slice_k_1);
             array::Array array_result(coeff, slice_k);
             // calculate divide difference
-            divide_difference_cpu_parallel(array_k, array_k_1, grid_vector[k], grid_vector[k-i], array_result);
+            divide_difference_cpu_parallel(array_k, array_k_1, grid_vector[k], grid_vector[k-i],
+                                           array_result, nthreads);
         }
     }
     // calculate new start index jump
@@ -84,7 +85,7 @@ static void calc_newton_coeffs_cpu_recursive(const interpolant::CartesianGrid & 
         slice_i[0] = array::Slice({static_cast<std::uint64_t>(i)});
         array::Array array_coeff_i(coeff, slice_i);
         array_coeff_i.remove_dim(0);
-        calc_newton_coeffs_cpu_recursive(grid, array_coeff_i, max_dimension, sub_slices, new_start_index);
+        calc_newton_coeffs_cpu_recursive(grid, array_coeff_i, max_dimension, sub_slices, new_start_index, nthreads);
         // push instance to vector
         if (current_dim == max_dimension) {
             // sub_slices[new_start_index] = array::Array(coeff, slice_i);
@@ -149,7 +150,7 @@ static void calc_newton_coeffs_single_core(const interpolant::CartesianGrid & gr
 
 // Calculate coefficients for cartesian grid
 void interpolant::calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid, const array::Array & value,
-                                         array::Array & coeff) {
+                                         array::Array & coeff, std::uint64_t nthreads) {
     // get associated 1D grid to calculate on
     std::uint64_t ndim = grid.ndim();
     // copy value to coeff
@@ -174,9 +175,9 @@ void interpolant::calc_newton_coeffs_cpu(const interpolant::CartesianGrid & grid
     }
     // recursive calculation
     Vector<array::Array> sub_slices = make_vector<array::Array>(cumulative_size);
-    calc_newton_coeffs_cpu_recursive(grid, coeff, dim_max, sub_slices, 0);
+    calc_newton_coeffs_cpu_recursive(grid, coeff, dim_max, sub_slices, 0, nthreads);
     // parallel calculation after that
-    #pragma omp parallel for schedule(guided, Environment::parallel_chunk)
+    #pragma omp parallel for schedule(guided, Environment::parallel_chunk) num_threads(nthreads)
     for (std::int64_t i = 0; i < sub_slices.size(); i++) {
         calc_newton_coeffs_single_core(grid, sub_slices[i]);
     }

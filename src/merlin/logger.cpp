@@ -54,10 +54,10 @@ std::string throw_windows_last_error(unsigned long int last_error) {
 void print_stacktrace(int skip) {
     #ifdef __MERLIN_DEBUG__
     // get current process
-    ::native_frame_ptr_t process = ::GetCurrentProcess();
+    native_frame_ptr_t process = ::GetCurrentProcess();
     ::SymInitialize(process, nullptr, true);
     // capture address of the functions in the stacktrace
-    ::native_frame_ptr_t buffer[STACK_TRACE_BUFFER_SIZE];
+    native_frame_ptr_t buffer[STACK_TRACE_BUFFER_SIZE];
     unsigned int frames = ::CaptureStackBackTrace(skip, STACK_TRACE_BUFFER_SIZE, buffer, nullptr);
     ::SYMBOL_INFO * symbol = static_cast<::SYMBOL_INFO *>(std::calloc(sizeof(::SYMBOL_INFO) + 256*sizeof(char), 1));
     symbol->MaxNameLen = 255;
@@ -92,7 +92,7 @@ std::string throw_linux_last_error(void) {
 void print_stacktrace(int skip) {
     #ifdef __MERLIN_DEBUG__
     // get number of frame in the stack
-    ::native_frame_ptr_t buffer[STACK_TRACE_BUFFER_SIZE];
+    native_frame_ptr_t buffer[STACK_TRACE_BUFFER_SIZE];
     int frames_count = ::backtrace(const_cast<void **>(buffer), STACK_TRACE_BUFFER_SIZE);
     std::copy(buffer+skip, buffer+frames_count, buffer);
     frames_count -= skip;

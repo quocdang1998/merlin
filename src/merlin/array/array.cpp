@@ -26,6 +26,9 @@ namespace merlin {
 // Allocate non pageable memory
 double * array::allocate_memory(std::uint64_t size) {
     double * result = new double[size];
+    if (result == nullptr) {
+        FAILURE(std::runtime_error, "Cannot allocate memory.\n");
+    }
     return result;
 }
 
@@ -244,7 +247,7 @@ void array::Array::extract_data_from_file(const array::Stock & src) {
 
 // Destructor
 array::Array::~Array(void) {
-    if (this->release_) {
+    if (this->release_ && (this->data_ != nullptr)) {
         array::free_memory(this->data_);
     }
 }

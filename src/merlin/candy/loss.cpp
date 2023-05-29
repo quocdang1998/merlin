@@ -19,7 +19,7 @@ namespace merlin {
 
 // Calculate loss function with CPU parallelism
 double candy::calc_loss_function_cpu(const candy::Model & model, const array::Array & train_data) {
-    Vector<double> loss_vector(::omp_get_max_threads(), 0.0);
+    floatvec loss_vector(::omp_get_max_threads(), 0.0);
     #pragma omp parallel for
     for (std::int64_t i_point = 0; i_point < train_data.size(); i_point++) {
         intvec index = contiguous_to_ndim_idx(i_point, train_data.shape());
@@ -38,8 +38,8 @@ double candy::calc_loss_function_cpu(const candy::Model & model, const array::Ar
 #ifndef __MERLIN_CUDA__
 
 // Calculate loss function with GPU parallelism
-double candy::calc_loss_function_gpu(const candy::Model & model, const array::Parcel & train_data,
-                                     const cuda::Stream & stream, std::uint64_t n_thread) {
+void candy::calc_loss_function_gpu(const candy::Model & model, const array::Parcel & train_data, floatvec & result,
+                                   const cuda::Stream & stream, std::uint64_t n_thread) {
     FAILURE(cuda_compile_error, "Compile the package with CUDA option enabled to access this feature.\n");
 }
 
@@ -50,7 +50,7 @@ double candy::calc_loss_function_gpu(const candy::Model & model, const array::Pa
 // --------------------------------------------------------------------------------------------------------------------
 
 // Calculate gradient of canonical decomposition model with CPU parallelism
-Vector<double> candy::calc_gradient_vector_cpu(const candy::Model & model, const array::Array & train_data) {
+void candy::calc_gradient_vector_cpu(const candy::Model & model, const array::Array & train_data, floatvec & result) {
     // check shape
     intvec model_shape = model.get_model_shape();
     const intvec & data_shape = train_data.shape();
@@ -62,9 +62,17 @@ Vector<double> candy::calc_gradient_vector_cpu(const candy::Model & model, const
             FAILURE(std::invalid_argument, "Shape of model and data must be the same.\n");
         }
     }
+    // check size of vector
+    std::uint64_t n_param = model.size();
+    if (result.size() != n_param) {
+        FAILURE(std::invalid_argument, "Result vector must have the size of the number of parameters in the model.\n");
+    }
+    // initialize result
+    for (std::uint64_t i_param = 0; i_param < n_param; i_param++) {
+        result[i_param] = 0.0;
+    }
     // update each parameter
-    std::uint64_t n_param = model.size(), n_point = train_data.size(), n_dim = model_shape.size();
-    Vector<double> gradient_vector(n_param, 0.0);
+    std::uint64_t n_point = train_data.size(), n_dim = model_shape.size();
     #pragma omp parallel for
     for (std::int64_t i_param = 0; i_param < n_param; i_param++) {
         auto [param_dim, param_index, param_rank] = contiguous_to_model_idx(i_param, model.rank(), model_shape);
@@ -91,10 +99,9 @@ Vector<double> candy::calc_gradient_vector_cpu(const candy::Model & model, const
             double eval = model.eval(index_data);
             gradient *= eval - data;
             // add gradient to gradient vector
-            gradient_vector[i_param] += gradient;
+            result[i_param] += gradient;
         }
     }
-    return gradient_vector;
 }
 
 }  // namespace merlin

@@ -6,12 +6,35 @@
 #include <cstdint>  // std::uint64_t
 #include <string>  // std::string
 
+#include "merlin/array/nddata.hpp"  // merlin::array::Array
 #include "merlin/cuda_decorator.hpp"  // __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/candy/declaration.hpp"  // merlin::candy::Model
-#include "merlin/vector.hpp"  // merlin::Vector
+#include "merlin/vector.hpp"  // merlin::Vector, merlin::floatvec
 
 namespace merlin {
+
+namespace candy {
+
+/** @brief Random distribution for model initialization.
+ *  @details Initial values of a canonical decomposition model must follow 2 rules: all entries must be non-zero, and
+ *  values of the same rank and belonging to the same dimension cannot having the same value. Thus, a random generator
+ *  is required to initialize model, based on mean and variance of the train data set.
+ */
+enum class RandomInitializer {
+    /** @brief Uniform distribution between @f$ [-1, 1] \setminus \{0\} @f$.*/
+    DefaultDistribution = 0x00,
+    /** @brief Uniform distribution between @f$ [-m, m] \setminus \{0\} @f$, @f$ m @f$ is max value in train data.*/
+    UniformDistribution = 0x01,
+    /** @brief Normal distribution @f$ \mathcal{N}(\mu, \sigma) \setminus \{0\} @f$. The mean value @f$ \mu =
+     *  \frac{1}{r} \sqrt[n]{M} @f$, in which @f$ r @f$ is the rank, @f$ n @f$ is the number of dimension, and
+     *  @f$ M @f$ is the mean value, while @f$ \sigma @f$ is the standard deviation on the dimension to which the
+     *  parameter belongs.
+     */
+    NormalDistribution = 0x02,
+};
+
+}  // namespace candy
 
 /** @brief Canonical decomposition model.*/
 class candy::Model {
@@ -20,10 +43,10 @@ class candy::Model {
     /// @{
     /** @brief Default constructor.*/
     Model(void) = default;
-    /** @brief Constructor from shape and rank.*/
+    /** @brief Constructor from train data shape and rank.*/
     MERLIN_EXPORTS Model(const intvec & shape, std::uint64_t rank);
     /** @brief Constructor from model values.*/
-    MERLIN_EXPORTS Model(const Vector<Vector<double>> & parameter, std::uint64_t rank);
+    MERLIN_EXPORTS Model(const Vector<floatvec> & parameter, std::uint64_t rank);
     /// @}
 
     /// @name Copy and move
@@ -40,8 +63,10 @@ class candy::Model {
 
     /// @name Get attributes
     /// @{
+        /** @brief Get reference to parameters.*/
+    __cuhostdev__ constexpr Vector<floatvec> & parameters(void) noexcept {return this->parameters_;}
     /** @brief Get constant reference to parameters.*/
-    __cuhostdev__ constexpr const Vector<Vector<double>> & parameters(void) const noexcept {return this->parameters_;}
+    __cuhostdev__ constexpr const Vector<floatvec> & parameters(void) const noexcept {return this->parameters_;}
     /** @brief Number of dimension.*/
     __cuhostdev__ constexpr std::uint64_t ndim(void) const noexcept {return this->parameters_.size();}
     /** @brief Get shape.*/
@@ -55,13 +80,12 @@ class candy::Model {
     /// @name Get and set parameters
     /// @{
     /** @brief Get value of element at a given index.*/
-    __cuhostdev__ constexpr double get(std::uint64_t i_dim, std::uint64_t index,
-                                               std::uint64_t rank) const noexcept {
+    __cuhostdev__ constexpr double get(std::uint64_t i_dim, std::uint64_t index, std::uint64_t rank) const noexcept {
         return this->parameters_[i_dim][index*this->rank_ + rank];
     }
     /** @brief Set value of element at a given index.*/
     __cuhostdev__ constexpr void set(std::uint64_t i_dim, std::uint64_t index, std::uint64_t rank,
-                                     double && value) noexcept {
+                                     double value) noexcept {
         this->parameters_[i_dim][index*this->rank_ + rank] = value;
     }
     /** @brief Get dimension and index from contiguous index.*/
@@ -69,13 +93,25 @@ class candy::Model {
     /** @brief Get reference to element from flattened index.*/
     __cuhostdev__ const double & get(std::uint64_t index) const noexcept;
     /** @brief Set value of element from flattened index.*/
-    __cuhostdev__ void set(std::uint64_t index, double && value) noexcept;
+    __cuhostdev__ void set(std::uint64_t index, double value) noexcept;
     /// @}
 
     /// @name Evaluation of the model
     /// @{
     /** @brief Evaluate result of the model at a given index.*/
     __cuhostdev__ double eval(const intvec & index) const noexcept;
+    /// @}
+
+    /// @name Initialization model
+    /// @{
+    /** @brief Initialize values of model based on train data.
+     *  @param train_data Data to train the model.
+     *  @param random_distribution Random distribution from which values are sampled.
+     *  @param n_thread Number of parallel threads for calculation the mean and variance.
+     */
+    void initialize(const array::Array & train_data,
+                    candy::RandomInitializer random_distribution = candy::RandomInitializer::DefaultDistribution,
+                    std::uint64_t n_thread = 1);
     /// @}
 
     /// @name GPU related features
@@ -92,7 +128,7 @@ class candy::Model {
                                       std::uintptr_t stream_ptr = 0) const;
     /** @brief Calculate the minimum number of bytes to allocate in CUDA shared memory to store the model.*/
     std::uint64_t shared_mem_size(void) const {
-        return sizeof(candy::Model) + this->ndim() * sizeof(Vector<double>);
+        return sizeof(candy::Model) + this->ndim() * sizeof(floatvec);
     }
     #ifdef __NVCC__
     /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
@@ -126,7 +162,7 @@ class candy::Model {
 
   protected:
     /** @brief Pointer to values of parameters.*/
-    Vector<Vector<double>> parameters_;
+    Vector<floatvec> parameters_;
     /** @brief Rank of the decomposition.*/
     std::uint64_t rank_ = 0;
 };

@@ -10,6 +10,7 @@
 #include "merlin/array/declaration.hpp"  // merlin::array::Slice
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/cuda_decorator.hpp"  // __cuhostdev__
+#include "merlin/vector.hpp"  // merlin::Vector
 
 namespace merlin {
 
@@ -119,6 +120,9 @@ class array::Slice {
     /** @brief Check validity of values inputted in the Slice.*/
     __cuhostdev__ void check_validity(void) const;
 };
+
+/** @brief %Vector of slices.*/
+using slicevec = Vector<array::Slice>;
 
 }  // namespace merlin
 

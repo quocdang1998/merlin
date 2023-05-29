@@ -33,6 +33,7 @@ int main(void) {
     merlin::floatvec gradient_gpu(model.size());
     merlin::candy::calc_gradient_vector_gpu(model, data_gpu, gradient_gpu, merlin::cuda::Stream(), 3);
     MESSAGE("Gradient vector on GPU: %s\n", gradient_gpu.str().c_str());
-    merlin::Vector<double> gradient_cpu = merlin::candy::calc_gradient_vector_cpu(model, train_data);
+    merlin::Vector<double> gradient_cpu(model.size());
+    merlin::candy::calc_gradient_vector_cpu(model, train_data, gradient_cpu);
     MESSAGE("Gradient vector on CPU: %s\n", gradient_cpu.str().c_str());
 }

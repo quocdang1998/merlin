@@ -40,12 +40,18 @@ MERLIN_EXPORTS double mean_cpu(const array::Array & data, std::uint64_t nthreads
  */
 MERLIN_EXPORTS double variance_cpu(const array::Array & data, std::uint64_t nthreads = 1);
 
+/** @brief Calculate max element of the array.
+ *  @param data Array of data to calculate the mean.
+ *  @param nthreads Number of CPU threads to perform the calculation.
+ */
+MERLIN_EXPORTS double max_cpu(const array::Array & data, std::uint64_t nthreads = 1);
+
 /** @brief Calculate mean for a given set of dimensions.
  *  @param data Array of data to calculate the mean.
  *  @param dims Dimension on which the mean is calculated.
  *  @param nthreads Number of CPU threads to perform the calculation.
  */
-MERLIN_EXPORTS array::Array mean_cpu(const array::Array & data, const intvec & dims, const std::uint64_t nthreads = 1);
+MERLIN_EXPORTS array::Array mean_cpu(const array::Array & data, const intvec & dims, std::uint64_t nthreads = 1);
 
 #ifdef __NVCC__
 
