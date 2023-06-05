@@ -50,7 +50,8 @@ void candy::calc_loss_function_gpu(const candy::Model & model, const array::Parc
 // --------------------------------------------------------------------------------------------------------------------
 
 // Calculate gradient of canonical decomposition model with CPU parallelism
-void candy::calc_gradient_vector_cpu(const candy::Model & model, const array::Array & train_data, floatvec & result) {
+void candy::calc_gradient_vector_cpu(const candy::Model & model, const array::Array & train_data, floatvec & result,
+                                     std::uint64_t n_thread) {
     // check shape
     intvec model_shape = model.get_model_shape();
     const intvec & data_shape = train_data.shape();
@@ -73,7 +74,7 @@ void candy::calc_gradient_vector_cpu(const candy::Model & model, const array::Ar
     }
     // update each parameter
     std::uint64_t n_point = train_data.size(), n_dim = model_shape.size();
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(n_thread)
     for (std::int64_t i_param = 0; i_param < n_param; i_param++) {
         auto [param_dim, param_index, param_rank] = contiguous_to_model_idx(i_param, model.rank(), model_shape);
         // loop over each point in the dataset

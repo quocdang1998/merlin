@@ -24,7 +24,7 @@ class candy::GradDescent : public candy::Optimizer {
     /// @name Constructor
     /// @{
     /** @brief Constructor from learning rate.*/
-    GradDescent(double learning_rate = 0.5) : learning_rate_(learning_rate) {}
+    __cuhostdev__ GradDescent(double learning_rate = 0.5) : learning_rate_(learning_rate) {}
     /// @}
 
     /// @name Copy and move
@@ -59,22 +59,19 @@ class candy::GradDescent : public candy::Optimizer {
 
     /// @name GPU related features
     /// @{
-    /** @brief Calculate the minimum number of bytes to allocate in the memory to store the object and its data.*/
-    std::uint64_t malloc_size(void) const {return sizeof(candy::GradDescent);}
-    /** @brief Copy data from CPU to a pre-allocated memory on GPU.
-     *  @details The meta-data should be to the memory region that comes right after the copied object.
-     *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
-     *  @param next_ptr Pointer to a pre-allocated GPU memory for storing next object's meta-data.
-     *  @param stream_ptr Pointer to CUDA sytream for asynchronous copy.
+    /** @brief Create an object on GPU by the GPU.
+     *  @details Create object by GPU allow register v-table on the GPU, which is required for calling virtual
+     *  functions. This function is synchronous.
      */
-    MERLIN_EXPORTS void * copy_to_gpu(candy::Optimizer * gpu_ptr, void * next_ptr,
-                                      std::uintptr_t stream_ptr = 0) const;
+    MERLIN_EXPORTS static candy::GradDescent * create_object_on_gpu(double learning_rate = 0.5);
+    /** @brief Destroy an object by GPU.*/
+    MERLIN_EXPORTS static void delete_object_on_gpu(candy::GradDescent * p_optimizer);
     /// @}
 
     /// @name Destructor
     /// @{
     /** @brief Destructor.*/
-    MERLIN_EXPORTS ~GradDescent(void);
+    __cuhostdev__ ~GradDescent(void) {}
     /// @}
 
   protected:
@@ -82,6 +79,7 @@ class candy::GradDescent : public candy::Optimizer {
     double learning_rate_;
 };
 
+#ifdef __comment
 // AdaGrad
 // -------
 
@@ -189,6 +187,8 @@ class candy::Adam : public candy::Optimizer {
     /** @brief Time step.*/
     std::uint64_t time_step_ = 0;
 };
+
+#endif // __comment
 
 }  // namespace merlin
 

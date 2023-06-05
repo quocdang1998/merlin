@@ -71,10 +71,11 @@ __cuhostdev__ intvec contiguous_to_ndim_idx_1(std::uint64_t index, const intvec 
  *  @details Calculate gradient of loss function of a model over a dataset with CPU parallelism.
  *  @param model Canonical decomposition model.
  *  @param train_data Target data to fit the model.
- *  @param result Result
+ *  @param result %Vector to store gradient values.
+ *  @param n_thread Number of threads.
  */
 MERLIN_EXPORTS void calc_gradient_vector_cpu(const candy::Model & model, const array::Array & train_data,
-                                             floatvec & result);
+                                             floatvec & result, std::uint64_t n_thread = 1);
 
 /** @brief Calculate gradient of a model.
  *  @details Calculate gradient of loss function of a model over a dataset with GPU parallelism.

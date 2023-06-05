@@ -8,6 +8,7 @@ class Optimizer;
 class GradDescent;
 class AdaGrad;
 class Adam;
+class Launcher;
 }
 
 #endif  // MERLIN_CANDY_DECLARATION_HPP_

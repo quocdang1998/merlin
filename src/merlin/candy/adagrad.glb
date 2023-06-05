@@ -1,0 +1,35 @@
+// Copyright 2023 quocdang1998
+#include "merlin/candy/adagrad.hpp"
+
+namespace merlin {
+
+// Kernel creating object on GPU
+__global__ static void create_adagrad_kernel(candy::AdaGrad ** p_ref_adagrad, double learning_rate, double bias,
+                                             std::uint64_t gradient_size) {
+    *p_ref_adagrad = new candy::AdaGrad(learning_rate, bias, gradient_size);
+}
+
+// Kernel deleting object on GPU
+__global__ static void delete_adagrad_kernel(candy::AdaGrad * p_adagrad) {
+    delete p_adagrad;
+}
+
+// Create an object on GPU by the GPU
+candy::AdaGrad * candy::AdaGrad::create_object_on_gpu(double learning_rate, double bias, std::uint64_t gradient_size) {
+    ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(0);
+    candy::AdaGrad ** p_ref_adagrad_gpu;
+    ::cudaMalloc(&p_ref_adagrad_gpu, sizeof(candy::AdaGrad *));
+    create_adagrad_kernel<<<1, 1, 0, stream>>>(p_ref_adagrad_gpu, learning_rate, bias, gradient_size);
+    candy::AdaGrad * result;
+    ::cudaMemcpy(&result, p_ref_adagrad_gpu, sizeof(candy::AdaGrad *), ::cudaMemcpyDeviceToHost);
+    ::cudaFree(p_ref_adagrad_gpu);
+    return result;
+}
+
+// Destroy an object by GPU
+void candy::AdaGrad::delete_object_on_gpu(candy::AdaGrad * p_optimizer) {
+    ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(0);
+    delete_adagrad_kernel<<<1, 1, 0, stream>>>(p_optimizer);
+}
+
+}  // namespace merlin

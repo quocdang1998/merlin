@@ -2,9 +2,8 @@
 #ifndef MERLIN_CANDY_OPTIMIZER_HPP_
 #define MERLIN_CANDY_OPTIMIZER_HPP_
 
-#include <cstdio>
-
 #include "merlin/candy/declaration.hpp"  // merlin::candy::Model
+#include "merlin/cuda_decorator.hpp"  // __cuhostdev__
 #include "merlin/vector.hpp"  // merlin::Vector
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 
@@ -35,11 +34,16 @@ class candy::Optimizer {
     /// @{
     /** @brief Update model by gradient.*/
     virtual void update_cpu(candy::Model & model, const floatvec & gradient) {}
+    #ifdef __NVCC__
+    /** @brief Update model by gradient on GPU.*/
+    // virtual device function bugged !!!
+    __cudevice__ virtual void update_gpu(candy::Model * p_model, const double * p_gradient, std::uint64_t size) {}
+    #endif  // __NVCC__
     /// @}
 
     /// @name Destructor
     /// @{
-    MERLIN_EXPORTS virtual ~Optimizer(void);
+    __cuhostdev__ virtual ~Optimizer(void) {}
     /// @}
 };
 

@@ -8,6 +8,7 @@
 #include "merlin/array/copy.hpp"
 #include "merlin/candy/adagrad.hpp"
 #include "merlin/candy/grad_descent.hpp"
+#include "merlin/candy/launcher.hpp"
 #include "merlin/candy/loss.hpp"
 #include "merlin/candy/model.hpp"
 #include "merlin/logger.hpp"
@@ -51,16 +52,12 @@ int main(void) {
     MESSAGE("Gradient vector: %s\n", gradient.str().c_str());
 
     std::printf("\n");
-    // merlin::candy::Adam grad(0.5);
-    merlin::candy::AdaGrad grad(0.2);
-    // merlin::candy::GradDescent grad(0.1);
-    for (std::uint64_t i = 0; i < 1000; i++) {
-        merlin::candy::calc_gradient_vector_cpu(model, train_data, gradient);
-        grad.update_cpu(model, gradient);
-        if (i % 100 == 0) {
-            MESSAGE("Model update after %" PRIu64 " steps: %s\n", i, model.str().c_str());
-        }
-    }
+    merlin::candy::GradDescent grad(0.101);
+    merlin::candy::Launcher launch(model, train_data, grad, 32);
+    launch.launch_async(1000);
+    launch.synchronize();
+
+
     MESSAGE("Model update after last steps: %s\n", model.str().c_str());
     MESSAGE("Gradient update after last steps: %s\n", gradient.str().c_str());
     MESSAGE("Loss function after trained: %f\n", merlin::candy::calc_loss_function_cpu(model, train_data));

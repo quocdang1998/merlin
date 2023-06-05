@@ -37,7 +37,7 @@ int main(void) {
     initialize_intvec_on_gpu<<<1,1>>>();
     cudaError_t err_ = cudaGetLastError();
     if (err_ != cudaSuccess) {
-        FAILURE(cuda_runtime_error, "%s.\n", cudaGetErrorName(err_));
+        FAILURE(merlin::cuda_runtime_error, "%s.\n", cudaGetErrorName(err_));
     }
     cudaDeviceSynchronize();
 }

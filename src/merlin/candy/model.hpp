@@ -7,6 +7,7 @@
 #include <string>  // std::string
 
 #include "merlin/array/nddata.hpp"  // merlin::array::Array
+#include "merlin/array/slice.hpp"  // merlin::slicevec
 #include "merlin/cuda_decorator.hpp"  // __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/candy/declaration.hpp"  // merlin::candy::Model
@@ -47,6 +48,10 @@ class candy::Model {
     MERLIN_EXPORTS Model(const intvec & shape, std::uint64_t rank);
     /** @brief Constructor from model values.*/
     MERLIN_EXPORTS Model(const Vector<floatvec> & parameter, std::uint64_t rank);
+    /** @brief Slicing constructor.
+     *  @details Partite the full model into multiple smaller potions.
+     */
+    MERLIN_EXPORTS Model(Model & full_model, const slicevec & slices);
     /// @}
 
     /// @name Copy and move
@@ -145,7 +150,7 @@ class candy::Model {
                                                   void * parameters_data_ptr) const;
     #endif  // __NVCC__
     /** @brief Copy data from GPU to CPU.*/
-    MERLIN_EXPORTS void * copy_from_gpu(void * data_ptr, std::uintptr_t stream_ptr = 0);
+    MERLIN_EXPORTS void * copy_from_gpu(void * parameters_data_ptr, std::uintptr_t stream_ptr = 0);
     /// @}
 
     /// @name Representation

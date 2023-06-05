@@ -8,7 +8,7 @@
 #include "merlin/candy/model.hpp"
 #include "merlin/logger.hpp"
 
-__global__ void call_optimizer_updater(merlin::candy::Model * p_model, merlin::candy::GradDescent * p_opt,
+__global__ void call_optimizer_updater(merlin::candy::Model * p_model, merlin::candy::Optimizer * p_opt,
                                        double * p_gradient, std::uint64_t size) {
     p_opt->update_gpu(p_model, p_gradient, size);
 }
@@ -21,10 +21,7 @@ int main(void) {
     model.copy_to_gpu(gpu_model, gpu_model+1);
 
     // Initialize optimizer on GPU
-    merlin::candy::GradDescent opt(0.2);
-    merlin::candy::GradDescent * gpu_opt;
-    cudaMalloc(&gpu_opt, opt.malloc_size());
-    opt.copy_to_gpu(gpu_opt, gpu_opt+1);
+    merlin::candy::GradDescent * gpu_opt = merlin::candy::GradDescent::create_object_on_gpu(0.2);
 
     // Calculate gradient vector
     double data[6] = {1.2, 2.3, 5.7, 4.8, 7.1, 0.0};
@@ -47,6 +44,6 @@ int main(void) {
 
     // free memory
     cudaFree(gradient_gpu);
-    cudaFree(gpu_opt);
+    merlin::candy::GradDescent::delete_object_on_gpu(gpu_opt);
     cudaFree(gpu_model);
 }

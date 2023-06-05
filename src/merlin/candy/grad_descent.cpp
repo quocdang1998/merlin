@@ -32,16 +32,17 @@ void candy::GradDescent::update_cpu(candy::Model & model, const floatvec & gradi
 
 #ifndef __MERLIN_CUDA__
 
-// Copy data from CPU to a pre-allocated memory on GPU
-void * candy::GradDescent::copy_to_gpu(candy::Optimizer * gpu_ptr, void * next_ptr, std::uintptr_t stream_ptr) const {
-    FAILURE(std::runtime_error, "Compile with CUDA option to enable this feature.\n");
-    return nullptr;
+// Create an object on GPU by the GPU
+candy::GradDescent * candy::GradDescent::create_object_on_gpu(double learning_rate, std::uintptr_t stream_ptr) {
+    FAILURE(cuda_compile_error, "Enable CUDA option to use this function.\n");
 }
 
 #endif  // __MERLIN_CUDA__
 
 // Destructor
-candy::GradDescent::~GradDescent(void) {}
+// candy::GradDescent::~GradDescent(void) {}
+
+#ifdef __comment
 
 // --------------------------------------------------------------------------------------------------------------------
 // AdaGrad
@@ -127,5 +128,7 @@ void candy::Adam::update_cpu(candy::Model & model, const floatvec & gradient) {
 
 // Destructor
 candy::Adam::~Adam(void) {}
+
+#endif // __comment
 
 }  // namespace merlin

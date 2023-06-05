@@ -1,5 +1,6 @@
 // Copyright 2023 quocdang1998
 #include "merlin/candy/model.hpp"
+#include "merlin/logger.hpp"  // CUHDERR
 
 namespace merlin {
 

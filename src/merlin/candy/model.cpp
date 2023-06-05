@@ -139,6 +139,22 @@ rank_(rank) {
     }
 }
 
+// Slicing constructor
+candy::Model::Model(Model & full_model, const slicevec & slices) : parameters_(full_model.ndim()),
+rank_(full_model.rank_) {
+    if (slices.size() != full_model.ndim()) {
+        CUHDERR(std::invalid_argument, "Inconsistent size of Model and slice vector.\n");
+    }
+    for (std::uint64_t i_dim = 0; i_dim < full_model.ndim(); i_dim++) {
+        if (slices[i_dim].step() != 1) {
+            CUHDERR(std::invalid_argument, "Expected slice with step 1.\n");
+        }
+        auto [offset, shape, stride] = slices[i_dim].slice_on(full_model.parameters_[i_dim].size() / full_model.rank_,
+                                                              full_model.rank_ * sizeof(double));
+        this->parameters_[i_dim].assign(full_model.parameters_[i_dim].data() + offset, shape);
+    }
+}
+
 // Initialize values of model based on train data
 void candy::Model::initialize(const array::Array & train_data, candy::RandomInitializer random_distribution,
                               std::uint64_t n_thread) {
@@ -187,7 +203,7 @@ void * candy::Model::copy_to_gpu(candy::Model * gpu_ptr, void * grid_vector_data
 }
 
 // Copy data from GPU to CPU
-void * candy::Model::copy_from_gpu(void * gpu_ptr, std::uintptr_t stream_ptr) {
+void * candy::Model::copy_from_gpu(void * parameters_data_ptr, std::uintptr_t stream_ptr) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
     return nullptr;
 }

@@ -29,8 +29,9 @@ void * candy::Model::copy_to_gpu(candy::Model * gpu_ptr, void * parameters_data_
 }
 
 // Copy data from GPU to CPU
-void * candy::Model::copy_from_gpu(void * gpu_ptr, std::uintptr_t stream_ptr) {
-    std::uintptr_t data_potition = reinterpret_cast<std::uintptr_t>(gpu_ptr) + this->ndim()*sizeof(floatvec);
+void * candy::Model::copy_from_gpu(void * parameters_data_ptr, std::uintptr_t stream_ptr) {
+    std::uintptr_t data_potition = reinterpret_cast<std::uintptr_t>(parameters_data_ptr);
+    data_potition += this->ndim()*sizeof(floatvec);
     void * data_ptr = reinterpret_cast<void *>(data_potition);
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
         data_ptr = this->parameters_[i_dim].copy_from_gpu(reinterpret_cast<double *>(data_ptr), stream_ptr);
