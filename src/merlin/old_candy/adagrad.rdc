@@ -39,6 +39,21 @@ __cudevice__ void candy::AdaGrad::update_gpu(candy::Model * p_model, const doubl
     __syncthreads();
 }
 
+// Copy data to shared memory
+__cudevice__ void * candy::AdaGrad::copy_to_shared_mem(candy::Optimizer * share_ptr, void * data_ptr) const {
+    // copy meta data
+    bool check_zeroth_thread = (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
+    candy::AdaGrad * share_ptr_polymorphic = reinterpret_cast<candy::AdaGrad *>(share_ptr);
+    if (check_zeroth_thread) {
+        share_ptr_polymorphic->learning_rate_ = this->learning_rate_;
+        share_ptr_polymorphic->bias_ = this->bias_;
+        share_ptr_polymorphic->cumulative_gradient_norm_.data() = const_cast<double *>(this->cumulative_gradient_norm_.data());
+        share_ptr_polymorphic->cumulative_gradient_norm_.size() = this->cumulative_gradient_norm_.size();
+    }
+    __syncthreads();
+    return data_ptr;
+}
+
 #endif  // __NVCC__
 
 }  // namespace merlin

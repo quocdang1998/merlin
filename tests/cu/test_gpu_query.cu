@@ -39,7 +39,7 @@ int main(void) {
 
     merlin::cuda::Event ev(merlin::cuda::EventCategory::BlockingSyncEvent | merlin::cuda::EventCategory::DisableTimingEvent);
 
-    merlin::cuda::Stream s(merlin::cuda::StreamSetting::Default);
+    merlin::cuda::Stream s(merlin::cuda::StreamSetting::NonBlocking);
     MESSAGE("Default stream: %s.\n", s.str().c_str());
     int data = 1;
     s.check_cuda_context();
@@ -69,4 +69,5 @@ int main(void) {
     dynamic_graph.export_to_dot("output.dot");
     dynamic_graph.execute(s);
     s.synchronize();
+
 }

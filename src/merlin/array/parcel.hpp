@@ -109,6 +109,8 @@ class array::Parcel : public array::NdData {
      */
     MERLIN_EXPORTS void * copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr,
                                       std::uintptr_t stream_ptr = 0) const;
+    /** @brief Calculate the minimum number of bytes to allocate in CUDA shared memory to store the array.*/
+    std::uint64_t shared_mem_size(void) const {return this->malloc_size();}
     #ifdef __NVCC__
     /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
      *  @note This operation is single-threaded.

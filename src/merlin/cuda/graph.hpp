@@ -49,7 +49,9 @@ class cuda::Graph {
   public:
     /// @name Constructors
     /// @{
-    /** @brief Constructor a graph.*/
+    /** @brief Constructor a graph.
+     *  @param flag Creation flag. ``-1`` means a default (empty) constructor, ``0`` means creating a new CUDA graph.
+     */
     Graph(int flag = -1);
     /** @brief Constructor from pointer.*/
     Graph(std::uintptr_t graph_ptr) : graph_ptr_(graph_ptr) {}

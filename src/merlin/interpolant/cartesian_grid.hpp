@@ -101,6 +101,8 @@ class interpolant::CartesianGrid : public interpolant::Grid {
      */
     MERLIN_EXPORTS void * copy_to_gpu(interpolant::CartesianGrid * gpu_ptr, void * grid_vector_data_ptr,
                                       std::uintptr_t stream_ptr = 0) const;
+    /** @brief Calculate the minimum number of bytes to allocate in CUDA shared memory to store the grid.*/
+    std::uint64_t shared_mem_size(void) const {return this->malloc_size();}
     #ifdef __NVCC__
     /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
      *  @note This operation is single-threaded.

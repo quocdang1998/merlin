@@ -42,7 +42,7 @@ int main(void) {
     cudaMalloc(&gpu_model, model.malloc_size());
     model.copy_to_gpu(gpu_model, gpu_model+1);
     print_model<<<1, 1>>>(gpu_model);
-    print_model_shared_mem<<<1, 1, model.shared_mem_size()>>>(gpu_model);
+    print_model_shared_mem<<<1, 1, model.shared_mem_size() + sizeof(double)>>>(gpu_model);
     cudaDeviceSynchronize();
 
     // Copy model from GPU

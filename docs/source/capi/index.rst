@@ -139,6 +139,19 @@ Statistical moments
    merlin::statistics::powered_mean
    merlin::statistics::moment_cpu
 
+Linear algebra
+^^^^^^^^^^^^^^
+
+Vector inner product
+^^^^^^^^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::linalg::inner_product
+   merlin::linalg::norm
+   merlin::linalg::normalize
+
 Canonical decomposition API
 ---------------------------
 
@@ -150,10 +163,10 @@ CP decomposition model
 
    merlin::candy::Model
    merlin::candy::RandomInitializer
-   merlin::candy::calc_loss_function_cpu
-   merlin::candy::calc_loss_function_gpu
-   merlin::candy::calc_gradient_vector_cpu
-   merlin::candy::calc_gradient_vector_gpu
+   # merlin::candy::calc_loss_function_cpu
+   # merlin::candy::calc_loss_function_gpu
+   # merlin::candy::calc_gradient_vector_cpu
+   # merlin::candy::calc_gradient_vector_gpu
 
 Model training algorithm
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -162,7 +175,7 @@ Model training algorithm
    :toctree: generated
 
    merlin::candy::Optimizer
-   merlin::candy::GradDescent
+   merlin::candy::optmz::GradDescent
 
 Low level API
 -------------

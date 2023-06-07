@@ -53,7 +53,7 @@ void alarm_cuda_error(void) {
     // check for any CUDA error
     ::cudaError_t err_ = ::cudaPeekAtLastError();
     if (err_ != 0) {
-        WARNING("A CUDA error has occurred somewhere int he program with message \"%s\"", ::cudaGetErrorString(err_));
+        WARNING("A CUDA error has occurred somewhere in the program with message \"%s\"", ::cudaGetErrorString(err_));
     }
     // check for unreleased memory
     if (!Environment::deferred_gpu_pointer.empty()) {

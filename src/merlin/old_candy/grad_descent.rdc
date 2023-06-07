@@ -18,7 +18,6 @@ namespace merlin {
 __cudevice__ void candy::GradDescent::update_gpu(candy::Model * p_model, const double * p_gradient,
                                                  std::uint64_t size) {
     // get thread index and number of threads
-    std::printf("GradientDescent(%f) method called.\n", this->learning_rate_);
     std::uint64_t thread_idx = flatten_thread_index(), n_threads = size_of_block();
     // update
     for (std::uint64_t i_param = thread_idx; i_param < size; i_param += n_threads) {
@@ -27,6 +26,25 @@ __cudevice__ void candy::GradDescent::update_gpu(candy::Model * p_model, const d
         param_value -= this->learning_rate_ * p_gradient[i_param];
     }
     __syncthreads();
+}
+
+// Update model by gradient value of current thread
+__cudevice__ void candy::GradDescent::update_gpu(candy::Model * p_model, const double & gradient,
+                                                 const std::uint64_t & param_dim, const std::uint64_t & param_index) {
+    double & param_value = p_model->parameters()[param_dim][param_index];
+    param_value -= this->learning_rate_ * p_gradient[i_param];
+}
+
+// Copy data to shared memory
+__cudevice__ void * candy::GradDescent::copy_to_shared_mem(candy::Optimizer * share_ptr, void * data_ptr) const {
+    bool check_zeroth_thread = (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
+    candy::GradDescent * share_ptr_polymorphic = reinterpret_cast<candy::GradDescent *>(share_ptr);
+    // copy learning rate
+    if (check_zeroth_thread) {
+        share_ptr_polymorphic->learning_rate_ = this->learning_rate_;
+    }
+    __syncthreads();
+    return data_ptr;
 }
 
 #ifdef __comment

@@ -37,10 +37,8 @@ int main(void) {
     cudaMemcpy(gradient_gpu, gradient.data(), sizeof(double) * gradient.size(), cudaMemcpyHostToDevice);
 
     // Call updater
-    std::printf("Pass.\n");
     call_optimizer_updater<<<1, 3>>>(gpu_model, gpu_opt, gradient_gpu, gradient.size());
     cudaDeviceSynchronize();
-    std::printf("After launched claculation.\n");
 
     // free memory
     cudaFree(gradient_gpu);

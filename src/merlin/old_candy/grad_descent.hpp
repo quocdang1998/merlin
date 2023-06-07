@@ -46,6 +46,9 @@ class candy::GradDescent : public candy::Optimizer {
     #ifdef __NVCC__
     /** @brief Update model by gradient on GPU.*/
     __cudevice__ void update_gpu(candy::Model * p_model, const double * p_gradient, std::uint64_t size);
+    /** @brief Update model by gradient value of current thread.*/
+    __cudevice__ void update_gpu(candy::Model * p_model, const double & gradient, const std::uint64_t & param_dim,
+                                 const std::uint64_t & param_index);
     #endif  // __NVCC__
     /// @}
 
@@ -66,6 +69,10 @@ class candy::GradDescent : public candy::Optimizer {
     MERLIN_EXPORTS static candy::GradDescent * create_object_on_gpu(double learning_rate = 0.5);
     /** @brief Destroy an object by GPU.*/
     MERLIN_EXPORTS static void delete_object_on_gpu(candy::GradDescent * p_optimizer);
+    #ifdef __NVCC__
+    /** @brief Copy data to shared memory.*/
+    __cudevice__ void * copy_to_shared_mem(candy::Optimizer * share_ptr, void * data_ptr) const;
+    #endif  // __NVCC__
     /// @}
 
     /// @name Destructor

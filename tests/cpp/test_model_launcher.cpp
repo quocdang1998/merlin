@@ -6,10 +6,9 @@
 
 #include "merlin/array/array.hpp"
 #include "merlin/array/copy.hpp"
-#include "merlin/candy/adagrad.hpp"
-#include "merlin/candy/grad_descent.hpp"
+#include "merlin/candy/optmz/grad_descent.hpp"
 #include "merlin/candy/launcher.hpp"
-#include "merlin/candy/loss.hpp"
+// #include "merlin/candy/loss.hpp"
 #include "merlin/candy/model.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
@@ -33,34 +32,25 @@ double get_max(const merlin::candy::Model & model, const merlin::array::Array & 
 }
 
 int main(void) {
-    double data[6] = {1.2, 2.3, 3.0, 4.8, 7.1, 2.5};
+    double data[6] = {1.2, 2.3, 3.6, 4.8, 7.1, 2.5};
     // double data[6] = {2.5, 3.0, 3.5, 4.45, 5.34, 6.07};
     merlin::intvec data_dims = {2, 3}, data_strides = merlin::array::contiguous_strides(data_dims, sizeof(double));
     merlin::array::Array train_data(data, data_dims, data_strides);
     MESSAGE("Data: %s\n", train_data.str().c_str());
 
-    // merlin::candy::Model model({{1.0, 0.5, 2.1, 0.25}, {2.0, 1.0, 2.4, 1.2, 2.7, 1.6}}, 2);
-    // merlin::candy::Model model(data_dims, 2);
     merlin::candy::Model model(train_data.shape(), 2);
     model.initialize(train_data, merlin::candy::RandomInitializer::NormalDistribution, 24);
-    // merlin::candy::Model model({{0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0, 0.0, 0.0}}, 2);  // do not work !!!
-    MESSAGE("Model: %s\n", model.str().c_str());
 
-    MESSAGE("Value of loss function: %f\n", merlin::candy::calc_loss_function_cpu(model, train_data));
     merlin::Vector<double> gradient(model.size());
-    merlin::candy::calc_gradient_vector_cpu(model, train_data, gradient, 24);
-    MESSAGE("Gradient vector: %s\n", gradient.str().c_str());
+    merlin::candy::optmz::GradDescent grad(0.5);
 
-    std::printf("\n");
-    merlin::candy::GradDescent grad(0.101);
-    merlin::candy::Launcher launch(model, train_data, grad, 32);
+    merlin::candy::Launcher launch(model, train_data, grad, 24);
     launch.launch_async(1000);
     launch.synchronize();
 
-
     MESSAGE("Model update after last steps: %s\n", model.str().c_str());
     MESSAGE("Gradient update after last steps: %s\n", gradient.str().c_str());
-    MESSAGE("Loss function after trained: %f\n", merlin::candy::calc_loss_function_cpu(model, train_data));
+    // MESSAGE("Loss function after trained: %f\n", merlin::candy::calc_loss_function_cpu(model, train_data));
     MESSAGE("Max relative error after trained: %f\n", get_max(model, train_data));
 
     for (std::uint64_t i = 0; i < train_data.size(); i++) {

@@ -57,6 +57,10 @@ class candy::AdaGrad : public candy::Optimizer {
                                                                 std::uint64_t gradient_size);
     /** @brief Destroy an object by GPU.*/
     MERLIN_EXPORTS static void delete_object_on_gpu(candy::AdaGrad * p_optimizer);
+    #ifdef __NVCC__
+    /** @brief Copy data to shared memory.*/
+    __cudevice__ void * copy_to_shared_mem(candy::Optimizer * share_ptr, void * data_ptr) const;
+    #endif  // __NVCC__
     /// @}
 
     /// @name Destructor

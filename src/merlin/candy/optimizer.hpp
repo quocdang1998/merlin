@@ -32,18 +32,37 @@ class candy::Optimizer {
 
     /// @name Update model by gradient
     /// @{
-    /** @brief Update model by gradient.*/
-    virtual void update_cpu(candy::Model & model, const floatvec & gradient) {}
+    /** @brief Update model by gradient.
+     *  @param model Candecomp model to be trained.
+     *  @param gradient Value of the gradient of the parameter.
+     *  @param i_param Contiguous index of the parameter.
+     *  @param param_dim Dimension of the current parameter.
+     *  @param param_index Index of parameter in the model.
+     *  @param param_rank Rank of the parameter in the model.
+     */
+    virtual void update_cpu(candy::Model & model, double gradient, std::uint64_t i_param, std::uint64_t param_dim,
+                            std::uint64_t param_index, std::uint64_t param_rank) {}
     #ifdef __NVCC__
-    /** @brief Update model by gradient on GPU.*/
-    // virtual device function bugged !!!
-    __cudevice__ virtual void update_gpu(candy::Model * p_model, const double * p_gradient, std::uint64_t size) {}
+    /** @brief Update model by gradient value of current thread.*/
+    __cudevice__ virtual void update_gpu(candy::Model * p_model, double gradient, std::uint64_t i_param,
+                                         std::uint64_t param_dim, std::uint64_t param_index,
+                                         std::uint64_t param_rank) {}
+    #endif  // __NVCC__
+    /// @}
+
+    /// @name GPU related features
+    /// @{
+    #ifdef __NVCC__
+    /** @brief Copy data to shared memory.*/
+    __cudevice__ virtual void * copy_to_shared_mem(candy::Optimizer * share_ptr, void * data_ptr) const {
+        return data_ptr;
+    }
     #endif  // __NVCC__
     /// @}
 
     /// @name Destructor
     /// @{
-    __cuhostdev__ virtual ~Optimizer(void) {}
+    virtual __cuhostdev__ ~Optimizer(void);
     /// @}
 };
 

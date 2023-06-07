@@ -57,7 +57,7 @@ breathe_default_project = "merlin"
 doxygen_xml = [breathe_projects[breathe_default_project]]
 
 # Sphinx-panel settings
-sd_fontawesome_latex = True
+sd_fontawesome_latex = False
 
 # Citation
 bibtex_bibfiles = [os.path.abspath('./citations.bib')]

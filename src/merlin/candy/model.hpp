@@ -114,9 +114,8 @@ class candy::Model {
      *  @param random_distribution Random distribution from which values are sampled.
      *  @param n_thread Number of parallel threads for calculation the mean and variance.
      */
-    void initialize(const array::Array & train_data,
-                    candy::RandomInitializer random_distribution = candy::RandomInitializer::DefaultDistribution,
-                    std::uint64_t n_thread = 1);
+    MERLIN_EXPORTS void initialize(const array::Array & train_data,
+                                   candy::RandomInitializer random_distribution, std::uint64_t n_thread = 1);
     /// @}
 
     /// @name GPU related features

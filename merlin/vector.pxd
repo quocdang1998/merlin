@@ -35,6 +35,7 @@ cdef extern from "merlin/vector.hpp":
     bint operator!=[T](const CppVector[T] & vec_1, const CppVector[T] & vec_2)
 
     ctypedef CppVector[uint64_t, np.npy_intp] CppIntvec "merlin::intvec"
+    ctypedef CppVector[double, double] CppFloatvec "merlin::floatvec"
 
 
 cdef inline CppIntvec intvec_from_iteratable(object values):

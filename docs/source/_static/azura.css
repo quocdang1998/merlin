@@ -84,7 +84,7 @@
     --subitem-background:         hsl(var(--hue),  10%, 94%);  /* subitem box background */
 
     --item-name:                  hsl(var(--hue), 100%, 40%);  /* item name */
-    --attribute:                  hsl(var(--hls),  85%, 55%);  /* attribute */
+    --attribute:                  hsl(var(--hue),  98%, 26%);  /* attribute */
     --keyword:                    hsl(var(--hpl), 100%, 35%);  /* keyworks of code language */
     --inherited:                  hsl(var(--hpl),  59%, 47%);  /* interrnal reference to other classes */
     --type:                       hsl(var(--hmn),  53%, 55%);  /* type */

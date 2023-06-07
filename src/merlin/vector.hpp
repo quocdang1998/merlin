@@ -134,6 +134,8 @@ class Vector {
      *  @param stream_ptr Pointer to CUDA stream for asynchronous memory copy.
      */
     void * copy_from_gpu(T * gpu_ptr, std::uintptr_t stream_ptr = 0);
+    /** @brief Calculate the minimum number of bytes to allocate in CUDA shared memory to store the object.*/
+    constexpr std::uint64_t shared_mem_size(void) const {return this->malloc_size();}
     #ifdef __NVCC__
     /** @brief Copy data from GPU global memory to shared memory of a kernel.
      *  @note This operation is single-threaded.
