@@ -211,14 +211,6 @@ void * array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_
     return result_ptr;
 }
 
-// Defer deallocation
-void array::Parcel::defer_allocation(void) {
-    if (this->data_ != nullptr) {
-        Environment::deferred_gpu_pointer.push_back(std::make_pair(this->device_.id(), this->data_));
-        this->release_ = false;
-    }
-}
-
 // Destructor
 array::Parcel::~Parcel(void) {
     this->free_current_data();

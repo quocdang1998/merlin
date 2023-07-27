@@ -64,7 +64,7 @@ void calc_loss_function_gpu(const candy::Model & model, const array::Parcel & tr
 // --------------
 
 /** @brief Convert contiguous index to ndim index with a dimension fixed.*/
-__cuhostdev__ intvec contiguous_to_ndim_idx_1(std::uint64_t index, const intvec & shape, std::uint64_t skip_dim,
+__cuhostdev__ intvec contiguous_to_ndim_idx_1_(std::uint64_t index, const intvec & shape, std::uint64_t skip_dim,
                                               std::uint64_t * data_ptr = nullptr);
 
 /** @brief Calculate gradient of a model.

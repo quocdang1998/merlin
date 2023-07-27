@@ -29,14 +29,19 @@ void * candy::Model::copy_to_gpu(candy::Model * gpu_ptr, void * parameters_data_
 }
 
 // Copy data from GPU to CPU
-void * candy::Model::copy_from_gpu(void * parameters_data_ptr, std::uintptr_t stream_ptr) {
-    std::uintptr_t data_potition = reinterpret_cast<std::uintptr_t>(parameters_data_ptr);
-    data_potition += this->ndim()*sizeof(floatvec);
-    void * data_ptr = reinterpret_cast<void *>(data_potition);
+void * candy::Model::copy_from_gpu(candy::Model * gpu_ptr, std::uintptr_t stream_ptr) {
+    // create a temporary object to get pointer to floatvec data
+    ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
+    candy::Model gpu_object;
+    ::cudaMemcpyAsync(&gpu_object, gpu_ptr, sizeof(candy::Model), ::cudaMemcpyDeviceToHost, stream);
+    floatvec * gpu_parameter_vector_data = gpu_object.parameters_.data();
+    // copy data from each parameter vector
+    void * data_ptr;
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
-        data_ptr = this->parameters_[i_dim].copy_from_gpu(reinterpret_cast<double *>(data_ptr), stream_ptr);
-        // data_ptr = reinterpret_cast<void *>(reinterpret_cast<double *>(data_ptr) + this->parameters_[i_dim].size());
+        data_ptr = this->parameters_[i_dim].copy_from_gpu(gpu_parameter_vector_data + i_dim, stream_ptr);
     }
+    // avoid seg.fault due to freeing data of temporary object
+    gpu_object.parameters_.assign(nullptr, 0UL);
     return data_ptr;
 }
 

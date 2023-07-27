@@ -58,7 +58,7 @@ double statistics::moment_cpu(const std::array<double, order> & esperances) {
     double result = 0.0;
     std::uint64_t binom_coeff = 1;
     double pow_mean = 1.0;
-    for(std::uint64_t i = 0; i < order; i++) {
+    for (std::uint64_t i = 0; i < order; i++) {
         result += binom_coeff * esperances[order-1-i] * pow_mean;
         pow_mean *= - esperances[0];
         binom_coeff *= (order-i);

@@ -112,10 +112,10 @@ Grid
 .. doxysummary::
    :toctree: generated
 
-   merlin::interpolant::Grid
-   merlin::interpolant::RegularGrid
-   merlin::interpolant::CartesianGrid
-   merlin::interpolant::SparseGrid
+   merlin::intpl::Grid
+   merlin::intpl::RegularGrid
+   merlin::intpl::CartesianGrid
+   merlin::intpl::SparseGrid
 
 Polynomial interpolant
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -123,8 +123,8 @@ Polynomial interpolant
 .. doxysummary::
    :toctree: generated
 
-   merlin::interpolant::PolynomialInterpolant
-   merlin::interpolant::Method
+   merlin::intpl::PolynomialInterpolant
+   merlin::intpl::Method
 
 
 Statistics API
@@ -139,8 +139,8 @@ Statistical moments
    merlin::statistics::powered_mean
    merlin::statistics::moment_cpu
 
-Linear algebra
-^^^^^^^^^^^^^^
+Linear algebra API
+------------------
 
 Vector inner product
 ^^^^^^^^^^^^^^^^^^^^
@@ -151,6 +151,25 @@ Vector inner product
    merlin::linalg::inner_product
    merlin::linalg::norm
    merlin::linalg::normalize
+
+Solving linear system by QR decomposition
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::linalg::qr_solve_cpu
+   merlin::linalg::qr_decomposition_cpu
+   merlin::linalg::upright_solver_cpu
+   merlin::linalg::householder_cpu
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::linalg::qr_solve_gpu
+   merlin::linalg::qr_decomposition_gpu
+   merlin::linalg::upright_solver_gpu
+   merlin::linalg::householder_gpu
 
 Canonical decomposition API
 ---------------------------

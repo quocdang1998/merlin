@@ -45,21 +45,5 @@ cdef class Environment:
         """
         return CppEnvironment_default_gpu
 
-    @classmethod
-    def flush_cuda_deferred_deallocation(self):
-        """flush_cuda_deferred_deallocation(self)
-        Free all non-automatically deallocated CUDA memory blocks.
-
-        This functions should be called explicitly after launching asynchronious GPU functions. Any non memory leaks
-        at the end of the program will be reported as a warning.
-
-        Note
-        ----
-        This function is synchronious. Call this function right after an asynchronious launch with force the CPU to
-        wait for the GPU to finish the task before launching another aynchronious GPU task, thus losing concurrency of
-        the launch.
-        """
-        return CppEnvironment.flush_cuda_deferred_deallocation()
-
     def __dealloc__(self):
         del self.core

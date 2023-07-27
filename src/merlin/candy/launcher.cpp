@@ -98,7 +98,7 @@ candy::Launcher::Launcher(candy::Model * p_model, const array::Parcel * p_train_
     FAILURE(cuda_compile_error, "Cannot initilize launcher without using CUDA option.\n");
 }
 
-#endif // __MERLIN_CUDA__
+#endif  // __MERLIN_CUDA__
 
 // Launch asynchronously the gradient update
 void candy::Launcher::launch_async(std::uint64_t rep) {

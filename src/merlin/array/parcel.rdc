@@ -53,29 +53,28 @@ __cudevice__ const double & array::Parcel::operator[](std::uint64_t index) const
 }
 
 // Copy to shared memory
-__cudevice__ void * array::Parcel::copy_to_shared_mem(array::Parcel * share_ptr, void * shape_strides_ptr) const {
-    // copy meta data
-    bool check_zeroth_thread = (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
-    if (check_zeroth_thread) {
-        share_ptr->data_ = this->data_;
-        share_ptr->size_ = this->size_;
+__cudevice__ void * array::Parcel::copy_by_block(array::Parcel * dest_ptr, void * shape_strides_ptr,
+                                                 std::uint64_t thread_idx, std::uint64_t block_size) const {
+    // copy pointer to data and size
+    if (thread_idx == 0) {
+        dest_ptr->data_ = this->data_;
+        dest_ptr->size_ = this->size_;
     }
     __syncthreads();
     // copy shape and strides
-    void * strides_data_ptr = this->shape_.copy_to_shared_mem(&(share_ptr->shape_), shape_strides_ptr);
-    void * result = this->strides_.copy_to_shared_mem(&(share_ptr->strides_), strides_data_ptr);
+    void * strides_data = this->shape_.copy_by_block(&(dest_ptr->shape_), shape_strides_ptr, thread_idx, block_size);
+    void * result = this->strides_.copy_by_block(&(dest_ptr->strides_), strides_data, thread_idx, block_size);
     return result;
 }
 
 // Copy to shared memory
-__cudevice__ void * array::Parcel::copy_to_shared_mem_single(array::Parcel * share_ptr,
-                                                             void * shape_strides_ptr) const {
+__cudevice__ void * array::Parcel::copy_by_thread(array::Parcel * dest_ptr, void * shape_strides_ptr) const {
     // copy meta data
-    share_ptr->data_ = this->data_;
-    share_ptr->size_ = this->size_;
+    dest_ptr->data_ = this->data_;
+    dest_ptr->size_ = this->size_;
     // copy shape and strides
-    void * strides_data_ptr = this->shape_.copy_to_shared_mem_single(&(share_ptr->shape_), shape_strides_ptr);
-    void * result = this->strides_.copy_to_shared_mem(&(share_ptr->strides_), strides_data_ptr);
+    void * strides_data = this->shape_.copy_by_thread(&(dest_ptr->shape_), shape_strides_ptr);
+    void * result = this->strides_.copy_by_thread(&(dest_ptr->strides_), strides_data);
     return result;
 }
 

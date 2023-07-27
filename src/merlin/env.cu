@@ -55,27 +55,6 @@ void alarm_cuda_error(void) {
     if (err_ != 0) {
         WARNING("A CUDA error has occurred somewhere in the program with message \"%s\"", ::cudaGetErrorString(err_));
     }
-    // check for unreleased memory
-    if (!Environment::deferred_gpu_pointer.empty()) {
-            WARNING("CUDA memory leak detected (%zu memory blocks allocated on GPU not freed "
-                    "at the end of the program).\n", Environment::deferred_gpu_pointer.size());
-        }
-}
-
-// Deallocate all pointers in deferred pointer array
-void Environment::flush_cuda_deferred_deallocation(void) {
-    Environment::mutex.lock();
-    for (auto & [gpu, pointer] : Environment::deferred_gpu_pointer) {
-        ::CUcontext gpu_context = reinterpret_cast<::CUcontext>(Environment::primary_contexts[gpu]);
-        ::cuCtxPushCurrent(gpu_context);
-        ::cudaError_t err_ = ::cudaFree(pointer);
-        if (err_ != 0) {
-            FAILURE(cuda_runtime_error, "CUDA free failed with error \"%s\"\n", ::cudaGetErrorString(err_));
-        }
-        ::cuCtxPopCurrent(&gpu_context);
-    }
-    Environment::deferred_gpu_pointer.clear();
-    Environment::mutex.unlock();
 }
 
 }  // namespace merlin

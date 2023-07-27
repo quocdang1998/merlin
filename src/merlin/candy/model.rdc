@@ -68,73 +68,39 @@ __cuhostdev__ double candy::Model::eval(const intvec & index) const noexcept {
 
 #ifdef __NVCC__
 
-// Copy to shared memory
-__cudevice__ void * candy::Model::copy_to_shared_mem(candy::Model * share_ptr, void * parameters_data_ptr) const {
-    /*
-    // shallow copy of parameters vector
-    bool check_zeroth_thread = (threadIdx.x == 0) && (threadIdx.y == 0) && (threadIdx.z == 0);
-    if (check_zeroth_thread) {
-        share_ptr->parameters_.data() = reinterpret_cast<floatvec *>(parameters_data_ptr);
-        share_ptr->parameters_.size() = this->ndim();
-        share_ptr->rank_ = this->rank_;
-        std::uintptr_t dptr = reinterpret_cast<std::uintptr_t>(parameters_data_ptr);
-        for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
-            floatvec * p_parameter_dim = reinterpret_cast<floatvec *>(dptr);
-            p_parameter_dim->data() = const_cast<double *>(this->parameters_[i_dim].data());
-            p_parameter_dim->size() = this->parameters_[i_dim].size();
-            dptr = reinterpret_cast<std::uintptr_t>(p_parameter_dim+1);
-        }
-    }
-    floatvec * result = reinterpret_cast<floatvec *>(parameters_data_ptr);
-    return reinterpret_cast<void *>(result + this->ndim());
-    */
-    // copy of parameter vector pointer
-    std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
+// Copy to shared memory by CUDA block
+__cudevice__ void * candy::Model::copy_by_block(candy::Model * dest_ptr, void * parameters_data_ptr,
+                                                std::uint64_t thread_idx, std::uint64_t block_size) const {
+    // copy of parameter vector pointer and rank
+    floatvec * parameters_data = reinterpret_cast<floatvec *>(parameters_data_ptr);
     if (thread_idx == 0) {
-        share_ptr->parameters_.data() = reinterpret_cast<floatvec *>(parameters_data_ptr);
-        share_ptr->parameters_.size() = this->ndim();
-        share_ptr->rank_ = this->rank_;
+        dest_ptr->parameters_.data() = parameters_data;
+        dest_ptr->parameters_.size() = this->ndim();
+        dest_ptr->rank_ = this->rank_;
     }
     __syncthreads();
-    // assign pointer to each floatvec
-    std::uintptr_t parameter_data = reinterpret_cast<std::uintptr_t>(parameters_data_ptr);
-    parameter_data += sizeof(floatvec) * share_ptr->ndim();
-    double * floatvecs_data = reinterpret_cast<double *>(parameter_data);
-    for (std::uint64_t i_dim = 0; i_dim < share_ptr->ndim(); i_dim++) {
-        std::uint64_t dim_size = this->parameters_[i_dim].size();
-        if (thread_idx == 0) {
-            share_ptr->parameters_[i_dim].data() = floatvecs_data;
-            share_ptr->parameters_[i_dim].size() = dim_size;
-        }
-        __syncthreads();
-        floatvecs_data += dim_size;
-    }
     // copy parameter value
-    double * param_data = reinterpret_cast<double *>(parameter_data);
-    std::uint64_t model_size = this->size();
-    for (std::uint64_t i_param = 0; i_param < model_size; i_param += block_size) {
-        param_data[i_param] = this->parameters_[0].data()[i_param];
+    void * floatvecs_data = reinterpret_cast<void *>(parameters_data + this->ndim());
+    for (std::uint64_t i_dim = 0; i_dim < dest_ptr->ndim(); i_dim++) {
+        floatvecs_data = this->parameters_[i_dim].copy_by_block(parameters_data + i_dim, floatvecs_data, thread_idx,
+                                                                block_size);
     }
-    __syncthreads();
-    return reinterpret_cast<void *>(floatvecs_data);
+    return floatvecs_data;
 }
 
-// Copy to shared memory
-__cudevice__ void * candy::Model::copy_to_shared_mem_single(candy::Model * share_ptr,
-                                                            void * parameters_data_ptr) const {
-    // shallow copy of parameters vector
-    share_ptr->parameters_.data() = reinterpret_cast<floatvec *>(parameters_data_ptr);
-    share_ptr->parameters_.size() = this->ndim();
-    share_ptr->rank_ = this->rank_;
-    std::uintptr_t dptr = reinterpret_cast<std::uintptr_t>(parameters_data_ptr);
-    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
-        floatvec * p_parameter_dim = reinterpret_cast<floatvec *>(dptr);
-        p_parameter_dim->data() = const_cast<double *>(this->parameters_[i_dim].data());
-        p_parameter_dim->size() = this->parameters_[i_dim].size();
-        dptr = reinterpret_cast<std::uintptr_t>(p_parameter_dim+1);
+// Copy to shared memory by CUDA thread
+__cudevice__ void * candy::Model::copy_by_thread(candy::Model * dest_ptr, void * parameters_data_ptr) const {
+    // copy of parameters vector
+    floatvec * parameters_data = reinterpret_cast<floatvec *>(parameters_data_ptr);
+    dest_ptr->parameters_.data() = parameters_data;
+    dest_ptr->parameters_.size() = this->ndim();
+    dest_ptr->rank_ = this->rank_;
+    // copy data of each parameter vector
+    void * floatvecs_data = reinterpret_cast<void *>(parameters_data + this->ndim());
+    for (std::uint64_t i_dim = 0; i_dim < dest_ptr->ndim(); i_dim++) {
+        floatvecs_data = this->parameters_[i_dim].copy_by_thread(parameters_data + i_dim, floatvecs_data);
     }
-    floatvec * result = reinterpret_cast<floatvec *>(parameters_data_ptr);
-    return reinterpret_cast<void *>(result + this->ndim());
+    return floatvecs_data;
 }
 
 #endif  // __NVCC__

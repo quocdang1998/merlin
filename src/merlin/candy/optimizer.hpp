@@ -54,7 +54,8 @@ class candy::Optimizer {
     /// @{
     #ifdef __NVCC__
     /** @brief Copy data to shared memory.*/
-    __cudevice__ virtual void * copy_to_shared_mem(candy::Optimizer * share_ptr, void * data_ptr) const {
+    __cudevice__ virtual void * copy_by_block(candy::Optimizer * dest_ptr, void * data_ptr, std::uint64_t thread_idx,
+                                              std::uint64_t block_size) const {
         return data_ptr;
     }
     #endif  // __NVCC__

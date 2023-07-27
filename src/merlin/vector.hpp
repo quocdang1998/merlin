@@ -121,7 +121,7 @@ class Vector {
     /// @name Transfer data from/to GPU
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the object and its data.*/
-    __cuhostdev__ constexpr std::uint64_t malloc_size(void) const {return sizeof(Vector<T>) + this->size_*sizeof(T);}
+    constexpr std::uint64_t cumalloc_size(void) const {return sizeof(Vector<T>) + this->size_*sizeof(T);}
     /** @brief Copy data from CPU to a pre-allocated memory on GPU.
      *  @details The object and its data is copied to the global memory of the GPU.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory storing the object.
@@ -133,21 +133,24 @@ class Vector {
      *  @param gpu_ptr Pointer to object on GPU global memory.
      *  @param stream_ptr Pointer to CUDA stream for asynchronous memory copy.
      */
-    void * copy_from_gpu(T * gpu_ptr, std::uintptr_t stream_ptr = 0);
+    void * copy_from_gpu(Vector<T> * gpu_ptr, std::uintptr_t stream_ptr = 0);
     /** @brief Calculate the minimum number of bytes to allocate in CUDA shared memory to store the object.*/
-    constexpr std::uint64_t shared_mem_size(void) const {return this->malloc_size();}
+    constexpr std::uint64_t sharedmem_size(void) const {return this->cumalloc_size();}
     #ifdef __NVCC__
-    /** @brief Copy data from GPU global memory to shared memory of a kernel.
-     *  @note This operation is single-threaded.
-     *  @param share_ptr Dynamically allocated shared pointer on GPU.
+    /** @brief Copy data to a pre-allocated memory region by a GPU block of threads.
+     *  @details The copy action is performed by the whole CUDA thread block.
+     *  @param dest_ptr Memory region where the vector is copied to.
+     *  @param data_ptr Memory region where the data of the new created vector is stored.
+     *  @param thread_idx Flatten ID of the current CUDA thread in the block.
+     *  @param block_size Number of threads in the current CUDA block.
+     */
+    __cudevice__ void * copy_by_block(Vector<T> * dest_ptr, void * data_ptr, std::uint64_t thread_idx,
+                                      std::uint64_t block_size) const;
+    /** @brief Copy data to a pre-allocated memory region by a single GPU threads.
+     *  @param dest_ptr Memory region where the vector is copied to.
      *  @param data_ptr Pre-allocated pointer to memory region storing data of the vector.
      */
-    __cudevice__ void * copy_to_shared_mem(Vector<T> * share_ptr, void * data_ptr) const;
-    /** @brief Copy data from GPU global memory to shared memory of a kernel.
-     *  @param share_ptr Dynamically allocated shared pointer on GPU.
-     *  @param data_ptr Pre-allocated pointer to memory region storing data of the vector.
-     */
-    __cudevice__ void * copy_to_shared_mem_single(Vector<T> * share_ptr, void * data_ptr) const;
+    __cudevice__ void * copy_by_thread(Vector<T> * dest_ptr, void * data_ptr) const;
     #endif  // __NVCC__
     /// @}
 

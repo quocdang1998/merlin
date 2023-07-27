@@ -9,8 +9,8 @@
 
 #include <cuda.h>  // ::cuCtxGetDevice
 
-#include "merlin/env.hpp"  // merlin::Environment
 #include "merlin/logger.hpp"  // FAILURE
+#include "merlin/utils.hpp"  // merlin::flatten_thread_index, merlin::size_of_block
 
 namespace merlin {
 
@@ -22,7 +22,7 @@ namespace merlin {
 template <typename T, typename ... Args>
 std::uint64_t total_malloc_size(std::uintptr_t * arr, std::uint64_t write_index, const T & first,
                                 const Args & ... args) {
-    std::uint64_t result = first.malloc_size();
+    std::uint64_t result = first.cumalloc_size();
     if constexpr (sizeof...(args) > 0) {
         arr[write_index] = result;
         result += total_malloc_size(arr, write_index+1, args...);
@@ -47,7 +47,8 @@ __cudevice__ std::tuple<T *, Args * ...> copy_metadata_to_shmem(void * data, voi
                                                                 const T & first, const Args & ... args) {
     T * ptr_data = reinterpret_cast<T *>(data);
     std::tuple<T *> current(ptr_data);
-    void * next = first.copy_to_shared_mem(ptr_data, ptr_data+1);
+    std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
+    void * next = first.copy_by_block(ptr_data, ptr_data+1, thread_idx, block_size);
     *final = next;
     if constexpr (sizeof...(args) > 0) {
         return std::tuple_cat(current, copy_metadata_to_shmem(next, final, args...));
@@ -90,21 +91,10 @@ typename std::tuple_element<index, std::tuple<Args * ...>>::type cuda::Memory<Ar
     return reinterpret_cast<typename std::tuple_element<index, std::tuple<Args * ...>>::type>(result);
 }
 
-// Defer the CUDA free on pointer
-template <typename ... Args>
-void cuda::Memory<Args ...>::defer_allocation(void) {
-    if (this->gpu_ptr_ != nullptr) {
-        int gpu;
-        ::cuCtxGetDevice(&gpu);
-        Environment::deferred_gpu_pointer.push_back(std::make_pair(gpu, this->gpu_ptr_));
-        this->deferred_dealloc_ = true;
-    }
-}
-
 // Destructor
 template <typename ... Args>
 cuda::Memory<Args ...>::~Memory(void) {
-    if ((this->gpu_ptr_ != nullptr) && !(this->deferred_dealloc_)) {
+    if (this->gpu_ptr_ != nullptr) {
         ::cudaFreeAsync(this->gpu_ptr_, reinterpret_cast<::cudaStream_t>(this->stream_ptr_));
     }
 }

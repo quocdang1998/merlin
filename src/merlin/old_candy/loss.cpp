@@ -80,7 +80,7 @@ void candy::calc_gradient_vector_cpu(const candy::Model & model, const array::Ar
         // loop over each point in the dataset
         std::uint64_t n_subset = n_point / data_shape[param_dim];
         for (std::uint64_t i_point = 0; i_point < n_subset; i_point++) {
-            intvec index_data = candy::contiguous_to_ndim_idx_1(i_point, data_shape, param_dim);
+            intvec index_data = candy::contiguous_to_ndim_idx_1_(i_point, data_shape, param_dim);
             index_data[param_dim] = param_index;
             double data = train_data.get(index_data);
             if (data == 0) {

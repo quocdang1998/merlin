@@ -13,7 +13,7 @@ namespace merlin {
 // --------------------------------------------------------------------------------------------------------------------
 
 // Convert contiguous index to ndim index with a dimension fixed (to be improved to GPU version)
-__cuhostdev__ intvec candy::contiguous_to_ndim_idx_1(std::uint64_t index, const intvec & shape, std::uint64_t skip_dim,
+__cuhostdev__ intvec candy::contiguous_to_ndim_idx_1_(std::uint64_t index, const intvec & shape, std::uint64_t skip_dim,
                                                      std::uint64_t * data_ptr) {
     // calculate index vector
     intvec index_;

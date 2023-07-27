@@ -31,7 +31,7 @@ extensions = [
               language="c++", **ext_options),
     Extension("merlin.array", [abspath_wrt_package("merlin/array/core.pyx")],
               language="c++", **ext_options),
-    Extension("merlin.interpolant", [abspath_wrt_package("merlin/interpolant/core.pyx")],
+    Extension("merlin.intpl", [abspath_wrt_package("merlin/intpl/core.pyx")],
               language="c++", **ext_options)
 ]
 

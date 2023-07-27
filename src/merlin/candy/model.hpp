@@ -121,7 +121,7 @@ class candy::Model {
     /// @name GPU related features
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the model and its data.*/
-    MERLIN_EXPORTS std::uint64_t malloc_size(void) const;
+    MERLIN_EXPORTS std::uint64_t cumalloc_size(void) const;
     /** @brief Copy the model from CPU to a pre-allocated memory on GPU.
      *  @details Values of vectors should be copied to the memory region that comes right after the copied object.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
@@ -131,25 +131,27 @@ class candy::Model {
     MERLIN_EXPORTS void * copy_to_gpu(candy::Model * gpu_ptr, void * parameters_data_ptr,
                                       std::uintptr_t stream_ptr = 0) const;
     /** @brief Calculate the minimum number of bytes to allocate in CUDA shared memory to store the model.*/
-    std::uint64_t shared_mem_size(void) const {
-        return sizeof(candy::Model) + this->ndim() * sizeof(floatvec);
-    }
+    std::uint64_t sharedmem_size(void) const {return this->cumalloc_size();}
     #ifdef __NVCC__
-    /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
-     *  @note This operation is single-threaded.
-     *  @param share_ptr Dynamically allocated shared pointer on GPU.
-     *  @param parameters_data_ptr Pointer to a pre-allocated GPU memory storing data of parameters.
+    /** @brief Copy model to pre-allocated memory region by current CUDA block of threads.
+     *  @details The copy action is performed by the whole CUDA thread block.
+     *  @param dest_ptr Memory region where the model is copied to.
+     *  @param parameters_data_ptr Pointer to a pre-allocated GPU memory storing data of parameters, size of
+     *  ``floatvec[this->ndim()] + double[this->size()]``.
+     *  @param thread_idx Flatten ID of the current CUDA thread in the block.
+     *  @param block_size Number of threads in the current CUDA block.
      */
-    __cudevice__ void * copy_to_shared_mem(candy::Model * share_ptr, void * parameters_data_ptr) const;
-    /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
-     *  @param share_ptr Dynamically allocated shared pointer on GPU.
-     *  @param parameters_data_ptr Pointer to a pre-allocated GPU memory storing data of parameters.
+    __cudevice__ void * copy_by_block(candy::Model * dest_ptr, void * parameters_data_ptr, std::uint64_t thread_idx,
+                                      std::uint64_t block_size) const;
+    /** @brief Copy model to a pre-allocated memory region by a single GPU threads.
+     *  @param dest_ptr Memory region where the model is copied to.
+     *  @param parameters_data_ptr Pointer to a pre-allocated GPU memory storing data of parameters, size of
+     *  ``floatvec[this->ndim()] + double[this->size()]``.
      */
-    __cudevice__ void * copy_to_shared_mem_single(candy::Model * share_ptr,
-                                                  void * parameters_data_ptr) const;
+    __cudevice__ void * copy_by_thread(candy::Model * dest_ptr, void * parameters_data_ptr) const;
     #endif  // __NVCC__
     /** @brief Copy data from GPU to CPU.*/
-    MERLIN_EXPORTS void * copy_from_gpu(void * parameters_data_ptr, std::uintptr_t stream_ptr = 0);
+    MERLIN_EXPORTS void * copy_from_gpu(candy::Model * gpu_ptr, std::uintptr_t stream_ptr = 0);
     /// @}
 
     /// @name Representation

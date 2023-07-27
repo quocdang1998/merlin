@@ -8,9 +8,6 @@ cdef extern from "merlin/env.hpp":
     cdef cppclass CppEnvironment "merlin::Environment":
         CppEnvironment() except +
 
-        @staticmethod
-        void flush_cuda_deferred_deallocation() except +
-
     cdef bint CppEnvironment_is_initialized "merlin::Environment::is_initialized"
     cdef atomic[unsigned int] CppEnvironment_num_instances "merlin::Environment::num_instances"
 

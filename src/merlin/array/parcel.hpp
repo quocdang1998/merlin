@@ -99,7 +99,7 @@ class array::Parcel : public array::NdData {
     /// @name GPU related features
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the object and its data.*/
-    std::uint64_t malloc_size(void) const {return sizeof(array::Parcel) + 2*this->ndim()*sizeof(std::uint64_t);}
+    std::uint64_t cumalloc_size(void) const {return sizeof(array::Parcel) + 2*this->ndim()*sizeof(std::uint64_t);}
     /** @brief Copy meta-data (shape and strides) from CPU to a pre-allocated memory on GPU.
      *  @details The meta-data should be to the memory region that comes right after the copied object.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
@@ -110,31 +110,29 @@ class array::Parcel : public array::NdData {
     MERLIN_EXPORTS void * copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr,
                                       std::uintptr_t stream_ptr = 0) const;
     /** @brief Calculate the minimum number of bytes to allocate in CUDA shared memory to store the array.*/
-    std::uint64_t shared_mem_size(void) const {return this->malloc_size();}
+    std::uint64_t sharedmem_size(void) const {return this->cumalloc_size();}
     #ifdef __NVCC__
-    /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
-     *  @note This operation is single-threaded.
-     *  @param share_ptr Dynamically allocated shared pointer on GPU.
-     *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and
-     *  stride vector.
+    /** @brief Copy metadata to a pre-allocated memory region by a GPU block of threads.
+     *  @details The copy action is performed by the whole CUDA thread block.
+     *  @param dest_ptr Pre-allocated memory region storing the new object on GPU.
+     *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``std::uint64_t[2*this->ndim()]``,
+     *  storing data of shape and stride vector.
+     *  @param thread_idx Flatten ID of the current CUDA thread in the block.
+     *  @param block_size Number of threads in the current CUDA block.
      */
-    __cudevice__ void * copy_to_shared_mem(array::Parcel * share_ptr, void * shape_strides_ptr) const;
-    /** @brief Copy meta-data from GPU global memory to shared memory of a kernel.
-     *  @param share_ptr Dynamically allocated shared pointer on GPU.
-     *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ``2*ndim``, storing data of shape and
-     *  stride vector.
+    __cudevice__ void * copy_by_block(array::Parcel * dest_ptr, void * shape_strides_ptr, std::uint64_t thread_idx,
+                                      std::uint64_t block_size) const;
+    /** @brief Copy metadata to a pre-allocated memory region by a single GPU threads.
+     *  @param dest_ptr Memory region where the new object resides.
+     *  @param shape_strides_ptr Pointer to a pre-allocated GPU memory of size ```std::uint64_t[2*this->ndim()]``,
+     *  storing data of shape and stride vector.
      */
-    __cudevice__ void * copy_to_shared_mem_single(array::Parcel * share_ptr, void * shape_strides_ptr) const;
+    __cudevice__ void * copy_by_thread(array::Parcel * dest_ptr, void * shape_strides_ptr) const;
     #endif  // __NVCC__
     /// @}
 
     /// @name Destructor
     /// @{
-    /** @brief Defer deallocation.
-     *  @details Delay CUDA memory deallocation until the end of program, or until
-     *  ``merlin::Environment::flush_cuda_deferred_deallocation`` is called.
-     */
-    MERLIN_EXPORTS void defer_allocation(void);
     /** @brief Free current data hold by the object.*/
     MERLIN_EXPORTS void free_current_data(const cuda::Stream & stream = cuda::Stream());
     /** @brief Destructor.*/

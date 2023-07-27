@@ -71,7 +71,7 @@ __global__ static void calc_model_gradient_kernel(const candy::Model * p_model, 
         // loop over each point in the subset of dataset related to the current parameter
         std::uint64_t n_subset = p_train_data->size() / data_shape[param_dim];
         for (std::uint64_t i_point = 0; i_point < n_subset; i_point++) {
-            intvec index_data = candy::contiguous_to_ndim_idx_1(i_point, data_shape, param_dim,
+            intvec index_data = candy::contiguous_to_ndim_idx_1_(i_point, data_shape, param_dim,
                                                                 cache_memory + thread_idx*n_dim);
             index_data[param_dim] = param_index;
             const double & data = (*p_train_data)[index_data];

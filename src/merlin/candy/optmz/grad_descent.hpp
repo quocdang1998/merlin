@@ -61,9 +61,9 @@ class candy::optmz::GradDescent : public candy::Optimizer {
      *  @details Create object by GPU allow register v-table on the GPU, which is required for calling virtual
      *  functions. This function is synchronous.
      */
-    MERLIN_EXPORTS static candy::optmz::GradDescent * create_object_on_gpu(double learning_rate = 0.5);
+    MERLIN_EXPORTS static candy::optmz::GradDescent * new_gpu(double learning_rate = 0.5);
     /** @brief Destroy an object by GPU.*/
-    MERLIN_EXPORTS static void delete_object_on_gpu(candy::optmz::GradDescent * p_optimizer);
+    MERLIN_EXPORTS static void delete_gpu(candy::optmz::GradDescent * p_optimizer);
     /// @}
 
     /// @name Destructor

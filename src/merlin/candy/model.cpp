@@ -121,8 +121,7 @@ candy::Model::Model(const intvec & shape, std::uint64_t rank) : parameters_(shap
 }
 
 // Constructor from model values
-candy::Model::Model(const Vector<floatvec> & parameter, std::uint64_t rank) : parameters_(parameter),
-rank_(rank) {
+candy::Model::Model(const Vector<floatvec> & parameter, std::uint64_t rank) : parameters_(parameter), rank_(rank) {
     // check rank
     if (rank == 0) {
         FAILURE(std::invalid_argument, "Cannot initialize a canonical model with rank zero.\n");
@@ -185,7 +184,7 @@ void candy::Model::initialize(const array::Array & train_data, candy::RandomInit
 }
 
 // Calculate minimum size to allocate to store the object
-std::uint64_t candy::Model::malloc_size(void) const {
+std::uint64_t candy::Model::cumalloc_size(void) const {
     std::uint64_t size = sizeof(candy::Model) + this->ndim()*sizeof(floatvec);
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
         size += this->parameters_[i_dim].size() * sizeof(double);
@@ -220,7 +219,8 @@ std::string candy::Model::str(void) const {
         std::uint64_t dim_shape = this->parameters_[i_dim].size() / this->rank_;
         for (std::uint64_t i_index = 0; i_index < dim_shape; i_index++) {
             floatvec rank_vector;
-            rank_vector.assign(const_cast<double *>(this->parameters_[i_dim].data()) + i_index*this->rank_, this->rank_);
+            double * rank_vector_data = const_cast<double *>(this->parameters_[i_dim].data());
+            rank_vector.assign(rank_vector_data + i_index*this->rank_, this->rank_);
             out_stream << ((i_index != 0) ? " " : "");
             out_stream << rank_vector.str();
         }

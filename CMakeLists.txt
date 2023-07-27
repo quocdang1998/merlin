@@ -36,15 +36,16 @@ list(APPEND MERLIN_SRC_CPP
      cuda/stream.cpp
      filelock.cpp
      iterator.cpp
-     interpolant/cartesian_grid.cpp
-     interpolant/grid.cpp
-     interpolant/interpolant.cpp
-     interpolant/lagrange.cpp
-     interpolant/newton.cpp
-     interpolant/nodes.cpp
-     interpolant/regular_grid.cpp
-     interpolant/sparse_grid.cpp
-     linalg/householder.cpp
+     intpl/cartesian_grid.cpp
+     intpl/grid.cpp
+     intpl/interpolant.cpp
+     intpl/lagrange.cpp
+     intpl/newton.cpp
+     intpl/nodes.cpp
+     intpl/regular_grid.cpp
+     intpl/sparse_grid.cpp
+     linalg/qr_solve.cpp
+     linalg/matrix.cpp
      shuffle.cpp
      statistics/moment.cpp
 )
@@ -59,9 +60,9 @@ list(APPEND MERLIN_SRC_CU
      cuda/event.cu
      cuda/graph.cu
      cuda/stream.cu
-     interpolant/cartesian_grid.cu
-     interpolant/lagrange.cu
-     interpolant/newton.cu
+     intpl/cartesian_grid.cu
+     intpl/lagrange.cu
+     intpl/newton.cu
      statistics/moment.cu
 )
 list(APPEND MERLIN_SRC_GLB
@@ -69,8 +70,8 @@ list(APPEND MERLIN_SRC_GLB
      candy/optmz/grad_descent.glb
      #candy/loss.glb
      cuda/device.glb
-     interpolant/lagrange.glb
-     interpolant/newton.glb
+     intpl/lagrange.glb
+     intpl/newton.glb
 )
 list(APPEND MERLIN_SRC_RDC
      array/copy.rdc
@@ -84,10 +85,10 @@ list(APPEND MERLIN_SRC_RDC
      candy/model.rdc
      candy/optimizer.rdc
      cuda/device.rdc
-     interpolant/cartesian_grid.rdc
-     interpolant/lagrange.rdc
-     interpolant/newton.rdc
-     linalg/householder.rdc
+     intpl/cartesian_grid.rdc
+     intpl/lagrange.rdc
+     intpl/newton.rdc
+     linalg/qr_solve.rdc
      linalg/matrix.rdc
      utils.rdc
 )

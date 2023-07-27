@@ -78,6 +78,6 @@ class Shuffle {
     static std::mt19937_64 & random_generator_;
 };
 
-} // namespace merlin
+}  // namespace merlin
 
 #endif  // MERLIN_SHUFFLE_HPP_
