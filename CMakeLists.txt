@@ -68,6 +68,7 @@ list(APPEND MERLIN_SRC_CU
 list(APPEND MERLIN_SRC_GLB
      #candy/adagrad.glb
      candy/optmz/grad_descent.glb
+     candy/launcher.glb
      #candy/loss.glb
      cuda/device.glb
      intpl/lagrange.glb
@@ -79,11 +80,11 @@ list(APPEND MERLIN_SRC_RDC
      array/parcel.rdc
      array/slice.rdc
      #candy/adagrad.rdc
-     #candy/grad_descent.rdc
      candy/launcher.rdc
      #candy/loss.rdc
      candy/model.rdc
      candy/optimizer.rdc
+     candy/optmz/grad_descent.rdc
      cuda/device.rdc
      intpl/cartesian_grid.rdc
      intpl/lagrange.rdc

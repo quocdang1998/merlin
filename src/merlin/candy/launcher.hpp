@@ -33,11 +33,13 @@ class candy::Launcher {
      *  @param p_train_data Pointer to train data pre-allocated on GPU.
      *  @param p_optimizer Pointer to optimizer pre-allocated on GPU.
      *  @param model_size Number of parameter of the model.
-     *  @param share_mem_size Size of share memory to be allocated for the calculation.
+     *  @param ndim Number of dimension.
+     *  @param share_mem_size Size of share memory of the model, training data and optimizer.
      *  @param block_size Number of threads in the CUDA execution block.
      */
     MERLIN_EXPORTS Launcher(candy::Model * p_model, const array::Parcel * p_train_data, candy::Optimizer * p_optimizer,
-                            std::uint64_t model_size, std::uint64_t share_mem_size, std::uint64_t block_size = 1);
+                            std::uint64_t model_size, std::uint64_t ndim, std::uint64_t share_mem_size,
+                            std::uint64_t block_size = 1);
     /// @}
 
     /** @brief Check if the processor is a GPU.*/
@@ -74,6 +76,8 @@ class candy::Launcher {
     void * synchronizer_ = nullptr;
     /** @brief Number of parameters to train in the model.*/
     std::uint64_t model_size_ = 0;
+    /** @brief Number of dimension of the model and train data.*/
+    std::uint64_t ndim_ = 0;
     /** @brief Size of shared memory.*/
     std::uint64_t shared_mem_size_ = 0;
 };
@@ -90,9 +94,9 @@ std::future<void> * cpu_async_launch(candy::Model * p_model, const array::Array 
                                      std::uint64_t rep);
 
 /** @brief Launch asynchronously model fitting algorithm on GPU.*/
-merlin::cuda::Stream * gpu_asynch_launch(candy::Model * p_model, const array::Parcel * p_train_data,
-                                         candy::Optimizer * p_optimizer, std::uint64_t model_size,
-                                         std::uint64_t share_mem_size, std::uint64_t block_size);
+cuda::Stream * gpu_asynch_launch(candy::Model * p_model, const array::Parcel * p_train_data,
+                                 candy::Optimizer * p_optimizer, std::uint64_t model_size, std::uint64_t ndim,
+                                 std::uint64_t share_mem_size, std::uint64_t block_size, std::uint64_t rep);
 
 }  // namespace candy
 

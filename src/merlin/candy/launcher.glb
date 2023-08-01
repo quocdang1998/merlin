@@ -1,0 +1,100 @@
+// Copyright 2023 quocdang1998
+#include "merlin/candy/launcher.hpp"
+
+#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
+#include "merlin/candy/model.hpp"  // merlin::candy::Model
+#include "merlin/candy/optimizer.hpp"  // merlin::candy::Optimizer
+#include "merlin/cuda/memory.hpp"  // merlin::cuda::copy_class_to_shared_mem
+#include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
+#include "merlin/utils.hpp"  // merlin::flatten_thread_idx, merlin::size_of_block
+
+namespace merlin {
+
+// --------------------------------------------------------------------------------------------------------------------
+// GPU asynchronous launch
+// --------------------------------------------------------------------------------------------------------------------
+
+// Calculate gradient and update gradient
+__global__ static void update_gradient(candy::Model * p_model, const array::Parcel * p_train_data,
+                                       candy::Optimizer * p_optimizer, std::uint64_t model_size, std::uint64_t rep) {
+    // get thread index and block size
+    std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
+    // copy objects to shared memory
+    extern __shared__ char share_mem[];
+    auto [optimizer_data, model_shr, data_shr] = cuda::copy_class_to_shared_mem(share_mem, *p_model, *p_train_data);
+    void * end_optimizer_data = p_optimizer->copy_data_by_block(optimizer_data, thread_idx, block_size);
+    // assign gradient data and index data
+    floatvec model_gradient;
+    model_gradient.assign(reinterpret_cast<double *>(end_optimizer_data), model_size);
+    std::uint64_t n_dim = data_shr->ndim();
+    std::uint64_t * index_buffer = reinterpret_cast<std::uint64_t *>(model_gradient.end()) + n_dim * thread_idx;
+    // get number of points, data shape
+    std::uint64_t n_point = data_shr->size();
+    const intvec & data_shape = data_shr->shape();
+    // update gradient vector for rep time
+    for (std::uint64_t time = 0; time < rep; time++) {
+        // loop over each parameter
+        for (std::int64_t i_param = thread_idx; i_param < model_size; i_param += block_size) {
+            // initialize gradient
+            double gradient = 0.0;
+            // get parameter index
+            auto [param_dim, param_index] = model_shr->convert_contiguous(i_param);
+            std::uint64_t param_rank = param_index % model_shr->rank();
+            param_index /= model_shr->rank();
+            // loop over each point in the dataset to calculate the gradient
+            std::uint64_t n_subset = n_point / data_shape[param_dim];
+            for (std::uint64_t i_point = 0; i_point < n_subset; i_point++) {
+                intvec index_data = candy::contiguous_to_ndim_idx_1(i_point, data_shape, param_dim, index_buffer);
+                index_data[param_dim] = param_index;
+                double data = data_shr->operator[](index_data);
+                if (data == 0) {
+                    continue;
+                }
+                double point_gradient = 1.0;
+                // divide by 1/data^2
+                point_gradient /= data * data;
+                // multiply by coefficient of the same rank from other dimension
+                for (std::uint64_t i_dim = 0; i_dim < n_dim; i_dim++) {
+                    point_gradient *= (i_dim == param_dim) ? 1.0 : model_shr->get(i_dim, index_data[i_dim], param_rank);
+                }
+                // multiply by value evaluation
+                double point_eval = model_shr->eval(index_data);
+                point_gradient *= point_eval - data;
+                // add gradient on a point to gradient of parameter
+                gradient += point_gradient;
+            }
+            // save gradient to a vector
+            model_gradient[i_param] = gradient;
+        }
+        __syncthreads();
+
+        if (thread_idx == 0) {
+            for (int i = 0; i < model_size; i++) {
+                std::printf("%f ", model_gradient[i]);
+            }
+            std::printf("\n");
+        }
+        __syncthreads();
+
+        // update each parameter by gradient
+        p_optimizer->update_gpu(p_model, &model_gradient, optimizer_data, thread_idx, block_size);
+    }
+}
+
+// Launch asynchronously model fitting algorithm on GPU
+cuda::Stream * candy::gpu_asynch_launch(candy::Model * p_model, const array::Parcel * p_train_data,
+                                               candy::Optimizer * p_optimizer, std::uint64_t model_size,
+                                               std::uint64_t ndim, std::uint64_t share_mem_size,
+                                               std::uint64_t block_size, std::uint64_t rep) {
+    // create an asynchrnous CUDA stream
+    // cuda::Stream * launch_stream = new cuda::Stream(cuda::StreamSetting::NonBlocking);
+    // ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(launch_stream->get_stream_ptr());
+    ::cudaStream_t stream = nullptr;
+    // launch kernel on stream
+    update_gradient<<<1, block_size, share_mem_size, stream>>>(p_model, p_train_data, p_optimizer, model_size, rep);
+    // create an event of synchronization
+    // return launch_stream;
+    return nullptr;
+}
+
+}  // namespace merlin

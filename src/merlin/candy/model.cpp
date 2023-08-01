@@ -44,7 +44,7 @@ static void initialize_default(candy::Model & model, std::uint64_t n_thread) {
         do {
             generated_value = generator(engines[::omp_get_thread_num()]);
         } while (generated_value == 0);
-        model.set(i_param, generated_value);
+        model[i_param] = generated_value;
     }
 }
 
@@ -91,7 +91,7 @@ static void initialize_uniform(candy::Model & model, const array::Array & train_
         do {
             generated_value = generator(engines[::omp_get_thread_num()]);
         } while (generated_value == 0);
-        model.set(i_param, generated_value);
+        model[i_param] = generated_value;
     }
 }
 
@@ -184,7 +184,7 @@ void candy::Model::initialize(const array::Array & train_data, candy::RandomInit
 }
 
 // Calculate minimum size to allocate to store the object
-std::uint64_t candy::Model::cumalloc_size(void) const {
+std::uint64_t candy::Model::cumalloc_size(void) const noexcept {
     std::uint64_t size = sizeof(candy::Model) + this->ndim()*sizeof(floatvec);
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
         size += this->parameters_[i_dim].size() * sizeof(double);

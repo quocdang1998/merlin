@@ -14,11 +14,11 @@ __global__ static void delete_kernel(candy::optmz::GradDescent * p_grad_descent)
 }
 
 // Create an object on GPU by the GPU
-candy::optmz::GradDescent * candy::optmz::GradDescent::new_gpu(double learning_rate) {
+candy::optmz::GradDescent * candy::optmz::GradDescent::new_gpu(const candy::optmz::GradDescent & original) {
     ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(0);
     candy::optmz::GradDescent ** p_ref_grad_descent_gpu;
     ::cudaMalloc(&p_ref_grad_descent_gpu, sizeof(candy::optmz::GradDescent *));
-    create_kernel<<<1, 1, 0, stream>>>(p_ref_grad_descent_gpu, learning_rate);
+    create_kernel<<<1, 1, 0, stream>>>(p_ref_grad_descent_gpu, original.learning_rate_);
     candy::optmz::GradDescent * result;
     ::cudaMemcpy(&result, p_ref_grad_descent_gpu, sizeof(candy::optmz::GradDescent *), ::cudaMemcpyDeviceToHost);
     ::cudaFree(p_ref_grad_descent_gpu);

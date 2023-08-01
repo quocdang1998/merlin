@@ -116,7 +116,7 @@ intpl::CartesianGrid::iterator intpl::CartesianGrid::end(void) {
 }
 
 // Calculate minimum size to allocate to store the object
-std::uint64_t intpl::CartesianGrid::cumalloc_size(void) const {
+std::uint64_t intpl::CartesianGrid::cumalloc_size(void) const noexcept {
     std::uint64_t size = sizeof(intpl::CartesianGrid) + this->ndim()*sizeof(floatvec);
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
         size += this->grid_vectors_[i_dim].size() * sizeof(double);

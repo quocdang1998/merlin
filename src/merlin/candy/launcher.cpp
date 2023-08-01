@@ -4,8 +4,10 @@
 #include <utility>  // std::move
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
+#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/candy/model.hpp"  // merlin::candy::Model
 #include "merlin/candy/optimizer.hpp"  // merlin::candy::Optimizer
+#include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
 #include "merlin/logger.hpp"  // FAILURE, merlin::cuda_compile_error
 #include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::contiguous_to_model_idx
 
@@ -18,9 +20,9 @@ namespace merlin {
 static void update_gradient(candy::Model * p_model, const array::Array * p_train_data, candy::Optimizer * p_optimizer,
                             std::uint64_t model_size, std::uint64_t n_thread, std::uint64_t rep) {
     // get number of points and data shape
-    intvec model_shape = p_model->get_model_shape();
     std::uint64_t n_point = p_train_data->size(), n_dim = p_train_data->ndim();
     const intvec & data_shape = p_train_data->shape();
+    floatvec model_gradient(model_size);
     // repeat for rep time
     for (std::uint64_t time = 0; time < rep; time++) {
         // loop over each parameter
@@ -29,7 +31,9 @@ static void update_gradient(candy::Model * p_model, const array::Array * p_train
             // initialize gradient
             double gradient = 0.0;
             // get parameter index
-            auto [param_dim, param_index, param_rank] = contiguous_to_model_idx(i_param, p_model->rank(), model_shape);
+            auto [param_dim, param_index] = p_model->convert_contiguous(i_param);
+            std::uint64_t param_rank = param_index % p_model->rank();
+            param_index /= p_model->rank();
             // loop over each point in the dataset to calculate the gradient
             std::uint64_t n_subset = n_point / data_shape[param_dim];
             for (std::uint64_t i_point = 0; i_point < n_subset; i_point++) {
@@ -55,9 +59,12 @@ static void update_gradient(candy::Model * p_model, const array::Array * p_train
                 // add gradient on a point to gradient of parameter
                 gradient += point_gradient;
             }
-            // update model parameter bu gradient method
-            p_optimizer->update_cpu(*p_model, gradient, i_param, param_dim, param_index, param_rank);
+            // save gradient to a vector
+            model_gradient[i_param] = gradient;
         }
+        std::printf("%s\n", model_gradient.str().c_str());
+        // update each parameter by gradient
+        p_optimizer->update_cpu(*p_model, model_gradient, n_thread);
     }
 }
 
@@ -70,6 +77,18 @@ std::future<void> * candy::cpu_async_launch(candy::Model * p_model, const array:
     return new std::future<void>(std::move(result));
 }
 
+#ifndef __MERLIN_CUDA__
+
+// Launch asynchronously model fitting algorithm on GPU
+cuda::Stream * candy::gpu_asynch_launch(candy::Model * p_model, const array::Parcel * p_train_data,
+                                        candy::Optimizer * p_optimizer, std::uint64_t model_size, std::uint64_t ndim,
+                                        std::uint64_t share_mem_size, std::uint64_t block_size, std::uint64_t rep) {
+    FAILURE(cuda_compile_error, "Cannot asynchronously on GPU without CUDA enabled.\n");
+    return nullptr;
+}
+
+#endif  // __MERLIN_CUDA__
+
 // --------------------------------------------------------------------------------------------------------------------
 // Launcher
 // --------------------------------------------------------------------------------------------------------------------
@@ -77,7 +96,8 @@ std::future<void> * candy::cpu_async_launch(candy::Model * p_model, const array:
 // Constructor from a model and CPU array
 candy::Launcher::Launcher(candy::Model & model, const array::Array & train_data, candy::Optimizer & optimizer,
                           std::uint64_t n_thread) :
-p_model_(&model), p_data_(&train_data), p_optimizer_(&optimizer), n_thread_(n_thread), model_size_(model.size()) {
+p_model_(&model), p_data_(&train_data), p_optimizer_(&optimizer), n_thread_(n_thread), model_size_(model.size()),
+ndim_(model.ndim()) {
     // check model and data size
     if (model.ndim() != train_data.ndim()) {
         FAILURE(std::invalid_argument, "Model and train data have different ndim.\n");
@@ -94,8 +114,9 @@ p_model_(&model), p_data_(&train_data), p_optimizer_(&optimizer), n_thread_(n_th
 
 // Constructor from a model and array on GPU
 candy::Launcher::Launcher(candy::Model * p_model, const array::Parcel * p_train_data, candy::Optimizer * p_optimizer,
-                          std::uint64_t model_size, std::uint64_t share_mem_size, std::uint64_t block_size) {
-    FAILURE(cuda_compile_error, "Cannot initilize launcher without using CUDA option.\n");
+                          std::uint64_t model_size, std::uint64_t ndim, std::uint64_t share_mem_size,
+                          std::uint64_t block_size) {
+    FAILURE(cuda_compile_error, "Cannot initilize launcher on GPU without CUDA enabled.\n");
 }
 
 #endif  // __MERLIN_CUDA__
@@ -108,7 +129,11 @@ void candy::Launcher::launch_async(std::uint64_t rep) {
                                                                  this->model_size_, this->n_thread_, rep);
         this->synchronizer_ = reinterpret_cast<void *>(future_ptr);
     } else {
-        FAILURE(std::runtime_error, "GPU launch not implemented.\n");
+        const array::Parcel * p_train_data = static_cast<const array::Parcel *>(this->p_data_);
+        cuda::Stream * stream_ptr = candy::gpu_asynch_launch(this->p_model_, p_train_data, this->p_optimizer_,
+                                                             this->model_size_, this->ndim_, this->shared_mem_size_,
+                                                             this->n_thread_, rep);
+        this->synchronizer_ = reinterpret_cast<void *>(stream_ptr);
     }
 }
 
@@ -123,21 +148,26 @@ void candy::Launcher::synchronize(void) {
         delete future_ptr;
         this->synchronizer_ = nullptr;
     } else {
-        FAILURE(std::runtime_error, "GPU launch not implemented.\n");
+        cuda::Stream * stream_ptr = reinterpret_cast<cuda::Stream *>(this->synchronizer_);
+        stream_ptr->synchronize();
+        delete stream_ptr;
+        this->synchronizer_ = nullptr;
     }
 }
-
-#ifndef __MERLIN_CUDA__
 
 // Destructor
 candy::Launcher::~Launcher(void) {
     // deallocate synchronizer
     if (this->synchronizer_ != nullptr) {
-        std::future<void> * p_future = reinterpret_cast<std::future<void> *>(this->synchronizer_);
-        delete p_future;
+        if (!this->is_gpu()) {
+            std::future<void> * p_future = reinterpret_cast<std::future<void> *>(this->synchronizer_);
+            delete p_future;
+        } else {
+            cuda::Stream * p_stream = reinterpret_cast<cuda::Stream *>(this->synchronizer_);
+            delete p_stream;
+        }
+        
     }
 }
-
-#endif  // __MERLIN_CUDA__
 
 }  // namespace merlin

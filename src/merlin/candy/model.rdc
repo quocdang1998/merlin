@@ -42,15 +42,15 @@ __cuhostdev__ std::array<std::uint64_t, 2> candy::Model::convert_contiguous(std:
 }
 
 // Get reference to element from flattened index
-__cuhostdev__ const double & candy::Model::get(std::uint64_t index) const noexcept {
+__cuhostdev__ double & candy::Model::operator[](std::uint64_t index) noexcept {
     auto [dimension, idx] = this->convert_contiguous(index);
     return this->parameters_[dimension][idx];
 }
 
-// Set value of element from flattened index
-__cuhostdev__ void candy::Model::set(std::uint64_t index, double value) noexcept {
+// Get constant reference to element from flattened index
+__cuhostdev__ const double & candy::Model::operator[](std::uint64_t index) const noexcept {
     auto [dimension, idx] = this->convert_contiguous(index);
-    this->parameters_[dimension][idx] = value;
+    return this->parameters_[dimension][idx];
 }
 
 // Evaluate result of the model at a given index

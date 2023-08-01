@@ -92,7 +92,7 @@ class intpl::CartesianGrid : public intpl::Grid {
     /// @name GPU related features
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the grid and its data.*/
-    MERLIN_EXPORTS std::uint64_t cumalloc_size(void) const;
+    MERLIN_EXPORTS std::uint64_t cumalloc_size(void) const noexcept;
     /** @brief Copy the grid from CPU to a pre-allocated memory on GPU.
      *  @details Values of vectors should be copied to the memory region that comes right after the copied object.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
@@ -102,7 +102,7 @@ class intpl::CartesianGrid : public intpl::Grid {
     MERLIN_EXPORTS void * copy_to_gpu(intpl::CartesianGrid * gpu_ptr, void * grid_vector_data_ptr,
                                       std::uintptr_t stream_ptr = 0) const;
     /** @brief Calculate the minimum number of bytes to allocate in CUDA shared memory to store the grid.*/
-    std::uint64_t sharedmem_size(void) const {return this->cumalloc_size();}
+    std::uint64_t sharedmem_size(void) const noexcept {return this->cumalloc_size();}
     #ifdef __NVCC__
     /** @brief Copy grid to a pre-allocated memory region by a GPU block of threads.
      *  @details The copy action is performed by the whole CUDA thread block.

@@ -13,20 +13,18 @@ namespace merlin {
 // --------------------------------------------------------------------------------------------------------------------
 
 // Update model by gradient
-void candy::optmz::GradDescent::update_cpu(candy::Model & model, double gradient, std::uint64_t i_param,
-                                           std::uint64_t param_dim, std::uint64_t param_index,
-                                           std::uint64_t param_rank) {
-    double & param_value = model.parameters()[param_dim][param_index*model.rank() + param_rank];
-    param_value -= this->learning_rate_ * gradient;
+void candy::optmz::GradDescent::update_cpu(candy::Model & model, floatvec & gradient,
+                                           std::uint64_t n_thread) noexcept {
+    #pragma omp parallel for num_threads(n_thread)
+    for (std::int64_t i_param = 0; i_param < gradient.size(); i_param++) {
+        double & param = model[i_param];
+        param -= this->learning_rate_ * gradient[i_param];
+    }
 }
 
 #ifndef __MERLIN_CUDA__
 
-// Create an object on GPU by the GPU
-candy::optmz::GradDescent * candy::optmz::GradDescent::create_object_on_gpu(double learning_rate,
-                                                                            std::uintptr_t stream_ptr) {
-    FAILURE(cuda_compile_error, "Enable CUDA option to use this function.\n");
-}
+
 
 #endif  // __MERLIN_CUDA__
 

@@ -84,21 +84,21 @@ class candy::Model {
 
     /// @name Get and set parameters
     /// @{
+    /** @brief Get dimension and index from contiguous index.*/
+    __cuhostdev__ std::array<std::uint64_t, 2> convert_contiguous(std::uint64_t index) const noexcept;
     /** @brief Get value of element at a given index.*/
-    __cuhostdev__ constexpr double get(std::uint64_t i_dim, std::uint64_t index, std::uint64_t rank) const noexcept {
+    __cuhostdev__ constexpr double & get(std::uint64_t i_dim, std::uint64_t index, std::uint64_t rank) noexcept {
         return this->parameters_[i_dim][index*this->rank_ + rank];
     }
     /** @brief Set value of element at a given index.*/
-    __cuhostdev__ constexpr void set(std::uint64_t i_dim, std::uint64_t index, std::uint64_t rank,
-                                     double value) noexcept {
-        this->parameters_[i_dim][index*this->rank_ + rank] = value;
+    __cuhostdev__ constexpr const double & get(std::uint64_t i_dim, std::uint64_t index,
+                                               std::uint64_t rank) const noexcept {
+        return this->parameters_[i_dim][index*this->rank_ + rank];
     }
-    /** @brief Get dimension and index from contiguous index.*/
-    __cuhostdev__ std::array<std::uint64_t, 2> convert_contiguous(std::uint64_t index) const noexcept;
     /** @brief Get reference to element from flattened index.*/
-    __cuhostdev__ const double & get(std::uint64_t index) const noexcept;
-    /** @brief Set value of element from flattened index.*/
-    __cuhostdev__ void set(std::uint64_t index, double value) noexcept;
+    __cuhostdev__ double & operator[](std::uint64_t index) noexcept;
+    /** @brief Get constant reference to element from flattened index.*/
+    __cuhostdev__ const double & operator[](std::uint64_t index) const noexcept;
     /// @}
 
     /// @name Evaluation of the model
@@ -121,7 +121,7 @@ class candy::Model {
     /// @name GPU related features
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the model and its data.*/
-    MERLIN_EXPORTS std::uint64_t cumalloc_size(void) const;
+    MERLIN_EXPORTS std::uint64_t cumalloc_size(void) const noexcept;
     /** @brief Copy the model from CPU to a pre-allocated memory on GPU.
      *  @details Values of vectors should be copied to the memory region that comes right after the copied object.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
@@ -131,7 +131,7 @@ class candy::Model {
     MERLIN_EXPORTS void * copy_to_gpu(candy::Model * gpu_ptr, void * parameters_data_ptr,
                                       std::uintptr_t stream_ptr = 0) const;
     /** @brief Calculate the minimum number of bytes to allocate in CUDA shared memory to store the model.*/
-    std::uint64_t sharedmem_size(void) const {return this->cumalloc_size();}
+    std::uint64_t sharedmem_size(void) const noexcept {return this->cumalloc_size();}
     #ifdef __NVCC__
     /** @brief Copy model to pre-allocated memory region by current CUDA block of threads.
      *  @details The copy action is performed by the whole CUDA thread block.
