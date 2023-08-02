@@ -2,9 +2,9 @@
 #ifndef MERLIN_LINALG_QR_SOLVE_HPP_
 #define MERLIN_LINALG_QR_SOLVE_HPP_
 
-#include "merlin/cuda_decorator.hpp"  // merlin::linalg::Matrix
+#include "merlin/cuda_interface.hpp"      // merlin::linalg::Matrix
 #include "merlin/linalg/declaration.hpp"  // __cuhostdev__
-#include "merlin/vector.hpp"  // merlin::Vector
+#include "merlin/vector.hpp"              // merlin::Vector
 
 namespace merlin::linalg {
 
@@ -12,7 +12,7 @@ namespace merlin::linalg {
  *  @details Solve the system @f$ \mathbf{M} \boldsymbol{x} = \boldsymbol{b} @f$ by the stable QR decomposition method
  *  of Householder. After the procedure, the matrix @f$ \mathbf{M} @f$ is reduced to identity matrix, while the
  *  solution is stored to the vector @f$ \boldsymbol{x} @f$.
- * 
+ *
  *  This function will not throw any exception. It expects the dimensions of the matrix and the size of the vector are
  *  equals.
  *  @param M Linear system to solve.

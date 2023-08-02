@@ -9,9 +9,9 @@
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Matrix inversion by QR decomposition
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Solve linear system by QR decomposition
 void linalg::qr_solve_cpu(linalg::Matrix & M, floatvec & x, std::uint64_t nthreads) noexcept {
@@ -29,7 +29,7 @@ void linalg::qr_decomposition_cpu(linalg::Matrix & matrix, floatvec & x, std::ui
         double norm_alpha = 0.0;
         for (std::uint64_t j_row = i_dim; j_row < size; j_row++) {
             double element = matrix.get(j_row, i_dim);
-            norm_alpha +=  element * element;
+            norm_alpha += element * element;
         }
         norm_alpha = std::sqrt(norm_alpha);
         // calculate v = (matrix[:,i_dim] - alpha * e_idim) / norm(v)
@@ -83,14 +83,14 @@ void linalg::householder_cpu(linalg::Matrix & M, floatvec & x, const floatvec & 
 // Solve upper right linear system
 void linalg::upright_solver_cpu(linalg::Matrix & R, floatvec & x, std::uint64_t nthreads) noexcept {
     const std::uint64_t & size = x.size();
-    for (std::int64_t i_row = size-1; i_row >=0; i_row--) {
+    for (std::int64_t i_row = size - 1; i_row >= 0; i_row--) {
         // solve for the value of i_row
         double & diagonal_element = R.get(i_row, i_row);
         x[i_row] /= diagonal_element;
         diagonal_element = 1.f;
         // subtract each previous rows by coeff * x[i_row]
         #pragma omp parallel for num_threads(nthreads)
-        for (std::uint64_t i_previous = 0; i_previous < i_row; i_previous++) {
+        for (std::int64_t i_previous = 0; i_previous < i_row; i_previous++) {
             double & off_diagonal = R.get(i_previous, i_row);
             x[i_previous] -= off_diagonal * x[i_row];
             off_diagonal = 0.f;

@@ -9,17 +9,10 @@ C++ API
 Preliminary
 -----------
 
-Environment
-^^^^^^^^^^^
-
 .. doxysummary::
    :toctree: generated
 
    merlin::Environment
-   merlin::default_environment
-
-One dimensional sequence of data
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxysummary::
    :toctree: generated
@@ -27,14 +20,6 @@ One dimensional sequence of data
    merlin::Vector
    merlin::intvec
    merlin::floatvec
-
-Shuffle elements
-^^^^^^^^^^^^^^^^
-
-.. doxysummary::
-   :toctree: generated
-
-   merlin::Shuffle
 
 GPU with CUDA
 -------------
@@ -158,6 +143,11 @@ Solving linear system by QR decomposition
 .. doxysummary::
    :toctree: generated
 
+   merlin::linalg::Matrix
+
+.. doxysummary::
+   :toctree: generated
+
    merlin::linalg::qr_solve_cpu
    merlin::linalg::qr_decomposition_cpu
    merlin::linalg::upright_solver_cpu
@@ -182,10 +172,20 @@ CP decomposition model
 
    merlin::candy::Model
    merlin::candy::RandomInitializer
-   # merlin::candy::calc_loss_function_cpu
-   # merlin::candy::calc_loss_function_gpu
-   # merlin::candy::calc_gradient_vector_cpu
-   # merlin::candy::calc_gradient_vector_gpu
+
+Metric error
+^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::candy::rmse_cpu
+   merlin::candy::rmae_cpu
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::candy::rmse_gpu
 
 Model training algorithm
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -195,14 +195,19 @@ Model training algorithm
 
    merlin::candy::Optimizer
    merlin::candy::optmz::GradDescent
+   merlin::candy::optmz::AdaGrad
+   merlin::candy::optmz::Adam
+
+Launch calculation
+^^^^^^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::candy::Launcher
 
 Low level API
 -------------
-
-Printing log messages
-^^^^^^^^^^^^^^^^^^^^^
-
-Macro functions for printing log messages and throwing an exception:
 
 .. doxysummary::
    :toctree: generated
@@ -214,25 +219,16 @@ Macro functions for printing log messages and throwing an exception:
    CUDAERR
    CUHDERR
 
-File mutex
-^^^^^^^^^^
-
 .. doxysummary::
    :toctree: generated
 
    merlin::FileLock
-
-Get system information
-^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxysummary::
    :toctree: generated
 
    merlin::get_current_process_id
    merlin::get_time
-
-CUDA kernel thread index
-^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxysummary::
    :toctree: generated
@@ -241,3 +237,8 @@ CUDA kernel thread index
    merlin::size_of_block
    merlin::flatten_block_index
    merlin::flatten_kernel_index
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::Shuffle

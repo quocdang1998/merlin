@@ -4,6 +4,8 @@
 
 #include <iterator>  // std::distance
 
+#include "merlin/logger.hpp"  // FAILURE
+
 namespace ap3_mpo {
 
 template <typename T>

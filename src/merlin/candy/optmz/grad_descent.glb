@@ -8,27 +8,16 @@ __global__ static void create_kernel(candy::optmz::GradDescent ** p_ref_grad_des
     *p_ref_grad_descent = new candy::optmz::GradDescent(learning_rate);
 }
 
-// Kernel deleting object on GPU
-__global__ static void delete_kernel(candy::optmz::GradDescent * p_grad_descent) {
-    delete p_grad_descent;
-}
-
 // Create an object on GPU by the GPU
-candy::optmz::GradDescent * candy::optmz::GradDescent::new_gpu(const candy::optmz::GradDescent & original) {
+candy::Optimizer * candy::optmz::GradDescent::new_gpu(void) const {
     ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(0);
     candy::optmz::GradDescent ** p_ref_grad_descent_gpu;
     ::cudaMalloc(&p_ref_grad_descent_gpu, sizeof(candy::optmz::GradDescent *));
-    create_kernel<<<1, 1, 0, stream>>>(p_ref_grad_descent_gpu, original.learning_rate_);
+    create_kernel<<<1, 1, 0, stream>>>(p_ref_grad_descent_gpu, this->learning_rate_);
     candy::optmz::GradDescent * result;
     ::cudaMemcpy(&result, p_ref_grad_descent_gpu, sizeof(candy::optmz::GradDescent *), ::cudaMemcpyDeviceToHost);
     ::cudaFree(p_ref_grad_descent_gpu);
     return result;
-}
-
-// Destroy an object by GPU
-void candy::optmz::GradDescent::delete_gpu(candy::optmz::GradDescent * p_optimizer) {
-    ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(0);
-    delete_kernel<<<1, 1, 0, stream>>>(p_optimizer);
 }
 
 }  // namespace merlin

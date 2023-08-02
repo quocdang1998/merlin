@@ -2,27 +2,23 @@
 #include "merlin/array/parcel.hpp"
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/env.hpp"  // merlin::Environment
-#include "merlin/logger.hpp"  // FAILURE, cuda_compile_error
+#include "merlin/env.hpp"          // merlin::Environment
+#include "merlin/logger.hpp"       // FAILURE, cuda_compile_error
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Parcel
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Initialize mutex
 std::mutex & array::Parcel::mutex_ = Environment::mutex;
 
 // Reshape
-void array::Parcel::reshape(const intvec & new_shape) {
-    this->array::NdData::reshape(new_shape);
-}
+void array::Parcel::reshape(const intvec & new_shape) { this->array::NdData::reshape(new_shape); }
 
 // Collapse dimension from felt (or right)
-void array::Parcel::remove_dim(std::uint64_t i_dim) {
-    this->array::NdData::remove_dim(i_dim);
-}
+void array::Parcel::remove_dim(std::uint64_t i_dim) { this->array::NdData::remove_dim(i_dim); }
 
 #ifndef __MERLIN_CUDA__
 

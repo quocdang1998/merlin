@@ -2,8 +2,8 @@
 #include "merlin/shuffle.hpp"
 
 #include <algorithm>  // std::shuffle
-#include <cstdint>  // std::uint64_t
-#include <sstream>  // std::ostringstream
+#include <cstdint>    // std::uint64_t
+#include <sstream>    // std::ostringstream
 
 #include "merlin/env.hpp"  // merlin::Environment
 
@@ -25,15 +25,12 @@ static intvec initialize_index_vector(std::uint64_t size) {
 Shuffle::Shuffle(const intvec & shape) : shuffled_index_(shape.size()) {
     for (std::uint64_t i_dim = 0; i_dim < shape.size(); i_dim++) {
         this->shuffled_index_[i_dim] = initialize_index_vector(shape[i_dim]);
-        std::shuffle(this->shuffled_index_[i_dim].begin(), this->shuffled_index_[i_dim].end(),
-                     this->random_generator_);
+        std::shuffle(this->shuffled_index_[i_dim].begin(), this->shuffled_index_[i_dim].end(), this->random_generator_);
     }
 }
 
 // Set random seed
-void Shuffle::set_random_seed(std::uint64_t seed) {
-   Shuffle::random_generator_.seed(seed);
-}
+void Shuffle::set_random_seed(std::uint64_t seed) { Shuffle::random_generator_.seed(seed); }
 
 // Get shuffled index
 intvec Shuffle::operator[](const intvec original_index) const noexcept {

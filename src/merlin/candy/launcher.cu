@@ -3,12 +3,12 @@
 
 #include <cuda.h>  // ::CUContext
 
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/candy/model.hpp"  // merlin::candy::Model
+#include "merlin/array/parcel.hpp"     // merlin::array::Parcel
+#include "merlin/candy/model.hpp"      // merlin::candy::Model
 #include "merlin/candy/optimizer.hpp"  // merlin::candy::Optimizer
-#include "merlin/cuda/context.hpp"  // merlin::cuda::Context
-#include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
-#include "merlin/env.hpp"  // merlin::Environment
+#include "merlin/cuda/context.hpp"     // merlin::cuda::Context
+#include "merlin/cuda/stream.hpp"      // merlin::cuda::Stream
+#include "merlin/env.hpp"              // merlin::Environment
 
 namespace merlin {
 
@@ -27,6 +27,23 @@ n_thread_(block_size) {
     Environment::mutex.unlock();
     // add share memory size for calculation
     this->shared_mem_size_ = share_mem_size + model_size * sizeof(double) + ndim * sizeof(std::uint64_t);
+}
+
+// Push context and destroy the stream
+void candy::destroy_stream_in_context(std::uintptr_t context_ptr, cuda::Stream *& stream_ptr) {
+    // get current context
+    bool lock_success = Environment::mutex.try_lock();
+    cuda::Context context(context_ptr);
+    // delete the stream
+    context.push_current();
+    delete stream_ptr;
+    stream_ptr = nullptr;
+    context.pop_current();
+    // release context
+    context.assign(0);
+    if (lock_success) {
+        Environment::mutex.unlock();
+    }
 }
 
 }  // namespace merlin

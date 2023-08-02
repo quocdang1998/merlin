@@ -3,8 +3,8 @@
 #define MERLIN_FILELOCK_HPP_
 
 #include <cstdint>  // std::uintptr_t
-#include <cstdio>  // std::FILE
-#include <string>  // std::string
+#include <cstdio>   // std::FILE
+#include <string>   // std::string
 
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 

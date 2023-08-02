@@ -3,14 +3,14 @@
 
 #include <cuda.h>  // ::cuCtxGetCurrent, ::cuDeviceGetCount, ::cuInit
 
-#include "merlin/logger.hpp"  // FAILURE
+#include "merlin/logger.hpp"    // FAILURE
 #include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // CUDA environment
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Initialize CUDA context
 void initialize_cuda_context(void) {
@@ -34,18 +34,6 @@ void initialize_cuda_context(void) {
     if ((err_ == 0) && (current_ctx != nullptr)) {
         return;
     }
-    // uninitialized or undefined
-    for (int i_gpu = 0; i_gpu < num_gpu; i_gpu++) {
-        err_ = ::cudaSetDevice(i_gpu);
-        if (err_ != 0) {
-            FAILURE(cuda_runtime_error, "Initialize primary context for GPU of ID %d failed with message \"%s\".\n",
-                    i_gpu, ::cudaGetErrorString(err_));
-        }
-        ::cuCtxGetCurrent(&current_ctx);
-        Environment::primary_contexts[i_gpu] = reinterpret_cast<std::uintptr_t>(current_ctx);
-    }
-    // set back to default device
-    ::cudaSetDevice(Environment::default_gpu);
 }
 
 // Alarm for CUDA error

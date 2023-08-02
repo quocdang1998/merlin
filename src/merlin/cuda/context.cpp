@@ -4,13 +4,14 @@
 #include <sstream>  // std::ostringstream
 
 #include "merlin/cuda/device.hpp"  // merlin::cuda::Device
-#include "merlin/env.hpp"  // merlin::Environment
+#include "merlin/env.hpp"          // merlin::Environment
+#include "merlin/logger.hpp"       // cuda_runtime_error, FAILURE
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------------
 // Context
-// --------------------------------------------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------------------------------------------
 
 // Check if context is primary
 bool cuda::Context::is_primary(void) const {
@@ -25,8 +26,8 @@ bool cuda::Context::is_primary(void) const {
 // String representation
 std::string cuda::Context::str(void) {
     std::ostringstream os;
-    os << "<Context instance at " << std::hex << this->context_ << std::dec
-       << ", reference count " << this->get_reference_count() << ">";
+    os << "<Context instance at " << std::hex << this->context_ << std::dec << ", reference count "
+       << this->get_reference_count() << ">";
     return os.str();
 }
 

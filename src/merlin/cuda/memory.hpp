@@ -2,19 +2,19 @@
 #ifndef MERLIN_CUDA_MEMORY_HPP_
 #define MERLIN_CUDA_MEMORY_HPP_
 
-#include <array>  // std::array
+#include <array>    // std::array
 #include <cstdint>  // std::uint64_t
-#include <tuple>  // std::tuple
+#include <tuple>    // std::tuple
 
-#include "merlin/cuda_decorator.hpp"  // __cudevice__
+#include "merlin/cuda_interface.hpp"  // __cudevice__
 
 // CUDA nvcc guard
 #ifndef __NVCC__
-#error "Compile with CUDA compiler nvcc to use memory allocation tool."
+    #error "Compile with CUDA compiler nvcc to use memory allocation tool."
 #endif
 
 namespace merlin::cuda {
-template <typename ... Args>
+template <typename... Args>
 class Memory;
 }  // namespace merlin::cuda
 
@@ -23,28 +23,28 @@ namespace merlin {
 /** @brief CUDA memory allocator.
  *  @details Copy metadata of classes to GPU.
  */
-template <typename ... Args>
+template <typename... Args>
 class cuda::Memory {
   public:
     /** @brief Default constructor.*/
     Memory(void) = default;
     /** @brief Constructor from classes.*/
-    Memory(std::uintptr_t stream_ptr, const Args & ... args);
+    Memory(std::uintptr_t stream_ptr, const Args &... args);
 
     /** @brief Copy constructor (deleted).*/
-    Memory(const cuda::Memory<Args ...> & src) = delete;
+    Memory(const cuda::Memory<Args...> & src) = delete;
     /** @brief Copy assignment (deleted).*/
-    cuda::Memory<Args ...> & operator=(const cuda::Memory<Args ...> & src) = delete;
+    cuda::Memory<Args...> & operator=(const cuda::Memory<Args...> & src) = delete;
     /** @brief Move constructor (deleted).*/
-    Memory(cuda::Memory<Args ...> && src) = delete;
+    Memory(cuda::Memory<Args...> && src) = delete;
     /** @brief Move assignment (deleted).*/
-    cuda::Memory<Args ...> & operator=(cuda::Memory<Args ...> && src) = delete;
+    cuda::Memory<Args...> & operator=(cuda::Memory<Args...> && src) = delete;
 
     /** @brief Get total malloc size.*/
-    constexpr std::uint64_t get_total_malloc_size(void) noexcept {return this->total_malloc_size_;}
+    constexpr std::uint64_t get_total_malloc_size(void) noexcept { return this->total_malloc_size_; }
     /** @brief Get GPU pointer to element.*/
     template <std::uint64_t index>
-    typename std::tuple_element<index, std::tuple<Args * ...>>::type get(void);
+    typename std::tuple_element<index, std::tuple<Args *...>>::type get(void);
 
     /** @brief Destructor.*/
     ~Memory(void);
@@ -59,7 +59,7 @@ class cuda::Memory {
     /** @brief CUDA stream pointer.*/
     std::uintptr_t stream_ptr_ = 0;
     /** @brief Tuple of pointers to elements for storing class type.*/
-    std::tuple<Args * ...> type_ptr_;
+    std::tuple<Args *...> type_ptr_;
 };
 
 namespace cuda {
@@ -72,8 +72,8 @@ namespace cuda {
  *  @returns A tuple of pointers. The first pointer points to the address of available free data after all objects
  *  have been copied. The rest is the list of pointers to copied objects on shared memory.
  */
-template <typename ... Args>
-__cudevice__ std::tuple<void *, Args * ...> copy_class_to_shared_mem(void * share_ptr, const Args & ... args);
+template <typename... Args>
+__cudevice__ std::tuple<void *, Args *...> copy_class_to_shared_mem(void * share_ptr, const Args &... args);
 
 }  // namespace cuda
 

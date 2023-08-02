@@ -7,15 +7,15 @@
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // NdData tools
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // C-Contiguous strides from shape vector
 __cuhostdev__ intvec array::contiguous_strides(const intvec & shape, std::uint64_t element_size) {
     intvec c_strides = intvec(shape.size(), element_size);
-    for (std::int64_t i = c_strides.size()-2;  i >= 0; i--) {
-        c_strides[i] = shape[i+1] * c_strides[i+1];
+    for (std::int64_t i = c_strides.size() - 2; i >= 0; i--) {
+        c_strides[i] = shape[i + 1] * c_strides[i + 1];
     }
     return c_strides;
 }
@@ -35,7 +35,7 @@ __cuhostdev__ std::tuple<std::uint64_t, std::int64_t> array::lcseg_and_brindex(c
     std::int64_t break_index_ = ndim_ - 1;
     // check if i-th element of strides equals to i-th element of contiguous_strides,
     // break at the element of different index
-    for (std::int64_t i = ndim_-1; i >= 0; i--) {
+    for (std::int64_t i = ndim_ - 1; i >= 0; i--) {
         if (strides[i] == contiguous_strides_[i]) {
             longest_contiguous_segment_ *= shape[i];
             break_index_--;

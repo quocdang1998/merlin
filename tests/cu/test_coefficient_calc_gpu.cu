@@ -40,5 +40,4 @@ int main(void) {
     merlin::Vector<double> eval_value = plm_int(points_gpu, stream, 32);
     MESSAGE("Expected value: %f\n", f(points[{0,0}], points[{0,1}], points[{0,2}]));
     MESSAGE("Evaluated value GPU vs CPU: %f %f\n", eval_value[0], plm_int_cpu({2.2, 1.2, 2.0}));
-    merlin::Environment::flush_cuda_deferred_deallocation();
 }

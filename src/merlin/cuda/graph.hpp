@@ -2,16 +2,16 @@
 #ifndef MERLIN_CUDA_GRAPH_HPP_
 #define MERLIN_CUDA_GRAPH_HPP_
 
+#include <array>    // std::array
 #include <cstdint>  // std::uintptr_t
-#include <array>  // std::array
-#include <mutex>  // std::mutex
-#include <string>  // std::string
-#include <tuple>  // std::tuple
+#include <mutex>    // std::mutex
+#include <string>   // std::string
+#include <tuple>    // std::tuple
 
-#include "merlin/cuda/declaration.hpp"  // merlin::cuda::Graph
+#include "merlin/cuda/declaration.hpp"   // merlin::cuda::Graph
 #include "merlin/cuda/enum_wrapper.hpp"  // merlin::cuda::MemcpyKind, merlin::cuda::NodeType
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/vector.hpp"  // merlin::Vector
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/vector.hpp"             // merlin::Vector
 
 namespace merlin {
 
@@ -39,7 +39,7 @@ static inline Vector<cuda::GraphNode> begin_graphnode = Vector<cuda::GraphNode>(
 #ifdef __NVCC__
 typedef cudaHostFn_t CudaHostFunction;
 #else
-typedef void(* CudaHostFunction)(void *);
+typedef void (*CudaHostFunction)(void *);
 #endif  // __NVCC__
 
 }  // namespace cuda
@@ -72,7 +72,7 @@ class cuda::Graph {
     /// @name Get members
     /// @{
     /** @brief Get pointer of CUDA graph object.*/
-    std::uintptr_t get_graph_ptr(void) const {return this->graph_ptr_;}
+    std::uintptr_t get_graph_ptr(void) const { return this->graph_ptr_; }
     /** @brief Get number of nodes in a graph.*/
     std::uint64_t get_num_nodes(void) const;
     /** @brief Get node list.*/
@@ -110,9 +110,9 @@ class cuda::Graph {
      *  @param deps %Vector of nodes on which the node depends.
      *  @param args List of arguments to provide to the kernel.
      */
-    template <typename Function, typename ... Args>
+    template <typename Function, typename... Args>
     cuda::GraphNode add_kernel_node(Function * kernel, std::uint64_t n_blocks, std::uint64_t n_threads,
-                                    std::uint64_t shared_mem, const Vector<cuda::GraphNode> & deps, Args & ... args);
+                                    std::uint64_t shared_mem, const Vector<cuda::GraphNode> & deps, Args &... args);
     /** @brief Add CUDA host node.
      *  @param functor Pointer to CPU function take in a pointer to ``void`` argument.
      *  @param deps %Vector of nodes on which the node depends.

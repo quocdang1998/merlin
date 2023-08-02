@@ -2,19 +2,19 @@
 #ifndef MERLIN_INTPL_GRID_HPP_
 #define MERLIN_INTPL_GRID_HPP_
 
-#include <cstdint>  // std::uint64_t
+#include <cstdint>           // std::uint64_t
 #include <initializer_list>  // std::initializer_list
 
-#include "merlin/array/nddata.hpp"  // merlin::NdData
-#include "merlin/cuda_decorator.hpp"  // __cuhostdev__
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/array/nddata.hpp"    // merlin::NdData
+#include "merlin/cuda_interface.hpp"  // __cuhostdev__
+#include "merlin/exports.hpp"         // MERLIN_EXPORTS
 
 namespace merlin::intpl {
-class Grid;  // Base grid
-class RegularGrid;  // A set of points in multi-dimension
+class Grid;           // Base grid
+class RegularGrid;    // A set of points in multi-dimension
 class CartesianGrid;  // Grid formed by Cartesian productions of vectors of points
-class SparseGrid;  // Sparse Grid (basic form)
-}
+class SparseGrid;     // Sparse Grid (basic form)
+}  // namespace merlin::intpl
 
 namespace merlin {
 

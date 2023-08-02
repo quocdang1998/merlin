@@ -1,11 +1,11 @@
 // Copyright 2022 quocdang1998
 #include "merlin/intpl/lagrange.hpp"
 
-#include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
+#include "merlin/array/array.hpp"           // merlin::array::Array
+#include "merlin/array/parcel.hpp"          // merlin::array::Parcel
 #include "merlin/intpl/cartesian_grid.hpp"  // merlin::intpl::CartesianGrid
-#include "merlin/logger.hpp"  // FAILURE
-#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx
+#include "merlin/logger.hpp"                // FAILURE
+#include "merlin/utils.hpp"                 // merlin::contiguous_to_ndim_idx
 
 namespace merlin {
 
@@ -28,7 +28,7 @@ __cuhostdev__ static void contiguous_to_ndim_idx_collapsed(const std::uint64_t &
     // calculate index vector
     std::uint64_t cum_prod = 1, current_dim_shape = full_shape[i_dim_last_collapsed];
     data_ptr[i_dim_last_collapsed] = index % current_dim_shape;
-    for (std::int64_t i = i_dim_last_collapsed-1; i >= 0; i--) {
+    for (std::int64_t i = i_dim_last_collapsed - 1; i >= 0; i--) {
         if (collapsed_index[i] != UINT64_MAX) {
             continue;
         }
@@ -42,12 +42,12 @@ __cuhostdev__ static void contiguous_to_ndim_idx_collapsed(const std::uint64_t &
 __cuhostdev__ double intpl::eval_lagrange_single_core(const intpl::CartesianGrid & grid, const array::NdData & coeff,
                                                       const Vector<double> & x, std::uint64_t * collapsed_index_data,
                                                       std::uint64_t * whole_coeff_data) {
-    // Type casting
-    #ifdef __CUDA_ARCH__
+// Type casting
+#ifdef __CUDA_ARCH__
     const array::Parcel * p_coeff = static_cast<const array::Parcel *>(&coeff);
-    #else
+#else
     const array::Array * p_coeff = static_cast<const array::Array *>(&coeff);
-    #endif  // __CUDA_ARCH__
+#endif  // __CUDA_ARCH__
     // check if point x lies on a hyperplane passing through a node of the grid
     std::uint64_t ndim = grid.ndim();
     const intvec & shape = p_coeff->shape();

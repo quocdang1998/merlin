@@ -1,35 +1,35 @@
 // Copyright 2022 quocdang1998
 #include "merlin/intpl/newton.hpp"
 
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/cuda/memory.hpp"  // merlin::cuda::copy_class_to_shared_mem
+#include "merlin/array/parcel.hpp"          // merlin::array::Parcel
+#include "merlin/cuda/memory.hpp"           // merlin::cuda::copy_class_to_shared_mem
 #include "merlin/intpl/cartesian_grid.hpp"  // merlin::intpl::CartesianGrid
-#include "merlin/utils.hpp"  // merlin::flatten_kernel_index, merlin::get_block_count, merlin::contiguous_to_ndim_idx
+#include "merlin/utils.hpp"  // merlin::flatten_thread_index, merlin::size_of_block, merlin::contiguous_to_ndim_idx
 
 namespace merlin {
 
 // Calculate divide difference by parallel on each matrix
 __cudevice__ static void calc_newton_coeffs_1(const Vector<double> & grid_vector, array::Parcel & coeff,
-                                              const std::uint64_t & i_dim,
-                                              const std::uint64_t & thrd_idx, const std::uint64_t & n_th,
-                                              const std::uint64_t & size_previous_dims, intvec & shape_previous_dims,
-                                              const std::uint64_t & size_divdiff_space, intvec & shape_divdiff_space,
-                                              std::uint64_t * point_index_k_data, intvec & point_index_k) {
+                                              const std::uint64_t & i_dim, const std::uint64_t & thrd_idx,
+                                              const std::uint64_t & n_th, const std::uint64_t & size_previous_dims,
+                                              intvec & shape_previous_dims, const std::uint64_t & size_divdiff_space,
+                                              intvec & shape_divdiff_space, std::uint64_t * point_index_k_data,
+                                              intvec & point_index_k) {
     // loop on each previous dims point
     for (std::int64_t i_previous_dims = thrd_idx; i_previous_dims < size_previous_dims; i_previous_dims += n_th) {
         point_index_k.assign(point_index_k_data, coeff.ndim());
         contiguous_to_ndim_idx(i_previous_dims, shape_previous_dims, point_index_k_data);
         // loop on indices of current dim for divide difference
         for (std::uint64_t i = 1; i < coeff.shape()[i_dim]; i++) {
-            for (std::uint64_t k = coeff.shape()[i_dim]-1; k >= i; k--) {
+            for (std::uint64_t k = coeff.shape()[i_dim] - 1; k >= i; k--) {
                 // loop on each point in divdiff space
                 for (std::uint64_t i_divdiff = 0; i_divdiff < size_divdiff_space; i_divdiff++) {
-                    contiguous_to_ndim_idx(i_divdiff, shape_divdiff_space, point_index_k_data+i_dim+1);
+                    contiguous_to_ndim_idx(i_divdiff, shape_divdiff_space, point_index_k_data + i_dim + 1);
                     point_index_k_data[i_dim] = k;
                     double divdiff_result = coeff[point_index_k];
-                    point_index_k_data[i_dim] = k-1;
+                    point_index_k_data[i_dim] = k - 1;
                     divdiff_result -= coeff[point_index_k];
-                    divdiff_result /= grid_vector[k] - grid_vector[k-i];
+                    divdiff_result /= grid_vector[k] - grid_vector[k - i];
                     point_index_k_data[i_dim] = k;
                     coeff[point_index_k] = divdiff_result;
                 }
@@ -41,26 +41,26 @@ __cudevice__ static void calc_newton_coeffs_1(const Vector<double> & grid_vector
 
 // Calculate divide difference by parallel on each entry
 __cudevice__ static void calc_newton_coeffs_2(const Vector<double> & grid_vector, array::Parcel & coeff,
-                                              const std::uint64_t & i_dim,
-                                              const std::uint64_t & thrd_idx, const std::uint64_t & n_th,
-                                              const std::uint64_t & size_previous_dims, intvec & shape_previous_dims,
-                                              const std::uint64_t & size_divdiff_space, intvec & shape_divdiff_space,
-                                              std::uint64_t * point_index_k_data, intvec & point_index_k) {
+                                              const std::uint64_t & i_dim, const std::uint64_t & thrd_idx,
+                                              const std::uint64_t & n_th, const std::uint64_t & size_previous_dims,
+                                              intvec & shape_previous_dims, const std::uint64_t & size_divdiff_space,
+                                              intvec & shape_divdiff_space, std::uint64_t * point_index_k_data,
+                                              intvec & point_index_k) {
     // loop on each previous dims point
     for (std::int64_t i_previous_dims = 0; i_previous_dims < size_previous_dims; i_previous_dims++) {
         point_index_k.assign(point_index_k_data, coeff.ndim());
         contiguous_to_ndim_idx(i_previous_dims, shape_previous_dims, point_index_k_data);
         // loop on indices of current dim for divide difference
         for (std::uint64_t i = 1; i < coeff.shape()[i_dim]; i++) {
-            for (std::uint64_t k = coeff.shape()[i_dim]-1; k >= i; k--) {
+            for (std::uint64_t k = coeff.shape()[i_dim] - 1; k >= i; k--) {
                 // loop on each point in divdiff space
                 for (std::uint64_t i_divdiff = thrd_idx; i_divdiff < size_divdiff_space; i_divdiff += n_th) {
-                    contiguous_to_ndim_idx(i_divdiff, shape_divdiff_space, point_index_k_data+i_dim+1);
+                    contiguous_to_ndim_idx(i_divdiff, shape_divdiff_space, point_index_k_data + i_dim + 1);
                     point_index_k_data[i_dim] = k;
                     double divdiff_result = coeff[point_index_k];
-                    point_index_k_data[i_dim] = k-1;
+                    point_index_k_data[i_dim] = k - 1;
                     divdiff_result -= coeff[point_index_k];
-                    divdiff_result /= grid_vector[k] - grid_vector[k-i];
+                    divdiff_result /= grid_vector[k] - grid_vector[k - i];
                     point_index_k_data[i_dim] = k;
                     coeff[point_index_k] = divdiff_result;
                 }
@@ -89,10 +89,10 @@ __cudevice__ static void calc_newton_coeffs_single_core(const intpl::CartesianGr
         std::uint64_t size_previous_dims = prod_elements(shape_previous_dims);
         // get shape and size of divdiff subspace
         intvec shape_divdiff_space;
-        shape_divdiff_space.assign(const_cast<std::uint64_t *>(coeff.shape().begin())+i_dim+1,
+        shape_divdiff_space.assign(const_cast<std::uint64_t *>(coeff.shape().begin()) + i_dim + 1,
                                    const_cast<std::uint64_t *>(coeff.shape().end()));
         std::uint64_t size_divdiff_space = prod_elements(shape_divdiff_space);
-        if (size_previous_dims > 2*n_th) {
+        if (size_previous_dims > 2 * n_th) {
             calc_newton_coeffs_1(grid_vector, coeff, i_dim, thrd_idx, n_th, size_previous_dims, shape_previous_dims,
                                  size_divdiff_space, shape_divdiff_space, point_index_k_data, point_index_k);
         } else {
@@ -115,8 +115,7 @@ __global__ static void calc_single_core_kernel(const intpl::CartesianGrid * p_gr
 
 // Call coefficient calculation on single core
 void intpl::call_newton_coeff_kernel(const intpl::CartesianGrid * p_grid, array::Parcel * p_coeff,
-                                           std::uint64_t shared_mem_size, std::uintptr_t stream_ptr,
-                                           std::uint64_t n_thread) {
+                                     std::uint64_t shared_mem_size, std::uintptr_t stream_ptr, std::uint64_t n_thread) {
     ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
     calc_single_core_kernel<<<1, n_thread, shared_mem_size, cuda_stream>>>(p_grid, p_coeff);
 }
@@ -141,10 +140,11 @@ __global__ static void eval_newton_kernel(const intpl::CartesianGrid * p_grid, c
     double * cummulative_register_data = reinterpret_cast<double *>(iterator_data + ndim);
     for (std::uint64_t i_point = i_thread; i_point < n_point; i_point += n_thread) {
         Vector<double> point;
-        std::uintptr_t point_ptr = reinterpret_cast<std::uintptr_t>(p_points->data()) + i_point*p_points->strides()[0];
+        std::uintptr_t point_ptr =
+            reinterpret_cast<std::uintptr_t>(p_points->data()) + i_point * p_points->strides()[0];
         point.assign(reinterpret_cast<double *>(point_ptr), ndim);
-        (*p_result)[i_point] = intpl::eval_newton_single_core(*p_grid, *p_coeff, point, iterator_data,
-                                                                    cummulative_register_data);
+        (*p_result)[i_point] =
+            intpl::eval_newton_single_core(*p_grid, *p_coeff, point, iterator_data, cummulative_register_data);
     }
     __syncthreads();
 }

@@ -3,11 +3,11 @@
 #define MERLIN_INTPL_NEWTON_HPP_
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Parcel, merlin::array::Slice
-#include "merlin/cuda_decorator.hpp"  // __cuhostdev__
-#include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
-#include "merlin/env.hpp"  // merlin::Environment
-#include "merlin/intpl/grid.hpp"  // merlin::intpl::CartesianGrid
-#include "merlin/vector.hpp"  // merlin::Vector
+#include "merlin/cuda/stream.hpp"        // merlin::cuda::Stream
+#include "merlin/cuda_interface.hpp"     // __cuhostdev__
+#include "merlin/env.hpp"                // merlin::Environment
+#include "merlin/intpl/grid.hpp"         // merlin::intpl::CartesianGrid
+#include "merlin/vector.hpp"             // merlin::Vector
 
 namespace merlin::intpl {
 
@@ -49,15 +49,15 @@ __cuhostdev__ double eval_newton_single_core(const intpl::CartesianGrid & grid, 
  *  @note This function is asynchronous. It simply push the CUDA kernel to the stream.
  */
 void call_newton_eval_kernel(const intpl::CartesianGrid * p_grid, const array::Parcel * p_coeff,
-                             const array::Parcel * p_points, Vector<double> * p_result,
-                             std::uint64_t shared_mem_size, std::uintptr_t stream_ptr, std::uint64_t n_thread);
+                             const array::Parcel * p_points, Vector<double> * p_result, std::uint64_t shared_mem_size,
+                             std::uintptr_t stream_ptr, std::uint64_t n_thread);
 
 // Calculate coefficients
 // ----------------------
 
 /** @brief Calculate Newton coefficients using CPU.*/
-void calc_newton_coeffs_cpu(const intpl::CartesianGrid & grid, const array::Array & value,
-                             array::Array & coeff, std::uint64_t nthreads = 1);
+void calc_newton_coeffs_cpu(const intpl::CartesianGrid & grid, const array::Array & value, array::Array & coeff,
+                            std::uint64_t nthreads = 1);
 
 /** @brief Calculate Newton interpolation coefficients on a full Cartesian grid using GPU.
  *  @param grid Cartesian grid.
@@ -68,13 +68,12 @@ void calc_newton_coeffs_cpu(const intpl::CartesianGrid & grid, const array::Arra
  *  @note This is asynchronous calculation. User should call ``merlin::cuda::Stream::synchronize(void)`` to force the
  *  CPU to wait until the calculation has finished.
  */
-void calc_newton_coeffs_gpu(const intpl::CartesianGrid & grid, const array::Parcel & value,
-                            array::Parcel & coeff, const cuda::Stream & stream = cuda::Stream(),
+void calc_newton_coeffs_gpu(const intpl::CartesianGrid & grid, const array::Parcel & value, array::Parcel & coeff,
+                            const cuda::Stream & stream = cuda::Stream(),
                             std::uint64_t n_thread = Environment::default_block_size);
 
 /** @brief Calculate Newton coefficients using CPU.*/
-void calc_newton_coeffs_cpu(const intpl::SparseGrid & grid, const array::Array & value,
-                            array::Array & coeff);
+void calc_newton_coeffs_cpu(const intpl::SparseGrid & grid, const array::Array & value, array::Array & coeff);
 
 // Evaluate interpolation
 // ----------------------
@@ -100,8 +99,7 @@ Vector<double> eval_newton_gpu(const intpl::CartesianGrid & grid, const array::P
  *  @param coeff Calculated coefficients.
  *  @param x Evaluate point, must have the same dimension as grid and coeff.
  */
-double eval_newton_cpu(const intpl::SparseGrid & grid, const array::Array & coeff,
-                       const Vector<double> & x);
+double eval_newton_cpu(const intpl::SparseGrid & grid, const array::Array & coeff, const Vector<double> & x);
 
 }  // namespace merlin::intpl
 

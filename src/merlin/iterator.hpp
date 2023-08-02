@@ -5,7 +5,7 @@
 #include <cstdint>  // std::uint64_t
 
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/vector.hpp"  // merlin::intvec
+#include "merlin/vector.hpp"   // merlin::intvec
 
 namespace merlin {
 
@@ -37,9 +37,9 @@ class Iterator {
     /// @name Get members
     /// @{
     /** @brief Get constant reference to multi-dimensional index.*/
-    constexpr const intvec & index(void) const noexcept {return this->index_;}
+    constexpr const intvec & index(void) const noexcept { return this->index_; }
     /** @brief Get constant reference to contiguous index.*/
-    constexpr const std::uint64_t & contiguous_index(void) const noexcept {return this->item_ptr_;}
+    constexpr const std::uint64_t & contiguous_index(void) const noexcept { return this->item_ptr_; }
     /// @}
 
     /// @name Operators
@@ -51,7 +51,7 @@ class Iterator {
     /** @brief Pre-increment operator.*/
     MERLIN_EXPORTS Iterator & operator++(void);
     /** @brief Post-increment operator.*/
-    Iterator operator++(int) {return ++(*this);}
+    Iterator operator++(int) { return ++(*this); }
     /// @}
 
     /// @name Destructor

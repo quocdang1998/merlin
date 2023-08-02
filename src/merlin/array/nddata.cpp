@@ -2,35 +2,32 @@
 #include "merlin/array/nddata.hpp"
 
 #include <cinttypes>  // PRIu64
-#include <sstream>  // std::ostringstream
-#include <vector>  // std::vector
-#include <utility>  // std::move
+#include <sstream>    // std::ostringstream
+#include <utility>    // std::move
+#include <vector>     // std::vector
 
-#include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides
+#include "merlin/array/array.hpp"   // merlin::array::Array
+#include "merlin/array/copy.hpp"    // merlin::array::contiguous_strides
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/array/slice.hpp"  // merlin::array::Slice
-#include "merlin/array/stock.hpp"  // merlin::array::Stock
-#include "merlin/logger.hpp"  // FAILURE
-#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx
+#include "merlin/array/slice.hpp"   // merlin::array::Slice
+#include "merlin/array/stock.hpp"   // merlin::array::Stock
+#include "merlin/logger.hpp"        // FAILURE
+#include "merlin/utils.hpp"         // merlin::contiguous_to_ndim_idx
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // NdData
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Member initialization for C++ interface
-array::NdData::NdData(double * data, const intvec & shape, const intvec & strides) : data_(data), shape_(shape),
-strides_(strides) {
+array::NdData::NdData(double * data, const intvec & shape, const intvec & strides) :
+data_(data), shape_(shape), strides_(strides) {
     this->calc_array_size();
     if (!is_same_size(shape, strides)) {
-        FAILURE(std::invalid_argument, "Expected size of shape (%" PRIu64 ") equals to size of strides (%" PRIu64
-                ").\n", shape.size(), strides.size());
-    }
-    if (this->ndim() > array::max_allowed_dim) {
-        FAILURE(std::invalid_argument, "Only allow array up to %" PRIu64 " dimension, got %" PRIu64 ".\n",
-                this->ndim(), array::max_allowed_dim);
+        FAILURE(std::invalid_argument,
+                "Expected size of shape (%" PRIu64 ") equals to size of strides (%" PRIu64 ").\n", shape.size(),
+                strides.size());
     }
 }
 
@@ -38,23 +35,7 @@ strides_(strides) {
 array::NdData::NdData(const intvec & shape) : shape_(shape) {
     this->strides_ = array::contiguous_strides(shape, sizeof(double));
     this->calc_array_size();
-    if (this->ndim() > array::max_allowed_dim) {
-        FAILURE(std::invalid_argument, "Only allow array up to %" PRIu64 " dimension, got %" PRIu64 ".\n",
-                this->ndim(), array::max_allowed_dim);
-    }
 }
-
-// Get value of element at a n-dim index
-double array::NdData::get(const intvec & index) const {return 0.0;}
-
-// Get value of element at a C-contiguous index.
-double array::NdData::get(std::uint64_t index) const {return 0.0;}
-
-// Set value of element at a n-dim index.
-void array::NdData::set(const intvec index, double value) {}
-
-// Set value of element at a C-contiguous index.
-void array::NdData::set(std::uint64_t index, double value) {}
 
 // Partite an array into multiple parts
 Vector<Vector<array::Slice>> array::NdData::partite(std::uint64_t max_memory) {
@@ -97,8 +78,9 @@ void array::NdData::reshape(const intvec & new_shape) {
         new_size *= new_shape[i_dim];
     }
     if (new_size != this->shape_[0]) {
-        FAILURE(std::invalid_argument, "Cannot reshape to an array with different size (current size %" PRIu64
-                ", new size %" PRIu64 ").\n", this->shape_[0], new_size);
+        FAILURE(std::invalid_argument,
+                "Cannot reshape to an array with different size (current size %" PRIu64 ", new size %" PRIu64 ").\n",
+                this->shape_[0], new_size);
     }
     this->shape_ = new_shape;
     this->strides_ = array::contiguous_strides(new_shape, this->strides_[0]);
@@ -109,14 +91,14 @@ void array::NdData::remove_dim(std::uint64_t i_dim) {
     if (this->shape_[i_dim] != 1) {
         return;
     }
-    intvec new_shape(this->ndim()-1), new_strides(this->ndim()-1);
+    intvec new_shape(this->ndim() - 1), new_strides(this->ndim() - 1);
     for (std::uint64_t i = 0; i < i_dim; i++) {
         new_shape[i] = this->shape_[i];
         new_strides[i] = this->strides_[i];
     }
-    for (std::uint64_t i = i_dim; i < this->ndim()-1; i++) {
-        new_shape[i] = this->shape_[i+1];
-        new_strides[i] = this->strides_[i+1];
+    for (std::uint64_t i = i_dim; i < this->ndim() - 1; i++) {
+        new_shape[i] = this->shape_[i + 1];
+        new_strides[i] = this->strides_[i + 1];
     }
     this->shape_ = std::move(new_shape);
     this->strides_ = std::move(new_strides);

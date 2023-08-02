@@ -2,12 +2,12 @@
 #ifndef MERLIN_LINALG_MATRIX_HPP_
 #define MERLIN_LINALG_MATRIX_HPP_
 
-#include <array>  // std::array
+#include <array>    // std::array
 #include <cstdint>  // std::uint64_t, std::uintptr_t
-#include <string>  // std::string
+#include <string>   // std::string
 
-#include "merlin/cuda_decorator.hpp"  // merlin::linalg::Matrix
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/cuda_interface.hpp"      // merlin::linalg::Matrix
+#include "merlin/exports.hpp"             // MERLIN_EXPORTS
 #include "merlin/linalg/declaration.hpp"  // __cuhostdev__
 
 namespace merlin {
@@ -38,15 +38,15 @@ class linalg::Matrix {
     /// @name Get attributes
     /// @{
     /** @brief Get pointer to data.*/
-    __cuhostdev__ constexpr double * data(void) noexcept {return this->data_;}
+    __cuhostdev__ constexpr double * data(void) noexcept { return this->data_; }
     /** @brief Get constant pointer to data.*/
-    __cuhostdev__ constexpr const double * data(void) const noexcept {return this->data_;}
+    __cuhostdev__ constexpr const double * data(void) const noexcept { return this->data_; }
     /** @brief Get number of rows.*/
-    __cuhostdev__ constexpr const std::uint64_t & nrow(void) const noexcept {return this->shape_[0];}
+    __cuhostdev__ constexpr const std::uint64_t & nrow(void) const noexcept { return this->shape_[0]; }
     /** @brief Get number of columns.*/
-    __cuhostdev__ constexpr const std::uint64_t & ncol(void) const noexcept {return this->shape_[1];}
+    __cuhostdev__ constexpr const std::uint64_t & ncol(void) const noexcept { return this->shape_[1]; }
     /** @brief Get strides.*/
-    __cuhostdev__ constexpr const std::array<std::uint64_t, 2> & strides(void) const noexcept {return this->strides_;}
+    __cuhostdev__ constexpr const std::array<std::uint64_t, 2> & strides(void) const noexcept { return this->strides_; }
     /// @}
 
     /// @name Get element

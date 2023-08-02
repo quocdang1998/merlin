@@ -2,16 +2,16 @@
 #ifndef MERLIN_INTPL_CARTESIAN_GRID_HPP_
 #define MERLIN_INTPL_CARTESIAN_GRID_HPP_
 
-#include <cstdint>  // std::uint64_t
+#include <cstdint>           // std::uint64_t
 #include <initializer_list>  // std::initializer_list
-#include <string>  // std::string
+#include <string>            // std::string
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array
-#include "merlin/cuda_decorator.hpp"  // __cuhostdev__
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/intpl/grid.hpp"  //  merlin::intpl::Grid
-#include "merlin/iterator.hpp"  // merlin::Iterator
-#include "merlin/vector.hpp"  // merlin::Vector, merlin::intvec, merlin::floatvec
+#include "merlin/cuda_interface.hpp"     // __cuhostdev__
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/intpl/grid.hpp"         //  merlin::intpl::Grid
+#include "merlin/iterator.hpp"           // merlin::Iterator
+#include "merlin/vector.hpp"             // merlin::Vector, merlin::intvec, merlin::floatvec
 
 namespace merlin {
 
@@ -53,17 +53,15 @@ class intpl::CartesianGrid : public intpl::Grid {
     /// @name Get members and attributes
     /// @{
     /** @brief Get reference to grid vectors.*/
-    __cuhostdev__ constexpr Vector<floatvec> & grid_vectors(void) noexcept {return this->grid_vectors_;}
+    __cuhostdev__ constexpr Vector<floatvec> & grid_vectors(void) noexcept { return this->grid_vectors_; }
     /** @brief Get constant reference to grid vectors.*/
-    __cuhostdev__ constexpr const Vector<floatvec> & grid_vectors(void) const noexcept {
-        return this->grid_vectors_;
-    }
+    __cuhostdev__ constexpr const Vector<floatvec> & grid_vectors(void) const noexcept { return this->grid_vectors_; }
     /** @brief Get shape of the grid.*/
     __cuhostdev__ intvec get_grid_shape(std::uint64_t * data_ptr = nullptr) const noexcept;
     /** @brief Full tensor of each point in the CartesianGrid in form of 2D table.*/
     MERLIN_EXPORTS array::Array grid_points(void) const;
     /** @brief Number of dimension of the CartesianGrid.*/
-    __cuhostdev__ std::uint64_t ndim(void) const {return this->grid_vectors_.size();}
+    __cuhostdev__ std::uint64_t ndim(void) const { return this->grid_vectors_.size(); }
     /** @brief Number of points in the CartesianGrid.*/
     __cuhostdev__ std::uint64_t size(void) const;
     /// @}
@@ -102,12 +100,12 @@ class intpl::CartesianGrid : public intpl::Grid {
     MERLIN_EXPORTS void * copy_to_gpu(intpl::CartesianGrid * gpu_ptr, void * grid_vector_data_ptr,
                                       std::uintptr_t stream_ptr = 0) const;
     /** @brief Calculate the minimum number of bytes to allocate in CUDA shared memory to store the grid.*/
-    std::uint64_t sharedmem_size(void) const noexcept {return this->cumalloc_size();}
-    #ifdef __NVCC__
+    std::uint64_t sharedmem_size(void) const noexcept { return this->cumalloc_size(); }
+#ifdef __NVCC__
     /** @brief Copy grid to a pre-allocated memory region by a GPU block of threads.
      *  @details The copy action is performed by the whole CUDA thread block.
      *  @param dest_ptr Memory region where the grid is copied to.
-     *  @param grid_vector_data_ptr Pointer to a pre-allocated GPU memory storing data of grid vectors, size of 
+     *  @param grid_vector_data_ptr Pointer to a pre-allocated GPU memory storing data of grid vectors, size of
      *  ``floatvec[this->ndim()] + double[this->size()]``.
      *  @param thread_idx Flatten ID of the current CUDA thread in the block.
      *  @param block_size Number of threads in the current CUDA block.
@@ -116,11 +114,11 @@ class intpl::CartesianGrid : public intpl::Grid {
                                       std::uint64_t thread_idx, std::uint64_t block_size) const;
     /** @brief Copy grid to a pre-allocated memory region by a single GPU threads.
      *  @param dest_ptr Memory region where the grid is copied to.
-     *  @param grid_vector_data_ptr Pointer to a pre-allocated GPU memory storing data of grid vectors, size of 
+     *  @param grid_vector_data_ptr Pointer to a pre-allocated GPU memory storing data of grid vectors, size of
      *  ``floatvec[this->ndim()] + double[this->size()]``.
      */
     __cudevice__ void * copy_by_thread(intpl::CartesianGrid * dest_ptr, void * grid_vector_data_ptr) const;
-    #endif  // __NVCC__
+#endif  // __NVCC__
     /// @}
 
     /// @name Grid merge operator
@@ -130,8 +128,7 @@ class intpl::CartesianGrid : public intpl::Grid {
     MERLIN_EXPORTS friend intpl::CartesianGrid operator+(const intpl::CartesianGrid & grid_1,
                                                          const intpl::CartesianGrid & grid_2);
     MERLIN_EXPORTS friend double exclusion_grid(const intpl::CartesianGrid & grid_parent,
-                                                const intpl::CartesianGrid & grid_child,
-                                                const floatvec & x);
+                                                const intpl::CartesianGrid & grid_child, const floatvec & x);
     /// @}
 
     /// @name Query
@@ -164,8 +161,7 @@ class intpl::CartesianGrid : public intpl::Grid {
 namespace intpl {
 
 /** @brief Union of 2 Cartesian grids.*/
-MERLIN_EXPORTS intpl::CartesianGrid operator+(const intpl::CartesianGrid & grid_1,
-                                              const intpl::CartesianGrid & grid_2);
+MERLIN_EXPORTS intpl::CartesianGrid operator+(const intpl::CartesianGrid & grid_1, const intpl::CartesianGrid & grid_2);
 
 /** @brief Exclusion on each dimension of 2 Cartesian grids.*/
 MERLIN_EXPORTS double exclusion_grid(const intpl::CartesianGrid & grid_parent, const intpl::CartesianGrid & grid_child,

@@ -117,7 +117,7 @@ body {
 
 /* content body width */
 .wy-nav-content {
-    max-width: 800px !important;
+    max-width: 850px !important;
     min-height: 100vh;
     background: var(--content-background);
 }
@@ -157,6 +157,11 @@ body {
 .rst-content code, .rst-content tt, code  {
     background: var(--literal-background);
     border-color: var(--table-border);
+}
+
+/* extent last column to 100% */
+.rst-content table.docutils td:last-child {
+    width: 100%;
 }
 
 /* table row odd */

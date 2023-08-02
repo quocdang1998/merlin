@@ -1,0 +1,116 @@
+// Copyright 2023 quocdang1998
+#include "merlin/candy/loss.hpp"
+
+#include <algorithm>  // std::max
+
+#include <nvfunctional>  // nvstd::function
+
+#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
+#include "merlin/candy/model.hpp"   // merlin::candy::Model
+#include "merlin/cuda/memory.hpp"   // merlin::cuda::copy_class_to_shared_mem
+#include "merlin/utils.hpp"         // merlin::contiguous_to_ndim_idx
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Loss function
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Concatenate macro
+#define CAT_I(a, b) a##b
+#define CAT(a, b) CAT_I(a, b)
+
+// Generate CUDA kernel calculating error
+#define GENERATE_ERROR_CALC_KERNEL(name, error_updater, averager)                                                      \
+    __global__ static void CAT(error_calculation_, name)(const candy::Model * p_model, const array::Parcel * p_data,   \
+                                                         double * p_result) {                                          \
+        /* get thread index and block size*/                                                                           \
+        std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();                               \
+        /* copy objects to shared memory*/                                                                             \
+        extern __shared__ char share_mem[];                                                                            \
+        auto [buffer_data, model_shr, data_shr] = cuda::copy_class_to_shared_mem(share_mem, *p_model, *p_data);        \
+        /* assign pointer to index vector*/                                                                            \
+        std::uint64_t * index_data = reinterpret_cast<std::uint64_t *>(buffer_data) + thread_idx * model_shr->ndim();  \
+        intvec index_point;                                                                                            \
+        index_point.assign(index_data, model_shr->ndim());                                                             \
+        /* get error on each non-zero element*/                                                                        \
+        std::uint64_t size = p_data->size();                                                                           \
+        double thread_result = 0.0;                                                                                    \
+        std::uint64_t non_zero_count = 0;                                                                              \
+        for (std::uint64_t i_point = thread_idx; i_point < size; i_point += block_size) {                              \
+            contiguous_to_ndim_idx(i_point, data_shr->shape(), index_data);                                            \
+            double x_data = (*data_shr)[index_point];                                                                  \
+            if (x_data == 0.0) {                                                                                       \
+                continue;                                                                                              \
+            }                                                                                                          \
+            non_zero_count += 1;                                                                                       \
+            double x_model = model_shr->eval(index_point);                                                             \
+            error_updater(thread_result, x_model, x_data);                                                             \
+        }                                                                                                              \
+        __syncthreads();                                                                                               \
+        /* copy results to share memory*/                                                                              \
+        double * error_ptr = reinterpret_cast<double *>(buffer_data);                                                  \
+        error_ptr[thread_idx] = thread_result;                                                                         \
+        std::uint64_t * non_zero_count_ptr = reinterpret_cast<std::uint64_t *>(error_ptr + block_size);                \
+        non_zero_count_ptr[thread_idx] = non_zero_count;                                                               \
+        if (thread_idx == 0) {                                                                                         \
+            *p_result = averager(error_ptr, non_zero_count_ptr, block_size);                                           \
+        }                                                                                                              \
+        __syncthreads();                                                                                               \
+    }
+
+// Wrapper for CUDA kernel
+#define GENERATE_ERROR_CALC_CALLER(name)                                                                               \
+    static double CAT(calc_error_gpu_, name)(const candy::Model * p_model, const array::Parcel * p_data,               \
+                                             std::uint64_t ndim, std::uint64_t share_mem,                              \
+                                             std::uint64_t n_threads) noexcept {                                       \
+        /* calculate share memory */                                                                                   \
+        std::uint64_t share_mem_size = share_mem;                                                                      \
+        share_mem_size +=                                                                                              \
+            std::max(sizeof(std::uint64_t) * n_threads * ndim, (sizeof(std::uint64_t) + sizeof(double)) * n_threads);  \
+        /* allocate data for result */                                                                                 \
+        double * p_result_gpu;                                                                                         \
+        ::cudaError_t err_ = ::cudaMalloc(&p_result_gpu, sizeof(double));                                              \
+        if (err_ != 0) {                                                                                               \
+            FAILURE(cuda_runtime_error, "Allocate data on GPU failed with error \"%s\".\n",                            \
+                    ::cudaGetErrorString(err_));                                                                       \
+        }                                                                                                              \
+        /* launch kernel */                                                                                            \
+        CAT(error_calculation_, name)<<<1, n_threads, share_mem_size, 0>>>(p_model, p_data, p_result_gpu);             \
+        /* copy result back to CPU */                                                                                  \
+        double result;                                                                                                 \
+        err_ = cudaMemcpy(&result, p_result_gpu, sizeof(double), ::cudaMemcpyDeviceToHost);                            \
+        if (err_ != 0) {                                                                                               \
+            FAILURE(cuda_runtime_error, "Memcpy from GPU failed with error \"%s\".\n", ::cudaGetErrorString(err_));    \
+        }                                                                                                              \
+        err_ = ::cudaFree(p_result_gpu);                                                                               \
+        if (err_ != 0) {                                                                                               \
+            FAILURE(cuda_runtime_error, "Deallocate data GPU failed with error \"%s\".\n",                             \
+                    ::cudaGetErrorString(err_));                                                                       \
+        }                                                                                                              \
+        err_ = ::cudaStreamSynchronize(0);                                                                             \
+        if (err_ != 0) {                                                                                               \
+            FAILURE(cuda_runtime_error, "Stream synchronization failed with error \"%s\".\n",                          \
+                    ::cudaGetErrorString(err_));                                                                       \
+        }                                                                                                              \
+        return result;                                                                                                 \
+    }
+
+// Combine two macros
+#define GENERATE_ERROR_GPU(name, error_updater, averager)                                                              \
+    GENERATE_ERROR_CALC_KERNEL(name, error_updater, averager)                                                          \
+    GENERATE_ERROR_CALC_CALLER(name)
+
+namespace merlin {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// RMSE
+// ---------------------------------------------------------------------------------------------------------------------
+
+GENERATE_ERROR_GPU(rmse, candy::rmse_updater, candy::rmse_averager)
+
+// Calculate mean error with CPU parallelism
+double candy::rmse_gpu(const candy::Model * p_model, const array::Parcel * p_train_data, std::uint64_t ndim,
+                       std::uint64_t share_mem, std::uint64_t n_threads) noexcept {
+    return calc_error_gpu_rmse(p_model, p_train_data, ndim, share_mem, n_threads);
+}
+
+}  // namespace merlin

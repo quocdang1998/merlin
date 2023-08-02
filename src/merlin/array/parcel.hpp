@@ -3,15 +3,15 @@
 #define MERLIN_ARRAY_PARCEL_HPP_
 
 #include <cstdint>  // std::uint64_t, std::uintptr_t
-#include <mutex>  // std::mutex
+#include <mutex>    // std::mutex
 
-#include "merlin/array/nddata.hpp"  // merlin::array::Array, merlin::array::NdData
-#include "merlin/cuda_decorator.hpp"  // __cudevice__, __cuhostdev__
-#include "merlin/cuda/device.hpp"  // merlin::cuda::Device
-#include "merlin/cuda/context.hpp"  // merlin::cuda::Context
-#include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/vector.hpp"  // merlin::intvec
+#include "merlin/array/nddata.hpp"    // merlin::array::Array, merlin::array::NdData
+#include "merlin/cuda/context.hpp"    // merlin::cuda::Context
+#include "merlin/cuda/device.hpp"     // merlin::cuda::Device
+#include "merlin/cuda/stream.hpp"     // merlin::cuda::Stream
+#include "merlin/cuda_interface.hpp"  // __cudevice__, __cuhostdev__
+#include "merlin/exports.hpp"         // MERLIN_EXPORTS
+#include "merlin/vector.hpp"          // merlin::intvec
 
 namespace merlin {
 
@@ -46,12 +46,12 @@ class array::Parcel : public array::NdData {
     /// @name Get members
     /// @{
     /** @brief Get constant reference to ID of device containing data of a constant instance.*/
-    __cuhostdev__ constexpr const cuda::Device & device(void) const noexcept {return this->device_;}
-    /// @}
+    __cuhostdev__ constexpr const cuda::Device & device(void) const noexcept { return this->device_; }
+/// @}
 
-    /// @name Atributes
-    /// @{
-    #ifdef __NVCC__
+/// @name Atributes
+/// @{
+#ifdef __NVCC__
     /** @brief Get reference to element at a given ndim index.*/
     __cudevice__ double & operator[](const intvec & index);
     /** @brief Get reference to element at a given C-contiguous index.*/
@@ -60,7 +60,7 @@ class array::Parcel : public array::NdData {
     __cudevice__ const double & operator[](const intvec & index) const;
     /** @brief Get const reference to element at a given C-contiguous index.*/
     __cudevice__ const double & operator[](std::uint64_t index) const;
-    #endif  // __NVCC__
+#endif  // __NVCC__
     /// @}
 
     /// @name Get and set element
@@ -100,7 +100,7 @@ class array::Parcel : public array::NdData {
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the object and its data.*/
     std::uint64_t cumalloc_size(void) const noexcept {
-        return sizeof(array::Parcel) + 2*this->ndim()*sizeof(std::uint64_t);
+        return sizeof(array::Parcel) + 2 * this->ndim() * sizeof(std::uint64_t);
     }
     /** @brief Copy meta-data (shape and strides) from CPU to a pre-allocated memory on GPU.
      *  @details The meta-data should be to the memory region that comes right after the copied object.
@@ -112,8 +112,8 @@ class array::Parcel : public array::NdData {
     MERLIN_EXPORTS void * copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr,
                                       std::uintptr_t stream_ptr = 0) const;
     /** @brief Calculate the minimum number of bytes to allocate in CUDA shared memory to store the array.*/
-    std::uint64_t sharedmem_size(void) const noexcept {return this->cumalloc_size();}
-    #ifdef __NVCC__
+    std::uint64_t sharedmem_size(void) const noexcept { return this->cumalloc_size(); }
+#ifdef __NVCC__
     /** @brief Copy metadata to a pre-allocated memory region by a GPU block of threads.
      *  @details The copy action is performed by the whole CUDA thread block.
      *  @param dest_ptr Pre-allocated memory region storing the new object on GPU.
@@ -130,7 +130,7 @@ class array::Parcel : public array::NdData {
      *  storing data of shape and stride vector.
      */
     __cudevice__ void * copy_by_thread(array::Parcel * dest_ptr, void * shape_strides_ptr) const;
-    #endif  // __NVCC__
+#endif  // __NVCC__
     /// @}
 
     /// @name Destructor

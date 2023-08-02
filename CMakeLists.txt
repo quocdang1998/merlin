@@ -23,12 +23,13 @@ list(APPEND MERLIN_SRC_CPP
      array/parcel.cpp
      array/slice.cpp
      array/stock.cpp
-     #candy/adagrad.cpp
+     candy/optmz/adam.cpp
+     candy/optmz/adagrad.cpp
      candy/optmz/grad_descent.cpp
      candy/launcher.cpp
-     #candy/loss.cpp
+     candy/loss.cpp
      candy/model.cpp
-     #candy/partition.cpp
+     candy/partition.cpp
      cuda/context.cpp
      cuda/device.cpp
      cuda/event.cpp
@@ -66,10 +67,12 @@ list(APPEND MERLIN_SRC_CU
      statistics/moment.cu
 )
 list(APPEND MERLIN_SRC_GLB
-     #candy/adagrad.glb
+     candy/optimizer.glb
+     candy/optmz/adam.glb
+     candy/optmz/adagrad.glb
      candy/optmz/grad_descent.glb
      candy/launcher.glb
-     #candy/loss.glb
+     candy/loss.glb
      cuda/device.glb
      intpl/lagrange.glb
      intpl/newton.glb
@@ -79,11 +82,12 @@ list(APPEND MERLIN_SRC_RDC
      array/nddata.rdc
      array/parcel.rdc
      array/slice.rdc
-     #candy/adagrad.rdc
      candy/launcher.rdc
-     #candy/loss.rdc
+     candy/loss.rdc
      candy/model.rdc
      candy/optimizer.rdc
+     candy/optmz/adam.rdc
+     candy/optmz/adagrad.rdc
      candy/optmz/grad_descent.rdc
      cuda/device.rdc
      intpl/cartesian_grid.rdc
@@ -94,10 +98,12 @@ list(APPEND MERLIN_SRC_RDC
      utils.rdc
 )
 list(APPEND MERLIN_SRC_SHR
+     cuda_interface.cpp
      env.cpp
      logger.cpp
 )
 list(APPEND MERLIN_SRC_SHRCU
+     cuda_interface.cu
      env.cu
 )
 

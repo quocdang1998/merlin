@@ -2,22 +2,22 @@
 #include "merlin/array/parcel.hpp"
 
 #include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides
-#include "merlin/logger.hpp"  // CUDAERR
-#include "merlin/utils.hpp"  // merlin::inner_prod, merlin::contiguous_to_ndim_idx
+#include "merlin/logger.hpp"      // CUDAERR
+#include "merlin/utils.hpp"       // merlin::inner_prod, merlin::contiguous_to_ndim_idx
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Parcel
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Constructor from a slice
 __cuhostdev__ array::Parcel::Parcel(const array::Parcel & whole, const Vector<array::Slice> & slices) :
 array::NdData(whole, slices) {
     this->device_ = whole.device_;
-    #ifndef __CUDA_ARCH__
+#ifndef __CUDA_ARCH__
     this->context_ = whole.context_;
-    #endif  // __CUDA_ARCH__
+#endif  // __CUDA_ARCH__
 }
 
 #ifdef __NVCC__
@@ -78,6 +78,6 @@ __cudevice__ void * array::Parcel::copy_by_thread(array::Parcel * dest_ptr, void
     return result;
 }
 
-#endif  //  __NVCC__
+#endif  // __NVCC__
 
 }  // namespace merlin

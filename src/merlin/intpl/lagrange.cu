@@ -1,20 +1,19 @@
 // Copyright 2022 quocdang1998
 #include "merlin/intpl/lagrange.hpp"
 
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/cuda/memory.hpp"  // merlin::cuda::Memory
+#include "merlin/array/parcel.hpp"          // merlin::array::Parcel
+#include "merlin/cuda/memory.hpp"           // merlin::cuda::Memory
 #include "merlin/intpl/cartesian_grid.hpp"  // merlin::intpl::CartesianGrid
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Calculate coefficients
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Calculate Lagrange interpolation coefficients on a full Cartesian grid using GPU
 void intpl::calc_lagrange_coeffs_gpu(const intpl::CartesianGrid & grid, const array::Parcel & value,
-                                     array::Parcel & coeff, const cuda::Stream & stream,
-                                     std::uint64_t n_thread) {
+                                     array::Parcel & coeff, const cuda::Stream & stream, std::uint64_t n_thread) {
     // check for validity
     stream.check_cuda_context();
     // copy data to GPU

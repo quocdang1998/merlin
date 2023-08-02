@@ -7,20 +7,20 @@
 
 #include <omp.h>  // pragma omp, omp_get_num_threads
 
-#include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/copy.hpp"  // merlin::array::array_copy
-#include "merlin/array/slice.hpp"  // merlin::array::Slice
-#include "merlin/logger.hpp"  // CUHDERR
+#include "merlin/array/array.hpp"           // merlin::array::Array
+#include "merlin/array/copy.hpp"            // merlin::array::array_copy
+#include "merlin/array/slice.hpp"           // merlin::array::Slice
 #include "merlin/intpl/cartesian_grid.hpp"  // merlin::intpl::CartesianGrid
-#include "merlin/intpl/sparse_grid.hpp"  // merlin::intpl::SparseGrid
-#include "merlin/utils.hpp"  // merlin::prod_elements, merlin::contiguous_to_ndim_idx
-#include "merlin/vector.hpp"  // merlin::Vector
+#include "merlin/intpl/sparse_grid.hpp"     // merlin::intpl::SparseGrid
+#include "merlin/logger.hpp"                // CUHDERR
+#include "merlin/utils.hpp"                 // merlin::prod_elements, merlin::contiguous_to_ndim_idx
+#include "merlin/vector.hpp"                // merlin::Vector
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Utils
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Calculate divide diference between 2 arrays
 static void divide_difference_cpu_parallel(const array::Array & a1, const array::Array & a2, double x1, double x2,
@@ -49,8 +49,8 @@ static void calc_newton_coeffs_cpu_recursive(const intpl::CartesianGrid & grid, 
     // trivial case (1D)
     if (coeff.ndim() == 1) {
         for (std::uint64_t i = 1; i < coeff.shape()[0]; i++) {
-            for (std::uint64_t k = coeff.shape()[0]-1; k >=i; k--) {
-                long double coeff_calc = (coeff.get({k}) - coeff.get({k-1})) / (grid_vector[k] - grid_vector[k-i]);
+            for (std::uint64_t k = coeff.shape()[0] - 1; k >= i; k--) {
+                long double coeff_calc = (coeff.get({k}) - coeff.get({k - 1})) / (grid_vector[k] - grid_vector[k - i]);
                 coeff.set({k}, coeff_calc);
             }
         }
@@ -58,28 +58,28 @@ static void calc_newton_coeffs_cpu_recursive(const intpl::CartesianGrid & grid, 
     }
     // calculate divdiff on dim i-th
     for (std::uint64_t i = 1; i < coeff.shape()[0]; i++) {
-        for (std::uint64_t k = coeff.shape()[0]-1; k >= i; k--) {
+        for (std::uint64_t k = coeff.shape()[0] - 1; k >= i; k--) {
             // get NdData of sub slice
             Vector<array::Slice> slice_k(coeff.ndim()), slice_k_1(coeff.ndim());
             slice_k[0] = array::Slice({k});
-            slice_k_1[0] = array::Slice({k-1});
+            slice_k_1[0] = array::Slice({k - 1});
             const array::Array array_k(coeff, slice_k);
             const array::Array array_k_1(coeff, slice_k_1);
             array::Array array_result(coeff, slice_k);
             // calculate divide difference
-            divide_difference_cpu_parallel(array_k, array_k_1, grid_vector[k], grid_vector[k-i],
-                                           array_result, nthreads);
+            divide_difference_cpu_parallel(array_k, array_k_1, grid_vector[k], grid_vector[k - i], array_result,
+                                           nthreads);
         }
     }
     // calculate new start index jump
     intvec shape_other_dims;
     intvec total_dim = grid.get_grid_shape();
-    shape_other_dims.assign(total_dim.begin()+current_dim+1, total_dim.begin()+max_dimension+1);
+    shape_other_dims.assign(total_dim.begin() + current_dim + 1, total_dim.begin() + max_dimension + 1);
     std::uint64_t start_index_jump = prod_elements(shape_other_dims);
     // recursively calculate divide difference for dimension from i-1-th
     for (std::uint64_t i = 0; i < coeff.shape()[0]; i++) {
         // calculate new start index
-        std::uint64_t new_start_index = start_index + i*start_index_jump;
+        std::uint64_t new_start_index = start_index + i * start_index_jump;
         // get array assigned to slice
         Vector<array::Slice> slice_i(coeff.ndim());
         slice_i[0] = array::Slice({static_cast<std::uint64_t>(i)});
@@ -102,7 +102,7 @@ static intvec merge_3vectors(const intvec & v1, std::uint64_t v2, const intvec &
     }
     result[v1.size()] = v2;
     for (std::uint64_t i = 0; i < v3.size(); i++) {
-        result[1+v1.size()+i] = v3[i];
+        result[1 + v1.size() + i] = v3[i];
     }
     return result;
 }
@@ -119,7 +119,7 @@ static void calc_newton_coeffs_single_core(const intpl::CartesianGrid & grid, ar
         std::uint64_t size_previous_dims = prod_elements(shape_previous_dims);
         // get shape and size of divdiff subspace
         intvec shape_divdiff_space;
-        shape_divdiff_space.assign(const_cast<std::uint64_t *>(coeff.shape().begin())+i_dim+1,
+        shape_divdiff_space.assign(const_cast<std::uint64_t *>(coeff.shape().begin()) + i_dim + 1,
                                    const_cast<std::uint64_t *>(coeff.shape().end()));
         std::uint64_t size_divdiff_space = prod_elements(shape_divdiff_space);
         // loop on each previous dims point
@@ -127,14 +127,14 @@ static void calc_newton_coeffs_single_core(const intpl::CartesianGrid & grid, ar
             intvec index_previous_dims = contiguous_to_ndim_idx(i_previous_dims, shape_previous_dims);
             // loop on indices of current dim for divide difference
             for (std::uint64_t i = 1; i < coeff.shape()[i_dim]; i++) {
-                for (std::uint64_t k = coeff.shape()[i_dim]-1; k >= i; k--) {
+                for (std::uint64_t k = coeff.shape()[i_dim] - 1; k >= i; k--) {
                     // loop on each point in divdiff space
                     for (std::uint64_t i_divdiff_space = 0; i_divdiff_space < size_divdiff_space; i_divdiff_space++) {
                         intvec index_divdiff_space = contiguous_to_ndim_idx(i_divdiff_space, shape_divdiff_space);
                         intvec point_index_k = merge_3vectors(index_previous_dims, k, index_divdiff_space);
-                        intvec point_index_k_1 = merge_3vectors(index_previous_dims, k-1, index_divdiff_space);
+                        intvec point_index_k_1 = merge_3vectors(index_previous_dims, k - 1, index_divdiff_space);
                         double divdiff_result = (coeff[point_index_k] - coeff[point_index_k_1]);
-                        divdiff_result /= grid_vector[k] - grid_vector[k-i];
+                        divdiff_result /= grid_vector[k] - grid_vector[k - i];
                         intvec point_index_result = std::move(point_index_k);
                         coeff[point_index_result] = divdiff_result;
                     }
@@ -144,9 +144,9 @@ static void calc_newton_coeffs_single_core(const intpl::CartesianGrid & grid, ar
     }
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Calculate coefficient
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Calculate coefficients for cartesian grid
 void intpl::calc_newton_coeffs_cpu(const intpl::CartesianGrid & grid, const array::Array & value, array::Array & coeff,
@@ -209,7 +209,7 @@ static double eval_newton_of_added_grid_cpu(const intpl::CartesianGrid & accumul
                                             const Vector<double> & x) {
     double result = intpl::eval_newton_cpu(grid, coeff, x);
     double factor = intpl::exclusion_grid(accumulated_grid, grid, x);
-    return result*factor;
+    return result * factor;
 }
 
 // Calculate Newton interpolation coefficients on a sparse grid using CPU (function value are preprocessed)
@@ -228,20 +228,20 @@ void intpl::calc_newton_coeffs_cpu(const intpl::SparseGrid & grid, const array::
         intpl::CartesianGrid level_cartgrid = intpl::get_cartesian_grid(grid, i_subgrid);
         accumulated_cart_grid += level_cartgrid;
         intvec level_shape = get_level_shape(level_index);
-        array::Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid+1]);
+        array::Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid + 1]);
         array::Array level_coeff(coeff, {level_slice});
         level_coeff.reshape(level_shape);
         calc_newton_coeffs_of_added_grid_cpu(accumulated_cart_grid, level_cartgrid, level_coeff, level_coeff);
         // subtract other points of the grid
-        for (std::uint64_t j_subgrid = i_subgrid+1; j_subgrid < num_subgrid; j_subgrid++) {
+        for (std::uint64_t j_subgrid = i_subgrid + 1; j_subgrid < num_subgrid; j_subgrid++) {
             std::uint64_t start_index = grid.sub_grid_start_index()[j_subgrid];
             intpl::CartesianGrid level_j_cartgrid = intpl::get_cartesian_grid(grid, j_subgrid);
             std::uint64_t level_j_cartgrid_size = level_j_cartgrid.size();
             for (std::uint64_t i_point = 0; i_point < level_j_cartgrid_size; i_point++) {
                 Vector<double> point = level_j_cartgrid[i_point];
                 std::uint64_t i_point_sparsegrid = start_index + i_point;
-                coeff[{i_point_sparsegrid}] -= eval_newton_of_added_grid_cpu(accumulated_cart_grid, level_cartgrid,
-                                                                             level_coeff, point);
+                coeff[{i_point_sparsegrid}] -=
+                    eval_newton_of_added_grid_cpu(accumulated_cart_grid, level_cartgrid, level_coeff, point);
             }
         }
     }
@@ -270,13 +270,12 @@ Vector<double> intpl::eval_newton_gpu(const intpl::CartesianGrid & grid, const a
 
 #endif  // __MERLIN_CUDA__
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Evaluate interpolation
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Evaluate Newton interpolation on a cartesian grid using CPU
-double intpl::eval_newton_cpu(const intpl::CartesianGrid & grid, const array::Array & coeff,
-                              const Vector<double> & x) {
+double intpl::eval_newton_cpu(const intpl::CartesianGrid & grid, const array::Array & coeff, const Vector<double> & x) {
     return intpl::eval_newton_single_core(grid, coeff, x);
 }
 
@@ -293,7 +292,7 @@ double intpl::eval_newton_cpu(const intpl::SparseGrid & grid, const array::Array
         intpl::CartesianGrid level_cartgrid = intpl::get_cartesian_grid(grid, i_subgrid);
         accumulated_cart_grid += level_cartgrid;
         intvec level_shape = get_level_shape(level_index);
-        array::Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid+1]);
+        array::Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid + 1]);
         array::Array level_coeff(coeff, {level_slice});
         level_coeff.reshape(level_shape);
         result += eval_newton_of_added_grid_cpu(accumulated_cart_grid, level_cartgrid, level_coeff, x);

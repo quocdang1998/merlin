@@ -3,16 +3,15 @@
 #define MERLIN_CUDA_CONTEXT_HPP_
 
 #include <cstdint>  // std::uintptr_t
-#include <map>  // std::map
-#include <string>  // std::string
+#include <map>      // std::map
+#include <string>   // std::string
 #include <utility>  // std::exchange, std::pair
-#include <vector>  // std::vector
+#include <vector>   // std::vector
 
-#include "merlin/cuda/declaration.hpp"  // merlin::cuda::Context, merlin::cuda::Device
+#include "merlin/cuda/declaration.hpp"   // merlin::cuda::Context, merlin::cuda::Device
 #include "merlin/cuda/enum_wrapper.hpp"  // merlin::cuda::ContextSchedule
-#include "merlin/env.hpp"  // merlin::Environment
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/logger.hpp"  // cuda_runtime_error, FAILURE
+#include "merlin/env.hpp"                // merlin::Environment
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
 
 namespace merlin {
 
@@ -49,9 +48,7 @@ class cuda::Context {
         return *this;
     }
     /** @brief Move constructor.*/
-    Context(cuda::Context && src) {
-        this->context_ = std::exchange(src.context_, 0);
-    }
+    Context(cuda::Context && src) { this->context_ = std::exchange(src.context_, 0); }
     /** @brief Move assignment.*/
     cuda::Context & operator=(cuda::Context && src) {
         this->context_ = std::exchange(src.context_, 0);
@@ -62,7 +59,13 @@ class cuda::Context {
     /// @name Get attributes
     /// @{
     /** @brief Get pointer to Context object.*/
-    constexpr std::uintptr_t get_context_ptr(void) const noexcept {return this->context_;}
+    constexpr std::uintptr_t get_context_ptr(void) const noexcept { return this->context_; }
+    /** @brief Assign the current context to a context pointer.
+     *  @details Assign the new context pointer to the object. The old context will not be destroyed, and the newly
+     *  assigned context will be destroyed in destructor.
+     *  @param context_ptr New CUDA context pointer.
+     */
+    constexpr void assign(std::uintptr_t context_ptr) noexcept { this->context_ = context_ptr; }
     /** @brief Get number of instances representing the context.*/
     std::uint64_t get_reference_count(void) const noexcept {
         return Environment::attribute[this->context_].reference_count;

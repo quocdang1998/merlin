@@ -14,8 +14,8 @@
         #else
             #define MERLINSHARED_EXPORTS __declspec(dllimport)
         #endif  // libmerlinshared_EXPORTS
-    #endif  // MERLINSHARED_EXPORTS
-#endif  // __MERLIN_LINUX__
+    #endif      // MERLINSHARED_EXPORTS
+#endif          // __MERLIN_LINUX__
 
 #if defined(__MERLIN_BUILT_AS_STATIC__) || defined(__LIBMERLINCUDA__) || defined(__MERLIN_LINUX__)
     #define MERLIN_EXPORTS
@@ -28,12 +28,12 @@
         #else
             #define MERLIN_EXPORTS __declspec(dllimport)
         #endif  // libmerlin_EXPORTS
-    #endif  // MERLIN_EXPORTS
+    #endif      // MERLIN_EXPORTS
     // define MERLIN_NO_EXPORT as regular "static" objects
     #ifndef MERLIN_NO_EXPORT
         #define MERLIN_NO_EXPORT
     #endif  // MERLIN_NO_EXPORT
-#endif  // __MERLIN_BUILT_AS_STATIC__ || LIBMERLIN_STATIC || __MERLIN_LINUX__
+#endif      // __MERLIN_BUILT_AS_STATIC__ || LIBMERLIN_STATIC || __MERLIN_LINUX__
 
 #ifndef MERLIN_DEPRECATED
     #if defined(__MERLIN_WINDOWS__)

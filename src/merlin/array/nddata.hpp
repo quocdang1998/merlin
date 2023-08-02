@@ -4,13 +4,12 @@
 
 #include <cstddef>  // nullptr
 #include <cstdint>  // std::int64_t, std::uint64_t, std::uintptr_t
-#include <string>  // std::string
+#include <string>   // std::string
 
 #include "merlin/array/declaration.hpp"  // merlin::array::NdData, merlin::array::Slice
-#include "merlin/cuda_decorator.hpp"  // __cuhost__, __cuhostdev__
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/vector.hpp"  // merlin::intvec
-
+#include "merlin/cuda_interface.hpp"     // __cuhost__, __cuhostdev__
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/vector.hpp"             // merlin::intvec
 
 namespace merlin {
 
@@ -42,41 +41,41 @@ class array::NdData {
     /** @brief Shallow copy constructor.*/
     NdData(const array::NdData & source) = default;
     /** @brief Shallow copy assignment.*/
-    array::NdData & operator= (const array::NdData & source) = default;
+    array::NdData & operator=(const array::NdData & source) = default;
     /** @brief Move constructor.*/
     NdData(array::NdData && source) = default;
     /** @brief Move assignment.*/
-    array::NdData & operator= (array::NdData && source) = default;
+    array::NdData & operator=(array::NdData && source) = default;
     /// @}
 
     /// @name Get members
     /// @{
     /** @brief Get pointer to data.*/
-    __cuhostdev__ constexpr double * data(void) const noexcept {return this->data_;}
+    __cuhostdev__ constexpr double * data(void) const noexcept { return this->data_; }
     /** @brief Get number of dimension.*/
-    __cuhostdev__ constexpr const std::uint64_t & ndim(void) const noexcept {return this->shape_.size();}
+    __cuhostdev__ constexpr const std::uint64_t & ndim(void) const noexcept { return this->shape_.size(); }
     /** @brief Get constant reference to shape vector.*/
-    __cuhostdev__ constexpr const intvec & shape(void) const noexcept {return this->shape_;}
+    __cuhostdev__ constexpr const intvec & shape(void) const noexcept { return this->shape_; }
     /** @brief Get constant reference to stride vector.*/
-    __cuhostdev__ constexpr const intvec & strides(void) const noexcept {return this->strides_;}
+    __cuhostdev__ constexpr const intvec & strides(void) const noexcept { return this->strides_; }
     /// @}
 
     /// @name Atributes
     /// @{
     /** @brief Number of element.*/
-    __cuhostdev__ constexpr const std::uint64_t & size(void) const noexcept {return this->size_;}
+    __cuhostdev__ constexpr const std::uint64_t & size(void) const noexcept { return this->size_; }
     /// @}
 
     /// @name Get and set element
     /// @{
     /** @brief Get value of element at a n-dim index.*/
-    MERLIN_EXPORTS virtual double get(const intvec & index) const;
+    virtual double get(const intvec & index) const { return 0.0; }
     /** @brief Get value of element at a C-contiguous index.*/
-    MERLIN_EXPORTS virtual double get(std::uint64_t index) const;
+    virtual double get(std::uint64_t index) const { return 0.0; }
     /** @brief Set value of element at a n-dim index.*/
-    MERLIN_EXPORTS virtual void set(const intvec index, double value);
+    virtual void set(const intvec index, double value) {}
     /** @brief Set value of element at a C-contiguous index.*/
-    MERLIN_EXPORTS virtual void set(std::uint64_t index, double value);
+    virtual void set(std::uint64_t index, double value) {}
     /// @}
 
     /// @name Partite data
@@ -138,10 +137,7 @@ namespace array {
 /** @brief Slice current array to a new array with the same polymorphic type.*/
 MERLIN_EXPORTS array::NdData * slice_on(const array::NdData & original, const Vector<array::Slice> & slices);
 
-/** @brief Maximum number of dimension allowed.*/
-inline constexpr std::uint64_t max_allowed_dim = 16;
-
-}
+}  // namespace array
 
 }  // namespace merlin
 

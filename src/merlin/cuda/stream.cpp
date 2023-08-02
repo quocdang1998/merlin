@@ -4,14 +4,14 @@
 #include <sstream>  // std::ostringstream
 
 #include "merlin/cuda/context.hpp"  // merlin::cuda::Context
-#include "merlin/cuda/graph.hpp"  // merlin::cuda::Graph
-#include "merlin/logger.hpp"  // cuda_compile_error, FAILURE
+#include "merlin/cuda/graph.hpp"    // merlin::cuda::Graph
+#include "merlin/logger.hpp"        // cuda_compile_error, FAILURE
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Stream
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // String representation
 std::string cuda::Stream::str(void) const {

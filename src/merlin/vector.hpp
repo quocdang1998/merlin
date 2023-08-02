@@ -2,13 +2,12 @@
 #ifndef MERLIN_VECTOR_HPP_
 #define MERLIN_VECTOR_HPP_
 
-#include <cstddef>  // nullptr
-#include <cstdint>  // std::int64_t, std::uint64_t, std::uintptr_t
+#include <cstddef>           // nullptr
+#include <cstdint>           // std::uint64_t, std::uintptr_t
 #include <initializer_list>  // std::initializer_list
-#include <string>  // std::string
+#include <string>            // std::string
 
-#include "merlin/cuda_decorator.hpp"  // __cuhost__, __cuhostdev__
-#include "merlin/exports.hpp"  // MERLIN_TEMPLATE_EXPORTS
+#include "merlin/cuda_interface.hpp"  // __cuhost__, __cuhostdev__
 
 namespace merlin {
 
@@ -89,39 +88,39 @@ class Vector {
     /// @name Get members
     /// @{
     /** @brief Get reference to pointer of data.*/
-    __cuhostdev__ constexpr T * & data(void) {return this->data_;}
+    __cuhostdev__ constexpr T *& data(void) { return this->data_; }
     /** @brief Get constant reference to pointer of data.*/
-    __cuhostdev__ constexpr const T * data(void) const {return this->data_;}
+    __cuhostdev__ constexpr const T * data(void) const { return this->data_; }
     /** @brief Get reference to size.*/
-    __cuhostdev__ constexpr std::uint64_t & size(void) {return this->size_;}
+    __cuhostdev__ constexpr std::uint64_t & size(void) { return this->size_; }
     /** @brief Get constant reference to size.*/
-    __cuhostdev__ constexpr const std::uint64_t & size(void) const {return this->size_;}
+    __cuhostdev__ constexpr const std::uint64_t & size(void) const { return this->size_; }
     /** @brief Begin iterator.*/
-    constexpr T * begin(void) {return this->data_;}
+    constexpr T * begin(void) { return this->data_; }
     /** @brief Begin iterator.*/
-    constexpr const T * begin(void) const {return this->data_;}
+    constexpr const T * begin(void) const { return this->data_; }
     /** @brief Constant begin iterator.*/
-    constexpr const T * cbegin(void) const {return this->data_;}
+    constexpr const T * cbegin(void) const { return this->data_; }
     /** @brief End iterator.*/
-    constexpr T * end(void) {return &this->data_[this->size_];}
+    constexpr T * end(void) { return &this->data_[this->size_]; }
     /** @brief End iterator.*/
-    constexpr const T * end(void) const {return &this->data_[this->size_];}
+    constexpr const T * end(void) const { return &this->data_[this->size_]; }
     /** @brief Constant begin iterator.*/
-    constexpr const T * cend(void) const {return &this->data_[this->size_];}
+    constexpr const T * cend(void) const { return &this->data_[this->size_]; }
     /// @}
 
     /// @name Slicing operator
     /// @{
     /** @brief Get reference to an element.*/
-    __cuhostdev__ constexpr T & operator[](std::uint64_t index) {return this->data_[index];}
+    __cuhostdev__ constexpr T & operator[](std::uint64_t index) { return this->data_[index]; }
     /** @brief Get constant reference to an element.*/
-    __cuhostdev__ constexpr const T & operator[](std::uint64_t index) const {return this->data_[index];}
+    __cuhostdev__ constexpr const T & operator[](std::uint64_t index) const { return this->data_[index]; }
     /// @}
 
     /// @name Transfer data from/to GPU
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the object and its data.*/
-    constexpr std::uint64_t cumalloc_size(void) const {return sizeof(Vector<T>) + this->size_*sizeof(T);}
+    constexpr std::uint64_t cumalloc_size(void) const { return sizeof(Vector<T>) + this->size_ * sizeof(T); }
     /** @brief Copy data from CPU to a pre-allocated memory on GPU.
      *  @details The object and its data is copied to the global memory of the GPU.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory storing the object.
@@ -135,8 +134,8 @@ class Vector {
      */
     void * copy_from_gpu(Vector<T> * gpu_ptr, std::uintptr_t stream_ptr = 0);
     /** @brief Calculate the minimum number of bytes to allocate in CUDA shared memory to store the object.*/
-    constexpr std::uint64_t sharedmem_size(void) const {return this->cumalloc_size();}
-    #ifdef __NVCC__
+    constexpr std::uint64_t sharedmem_size(void) const { return this->cumalloc_size(); }
+#ifdef __NVCC__
     /** @brief Copy data to a pre-allocated memory region by a GPU block of threads.
      *  @details The copy action is performed by the whole CUDA thread block.
      *  @param dest_ptr Memory region where the vector is copied to.
@@ -151,7 +150,7 @@ class Vector {
      *  @param data_ptr Pre-allocated pointer to memory region storing data of the vector.
      */
     __cudevice__ void * copy_by_thread(Vector<T> * dest_ptr, void * data_ptr) const;
-    #endif  // __NVCC__
+#endif  // __NVCC__
     /// @}
 
     /// @name String representation
@@ -202,8 +201,8 @@ using intvec = Vector<std::uint64_t>;
 using floatvec = Vector<double>;
 
 /** @brief Create a vector from its arguments.*/
-template <typename T, typename ... Args>
-Vector<T> make_vector(std::uint64_t size, Args ... args) noexcept;
+template <typename T, typename... Args>
+Vector<T> make_vector(std::uint64_t size, Args... args) noexcept;
 
 }  // namespace merlin
 

@@ -6,19 +6,19 @@
 #if defined(__MERLIN_WINDOWS__)
     #include <windows.h>  // ::FormatMessageA, ::GetCurrentProcess
     #ifdef __MERLIN_DEBUG__
-        #include <cstdlib>  // std::calloc
-        #include <cstdint>  // std::uint64_t
-        #include <cstring>  // std::strlen
+        #include <cstdint>    // std::uint64_t
+        #include <cstdlib>    // std::calloc
+        #include <cstring>    // std::strlen
         #include <dbghelp.h>  // ::CaptureStackBackTrace, ::SymInitialize, ::SymFromAddr, ::SYMBOL_INFO
-    #endif   // __MERLIN_DEBUG__
+    #endif                    // __MERLIN_DEBUG__
 #elif defined(__MERLIN_LINUX__)
-    #include <errno.h>  // errno
+    #include <errno.h>   // errno
     #include <string.h>  // ::strerror
     #ifdef __MERLIN_DEBUG__
-        #include <cxxabi.h>  // ::abi::__cxa_demangle
-        #include <dlfcn.h>  // ::Dl_info, ::dladdr
+        #include <cxxabi.h>    // ::abi::__cxa_demangle
+        #include <dlfcn.h>     // ::Dl_info, ::dladdr
         #include <execinfo.h>  // ::backtrace
-    #endif   // __MERLIN_DEBUG__
+    #endif                     // __MERLIN_DEBUG__
 #endif
 
 // Max depth of the stacktrace
@@ -26,9 +26,9 @@
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Get error message and print stacktrace
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Pointer to frame
 typedef void * native_frame_ptr_t;
@@ -39,11 +39,11 @@ typedef void * native_frame_ptr_t;
 std::string throw_windows_last_error(unsigned long int last_error) {
     if (last_error != 0) {
         char * buffer = nullptr;
-        const unsigned long int format = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
-                                         | FORMAT_MESSAGE_IGNORE_INSERTS;
-        unsigned long int size = ::FormatMessageA(format, nullptr, last_error,
-                                                  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                                                  reinterpret_cast<char *>(&buffer), 0, nullptr);
+        const unsigned long int format =
+            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
+        unsigned long int size =
+            ::FormatMessageA(format, nullptr, last_error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                             reinterpret_cast<char *>(&buffer), 0, nullptr);
         return std::string(buffer, size);
     } else {
         return std::string();
@@ -59,7 +59,7 @@ void print_stacktrace(int skip) {
     // capture address of the functions in the stacktrace
     native_frame_ptr_t buffer[STACK_TRACE_BUFFER_SIZE];
     unsigned int frames = ::CaptureStackBackTrace(skip, STACK_TRACE_BUFFER_SIZE, buffer, nullptr);
-    ::SYMBOL_INFO * symbol = static_cast<::SYMBOL_INFO *>(std::calloc(sizeof(::SYMBOL_INFO) + 256*sizeof(char), 1));
+    ::SYMBOL_INFO * symbol = static_cast<::SYMBOL_INFO *>(std::calloc(sizeof(::SYMBOL_INFO) + 256 * sizeof(char), 1));
     symbol->MaxNameLen = 255;
     symbol->SizeOfStruct = sizeof(::SYMBOL_INFO);
     // print symbol name
@@ -73,7 +73,7 @@ void print_stacktrace(int skip) {
         }
     }
     std::free(symbol);
-    #endif   // __MERLIN_DEBUG__
+    #endif  // __MERLIN_DEBUG__
 }
 
 #elif defined(__MERLIN_LINUX__)
@@ -94,9 +94,9 @@ void print_stacktrace(int skip) {
     // get number of frame in the stack
     native_frame_ptr_t buffer[STACK_TRACE_BUFFER_SIZE];
     int frames_count = ::backtrace(const_cast<void **>(buffer), STACK_TRACE_BUFFER_SIZE);
-    std::copy(buffer+skip, buffer+frames_count, buffer);
+    std::copy(buffer + skip, buffer + frames_count, buffer);
     frames_count -= skip;
-    if (frames_count && buffer[frames_count-1] == nullptr) {
+    if (frames_count && buffer[frames_count - 1] == nullptr) {
         --frames_count;
     }
     // get name (demangled) for each frame
@@ -114,13 +114,13 @@ void print_stacktrace(int skip) {
                 std::fprintf(stderr, "%s\n", demangled_name);
                 free(demangled_name);
             } else {
-                std::fprintf(stderr, "%s\n",  dli.dli_sname);
+                std::fprintf(stderr, "%s\n", dli.dli_sname);
             }
         } else {
             std::fprintf(stderr, "%p\n", buffer[i]);
         }
     }
-    #endif   // __MERLIN_DEBUG__
+    #endif  // __MERLIN_DEBUG__
 }
 
 #endif

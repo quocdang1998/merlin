@@ -1,28 +1,28 @@
 // Copyright 2023 quocdang1998
 #include "merlin/candy/model.hpp"
 
-#include <cmath>  // std::pow, std::sqrt
+#include <cmath>    // std::pow, std::sqrt
 #include <cstring>  // std::memcpy
+#include <random>   // std::mt19937_64, std::uniform_real_distribution
 #include <sstream>  // std::ostringstream
-#include <random>  // std::mt19937_64, std::uniform_real_distribution
 #include <utility>  // std::exchange
-#include <vector>  // std::vector
+#include <vector>   // std::vector
 
 #include <omp.h>  // pragma omp, ::omp_get_threa
 
-#include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/slice.hpp"  // merlin::Slice, merlin::slicevec
-#include "merlin/env.hpp"  // merlin::Environment
-#include "merlin/logger.hpp"  // FAILURE
+#include "merlin/array/array.hpp"        // merlin::array::Array
+#include "merlin/array/slice.hpp"        // merlin::Slice, merlin::slicevec
+#include "merlin/env.hpp"                // merlin::Environment
+#include "merlin/logger.hpp"             // FAILURE
 #include "merlin/statistics/moment.hpp"  // merlin::statistics::powered_mean, merlin::statistics::moment_cpu
                                          // merlin::statistics::max_cpu
-#include "merlin/utils.hpp"  // merlin::prod_elements
+#include "merlin/utils.hpp"              // merlin::prod_elements
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Initialize model
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Initialize a random engine to each thread
 static std::vector<std::mt19937_64> initialize_engine(std::uint64_t n_thread) {
@@ -95,9 +95,9 @@ static void initialize_uniform(candy::Model & model, const array::Array & train_
     }
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Model
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Constructor from shape and rank
 candy::Model::Model(const intvec & shape, std::uint64_t rank) : parameters_(shape.size()), rank_(rank) {
@@ -108,7 +108,7 @@ candy::Model::Model(const intvec & shape, std::uint64_t rank) : parameters_(shap
     // allocate data and assign a random number between 0 and 1 for each entry
     std::uniform_real_distribution<double> generator(-1.0, 1.0);
     for (std::uint64_t i_dim = 0; i_dim < shape.size(); i_dim++) {
-        this->parameters_[i_dim] = floatvec(shape[i_dim]*rank);
+        this->parameters_[i_dim] = floatvec(shape[i_dim] * rank);
         for (std::uint64_t i_param = 0; i_param < this->parameters_[i_dim].size(); i_param++) {
             // generate a random strictly positive floating-point value
             double assigned_value = generator(Environment::random_generator);
@@ -139,8 +139,8 @@ candy::Model::Model(const Vector<floatvec> & parameter, std::uint64_t rank) : pa
 }
 
 // Slicing constructor
-candy::Model::Model(Model & full_model, const slicevec & slices) : parameters_(full_model.ndim()),
-rank_(full_model.rank_) {
+candy::Model::Model(Model & full_model, const slicevec & slices) :
+parameters_(full_model.ndim()), rank_(full_model.rank_) {
     if (slices.size() != full_model.ndim()) {
         CUHDERR(std::invalid_argument, "Inconsistent size of Model and slice vector.\n");
     }
@@ -168,24 +168,28 @@ void candy::Model::initialize(const array::Array & train_data, candy::RandomInit
     }
     // initialize model parameters
     switch (random_distribution) {
-    case candy::RandomInitializer::DefaultDistribution:
-        initialize_default(*this, n_thread);
-        break;
-    case candy::RandomInitializer::UniformDistribution:
-        initialize_uniform(*this, train_data, n_thread);
-        break;
-    case candy::RandomInitializer::NormalDistribution:
-        initialize_gaussian(*this, train_data, n_thread);
-        break;
-    default:
-        FAILURE(std::invalid_argument, "Not implemented random distribution.\n");
-        break;
+        case candy::RandomInitializer::DefaultDistribution : {
+            initialize_default(*this, n_thread);
+            break;
+        }
+        case candy::RandomInitializer::UniformDistribution : {
+            initialize_uniform(*this, train_data, n_thread);
+            break;
+        }
+        case candy::RandomInitializer::NormalDistribution : {
+            initialize_gaussian(*this, train_data, n_thread);
+            break;
+        }
+        default : {
+            FAILURE(std::invalid_argument, "Not implemented random distribution.\n");
+            break;
+        }
     }
 }
 
 // Calculate minimum size to allocate to store the object
 std::uint64_t candy::Model::cumalloc_size(void) const noexcept {
-    std::uint64_t size = sizeof(candy::Model) + this->ndim()*sizeof(floatvec);
+    std::uint64_t size = sizeof(candy::Model) + this->ndim() * sizeof(floatvec);
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
         size += this->parameters_[i_dim].size() * sizeof(double);
     }
@@ -195,8 +199,7 @@ std::uint64_t candy::Model::cumalloc_size(void) const noexcept {
 #ifndef __MERLIN_CUDA__
 
 // Copy data to a pre-allocated memory
-void * candy::Model::copy_to_gpu(candy::Model * gpu_ptr, void * grid_vector_data_ptr,
-                                 std::uintptr_t stream_ptr) const {
+void * candy::Model::copy_to_gpu(candy::Model * gpu_ptr, void * grid_vector_data_ptr, std::uintptr_t stream_ptr) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
     return nullptr;
 }
@@ -220,7 +223,7 @@ std::string candy::Model::str(void) const {
         for (std::uint64_t i_index = 0; i_index < dim_shape; i_index++) {
             floatvec rank_vector;
             double * rank_vector_data = const_cast<double *>(this->parameters_[i_dim].data());
-            rank_vector.assign(rank_vector_data + i_index*this->rank_, this->rank_);
+            rank_vector.assign(rank_vector_data + i_index * this->rank_, this->rank_);
             out_stream << ((i_index != 0) ? " " : "");
             out_stream << rank_vector.str();
         }

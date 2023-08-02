@@ -3,29 +3,29 @@
 
 #include <algorithm>  // std::find
 #include <cinttypes>  // PRIu64
-#include <cstring>  // std::memcpy
-#include <numeric>  // std::iota
-#include <sstream>  // std::ostringstream
-#include <utility>  // std::move
-#include <vector>  // std::vector
+#include <cstring>    // std::memcpy
+#include <numeric>    // std::iota
+#include <sstream>    // std::ostringstream
+#include <utility>    // std::move
+#include <vector>     // std::vector
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides
+#include "merlin/array/copy.hpp"   // merlin::array::contiguous_strides
 #include "merlin/array/slice.hpp"  // merlin::array::Slice
-#include "merlin/logger.hpp"  // FAILURE
+#include "merlin/logger.hpp"       // FAILURE
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Check utils
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Get sorted index
 static std::vector<std::uint64_t> sorted_index(const floatvec & input) {
     std::vector<std::uint64_t> result(input.size());
     std::iota(result.begin(), result.end(), 0);
     std::stable_sort(result.begin(), result.end(),
-                     [&input] (std::uint64_t i1, std::uint64_t i2) {return input[i1] < input[i2];});
+                     [&input](std::uint64_t i1, std::uint64_t i2) { return input[i1] < input[i2]; });
     return result;
 }
 
@@ -33,16 +33,16 @@ static std::vector<std::uint64_t> sorted_index(const floatvec & input) {
 static bool has_duplicated_element(const floatvec & input) {
     std::vector<std::uint64_t> sorted_idx = sorted_index(input);
     for (std::uint64_t i = 1; i < sorted_idx.size(); i++) {
-        if (input[sorted_idx[i]] == input[sorted_idx[i-1]]) {
+        if (input[sorted_idx[i]] == input[sorted_idx[i - 1]]) {
             return true;
         }
     }
     return false;
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // CartesianGrid
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Construct from a vector of values
 intpl::CartesianGrid::CartesianGrid(const Vector<floatvec> & grid_vectors) : grid_vectors_(grid_vectors) {
@@ -111,13 +111,11 @@ intpl::CartesianGrid::iterator intpl::CartesianGrid::begin(void) {
 }
 
 // End iterator
-intpl::CartesianGrid::iterator intpl::CartesianGrid::end(void) {
-    return this->end_;
-}
+intpl::CartesianGrid::iterator intpl::CartesianGrid::end(void) { return this->end_; }
 
 // Calculate minimum size to allocate to store the object
 std::uint64_t intpl::CartesianGrid::cumalloc_size(void) const noexcept {
-    std::uint64_t size = sizeof(intpl::CartesianGrid) + this->ndim()*sizeof(floatvec);
+    std::uint64_t size = sizeof(intpl::CartesianGrid) + this->ndim() * sizeof(floatvec);
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
         size += this->grid_vectors_[i_dim].size() * sizeof(double);
     }

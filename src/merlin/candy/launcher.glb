@@ -10,9 +10,9 @@
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // GPU asynchronous launch
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Calculate gradient and update gradient
 __global__ static void update_gradient(candy::Model * p_model, const array::Parcel * p_train_data,
@@ -67,34 +67,26 @@ __global__ static void update_gradient(candy::Model * p_model, const array::Parc
             model_gradient[i_param] = gradient;
         }
         __syncthreads();
-
-        if (thread_idx == 0) {
-            for (int i = 0; i < model_size; i++) {
-                std::printf("%f ", model_gradient[i]);
-            }
-            std::printf("\n");
-        }
-        __syncthreads();
-
         // update each parameter by gradient
-        p_optimizer->update_gpu(p_model, &model_gradient, optimizer_data, thread_idx, block_size);
+        p_optimizer->update_gpu(model_shr, &model_gradient, optimizer_data, thread_idx, block_size);
+    }
+    // copy model parameters back to global memory
+    for (std::uint64_t i_dim = 0; i_dim < n_dim; i_dim++) {
+        floatvec & parameter_of_current_dim = p_model->parameters()[i_dim];
+        model_shr->parameters()[i_dim].copy_by_block(&parameter_of_current_dim, parameter_of_current_dim.data(),
+                                                     thread_idx, block_size);
     }
 }
 
 // Launch asynchronously model fitting algorithm on GPU
-cuda::Stream * candy::gpu_asynch_launch(candy::Model * p_model, const array::Parcel * p_train_data,
-                                               candy::Optimizer * p_optimizer, std::uint64_t model_size,
-                                               std::uint64_t ndim, std::uint64_t share_mem_size,
-                                               std::uint64_t block_size, std::uint64_t rep) {
+void candy::gpu_asynch_launch(candy::Model * p_model, const array::Parcel * p_train_data,
+                              candy::Optimizer * p_optimizer, std::uint64_t model_size, std::uint64_t ndim,
+                              std::uint64_t share_mem_size, std::uint64_t block_size, std::uint64_t rep,
+                              cuda::Stream * stream_ptr) {
     // create an asynchrnous CUDA stream
-    // cuda::Stream * launch_stream = new cuda::Stream(cuda::StreamSetting::NonBlocking);
-    // ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(launch_stream->get_stream_ptr());
-    ::cudaStream_t stream = nullptr;
+    ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr->get_stream_ptr());
     // launch kernel on stream
     update_gradient<<<1, block_size, share_mem_size, stream>>>(p_model, p_train_data, p_optimizer, model_size, rep);
-    // create an event of synchronization
-    // return launch_stream;
-    return nullptr;
 }
 
 }  // namespace merlin

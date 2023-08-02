@@ -7,9 +7,9 @@
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Matrix inversion by QR decomposition
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 #ifdef __NVCC__
 
@@ -117,7 +117,7 @@ __cudevice__ void linalg::householder_gpu(linalg::Matrix & M, floatvec & x, cons
 __cudevice__ void linalg::upright_solver_gpu(linalg::Matrix & R, floatvec & x, std::uint64_t thread_idx,
                                              std::uint64_t block_size) noexcept {
     const std::uint64_t & size = x.size();
-    for (std::int64_t i_row = size-1; i_row >=0; i_row--) {
+    for (std::int64_t i_row = size - 1; i_row >= 0; i_row--) {
         // solve for the value of i_row
         if (thread_idx == 0) {
             double & diagonal_element = R.get(i_row, i_row);

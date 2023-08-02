@@ -5,7 +5,7 @@
 #include <cstdint>  // std::uint64_t
 
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/vector.hpp"  // merlin::Vector
+#include "merlin/vector.hpp"   // merlin::Vector
 
 namespace merlin::intpl {
 

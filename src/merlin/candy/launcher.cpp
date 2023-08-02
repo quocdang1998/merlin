@@ -3,22 +3,33 @@
 
 #include <utility>  // std::move
 
-#include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/candy/model.hpp"  // merlin::candy::Model
+#include "merlin/array/array.hpp"      // merlin::array::Array
+#include "merlin/array/parcel.hpp"     // merlin::array::Parcel
+#include "merlin/candy/model.hpp"      // merlin::candy::Model
 #include "merlin/candy/optimizer.hpp"  // merlin::candy::Optimizer
-#include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
-#include "merlin/logger.hpp"  // FAILURE, merlin::cuda_compile_error
-#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::contiguous_to_model_idx
+#include "merlin/cuda/stream.hpp"      // merlin::cuda::Stream
+#include "merlin/env.hpp"              // merlin::Environment
+#include "merlin/logger.hpp"           // FAILURE, merlin::cuda_compile_error
+#include "merlin/utils.hpp"            // merlin::contiguous_to_ndim_idx, merlin::contiguous_to_model_idx
+
+#define safety_lock() bool lock_success = Environment::mutex.try_lock()
+#define safety_unlock()                                                                                                \
+    if (lock_success) Environment::mutex.unlock()
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // CPU asynchronous launch
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
-static void update_gradient(candy::Model * p_model, const array::Array * p_train_data, candy::Optimizer * p_optimizer,
-                            std::uint64_t model_size, std::uint64_t n_thread, std::uint64_t rep) {
+static void update_gradient(std::future<void> * current_job, candy::Model * p_model, const array::Array * p_train_data,
+                            candy::Optimizer * p_optimizer, std::uint64_t model_size, std::uint64_t n_thread,
+                            std::uint64_t rep) {
+    // synch the current job
+    if (current_job != nullptr) {
+        current_job->get();
+        delete current_job;
+    }
     // get number of points and data shape
     std::uint64_t n_point = p_train_data->size(), n_dim = p_train_data->ndim();
     const intvec & data_shape = p_train_data->shape();
@@ -62,36 +73,38 @@ static void update_gradient(candy::Model * p_model, const array::Array * p_train
             // save gradient to a vector
             model_gradient[i_param] = gradient;
         }
-        std::printf("%s\n", model_gradient.str().c_str());
         // update each parameter by gradient
         p_optimizer->update_cpu(*p_model, model_gradient, n_thread);
     }
 }
 
 // Launch asynchroniously model fitting algorithm on CPU
-std::future<void> * candy::cpu_async_launch(candy::Model * p_model, const array::Array * p_train_data,
-                                            candy::Optimizer * p_optimizer, std::uint64_t model_size,
-                                            std::uint64_t n_thread, std::uint64_t rep) {
-    std::future<void> result = std::async(std::launch::async, update_gradient, p_model, p_train_data, p_optimizer,
-                                          model_size, n_thread, rep);
+std::future<void> * candy::cpu_async_launch(std::future<void> * current_job, candy::Model * p_model,
+                                            const array::Array * p_train_data, candy::Optimizer * p_optimizer,
+                                            std::uint64_t model_size, std::uint64_t n_thread, std::uint64_t rep) {
+    std::future<void> result = std::async(std::launch::async, update_gradient, current_job, p_model, p_train_data,
+                                          p_optimizer, model_size, n_thread, rep);
     return new std::future<void>(std::move(result));
 }
 
 #ifndef __MERLIN_CUDA__
 
 // Launch asynchronously model fitting algorithm on GPU
-cuda::Stream * candy::gpu_asynch_launch(candy::Model * p_model, const array::Parcel * p_train_data,
-                                        candy::Optimizer * p_optimizer, std::uint64_t model_size, std::uint64_t ndim,
-                                        std::uint64_t share_mem_size, std::uint64_t block_size, std::uint64_t rep) {
+void candy::gpu_asynch_launch(candy::Model * p_model, const array::Parcel * p_train_data,
+                              candy::Optimizer * p_optimizer, std::uint64_t model_size, std::uint64_t ndim,
+                              std::uint64_t share_mem_size, std::uint64_t block_size, std::uint64_t rep,
+                              cuda::Stream * stream_ptr) {
     FAILURE(cuda_compile_error, "Cannot asynchronously on GPU without CUDA enabled.\n");
-    return nullptr;
 }
+
+// Push context and destroy the stream
+void candy::destroy_stream_in_context(std::uintptr_t context_ptr, cuda::Stream *& stream_ptr) {}
 
 #endif  // __MERLIN_CUDA__
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Launcher
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Constructor from a model and CPU array
 candy::Launcher::Launcher(candy::Model & model, const array::Array & train_data, candy::Optimizer & optimizer,
@@ -123,17 +136,25 @@ candy::Launcher::Launcher(candy::Model * p_model, const array::Parcel * p_train_
 
 // Launch asynchronously the gradient update
 void candy::Launcher::launch_async(std::uint64_t rep) {
+    // launch new asynchronous job
     if (!this->is_gpu()) {
         const array::Array * p_train_data = static_cast<const array::Array *>(this->p_data_);
-        std::future<void> * future_ptr = candy::cpu_async_launch(this->p_model_, p_train_data, this->p_optimizer_,
-                                                                 this->model_size_, this->n_thread_, rep);
+        std::future<void> * current_job = reinterpret_cast<std::future<void> *>(this->synchronizer_);
+        std::future<void> * future_ptr = candy::cpu_async_launch(current_job, this->p_model_, p_train_data,
+                                                                 this->p_optimizer_, this->model_size_, this->n_thread_,
+                                                                 rep);
         this->synchronizer_ = reinterpret_cast<void *>(future_ptr);
     } else {
         const array::Parcel * p_train_data = static_cast<const array::Parcel *>(this->p_data_);
-        cuda::Stream * stream_ptr = candy::gpu_asynch_launch(this->p_model_, p_train_data, this->p_optimizer_,
-                                                             this->model_size_, this->ndim_, this->shared_mem_size_,
-                                                             this->n_thread_, rep);
-        this->synchronizer_ = reinterpret_cast<void *>(stream_ptr);
+        cuda::Stream * stream_ptr = reinterpret_cast<cuda::Stream *>(this->synchronizer_);
+        cuda::Context context(this->processor_id_);
+        safety_lock();
+        context.push_current();
+        candy::gpu_asynch_launch(this->p_model_, p_train_data, this->p_optimizer_, this->model_size_, this->ndim_,
+                                 this->shared_mem_size_, this->n_thread_, rep, stream_ptr);
+        context.pop_current();
+        context.assign(0);
+        safety_unlock();
     }
 }
 
@@ -144,14 +165,18 @@ void candy::Launcher::synchronize(void) {
     }
     if (!this->is_gpu()) {
         std::future<void> * future_ptr = reinterpret_cast<std::future<void> *>(this->synchronizer_);
-        future_ptr->wait();
+        future_ptr->get();
         delete future_ptr;
         this->synchronizer_ = nullptr;
     } else {
         cuda::Stream * stream_ptr = reinterpret_cast<cuda::Stream *>(this->synchronizer_);
+        cuda::Context context(this->processor_id_);
+        safety_lock();
+        context.push_current();
         stream_ptr->synchronize();
-        delete stream_ptr;
-        this->synchronizer_ = nullptr;
+        context.pop_current();
+        context.assign(0);
+        safety_unlock();
     }
 }
 
@@ -164,9 +189,8 @@ candy::Launcher::~Launcher(void) {
             delete p_future;
         } else {
             cuda::Stream * p_stream = reinterpret_cast<cuda::Stream *>(this->synchronizer_);
-            delete p_stream;
+            candy::destroy_stream_in_context(this->processor_id_, p_stream);
         }
-        
     }
 }
 

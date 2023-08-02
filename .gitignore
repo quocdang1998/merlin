@@ -17,6 +17,7 @@ merlin/__init__.py
 
 # Ignore folder starts with .
 .*
+!/.clang-format
 !/.gitignore
 !.gitattributes
 

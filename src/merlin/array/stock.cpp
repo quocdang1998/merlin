@@ -1,33 +1,36 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/stock.hpp"
 
-#include <cinttypes>  // PRIu64
+#include <cinttypes>   // PRIu64
 #include <filesystem>  // std::filesystem::filesystem_error, std::filesystem::file_size, std::filesystem::resize_file
 #include <functional>  // std::bind, std::placeholders
-#include <ios>  // std::ios_base::failure
-#include <sstream>  // std::ostringstream
+#include <ios>         // std::ios_base::failure
+#include <sstream>     // std::ostringstream
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/copy.hpp"  // merlin::array::array_copy, merlin::array::contiguous_strides
-#include "merlin/logger.hpp"  // WARNING, FAILURE
-#include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
-#include "merlin/utils.hpp"  // merlin::get_current_process_id, merlin::get_time
-#include "merlin/vector.hpp"  // merlin::intvec
+#include "merlin/array/copy.hpp"   // merlin::array::array_copy, merlin::array::contiguous_strides
+#include "merlin/logger.hpp"       // WARNING, FAILURE
+#include "merlin/platform.hpp"     // __MERLIN_LINUX__, __MERLIN_WINDOWS__
+#include "merlin/utils.hpp"        // merlin::get_current_process_id, merlin::get_time
+#include "merlin/vector.hpp"       // merlin::intvec
 
 // Acquire lockfile if thread safe
-#define EXCLUSIVE_LOCK_THREADSAFE() if (this->thread_safe_) this->flock_.lock()
+#define EXCLUSIVE_LOCK_THREADSAFE()                                                                                    \
+    if (this->thread_safe_) this->flock_.lock()
 
 // Acquire shared lockfile if thread safe
-#define SHARED_LOCK_THREADSAFE() if (this->thread_safe_) this->flock_.lock_shared()
+#define SHARED_LOCK_THREADSAFE()                                                                                       \
+    if (this->thread_safe_) this->flock_.lock_shared()
 
 // Unlock file if thread safe
-#define UNLOCK_THREADSAFE() if (this->thread_safe_) this->flock_.unlock()
+#define UNLOCK_THREADSAFE()                                                                                            \
+    if (this->thread_safe_) this->flock_.unlock()
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Data read/write
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Read an array from file
 static inline void read_from_file(double * dest, std::FILE * file, double * src, std::uint64_t bytes) {
@@ -57,9 +60,9 @@ static inline bool check_file_exist(const char * name) noexcept {
     }
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Stock
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Read metadata from file
 std::uint64_t array::Stock::read_metadata(void) {
@@ -82,7 +85,7 @@ std::uint64_t array::Stock::read_metadata(void) {
     this->data_ = reinterpret_cast<double *>(cursor);
     // check file size
     std::uint64_t file_size = std::filesystem::file_size(this->filename_);
-    std::uint64_t expected_size = this->offset_ + (1+ndim)*sizeof(std::uint64_t) + this->size()*sizeof(double);
+    std::uint64_t expected_size = this->offset_ + (1 + ndim) * sizeof(std::uint64_t) + this->size() * sizeof(double);
     if (file_size < expected_size) {
         FAILURE(std::filesystem::filesystem_error, "Expected filesize of at least %" PRIu64 ", got %" PRIu64 ".\n",
                 expected_size, file_size);
@@ -120,7 +123,7 @@ array::NdData(shape), filename_(filename), offset_(0), thread_safe_(thread_safe)
     }
     // resize file
     std::uint64_t file_size = std::filesystem::file_size(filename);
-    std::uint64_t new_file_size = (1+this->ndim())*sizeof(std::uint64_t) + this->size()*sizeof(double);
+    std::uint64_t new_file_size = (1 + this->ndim()) * sizeof(std::uint64_t) + this->size() * sizeof(double);
     if (offset + new_file_size > file_size) {
         if (offset < file_size) {
             new_file_size += file_size - offset;
@@ -154,8 +157,7 @@ filename_(filename), offset_(offset), thread_safe_(thread_safe) {
 }
 
 // Constructor from a slice
-array::Stock::Stock(const array::Stock & whole, const Vector<array::Slice> & slices)  :
-array::NdData(whole, slices) {
+array::Stock::Stock(const array::Stock & whole, const Vector<array::Slice> & slices) : array::NdData(whole, slices) {
     this->file_ptr_ = whole.file_ptr_;
     this->flock_ = whole.flock_;
     this->offset_ = whole.offset_;
@@ -176,9 +178,7 @@ double array::Stock::get(const intvec & index) const {
 }
 
 // Get value of element at a C-contiguous index
-double array::Stock::get(std::uint64_t index) const {
-    return this->get(contiguous_to_ndim_idx(index, this->shape()));
-}
+double array::Stock::get(std::uint64_t index) const { return this->get(contiguous_to_ndim_idx(index, this->shape())); }
 
 // Set value of element at a n-dim index
 void array::Stock::set(const intvec index, double value) {
@@ -195,19 +195,15 @@ void array::Stock::set(std::uint64_t index, double value) {
 }
 
 // Reshape
-void array::Stock::reshape(const intvec & new_shape) {
-    this->array::NdData::reshape(new_shape);
-}
+void array::Stock::reshape(const intvec & new_shape) { this->array::NdData::reshape(new_shape); }
 
 // Collapse dimension from felt (or right)
-void array::Stock::remove_dim(std::uint64_t i_dim) {
-    this->array::NdData::remove_dim(i_dim);
-}
+void array::Stock::remove_dim(std::uint64_t i_dim) { this->array::NdData::remove_dim(i_dim); }
 
 // Write data from an array to a file
 void array::Stock::record_data_to_file(const array::Array & src) {
-    auto write_func = std::bind(write_to_file, this->file_ptr_,
-                                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    auto write_func =
+        std::bind(write_to_file, this->file_ptr_, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     EXCLUSIVE_LOCK_THREADSAFE();
     array_copy(this, &src, write_func);
     UNLOCK_THREADSAFE();

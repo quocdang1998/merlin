@@ -5,9 +5,9 @@
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // CartesianGrid
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Get shape of the grid
 __cuhostdev__ intvec intpl::CartesianGrid::get_grid_shape(std::uint64_t * data_ptr) const noexcept {
@@ -66,8 +66,7 @@ __cudevice__ void * intpl::CartesianGrid::copy_by_block(intpl::CartesianGrid * d
     // copy data of each grid vector
     void * data_ptr = reinterpret_cast<void *>(grid_vector_data + this->ndim());
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
-        data_ptr = this->grid_vectors_[i_dim].copy_by_block(grid_vector_data + i_dim, data_ptr, thread_idx,
-                                                            block_size);
+        data_ptr = this->grid_vectors_[i_dim].copy_by_block(grid_vector_data + i_dim, data_ptr, thread_idx, block_size);
     }
     return data_ptr;
 }

@@ -3,16 +3,16 @@
 
 #include <tuple>  // std::get
 
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/cuda/memory.hpp"  // merlin::cuda::copy_class_to_shared_mem
+#include "merlin/array/parcel.hpp"          // merlin::array::Parcel
+#include "merlin/cuda/memory.hpp"           // merlin::cuda::copy_class_to_shared_mem
 #include "merlin/intpl/cartesian_grid.hpp"  // merlin::intpl::CartesianGrid
 #include "merlin/utils.hpp"  // merlin::flatten_kernel_index, merlin::get_block_count, merlin::contiguous_to_ndim_idx
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // GPU kernel wrapper
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Calculate interpolation on a given index
 __cudevice__ static void calc_lagrange_coefficients(const intpl::CartesianGrid * p_grid, const array::Parcel * p_value,
@@ -83,10 +83,11 @@ __global__ static void eval_lagrange_kernel(const intpl::CartesianGrid * p_grid,
     std::uint64_t * whole_coeff_data = collapsed_index_data + ndim;
     for (std::uint64_t i_point = i_thread; i_point < n_point; i_point += n_thread) {
         Vector<double> point;
-        std::uintptr_t point_ptr = reinterpret_cast<std::uintptr_t>(p_points->data()) + i_point*p_points->strides()[0];
+        std::uintptr_t point_ptr =
+            reinterpret_cast<std::uintptr_t>(p_points->data()) + i_point * p_points->strides()[0];
         point.assign(reinterpret_cast<double *>(point_ptr), ndim);
-        (*p_result)[i_point] = intpl::eval_lagrange_single_core(*p_grid, *p_coeff, point,
-                                                                      collapsed_index_data, whole_coeff_data);
+        (*p_result)[i_point] =
+            intpl::eval_lagrange_single_core(*p_grid, *p_coeff, point, collapsed_index_data, whole_coeff_data);
     }
     __syncthreads();
 }

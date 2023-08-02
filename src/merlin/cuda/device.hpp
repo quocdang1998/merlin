@@ -3,12 +3,12 @@
 #define MERLIN_CUDA_DEVICE_HPP_
 
 #include <cstdint>  // std::uint64_t, UINT64_MAX
-#include <string>  // std::string
+#include <string>   // std::string
 
-#include "merlin/cuda/declaration.hpp"  // merlin::cuda::Device
+#include "merlin/cuda/declaration.hpp"   // merlin::cuda::Device
 #include "merlin/cuda/enum_wrapper.hpp"  // merlin::cuda::DeviceLimit
-#include "merlin/cuda_decorator.hpp"  // __cuhostdev__
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/cuda_interface.hpp"     // __cuhostdev__
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
 
 namespace merlin {
 
@@ -27,7 +27,7 @@ class cuda::Device {
     /// @details Move constructor and Move assignment are deleted because they are not necessary.
     /// @{
     /** @brief Copy constructor.*/
-    __cuhostdev__ Device(const cuda::Device & src) {this->id_ = src.id_;}
+    __cuhostdev__ Device(const cuda::Device & src) { this->id_ = src.id_; }
     /** @brief Copy assignment.*/
     __cuhostdev__ cuda::Device & operator=(const cuda::Device & src) {
         this->id_ = src.id_;
@@ -38,9 +38,9 @@ class cuda::Device {
     /// @name Get members
     /// @{
     /** @brief Get reference to GPU ID.*/
-    __cuhostdev__ int & id(void) noexcept {return this->id_;}
+    __cuhostdev__ int & id(void) noexcept { return this->id_; }
     /** @brief Get constant reference to GPU ID.*/
-    __cuhostdev__ constexpr const int & id(void) const noexcept {return this->id_;}
+    __cuhostdev__ constexpr const int & id(void) const noexcept { return this->id_; }
     /// @}
 
     /// @name GPU query

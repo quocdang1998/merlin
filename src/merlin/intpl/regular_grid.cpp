@@ -1,20 +1,20 @@
 // Copyright 2022 quocdang1998
 #include "merlin/intpl/regular_grid.hpp"
 
-#include <cstring>  // std::memcpy
 #include <cinttypes>
+#include <cstring>  // std::memcpy
 #include <numeric>  // std::iota
 #include <utility>  // std::move
 
-#include "merlin/array/copy.hpp"  // merlin::array::array_copy
+#include "merlin/array/copy.hpp"   // merlin::array::array_copy
 #include "merlin/array/slice.hpp"  // merlin::array:Slice
-#include "merlin/logger.hpp"  // FAILURE
+#include "merlin/logger.hpp"       // FAILURE
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // RegularGrid
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Construct an empty grid from a given number of n-dim points
 intpl::RegularGrid::RegularGrid(std::uint64_t npoint, std::uint64_t ndim) : npoint_(npoint) {
@@ -50,7 +50,7 @@ intpl::RegularGrid::RegularGrid(const array::Array & points) {
 intpl::RegularGrid::RegularGrid(const intpl::RegularGrid & src) : npoint_(src.npoint_) {
     // copy data from old array to new array
     this->points_ = new array::Array(intvec({src.capacity(), src.ndim()}));
-    std::memcpy(this->points_->data(), src.points_->data(), sizeof(double)*src.capacity()*src.ndim());
+    std::memcpy(this->points_->data(), src.points_->data(), sizeof(double) * src.capacity() * src.ndim());
 }
 
 // Copy assignment
@@ -58,7 +58,7 @@ intpl::RegularGrid & intpl::RegularGrid::operator=(const intpl::RegularGrid & sr
     this->npoint_ = src.npoint_;
     // copy data from old array to new array
     this->points_ = new array::Array(intvec({src.capacity(), src.ndim()}));
-    std::memcpy(this->points_->data(), src.points_->data(), sizeof(double)*src.capacity()*src.ndim());
+    std::memcpy(this->points_->data(), src.points_->data(), sizeof(double) * src.capacity() * src.ndim());
     return *this;
 }
 
@@ -94,9 +94,7 @@ intpl::RegularGrid::iterator intpl::RegularGrid::begin(void) {
 }
 
 // End iterator
-intpl::RegularGrid::iterator intpl::RegularGrid::end(void) {
-    return this->end_;
-}
+intpl::RegularGrid::iterator intpl::RegularGrid::end(void) { return this->end_; }
 
 // Append a point at the end of the grid
 void intpl::RegularGrid::push_back(Vector<double> && point) {
@@ -109,31 +107,32 @@ void intpl::RegularGrid::push_back(Vector<double> && point) {
     this->npoint_ += 1;
     if (this->npoint_ > this->capacity()) {
         // reallocate data
-        array::Array * new_location = new array::Array(intvec({2*this->capacity(), this->ndim()}));
+        array::Array * new_location = new array::Array(intvec({2 * this->capacity(), this->ndim()}));
         // copy data from old location to new location
-        std::memcpy(new_location->data(), this->points_->data(), sizeof(double)*this->capacity()*this->ndim());
+        std::memcpy(new_location->data(), this->points_->data(), sizeof(double) * this->capacity() * this->ndim());
         delete this->points_;
         this->points_ = new_location;
     }
     array::Array & points = *(static_cast<array::Array *>(this->points_));
-    double * lastitem_ptr = &(points[{this->npoint_-1, 0}]);
-    std::memcpy(lastitem_ptr, point.data(), sizeof(double)*this->ndim());
+    double * lastitem_ptr = &(points[{this->npoint_ - 1, 0}]);
+    std::memcpy(lastitem_ptr, point.data(), sizeof(double) * this->ndim());
 }
 
 // Remove a point at the end of the grid
 void intpl::RegularGrid::pop_back(void) {
     this->npoint_ -= 1;
-    if (this->npoint_ <= this->capacity()/2) {
+    if (this->npoint_ <= this->capacity() / 2) {
         // reallocate data
-        array::Array * new_location = new array::Array(intvec({this->capacity()/2, this->ndim()}));
+        array::Array * new_location = new array::Array(intvec({this->capacity() / 2, this->ndim()}));
         // copy data from old location to new location
-        std::memcpy(new_location->data(), this->points_->data(), sizeof(double)*(this->capacity()/2)*this->ndim());
+        std::memcpy(new_location->data(), this->points_->data(),
+                    sizeof(double) * (this->capacity() / 2) * this->ndim());
         delete this->points_;
         this->points_ = new_location;
     } else {
         array::Array & points = *(static_cast<array::Array *>(this->points_));
         double * lastitem_ptr = &(points[{this->npoint_, 0}]);
-        std::memset(lastitem_ptr, 0, sizeof(double)*this->ndim());
+        std::memset(lastitem_ptr, 0, sizeof(double) * this->ndim());
     }
 }
 

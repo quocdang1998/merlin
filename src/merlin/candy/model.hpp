@@ -2,16 +2,16 @@
 #ifndef MERLIN_CANDY_MODEL_HPP_
 #define MERLIN_CANDY_MODEL_HPP_
 
-#include <array>  // std::array
+#include <array>    // std::array
 #include <cstdint>  // std::uint64_t
-#include <string>  // std::string
+#include <string>   // std::string
 
-#include "merlin/array/nddata.hpp"  // merlin::array::Array
-#include "merlin/array/slice.hpp"  // merlin::slicevec
-#include "merlin/cuda_decorator.hpp"  // __cuhostdev__
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/array/nddata.hpp"       // merlin::array::Array
+#include "merlin/array/slice.hpp"        // merlin::slicevec
 #include "merlin/candy/declaration.hpp"  // merlin::candy::Model
-#include "merlin/vector.hpp"  // merlin::Vector, merlin::floatvec
+#include "merlin/cuda_interface.hpp"     // __cuhostdev__
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/vector.hpp"             // merlin::Vector, merlin::floatvec
 
 namespace merlin {
 
@@ -68,16 +68,16 @@ class candy::Model {
 
     /// @name Get attributes
     /// @{
-        /** @brief Get reference to parameters.*/
-    __cuhostdev__ constexpr Vector<floatvec> & parameters(void) noexcept {return this->parameters_;}
+    /** @brief Get reference to parameters.*/
+    __cuhostdev__ constexpr Vector<floatvec> & parameters(void) noexcept { return this->parameters_; }
     /** @brief Get constant reference to parameters.*/
-    __cuhostdev__ constexpr const Vector<floatvec> & parameters(void) const noexcept {return this->parameters_;}
+    __cuhostdev__ constexpr const Vector<floatvec> & parameters(void) const noexcept { return this->parameters_; }
     /** @brief Number of dimension.*/
-    __cuhostdev__ constexpr std::uint64_t ndim(void) const noexcept {return this->parameters_.size();}
+    __cuhostdev__ constexpr std::uint64_t ndim(void) const noexcept { return this->parameters_.size(); }
     /** @brief Get shape.*/
     __cuhostdev__ intvec get_model_shape(std::uint64_t * data_ptr = nullptr) const noexcept;
     /** @brief Get rank.*/
-    __cuhostdev__ constexpr std::uint64_t rank(void) const noexcept {return this->rank_;}
+    __cuhostdev__ constexpr std::uint64_t rank(void) const noexcept { return this->rank_; }
     /** @brief Size (number of elements).*/
     __cuhostdev__ std::uint64_t size(void) const noexcept;
     /// @}
@@ -88,17 +88,23 @@ class candy::Model {
     __cuhostdev__ std::array<std::uint64_t, 2> convert_contiguous(std::uint64_t index) const noexcept;
     /** @brief Get value of element at a given index.*/
     __cuhostdev__ constexpr double & get(std::uint64_t i_dim, std::uint64_t index, std::uint64_t rank) noexcept {
-        return this->parameters_[i_dim][index*this->rank_ + rank];
+        return this->parameters_[i_dim][index * this->rank_ + rank];
     }
     /** @brief Set value of element at a given index.*/
     __cuhostdev__ constexpr const double & get(std::uint64_t i_dim, std::uint64_t index,
                                                std::uint64_t rank) const noexcept {
-        return this->parameters_[i_dim][index*this->rank_ + rank];
+        return this->parameters_[i_dim][index * this->rank_ + rank];
     }
     /** @brief Get reference to element from flattened index.*/
-    __cuhostdev__ double & operator[](std::uint64_t index) noexcept;
+    __cuhostdev__ double & operator[](std::uint64_t index) noexcept {
+        auto [dimension, idx] = this->convert_contiguous(index);
+        return this->parameters_[dimension][idx];
+    }
     /** @brief Get constant reference to element from flattened index.*/
-    __cuhostdev__ const double & operator[](std::uint64_t index) const noexcept;
+    __cuhostdev__ const double & operator[](std::uint64_t index) const noexcept {
+        auto [dimension, idx] = this->convert_contiguous(index);
+        return this->parameters_[dimension][idx];
+    }
     /// @}
 
     /// @name Evaluation of the model
@@ -114,8 +120,8 @@ class candy::Model {
      *  @param random_distribution Random distribution from which values are sampled.
      *  @param n_thread Number of parallel threads for calculation the mean and variance.
      */
-    MERLIN_EXPORTS void initialize(const array::Array & train_data,
-                                   candy::RandomInitializer random_distribution, std::uint64_t n_thread = 1);
+    MERLIN_EXPORTS void initialize(const array::Array & train_data, candy::RandomInitializer random_distribution,
+                                   std::uint64_t n_thread = 1);
     /// @}
 
     /// @name GPU related features
@@ -131,8 +137,8 @@ class candy::Model {
     MERLIN_EXPORTS void * copy_to_gpu(candy::Model * gpu_ptr, void * parameters_data_ptr,
                                       std::uintptr_t stream_ptr = 0) const;
     /** @brief Calculate the minimum number of bytes to allocate in CUDA shared memory to store the model.*/
-    std::uint64_t sharedmem_size(void) const noexcept {return this->cumalloc_size();}
-    #ifdef __NVCC__
+    std::uint64_t sharedmem_size(void) const noexcept { return this->cumalloc_size(); }
+#ifdef __NVCC__
     /** @brief Copy model to pre-allocated memory region by current CUDA block of threads.
      *  @details The copy action is performed by the whole CUDA thread block.
      *  @param dest_ptr Memory region where the model is copied to.
@@ -149,7 +155,7 @@ class candy::Model {
      *  ``floatvec[this->ndim()] + double[this->size()]``.
      */
     __cudevice__ void * copy_by_thread(candy::Model * dest_ptr, void * parameters_data_ptr) const;
-    #endif  // __NVCC__
+#endif  // __NVCC__
     /** @brief Copy data from GPU to CPU.*/
     MERLIN_EXPORTS void * copy_from_gpu(candy::Model * gpu_ptr, std::uintptr_t stream_ptr = 0);
     /// @}

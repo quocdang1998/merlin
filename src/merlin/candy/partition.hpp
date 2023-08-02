@@ -4,8 +4,8 @@
 
 #include <cstdint>  // std::uint64_t
 
-#include "merlin/vector.hpp"  // merlin::Vector, merlin::intvec
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/vector.hpp"   // merlin::Vector, merlin::intvec
 
 namespace merlin {
 

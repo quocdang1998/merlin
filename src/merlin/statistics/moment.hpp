@@ -2,13 +2,13 @@
 #ifndef MERLIN_STATISTICS_MOMENT_HPP_
 #define MERLIN_STATISTICS_MOMENT_HPP_
 
-#include <array>  // std::array
+#include <array>    // std::array
 #include <cstdint>  // std::uint64_t
 
-#include "merlin/array/nddata.hpp"  // merlin::array::Array, merlin::array::Parcel
-#include "merlin/cuda_decorator.hpp"  // __cudevice__
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/vector.hpp"  // merlin::intvec
+#include "merlin/array/nddata.hpp"    // merlin::array::Array, merlin::array::Parcel
+#include "merlin/cuda_interface.hpp"  // __cudevice__
+#include "merlin/exports.hpp"         // MERLIN_EXPORTS
+#include "merlin/vector.hpp"          // merlin::intvec
 
 namespace merlin::statistics {
 
@@ -25,7 +25,7 @@ std::array<double, order> powered_mean(const array::Array & data, std::uint64_t 
  *  @details Calculate @f$ \mathbb{E}[(X-\mathbb{E}[X])^k] @f$, @f$ k @f$ is the order.
  *  @param powered_means Array of powered means (result of function statistics::powered_mean).
  */
-template<std::uint64_t order>
+template <std::uint64_t order>
 double moment_cpu(const std::array<double, order> & powered_means);
 
 /** @brief Calculate mean on all elements of the array.

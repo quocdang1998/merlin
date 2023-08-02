@@ -4,8 +4,8 @@
 
 namespace merlin::candy::optmz {
 class GradDescent;
-// class AdaGrad;
-// class Adam;
-}
+class AdaGrad;
+class Adam;
+}  // namespace merlin::candy::optmz
 
 #endif  // MERLIN_CANDY_OPTMZ_DECLARATION_HPP_

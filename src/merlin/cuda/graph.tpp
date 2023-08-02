@@ -6,25 +6,25 @@
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Graph
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 #ifndef __MERLIN_CUDA__
 // Add CUDA kernel node
-template <typename Function, typename ... Args>
+template <typename Function, typename... Args>
 cuda::GraphNode cuda::Graph::add_kernel_node(Function * kernel, std::uint64_t n_blocks, std::uint64_t n_threads,
                                              std::uint64_t shared_mem, const Vector<cuda::GraphNode> & deps,
-                                             Args & ... args) {
+                                             Args &... args) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for graph management.\n");
     return cuda::GraphNode();
 }
 #elif defined(__NVCC__)
 // Add CUDA kernel node
-template <typename Function, typename ... Args>
+template <typename Function, typename... Args>
 cuda::GraphNode cuda::Graph::add_kernel_node(Function * kernel, std::uint64_t n_blocks, std::uint64_t n_threads,
                                              std::uint64_t shared_mem, const Vector<cuda::GraphNode> & deps,
-                                             Args & ... args) {
+                                             Args &... args) {
     // initialize kernel param
     ::cudaKernelNodeParams kernel_param;
     kernel_param.func = reinterpret_cast<void *>(kernel);

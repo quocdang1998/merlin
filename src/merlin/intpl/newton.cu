@@ -2,21 +2,21 @@
 #include "merlin/intpl/newton.hpp"
 
 #include <functional>  // std::bind, std::placeholders
-#include <utility>  // std::move, std::make_pair
+#include <utility>     // std::move, std::make_pair
 
-#include "merlin/array/copy.hpp"  // merlin::array::array_copy
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/array/slice.hpp"  // merlin::array::Slice
-#include "merlin/cuda/memory.hpp"  // merlin::cuda::Memory
-#include "merlin/env.hpp"  // merlin::Environment
-#include "merlin/utils.hpp"  // merlin::prod_elements
+#include "merlin/array/copy.hpp"            // merlin::array::array_copy
+#include "merlin/array/parcel.hpp"          // merlin::array::Parcel
+#include "merlin/array/slice.hpp"           // merlin::array::Slice
+#include "merlin/cuda/memory.hpp"           // merlin::cuda::Memory
+#include "merlin/env.hpp"                   // merlin::Environment
 #include "merlin/intpl/cartesian_grid.hpp"  // merlin::intpl::CartesianGrid
+#include "merlin/utils.hpp"                 // merlin::prod_elements
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Calculate coefficients
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Calculate Newton interpolation coefficients on a full Cartesian grid using GPU
 void intpl::calc_newton_coeffs_gpu(const intpl::CartesianGrid & grid, const array::Parcel & value,
@@ -34,7 +34,7 @@ void intpl::calc_newton_coeffs_gpu(const intpl::CartesianGrid & grid, const arra
             array::array_copy(&coeff, &value, copy_func);
         } else {
             auto copy_func = std::bind(::cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2,
-                                    std::placeholders::_3, ::cudaMemcpyDeviceToDevice, cuda_stream);
+                                       std::placeholders::_3, ::cudaMemcpyDeviceToDevice, cuda_stream);
             array::array_copy(&coeff, &value, copy_func);
         }
     }
@@ -44,8 +44,8 @@ void intpl::calc_newton_coeffs_gpu(const intpl::CartesianGrid & grid, const arra
     array::Parcel * ptr_coeff_on_gpu = mem.get<1>();
     std::uint64_t total_malloc_size = mem.get_total_malloc_size() + n_thread * grid.ndim() * sizeof(std::uint64_t);
     // call calculation kernel
-    intpl::call_newton_coeff_kernel(ptr_grid_on_gpu, ptr_coeff_on_gpu, total_malloc_size,
-                                    stream.get_stream_ptr(), n_thread);
+    intpl::call_newton_coeff_kernel(ptr_grid_on_gpu, ptr_coeff_on_gpu, total_malloc_size, stream.get_stream_ptr(),
+                                    n_thread);
 }
 
 // Evaluate Newton interpolation on a full Cartesian grid using GPU

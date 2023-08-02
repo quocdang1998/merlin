@@ -5,13 +5,13 @@
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Event
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Contruct an event with a given flag
-cuda::Event::Event(unsigned int category) : category_(category), device_(cuda::Device::get_current_gpu()),
-context_(cuda::Context::get_current()) {
+cuda::Event::Event(unsigned int category) :
+    category_(category), device_(cuda::Device::get_current_gpu()), context_(cuda::Context::get_current()) {
     ::cudaEvent_t event;
     ::cudaError_t err_ = ::cudaEventCreateWithFlags(&event, category);
     if (err_ != 0) {

@@ -2,15 +2,15 @@
 #ifndef MERLIN_INTPL_REGULAR_GRID_HPP_
 #define MERLIN_INTPL_REGULAR_GRID_HPP_
 
-#include <cstdint>  // std::uint64_t
+#include <cstdint>           // std::uint64_t
 #include <initializer_list>  // std::initializer_list
 
-#include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/cuda_decorator.hpp"  // __cuhostdev__
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/intpl/grid.hpp"  //  merlin::intpl::Grid
-#include "merlin/iterator.hpp"  // merlin::Iterator
-#include "merlin/vector.hpp"  // merlin::Vector, merlin::intvec
+#include "merlin/array/array.hpp"     // merlin::array::Array
+#include "merlin/cuda_interface.hpp"  // __cuhostdev__
+#include "merlin/exports.hpp"         // MERLIN_EXPORTS
+#include "merlin/intpl/grid.hpp"      //  merlin::intpl::Grid
+#include "merlin/iterator.hpp"        // merlin::Iterator
+#include "merlin/vector.hpp"          // merlin::Vector, merlin::intvec
 
 namespace merlin {
 
@@ -47,15 +47,15 @@ class intpl::RegularGrid : public intpl::Grid {
     /// @name Get members and attributes
     /// @{
     /** @brief Get reference to array of grid points.*/
-    array::Array & grid_points(void) noexcept {return *(dynamic_cast<array::Array *>(this->points_));}
+    array::Array & grid_points(void) noexcept { return *(dynamic_cast<array::Array *>(this->points_)); }
     /** @brief Get constant reference to array of grid points.*/
-    const array::Array & grid_points(void) const noexcept {return *(dynamic_cast<array::Array *>(this->points_));}
+    const array::Array & grid_points(void) const noexcept { return *(dynamic_cast<array::Array *>(this->points_)); }
     /** @brief Number of dimension of each point in the grid.*/
-    constexpr std::uint64_t ndim(void) const noexcept {return this->points_->shape()[1];}
+    constexpr std::uint64_t ndim(void) const noexcept { return this->points_->shape()[1]; }
     /** @brief Number of points in the grid.*/
-    constexpr std::uint64_t size(void) const noexcept {return this->npoint_;}
+    constexpr std::uint64_t size(void) const noexcept { return this->npoint_; }
     /** @brief Maximum number of point which the RegularGrid can hold without reallocating memory.*/
-    constexpr std::uint64_t capacity(void) const noexcept {return this->points_->shape()[0];}
+    constexpr std::uint64_t capacity(void) const noexcept { return this->points_->shape()[0]; }
     /// @}
 
     /// @name Iterator

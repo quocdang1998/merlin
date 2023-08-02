@@ -1,39 +1,43 @@
 // Copyright 2022 quocdang1998
 #include "merlin/intpl/interpolant.hpp"
 
+#include <bitset>     // std::bitset
 #include <cinttypes>  // PRIu64
-#include <bitset>  // std::bitset
 
-#include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/nddata.hpp"  // merlin::array::NdData
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
+#include "merlin/array/array.hpp"           // merlin::array::Array
+#include "merlin/array/nddata.hpp"          // merlin::array::NdData
+#include "merlin/array/parcel.hpp"          // merlin::array::Parcel
 #include "merlin/intpl/cartesian_grid.hpp"  // merlin::intpl::CartesianGrid
-#include "merlin/intpl/lagrange.hpp"  // merlin::intpl::calc_lagrange_coeffs_cpu
-#include "merlin/intpl/newton.hpp"  // merlin::intpl::calc_newton_coeffs_cpu
-#include "merlin/intpl/sparse_grid.hpp"  // merlin::intpl::SparseGrid
-#include "merlin/logger.hpp"  // FAILURE, merlin::not_implemented_error
-#include "merlin/vector.hpp"  // merlin::intvec
+#include "merlin/intpl/lagrange.hpp"        // merlin::intpl::calc_lagrange_coeffs_cpu
+#include "merlin/intpl/newton.hpp"          // merlin::intpl::calc_newton_coeffs_cpu
+#include "merlin/intpl/sparse_grid.hpp"     // merlin::intpl::SparseGrid
+#include "merlin/logger.hpp"                // FAILURE, merlin::not_implemented_error
+#include "merlin/vector.hpp"                // merlin::intvec
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // PolynomialInterpolant
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Constructor from a Cartesian grid and an array of values using CPU
 intpl::PolynomialInterpolant::PolynomialInterpolant(const intpl::CartesianGrid & grid, const array::Array & values,
                                                     intpl::Method method) {
     // check for dimensionality of the grid and the values
     if (grid.ndim() != values.ndim()) {
-        FAILURE(std::invalid_argument, "Expected grid and value array have the same dimension, got %" PRIu64
-                " (grid) and %" PRIu64 " (data).\n", grid.ndim(), values.ndim());
+        FAILURE(std::invalid_argument,
+                "Expected grid and value array have the same dimension, got %" PRIu64 " (grid) and %" PRIu64
+                " (data).\n",
+                grid.ndim(), values.ndim());
     }
     std::uint64_t ndim = grid.ndim();
     intvec grid_shape = grid.get_grid_shape();
     for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
         if (grid_shape[i_dim] != values.shape()[i_dim]) {
-            FAILURE(std::invalid_argument, "Cannot interpolate on grid and data with different dimensionality "
-                    "(difference detected at dimension %" PRIu64 ").\n", i_dim);
+            FAILURE(std::invalid_argument,
+                    "Cannot interpolate on grid and data with different dimensionality "
+                    "(difference detected at dimension %" PRIu64 ").\n",
+                    i_dim);
         }
     }
     this->grid_ = new intpl::CartesianGrid(grid);
@@ -54,15 +58,19 @@ intpl::PolynomialInterpolant::PolynomialInterpolant(const intpl::CartesianGrid &
                                                     std::uint64_t n_threads) {
     // check for dimensionality of the grid and the values
     if (grid.ndim() != values.ndim()) {
-        FAILURE(std::invalid_argument, "Expected grid and value array have the same dimension, got %" PRIu64
-                " (grid) and %" PRIu64 " (data).\n", grid.ndim(), values.ndim());
+        FAILURE(std::invalid_argument,
+                "Expected grid and value array have the same dimension, got %" PRIu64 " (grid) and %" PRIu64
+                " (data).\n",
+                grid.ndim(), values.ndim());
     }
     std::uint64_t ndim = grid.ndim();
     intvec grid_shape = grid.get_grid_shape();
     for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
         if (grid_shape[i_dim] != values.shape()[i_dim]) {
-            FAILURE(std::invalid_argument, "Cannot interpolate on grid and data with different dimensionality "
-                    "(difference detected at dimension %" PRIu64 ").\n", i_dim);
+            FAILURE(std::invalid_argument,
+                    "Cannot interpolate on grid and data with different dimensionality "
+                    "(difference detected at dimension %" PRIu64 ").\n",
+                    i_dim);
         }
     }
     this->grid_ = new intpl::CartesianGrid(grid);
@@ -82,15 +90,19 @@ intpl::PolynomialInterpolant::PolynomialInterpolant(const intpl::SparseGrid & gr
                                                     intpl::Method method) {
     // check for dimensionality of the grid and the values
     if (grid.ndim() != values.ndim()) {
-        FAILURE(std::invalid_argument, "Expected grid and value array have the same dimension, got %" PRIu64
-                " (grid) and %" PRIu64 " (data).\n", grid.ndim(), values.ndim());
+        FAILURE(std::invalid_argument,
+                "Expected grid and value array have the same dimension, got %" PRIu64 " (grid) and %" PRIu64
+                " (data).\n",
+                grid.ndim(), values.ndim());
     }
     std::uint64_t ndim = grid.ndim();
     intvec grid_shape = grid.get_grid_shape();
     for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
         if (grid_shape[i_dim] != values.shape()[i_dim]) {
-            FAILURE(std::invalid_argument, "Cannot interpolate on grid and data with different dimensionality "
-                    "(difference detected at dimension %" PRIu64 ").\n", i_dim);
+            FAILURE(std::invalid_argument,
+                    "Cannot interpolate on grid and data with different dimensionality "
+                    "(difference detected at dimension %" PRIu64 ").\n",
+                    i_dim);
         }
     }
     this->grid_ = new intpl::SparseGrid(grid);
@@ -179,8 +191,16 @@ double intpl::PolynomialInterpolant::operator()(const Vector<double> & point) co
     if (!(this->is_calc_on_cpu())) {
         FAILURE(std::invalid_argument, "Single point evaluation not supported on GPU.\n");
     }
-    if (this->is_grid_cartesian()) {status.reset(1);} else {status.set(1);}
-    if (this->method_ == intpl::Method::Lagrange) {status.reset(0);} else {status.set(0);}
+    if (this->is_grid_cartesian()) {
+        status.reset(1);
+    } else {
+        status.set(1);
+    }
+    if (this->method_ == intpl::Method::Lagrange) {
+        status.reset(0);
+    } else {
+        status.set(0);
+    }
     // declare variables for switch statement
     const intpl::CartesianGrid * p_cart_grid;
     const intpl::SparseGrid * p_sparse_grid;
@@ -188,7 +208,7 @@ double intpl::PolynomialInterpolant::operator()(const Vector<double> & point) co
     const array::Parcel * p_parcel_coeff;
     // for each case
     switch (status.to_ulong()) {
-    case 0:  // CPU for Cart grid, Lagrange
+    case 0 :  // CPU for Cart grid, Lagrange
         p_cart_grid = static_cast<const intpl::CartesianGrid *>(this->grid_);
         p_array_coeff = static_cast<const array::Array *>(this->coeff_);
         if (point.size() != p_cart_grid->ndim()) {
@@ -197,7 +217,7 @@ double intpl::PolynomialInterpolant::operator()(const Vector<double> & point) co
         }
         return intpl::eval_lagrange_cpu(*p_cart_grid, *p_array_coeff, point);
         break;
-    case 1:  // CPU for Cart grid, Newton
+    case 1 :  // CPU for Cart grid, Newton
         p_cart_grid = static_cast<const intpl::CartesianGrid *>(this->grid_);
         p_array_coeff = static_cast<const array::Array *>(this->coeff_);
         if (point.size() != p_cart_grid->ndim()) {
@@ -206,7 +226,7 @@ double intpl::PolynomialInterpolant::operator()(const Vector<double> & point) co
         }
         return intpl::eval_newton_cpu(*p_cart_grid, *p_array_coeff, point);
         break;
-    case 2:  // CPU for Sparse grid, Lagrange
+    case 2 :  // CPU for Sparse grid, Lagrange
         p_sparse_grid = static_cast<const intpl::SparseGrid *>(this->grid_);
         p_array_coeff = static_cast<const array::Array *>(this->coeff_);
         if (point.size() != p_sparse_grid->ndim()) {
@@ -215,7 +235,7 @@ double intpl::PolynomialInterpolant::operator()(const Vector<double> & point) co
         }
         return intpl::eval_lagrange_cpu(*p_sparse_grid, *p_array_coeff, point);
         break;
-    case 3:  // CPU for Sparse grid, Newton
+    case 3 :  // CPU for Sparse grid, Newton
         p_sparse_grid = static_cast<const intpl::SparseGrid *>(this->grid_);
         p_array_coeff = static_cast<const array::Array *>(this->coeff_);
         if (point.size() != p_sparse_grid->ndim()) {
@@ -224,7 +244,7 @@ double intpl::PolynomialInterpolant::operator()(const Vector<double> & point) co
         }
         return intpl::eval_newton_cpu(*p_sparse_grid, *p_array_coeff, point);
         break;
-    default:  // not implemented error
+    default :  // not implemented error
         FAILURE(not_implemented_error, "Case not yet implemented.\n");
     }
     return 0.0;

@@ -2,8 +2,8 @@
 #ifndef MERLIN_LINALG_INNER_PROD_HPP_
 #define MERLIN_LINALG_INNER_PROD_HPP_
 
-#include "merlin/cuda_decorator.hpp"  // __cuhostdev__
-#include "merlin/vector.hpp"  // merlin::Vector
+#include "merlin/cuda_interface.hpp"  // __cuhostdev__
+#include "merlin/vector.hpp"          // merlin::Vector
 
 namespace merlin::linalg {
 

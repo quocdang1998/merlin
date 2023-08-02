@@ -3,6 +3,8 @@
 #include "merlin/array/parcel.hpp"
 #include "merlin/candy/launcher.hpp"
 #include "merlin/candy/model.hpp"
+#include "merlin/candy/optmz/adam.hpp"
+#include "merlin/candy/optmz/adagrad.hpp"
 #include "merlin/candy/optmz/grad_descent.hpp"
 #include "merlin/cuda/memory.hpp"
 #include "merlin/logger.hpp"
@@ -26,8 +28,10 @@ int main (void) {
     merlin::candy::Model model_ref_cpu = model;
 
     // initialize optimizer
-    merlin::candy::optmz::GradDescent optimizer(0.5);
-    merlin::candy::optmz::GradDescent * optimizer_gpu = merlin::candy::optmz::GradDescent::new_gpu(optimizer);
+    // merlin::candy::optmz::GradDescent optimizer(0.5);
+    merlin::candy::optmz::AdaGrad optimizer(0.5, model.size());
+    // merlin::candy::optmz::Adam optimizer(0.1, 0.9, 0.999, model.size(), 1.0e-8);
+    merlin::candy::Optimizer * optimizer_gpu = optimizer.new_gpu();
 
     // copy model and data to GPU
     merlin::cuda::Memory mem(0, model, train_data);
@@ -38,20 +42,17 @@ int main (void) {
     merlin::candy::Launcher launch(model_gpu, train_data_gpu, optimizer_gpu, model.size(), train_data.ndim(),
                                    model.sharedmem_size() + train_data.sharedmem_size() + optimizer.sharedmem_size(),
                                    32);
+    merlin::candy::Launcher launch_reference(model_ref_cpu, train_data_cpu, optimizer, 8);
 
     // launch and wait
-    launch.launch_async(2);
-    ::cudaDeviceSynchronize();
-    // launch.synchronize();
+    launch.launch_async(5);
+    launch_reference.launch_async(5);
+    launch.synchronize();
+    launch_reference.synchronize();
 
-    // copy model back to CPU
+    // copy model back to CPU and copare with CPU result
     model.copy_from_gpu(model_gpu);
     MESSAGE("Model after trained on GPU: %s\n", model.str().c_str());
-
-    // train the reference on CPU
-    merlin::candy::Launcher launch_reference(model_ref_cpu, train_data_cpu, optimizer, 6);
-    launch_reference.launch_async(2);
-    launch_reference.synchronize();
     MESSAGE("Model after trained on CPU: %s\n", model_ref_cpu.str().c_str());
 
     // print evaluation

@@ -35,13 +35,9 @@ class Shuffle {
     /// @name Get members
     /// @{
     /** @brief Get number of dimension.*/
-    constexpr std::uint64_t ndim(void) const noexcept {
-        return this->shuffled_index_.size();
-    }
+    constexpr std::uint64_t ndim(void) const noexcept { return this->shuffled_index_.size(); }
     /** @brief Get constant reference to vector of shuffled indexes.*/
-    constexpr const Vector<intvec> & shuffled_index(void) const noexcept {
-        return this->shuffled_index_;
-    }
+    constexpr const Vector<intvec> & shuffled_index(void) const noexcept { return this->shuffled_index_; }
     /// @}
 
     /// @name Operations

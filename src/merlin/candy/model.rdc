@@ -2,7 +2,7 @@
 #include "merlin/candy/model.hpp"
 
 #include "merlin/logger.hpp"  // CUHDERR
-#include "merlin/utils.hpp"  // merlin::flatten_thread_index, merlin::size_of_block
+#include "merlin/utils.hpp"   // merlin::flatten_thread_index, merlin::size_of_block
 
 namespace merlin {
 
@@ -41,18 +41,6 @@ __cuhostdev__ std::array<std::uint64_t, 2> candy::Model::convert_contiguous(std:
     return {dimension, index};
 }
 
-// Get reference to element from flattened index
-__cuhostdev__ double & candy::Model::operator[](std::uint64_t index) noexcept {
-    auto [dimension, idx] = this->convert_contiguous(index);
-    return this->parameters_[dimension][idx];
-}
-
-// Get constant reference to element from flattened index
-__cuhostdev__ const double & candy::Model::operator[](std::uint64_t index) const noexcept {
-    auto [dimension, idx] = this->convert_contiguous(index);
-    return this->parameters_[dimension][idx];
-}
-
 // Evaluate result of the model at a given index
 __cuhostdev__ double candy::Model::eval(const intvec & index) const noexcept {
     double result = 0.0;
@@ -82,8 +70,8 @@ __cudevice__ void * candy::Model::copy_by_block(candy::Model * dest_ptr, void * 
     // copy parameter value
     void * floatvecs_data = reinterpret_cast<void *>(parameters_data + this->ndim());
     for (std::uint64_t i_dim = 0; i_dim < dest_ptr->ndim(); i_dim++) {
-        floatvecs_data = this->parameters_[i_dim].copy_by_block(parameters_data + i_dim, floatvecs_data, thread_idx,
-                                                                block_size);
+        floatvecs_data =
+            this->parameters_[i_dim].copy_by_block(parameters_data + i_dim, floatvecs_data, thread_idx, block_size);
     }
     return floatvecs_data;
 }

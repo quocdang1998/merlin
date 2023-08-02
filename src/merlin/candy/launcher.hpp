@@ -3,13 +3,13 @@
 #define MERLIN_CANDY_LAUNCHER_HPP_
 
 #include <cstdint>  // std::uint64_t
-#include <future>  // std::future
+#include <future>   // std::future
 
 #include "merlin/array/declaration.hpp"  // merlin::array::NdData, merlin::array::Array, merlin::array::Parcel
 #include "merlin/candy/declaration.hpp"  // merlin::candy::Launcher, merlin::candy::Model, merlin::candy::Optimizer
-#include "merlin/cuda/declaration.hpp"  // merlin::cuda::Stream
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/vector.hpp"  // merlin::floatvec, merlin::intvec
+#include "merlin/cuda/declaration.hpp"   // merlin::cuda::Stream
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/vector.hpp"             // merlin::floatvec, merlin::intvec
 
 namespace merlin {
 
@@ -19,7 +19,7 @@ class candy::Launcher {
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
-    Launcher(void) =  default;
+    Launcher(void) = default;
     /** @brief Constructor from a model and CPU array.
      *  @param model Candecomp model.
      *  @param train_data Data to be fitted by the model.
@@ -43,7 +43,7 @@ class candy::Launcher {
     /// @}
 
     /** @brief Check if the processor is a GPU.*/
-    bool is_gpu(void) const noexcept {return this->processor_id_ != static_cast<std::uintptr_t>(-1);}
+    bool is_gpu(void) const noexcept { return this->processor_id_ != static_cast<std::uintptr_t>(-1); }
 
     /** @brief Launch asynchronously the gradient update.
      *  @param rep Number of times to update model parameter.
@@ -89,14 +89,17 @@ __cuhostdev__ intvec contiguous_to_ndim_idx_1(std::uint64_t index, const intvec 
                                               std::uint64_t * data_ptr = nullptr);
 
 /** @brief Launch asynchronously model fitting algorithm on CPU.*/
-std::future<void> * cpu_async_launch(candy::Model * p_model, const array::Array * p_train_data,
-                                     candy::Optimizer * p_optimizer, std::uint64_t model_size, std::uint64_t n_thread,
-                                     std::uint64_t rep);
+std::future<void> * cpu_async_launch(std::future<void> * current_job, candy::Model * p_model,
+                                     const array::Array * p_train_data, candy::Optimizer * p_optimizer,
+                                     std::uint64_t model_size, std::uint64_t n_thread, std::uint64_t rep);
 
 /** @brief Launch asynchronously model fitting algorithm on GPU.*/
-cuda::Stream * gpu_asynch_launch(candy::Model * p_model, const array::Parcel * p_train_data,
-                                 candy::Optimizer * p_optimizer, std::uint64_t model_size, std::uint64_t ndim,
-                                 std::uint64_t share_mem_size, std::uint64_t block_size, std::uint64_t rep);
+void gpu_asynch_launch(candy::Model * p_model, const array::Parcel * p_train_data, candy::Optimizer * p_optimizer,
+                       std::uint64_t model_size, std::uint64_t ndim, std::uint64_t share_mem_size,
+                       std::uint64_t block_size, std::uint64_t rep, cuda::Stream * stream_ptr);
+
+/** @brief Push context and destroy the stream.*/
+void destroy_stream_in_context(std::uintptr_t context_ptr, cuda::Stream *& stream_ptr);
 
 }  // namespace candy
 

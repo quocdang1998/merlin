@@ -1,25 +1,25 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/array.hpp"
 
-#include <cstdio>  // std::fread, std::fseek
-#include <cstring>  // std::memcpy
+#include <cstdio>      // std::fread, std::fseek
+#include <cstring>     // std::memcpy
 #include <functional>  // std::bind, std::placeholders
-#include <ios>  // std::ios_base::failure
-#include <mutex>  // std::mutex
-#include <utility>  // std::move
+#include <ios>         // std::ios_base::failure
+#include <mutex>       // std::mutex
+#include <utility>     // std::move
 
-#include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides, merlin::array::array_copy
+#include "merlin/array/copy.hpp"    // merlin::array::contiguous_strides, merlin::array::array_copy
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/array/slice.hpp"  // merlin::array::Slice
-#include "merlin/array/stock.hpp"  // merlin::array::Stock
-#include "merlin/logger.hpp"  // FAILURE
-#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::inner_prod
+#include "merlin/array/slice.hpp"   // merlin::array::Slice
+#include "merlin/array/stock.hpp"   // merlin::array::Stock
+#include "merlin/logger.hpp"        // FAILURE
+#include "merlin/utils.hpp"         // merlin::contiguous_to_ndim_idx, merlin::inner_prod
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Memory lock (allocated array always stays in the RAM)
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 #ifndef __MERLIN_CUDA__
 
@@ -36,15 +36,13 @@ double * array::allocate_memory(std::uint64_t size) {
 void array::cuda_pin_memory(double * ptr, std::uint64_t n_elem) {}
 
 // Free non pageable memory
-void array::free_memory(double * ptr) {
-    delete[] ptr;
-}
+void array::free_memory(double * ptr) { delete[] ptr; }
 
 #endif  // __MERLIN_CUDA__
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Read data
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Read an array from file
 static inline void read_from_file(double * dest, std::FILE * file, double * src, std::uint64_t bytes) {
@@ -55,9 +53,9 @@ static inline void read_from_file(double * dest, std::FILE * file, double * src,
     }
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Array
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Initialize begin and end iterator
 void array::Array::initialize_iterator(void) noexcept {
@@ -176,14 +174,14 @@ array::Array & array::Array::operator=(array::Array && src) {
 }
 
 // Get value operator
-double & array::Array::operator[] (const intvec & index) {
+double & array::Array::operator[](const intvec & index) {
     std::uint64_t leap = inner_prod(index, this->strides_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<double *>(data_ptr));
 }
 
 // Get value operator
-const double & array::Array::operator[] (const intvec & index) const {
+const double & array::Array::operator[](const intvec & index) const {
     std::uint64_t leap = inner_prod(index, this->strides_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<const double *>(data_ptr));
@@ -197,9 +195,7 @@ double array::Array::get(const intvec & index) const {
 }
 
 // Get value of element at a C-contiguous index
-double array::Array::get(std::uint64_t index) const {
-    return this->get(contiguous_to_ndim_idx(index, this->shape()));
-}
+double array::Array::get(std::uint64_t index) const { return this->get(contiguous_to_ndim_idx(index, this->shape())); }
 
 // Set value of element at a n-dim index
 void array::Array::set(const intvec index, double value) {
@@ -252,9 +248,9 @@ array::Array::~Array(void) {
     }
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Shuffle array
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Shuffle array
 array::Array array::shuffle_array(const array::Array & src, const Shuffle & suffle_index) {

@@ -2,7 +2,7 @@
 #ifndef MERLIN_CUDA_LOCK_HPP_
 #define MERLIN_CUDA_LOCK_HPP_
 
-#include "merlin/cuda_decorator.hpp"  // __cudevice__
+#include "merlin/cuda_interface.hpp"  // __cudevice__
 
 namespace merlin {
 
@@ -28,9 +28,7 @@ class KernelLock {
     /** @brief Copy constructor
      *  @details No new memory is allocated. The copied object points to the same memory as the source.
      */
-    KernelLock(const KernelLock & src) : state_(src.state_) {
-        this->reference_count_ = src.reference_count_ + 1;
-    }
+    KernelLock(const KernelLock & src) : state_(src.state_) { this->reference_count_ = src.reference_count_ + 1; }
     /** @brief Copy assignment.*/
     KernelLock & operator=(const KernelLock & src) {
         this->state_ = src.state_;
@@ -48,7 +46,8 @@ class KernelLock {
     /** @brief Lock the region (other thread blocks are blocked).*/
     __cudevice__ void lock(void) {
         if (threadIdx.x == 0) {
-            while (atomicCAS(this->state_, 0, 1) != 0) {}
+            while (atomicCAS(this->state_, 0, 1) != 0) {
+            }
         }
     }
     /** @brief Unlock the region (other thread blocks can continue the execution).*/

@@ -4,28 +4,26 @@
 
 #include <cstddef>  // nullptr
 #include <cstdint>  // std::uintptr_t
-#include <string>  // std::string
+#include <string>   // std::string
 #include <utility>  // std::exchange
 
-#include "merlin/cuda/declaration.hpp"  // merlin::cuda::Event
-#include "merlin/cuda/device.hpp"  // merlin::cuda::Device
+#include "merlin/cuda/declaration.hpp"   // merlin::cuda::Event
+#include "merlin/cuda/device.hpp"        // merlin::cuda::Device
 #include "merlin/cuda/enum_wrapper.hpp"  // merlin::cuda::StreamSetting, merlin::cuda::EventWaitFlag
 
-namespace merlin::cuda {
-
-}  // namespace merlin::cuda
+namespace merlin::cuda {}  // namespace merlin::cuda
 
 namespace merlin {
 
 /** @brief CUDA stream of tasks.*/
 class cuda::Stream {
   public:
-    #ifdef __NVCC__
+#ifdef __NVCC__
     /** @brief Type of CPU callback function.*/
     typedef cudaStreamCallback_t CudaStreamCallback;
-    #else
-    typedef void(* CudaStreamCallback)(std::uintptr_t, int, void *);
-    #endif  // __NVCC__
+#else
+    typedef void (*CudaStreamCallback)(std::uintptr_t, int, void *);
+#endif  // __NVCC__
 
     /// @name Constructor
     /// @{
@@ -61,7 +59,7 @@ class cuda::Stream {
     /// @name Get attributes
     /// @{
     /** @brief Get stream pointer.*/
-    constexpr std::uintptr_t get_stream_ptr(void) const noexcept {return this->stream_;}
+    constexpr std::uintptr_t get_stream_ptr(void) const noexcept { return this->stream_; }
     /** @brief Get setting flag of the stream.*/
     MERLIN_EXPORTS cuda::StreamSetting setting(void) const;
     /** @brief Get priority of the stream.*/
@@ -69,7 +67,7 @@ class cuda::Stream {
     /** @brief Get context associated to stream.*/
     MERLIN_EXPORTS cuda::Context get_context(void) const;
     /** @brief Get GPU.*/
-    constexpr const cuda::Device & get_gpu(void) const noexcept {return this->device_;}
+    constexpr const cuda::Device & get_gpu(void) const noexcept { return this->device_; }
     /// @}
 
     /// @name Query
@@ -159,7 +157,7 @@ enum class MERLIN_EXPORTS StreamCaptureMode : unsigned int {
 /** @brief Capturing stream for CUDA graph.
  *  @details When a CUDA stream is in capture mode, execution orders will not be launch. It is enqueued in an execution
  *  CUDA graph to be retrieved later.
-*/
+ */
 MERLIN_EXPORTS void begin_capture_stream(const cuda::Stream & stream,
                                          StreamCaptureMode mode = StreamCaptureMode::Global);
 

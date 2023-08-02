@@ -2,15 +2,15 @@
 #include "merlin/array/slice.hpp"
 
 #include <cinttypes>  // PRIu64
-#include <cmath>  // std::ceil
+#include <cmath>      // std::ceil
 
 #include "merlin/logger.hpp"  // CUHDERR
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Slice
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Check validity of input values
 __cuhostdev__ void array::Slice::check_validity(void) const {
@@ -33,39 +33,44 @@ start_(start), stop_(stop), step_(step) {
 __cuhostdev__ array::Slice::Slice(std::initializer_list<std::uint64_t> list) {
     const std::uint64_t * list_data = list.begin();
     switch (list.size()) {
-    case 0:  // empty = get all element
-        break;
-    case 1:  // 1 element = get 1 element
-        this->start_ = list_data[0];
-        this->stop_ = list_data[0] + 1;
-        break;
-    case 2:  // 2 element = {start, stop}
-        this->start_ = list_data[0];
-        this->stop_ = list_data[1];
-        this->check_validity();
-        break;
-    case 3:
-        this->start_ = list_data[0];
-        this->stop_ = list_data[1];
-        this->step_ = list_data[2];
-        this->check_validity();
-        break;
-    default:
-        CUHDERR(std::invalid_argument, "Expected intializer list with size at most 3, got %u.\n",
-                static_cast<unsigned int>(list.size()));
-        break;
+        case 0 : {  // empty = get all element
+            break;
+        }
+        case 1 : {  // 1 element = get 1 element
+            this->start_ = list_data[0];
+            this->stop_ = list_data[0] + 1;
+            break;
+        }
+        case 2 : {  // 2 element = {start, stop}
+            this->start_ = list_data[0];
+            this->stop_ = list_data[1];
+            this->check_validity();
+            break;
+        }
+        case 3 : {
+            this->start_ = list_data[0];
+            this->stop_ = list_data[1];
+            this->step_ = list_data[2];
+            this->check_validity();
+            break;
+        }
+        default : {
+            CUHDERR(std::invalid_argument, "Expected intializer list with size at most 3, got %u.\n",
+                    static_cast<unsigned int>(list.size()));
+            break;
+        }
     }
 }
 // Calculate offset, new shape and stride
 __cuhostdev__ std::array<std::uint64_t, 3> array::Slice::slice_on(std::uint64_t shape, std::uint64_t stride) const {
     // check range
     if (this->start_ >= shape) {
-        CUHDERR(std::invalid_argument, "Expected start index smaller than %" PRIu64 ", got %" PRIu64 ".\n",
-                shape, this->start_);
+        CUHDERR(std::invalid_argument, "Expected start index smaller than %" PRIu64 ", got %" PRIu64 ".\n", shape,
+                this->start_);
     }
     if ((this->stop_ > shape) && (this->stop_ != UINT64_MAX)) {
-        CUHDERR(std::invalid_argument, "Expected stop index smaller or equal to %" PRIu64 ", got %" PRIu64 ".\n",
-                shape, this->stop_);
+        CUHDERR(std::invalid_argument, "Expected stop index smaller or equal to %" PRIu64 ", got %" PRIu64 ".\n", shape,
+                this->stop_);
     }
     // shrink the stop if out of range
     std::uint64_t stop = (this->stop_ == UINT64_MAX) ? shape : this->stop_;

@@ -3,15 +3,15 @@
 #define MERLIN_ARRAY_ARRAY_HPP_
 
 #include <cstdint>  // std::uint64_t, std::uintptr_t
-#include <string>  // std::string
+#include <string>   // std::string
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Parcel
-#include "merlin/array/nddata.hpp"  // merlin::array::NdData
-#include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/iterator.hpp"  // merlin::Iterator
-#include "merlin/shuffle.hpp"  // merlin::Shuffle
-#include "merlin/vector.hpp"  // merlin::intvec
+#include "merlin/array/nddata.hpp"       // merlin::array::NdData
+#include "merlin/cuda/stream.hpp"        // merlin::cuda::Stream
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/iterator.hpp"           // merlin::Iterator
+#include "merlin/shuffle.hpp"            // merlin::Shuffle
+#include "merlin/vector.hpp"             // merlin::intvec
 
 namespace merlin {
 
@@ -94,17 +94,18 @@ class array::Array : public array::NdData {
         double & operator*(void) const {
             return this->data_ptr_[this->item_ptr_];  // not counting non contiguous
         }
+
       private:
         mutable double * data_ptr_ = nullptr;
     };
     /** @brief Begin iterator.
      *  @details Vector of index \f$(0, 0, ..., 0)\f$.
      */
-    constexpr const array::Array::iterator & begin(void) const noexcept {return this->begin_;}
+    constexpr const array::Array::iterator & begin(void) const noexcept { return this->begin_; }
     /** @brief End iterator.
      *  @details Vector of index \f$(d_0, 0, ..., 0)\f$.
      */
-    constexpr const array::Array::iterator & end(void) const noexcept {return this->end_;}
+    constexpr const array::Array::iterator & end(void) const noexcept { return this->end_; }
     /** @brief Sciling operator.
      *  @details Get an element at a given index.
      *  @param index Vector of indices along each dimension.

@@ -2,24 +2,24 @@
 #include "merlin/intpl/lagrange.hpp"
 
 #include <algorithm>  // std::find
-#include <cstring>  // std::memcpy
+#include <cstring>    // std::memcpy
 
 #include <omp.h>  // #pragma omp, omp_get_num_threads
 
-#include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/copy.hpp"  // merlin::array::array_copy, merlin::array::contiguous_strides
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/array/slice.hpp"  // merlin::array::Slice
+#include "merlin/array/array.hpp"           // merlin::array::Array
+#include "merlin/array/copy.hpp"            // merlin::array::array_copy, merlin::array::contiguous_strides
+#include "merlin/array/parcel.hpp"          // merlin::array::Parcel
+#include "merlin/array/slice.hpp"           // merlin::array::Slice
 #include "merlin/intpl/cartesian_grid.hpp"  // merlin::intpl::CartesianGrid
-#include "merlin/intpl/sparse_grid.hpp"  // merlin::intpl::SparseGrid
-#include "merlin/logger.hpp"  // FAILURE, cuda_compile_error
-#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::get_level_shape
+#include "merlin/intpl/sparse_grid.hpp"     // merlin::intpl::SparseGrid
+#include "merlin/logger.hpp"                // FAILURE, cuda_compile_error
+#include "merlin/utils.hpp"                 // merlin::contiguous_to_ndim_idx, merlin::get_level_shape
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Calculate coefficients
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Calculate Lagrange interpolation coefficient on a full Cartesian grid using CPU
 void intpl::calc_lagrange_coeffs_cpu(const intpl::CartesianGrid & grid, const array::Array & value,
@@ -27,7 +27,7 @@ void intpl::calc_lagrange_coeffs_cpu(const intpl::CartesianGrid & grid, const ar
     std::uint64_t ndim = grid.ndim();
     intvec grid_shape = grid.get_grid_shape();
     // parallel loop calculation
-    bool parallel_exec = value.size() > 2*omp_get_num_threads();
+    bool parallel_exec = value.size() > 2 * omp_get_num_threads();
     #pragma omp parallel for if (parallel_exec) num_threads(nthreads)
     for (std::int64_t i = 0; i < value.size(); i++) {
         intvec index = contiguous_to_ndim_idx(i, grid_shape);
@@ -99,12 +99,11 @@ static double eval_lagrange_of_added_grid_cpu(const intpl::CartesianGrid & accum
                                               const Vector<double> & x) {
     double result = intpl::eval_lagrange_cpu(grid, coeff, x);
     double factor = intpl::exclusion_grid(accumulated_grid, grid, x);
-    return result*factor;
+    return result * factor;
 }
 
 // Calculate Lagrange interpolation coefficients on a sparse grid using CPU (function value are preprocessed)
-void intpl::calc_lagrange_coeffs_cpu(const intpl::SparseGrid & grid, const array::Array & value,
-                                     array::Array & coeff) {
+void intpl::calc_lagrange_coeffs_cpu(const intpl::SparseGrid & grid, const array::Array & value, array::Array & coeff) {
     // copy value to coeff
     if (&value != &coeff) {
         intpl::copy_value_from_cartesian_array(coeff, value, grid);
@@ -119,28 +118,28 @@ void intpl::calc_lagrange_coeffs_cpu(const intpl::SparseGrid & grid, const array
         intpl::CartesianGrid level_cartgrid = intpl::get_cartesian_grid(grid, i_subgrid);
         accumulated_cart_grid += level_cartgrid;
         intvec level_shape = get_level_shape(level_index);
-        array::Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid+1]);
+        array::Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid + 1]);
         array::Array level_coeff(coeff, {level_slice});
         level_coeff.reshape(level_shape);
         calc_lagrange_coeffs_of_added_grid_cpu(accumulated_cart_grid, level_cartgrid, level_coeff, level_coeff);
         // subtract other points of the grid
-        for (std::uint64_t j_subgrid = i_subgrid+1; j_subgrid < num_subgrid; j_subgrid++) {
+        for (std::uint64_t j_subgrid = i_subgrid + 1; j_subgrid < num_subgrid; j_subgrid++) {
             std::uint64_t start_index = grid.sub_grid_start_index()[j_subgrid];
             intpl::CartesianGrid level_j_cartgrid = intpl::get_cartesian_grid(grid, j_subgrid);
             std::uint64_t level_j_cartgrid_size = level_j_cartgrid.size();
             for (std::uint64_t i_point = 0; i_point < level_j_cartgrid_size; i_point++) {
                 Vector<double> point = level_j_cartgrid[i_point];
                 std::uint64_t i_point_sparsegrid = start_index + i_point;
-                coeff[{i_point_sparsegrid}] -= eval_lagrange_of_added_grid_cpu(accumulated_cart_grid, level_cartgrid,
-                                                                               level_coeff, point);
+                coeff[{i_point_sparsegrid}] -=
+                    eval_lagrange_of_added_grid_cpu(accumulated_cart_grid, level_cartgrid, level_coeff, point);
             }
         }
     }
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Evaluate interpolation
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Evaluate Lagrange interpolation on a cartesian grid using CPU
 double intpl::eval_lagrange_cpu(const intpl::CartesianGrid & grid, const array::Array & coeff,
@@ -161,7 +160,7 @@ double intpl::eval_lagrange_cpu(const intpl::SparseGrid & grid, const array::Arr
         intpl::CartesianGrid level_cartgrid = intpl::get_cartesian_grid(grid, i_subgrid);
         accumulated_cart_grid += level_cartgrid;
         intvec level_shape = get_level_shape(level_index);
-        array::Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid+1]);
+        array::Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid + 1]);
         array::Array level_coeff(coeff, {level_slice});
         level_coeff.reshape(level_shape);
         result += eval_lagrange_of_added_grid_cpu(accumulated_cart_grid, level_cartgrid, level_coeff, x);

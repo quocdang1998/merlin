@@ -2,21 +2,21 @@
 #include "merlin/statistics/moment.hpp"
 
 #include <cinttypes>  // PRIu64
-#include <set>  // std::set
+#include <set>        // std::set
 
 #include <omp.h>  // #pragma omp
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/array/slice.hpp"  // merlin::array::Slice
-#include "merlin/logger.hpp"  // FAILURE
-#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::prod_elements
-#include "merlin/vector.hpp"  // merlin::intvec
+#include "merlin/logger.hpp"       // FAILURE
+#include "merlin/utils.hpp"        // merlin::contiguous_to_ndim_idx, merlin::prod_elements
+#include "merlin/vector.hpp"       // merlin::intvec
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Moment
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Calculate mean on all elements of the array
 double statistics::mean_cpu(const array::Array & data, std::uint64_t nthreads) {

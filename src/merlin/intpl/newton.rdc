@@ -1,10 +1,10 @@
 // Copyright 2022 quocdang1998
 #include "merlin/intpl/newton.hpp"
 
-#include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
+#include "merlin/array/array.hpp"           // merlin::array::Array
+#include "merlin/array/parcel.hpp"          // merlin::array::Parcel
 #include "merlin/intpl/cartesian_grid.hpp"  // merlin::intpl::CartesianGrid
-#include "merlin/utils.hpp"  // merlin::decrement_index
+#include "merlin/utils.hpp"                 // merlin::decrement_index
 
 namespace merlin {
 
@@ -12,14 +12,14 @@ namespace merlin {
 __cuhostdev__ double intpl::eval_newton_single_core(const intpl::CartesianGrid & grid, const array::NdData & coeff,
                                                     const Vector<double> & x, std::uint64_t * iterator_data,
                                                     double * cummulative_register_data) {
-    // Type casting
-    #ifdef __CUDA_ARCH__
+// Type casting
+#ifdef __CUDA_ARCH__
     const array::Parcel * p_coeff = static_cast<const array::Parcel *>(&coeff);
-    #else
+#else
     const array::Array * p_coeff = static_cast<const array::Array *>(&coeff);
-    #endif  // __CUDA_ARCH__
+#endif  // __CUDA_ARCH__
     // initialize storing vector
-    std::uint64_t ndim = grid.ndim(), max_dim = ndim-1;
+    std::uint64_t ndim = grid.ndim(), max_dim = ndim - 1;
     const intvec & shape = coeff.shape();
     intvec iterator;
     if (iterator_data == nullptr) {
@@ -46,8 +46,8 @@ __cuhostdev__ double intpl::eval_newton_single_core(const intpl::CartesianGrid &
             cum[i_dim] *= x[i_dim] - grid.grid_vectors()[i_dim][iterator[i_dim]];
             cum[i_dim] += (*p_coeff)[iterator];
         } else {
-            cum[i_dim] *= x[i_dim] - grid.grid_vectors()[i_dim][iterator[i_dim]+1];
-            for (std::uint64_t i = i_dim+1; i < max_dim; i++) {
+            cum[i_dim] *= x[i_dim] - grid.grid_vectors()[i_dim][iterator[i_dim] + 1];
+            for (std::uint64_t i = i_dim + 1; i < max_dim; i++) {
                 cum[i_dim] += (x[i] - grid.grid_vectors()[i][0]) * cum[i];
                 cum[i] = 0;
             }

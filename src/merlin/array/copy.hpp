@@ -3,12 +3,12 @@
 #define MERLIN_ARRAY_COPY_HPP_
 
 #include <cstdint>  // std::uint64_t, std::int64_t
-#include <tuple>  // std::tuple
+#include <tuple>    // std::tuple
 
-#include "merlin/array/nddata.hpp"  // merlin::array::NdData
-#include "merlin/cuda_decorator.hpp"  // __cuhost__, __cuhostdev__
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/vector.hpp"  // merlin::intvec
+#include "merlin/array/nddata.hpp"    // merlin::array::NdData
+#include "merlin/cuda_interface.hpp"  // __cuhost__, __cuhostdev__
+#include "merlin/exports.hpp"         // MERLIN_EXPORTS
+#include "merlin/vector.hpp"          // merlin::intvec
 
 namespace merlin::array {
 

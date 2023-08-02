@@ -5,16 +5,16 @@
 #include <cstring>  // std::memset
 
 #include "merlin/cuda/device.hpp"  // merlin::cuda::Device
-#include "merlin/cuda/event.hpp"  // merlin::cuda::Event
+#include "merlin/cuda/event.hpp"   // merlin::cuda::Event
 #include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
-#include "merlin/env.hpp"  // merlin::Environment
-#include "merlin/logger.hpp"  // FAILURE
+#include "merlin/env.hpp"          // merlin::Environment
+#include "merlin/logger.hpp"       // FAILURE
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // GraphNode
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Get node type
 cuda::NodeType cuda::GraphNode::get_node_type(void) const {
@@ -26,17 +26,16 @@ cuda::NodeType cuda::GraphNode::get_node_type(void) const {
     return static_cast<cuda::NodeType>(type);
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Graph
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Destroy current CUDA graph instance
 void cuda::Graph::destroy_graph(void) {
     if (this->graph_ptr_ != 0) {
         ::cudaError_t err_ = ::cudaGraphDestroy(reinterpret_cast<::cudaGraph_t>(this->graph_ptr_));
         if (err_ != 0) {
-            FAILURE(cuda_runtime_error, "CUDA destroy graph failed with message \"%s\".\n",
-                    ::cudaGetErrorString(err_));
+            FAILURE(cuda_runtime_error, "CUDA destroy graph failed with message \"%s\".\n", ::cudaGetErrorString(err_));
         }
     }
 }
@@ -45,9 +44,9 @@ void cuda::Graph::destroy_graph(void) {
 cuda::Graph::Graph(int flag) {
     ::cudaError_t err_;
     switch (flag) {
-    case -1:  // default constructor
+    case -1 :  // default constructor
         break;
-    case 0:  // construct an empty graph
+    case 0 :  // construct an empty graph
         ::cudaGraph_t graph_;
         err_ = ::cudaGraphCreate(&graph_, 0);
         if (err_ != 0) {
@@ -55,7 +54,7 @@ cuda::Graph::Graph(int flag) {
         }
         this->graph_ptr_ = reinterpret_cast<std::uintptr_t>(graph_);
         break;
-    default:  // error unknown argument
+    default :  // error unknown argument
         FAILURE(std::invalid_argument, "Expected 0 (new empty graph) or -1 (NULL graph), got %d.\n", flag);
         break;
     }
@@ -136,8 +135,8 @@ Vector<cuda::GraphNode> cuda::Graph::get_node_list(void) const {
 // Get number of edges
 std::uint64_t cuda::Graph::get_num_edges(void) const {
     std::size_t num_edges;
-    ::cudaError_t err_ = ::cudaGraphGetEdges(reinterpret_cast<::cudaGraph_t>(this->graph_ptr_), nullptr, nullptr,
-                                             &num_edges);
+    ::cudaError_t err_ =
+        ::cudaGraphGetEdges(reinterpret_cast<::cudaGraph_t>(this->graph_ptr_), nullptr, nullptr, &num_edges);
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Get number of edges of CUDA graph failed with message \"%s\".\n",
                 ::cudaGetErrorString(err_));
@@ -151,8 +150,8 @@ Vector<std::array<cuda::GraphNode, 2>> cuda::Graph::get_edge_list(void) const {
     Vector<std::array<cuda::GraphNode, 2>> result(num_edges);
     ::cudaGraphNode_t * p_nodes_from = new ::cudaGraphNode_t[num_edges];
     ::cudaGraphNode_t * p_nodes_to = new ::cudaGraphNode_t[num_edges];
-    ::cudaError_t err_ = ::cudaGraphGetEdges(reinterpret_cast<::cudaGraph_t>(this->graph_ptr_), p_nodes_from,
-                                             p_nodes_to, &num_edges);
+    ::cudaError_t err_ =
+        ::cudaGraphGetEdges(reinterpret_cast<::cudaGraph_t>(this->graph_ptr_), p_nodes_from, p_nodes_to, &num_edges);
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Get edge list of CUDA graph failed with message \"%s\".\n",
                 ::cudaGetErrorString(err_));
@@ -200,9 +199,9 @@ cuda::GraphNode cuda::Graph::add_memcpy_node(void * dest, const void * src, std:
     for (std::uint64_t i = 0; i < dependancies.size(); i++) {
         dependancies[i] = reinterpret_cast<::cudaGraphNode_t>(deps[i].graphnode_ptr);
     }
-    ::cudaError_t err_ = ::cudaGraphAddMemcpyNode1D(&graph_node, reinterpret_cast<::cudaGraph_t>(this->graph_ptr_),
-                                                    dependancies.data(), dependancies.size(), dest, src, size,
-                                                    static_cast<::cudaMemcpyKind>(copy_flag));
+    ::cudaError_t err_ =
+        ::cudaGraphAddMemcpyNode1D(&graph_node, reinterpret_cast<::cudaGraph_t>(this->graph_ptr_), dependancies.data(),
+                                   dependancies.size(), dest, src, size, static_cast<::cudaMemcpyKind>(copy_flag));
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Add memcpy node to graph failed with message \"%s\".\n",
                 ::cudaGetErrorString(err_));
@@ -270,9 +269,9 @@ cuda::GraphNode cuda::Graph::add_event_wait_node(const cuda::Event & event, cons
     for (std::uint64_t i = 0; i < dependancies.size(); i++) {
         dependancies[i] = reinterpret_cast<::cudaGraphNode_t>(deps[i].graphnode_ptr);
     }
-    ::cudaError_t err_ = ::cudaGraphAddEventWaitNode(&graph_node, reinterpret_cast<::cudaGraph_t>(this->graph_ptr_),
-                                                     dependancies.data(), dependancies.size(),
-                                                     reinterpret_cast<::cudaEvent_t>(event.get_event_ptr()));
+    ::cudaError_t err_ =
+        ::cudaGraphAddEventWaitNode(&graph_node, reinterpret_cast<::cudaGraph_t>(this->graph_ptr_), dependancies.data(),
+                                    dependancies.size(), reinterpret_cast<::cudaEvent_t>(event.get_event_ptr()));
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Add event wait node to graph failed with message \"%s\".\n",
                 ::cudaGetErrorString(err_));
@@ -282,7 +281,7 @@ cuda::GraphNode cuda::Graph::add_event_wait_node(const cuda::Event & event, cons
 
 // Add CUDA child graph node
 cuda::GraphNode cuda::Graph::add_child_graph_node(const cuda::Graph & child_graph,
-                                                 const Vector<cuda::GraphNode> & deps) {
+                                                  const Vector<cuda::GraphNode> & deps) {
     ::cudaGraphNode_t graph_node;
     Vector<::cudaGraphNode_t> dependancies(deps.size());
     for (std::uint64_t i = 0; i < dependancies.size(); i++) {
@@ -300,16 +299,16 @@ cuda::GraphNode cuda::Graph::add_child_graph_node(const cuda::Graph & child_grap
 
 // Export graph into DOT file
 void cuda::Graph::export_to_dot(const std::string & filename) {
-    ::cudaError_t err_ = ::cudaGraphDebugDotPrint(reinterpret_cast<::cudaGraph_t>(this->graph_ptr_), filename.c_str(),
-                                                  0);
+    ::cudaError_t err_ =
+        ::cudaGraphDebugDotPrint(reinterpret_cast<::cudaGraph_t>(this->graph_ptr_), filename.c_str(), 0);
 }
 
 // Execute a graph (add detecting errored node)
 void cuda::Graph::execute(const cuda::Stream & stream) {
     ::cudaGraphExec_t exec_graph;
     char log_buffer[256];
-    ::cudaError_t err_ = ::cudaGraphInstantiate(&exec_graph, reinterpret_cast<::cudaGraph_t>(this->graph_ptr_),
-                                                nullptr, log_buffer, sizeof(log_buffer));
+    ::cudaError_t err_ = ::cudaGraphInstantiate(&exec_graph, reinterpret_cast<::cudaGraph_t>(this->graph_ptr_), nullptr,
+                                                log_buffer, sizeof(log_buffer));
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Create executable graph failed with message \"%s\".\n",
                 ::cudaGetErrorString(err_));
@@ -323,8 +322,6 @@ void cuda::Graph::execute(const cuda::Stream & stream) {
 }
 
 // Destructor
-cuda::Graph::~Graph(void) {
-    this->destroy_graph();
-}
+cuda::Graph::~Graph(void) { this->destroy_graph(); }
 
 }  // namespace merlin

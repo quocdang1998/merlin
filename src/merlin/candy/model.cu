@@ -6,8 +6,7 @@
 namespace merlin {
 
 // Copy data to a pre-allocated memory
-void * candy::Model::copy_to_gpu(candy::Model * gpu_ptr, void * parameters_data_ptr,
-                                 std::uintptr_t stream_ptr) const {
+void * candy::Model::copy_to_gpu(candy::Model * gpu_ptr, void * parameters_data_ptr, std::uintptr_t stream_ptr) const {
     // initialize buffer to store data of the copy before cloning it to GPU
     candy::Model copy_on_gpu;
     copy_on_gpu.rank_ = this->rank_;
@@ -15,7 +14,7 @@ void * candy::Model::copy_to_gpu(candy::Model * gpu_ptr, void * parameters_data_
     copy_on_gpu.parameters_.data() = reinterpret_cast<floatvec *>(parameters_data_ptr);
     copy_on_gpu.parameters_.size() = this->ndim();
     // copy data of each parameter vector
-    std::uintptr_t dptr = reinterpret_cast<std::uintptr_t>(parameters_data_ptr) + this->ndim()*sizeof(floatvec);
+    std::uintptr_t dptr = reinterpret_cast<std::uintptr_t>(parameters_data_ptr) + this->ndim() * sizeof(floatvec);
     void * data_ptr = reinterpret_cast<void *>(dptr);
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
         data_ptr = this->parameters_[i_dim].copy_to_gpu(&(copy_on_gpu.parameters_[i_dim]), data_ptr, stream_ptr);
@@ -41,7 +40,7 @@ void * candy::Model::copy_from_gpu(candy::Model * gpu_ptr, std::uintptr_t stream
         data_ptr = this->parameters_[i_dim].copy_from_gpu(gpu_parameter_vector_data + i_dim, stream_ptr);
     }
     // avoid seg.fault due to freeing data of temporary object
-    gpu_object.parameters_.assign(nullptr, 0UL);
+    gpu_object.parameters_.assign(nullptr, 1UL);
     return data_ptr;
 }
 

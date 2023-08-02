@@ -2,19 +2,19 @@
 #ifndef MERLIN_LOGGER_HPP_
 #define MERLIN_LOGGER_HPP_
 
-#include <cstdarg>  // std::va_list, va_start, va_end
-#include <cstdio>  // std::printf, std::vsnprintf
-#include <filesystem>  // std::filesystem::filesystem_error
-#include <stdexcept>  // std::runtime_error
-#include <string>  // std::string
+#include <cstdarg>       // std::va_list, va_start, va_end
+#include <cstdio>        // std::printf, std::vsnprintf
+#include <filesystem>    // std::filesystem::filesystem_error
+#include <stdexcept>     // std::runtime_error
+#include <string>        // std::string
 #include <system_error>  // std::error_code
-#include <type_traits>  // std::is_same
+#include <type_traits>   // std::is_same
 
 #ifdef __NVCC__
-#include "cuda.h"  // CUresult, cuGetErrorName
-#endif  // __NVCC__
+    #include "cuda.h"  // CUresult, cuGetErrorName
+#endif                 // __NVCC__
 
-#include "merlin/exports.hpp"  // MERLINSHARED_EXPORTS
+#include "merlin/exports.hpp"   // MERLINSHARED_EXPORTS
 #include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
 
 #if defined(__MERLIN_WINDOWS__)
@@ -76,10 +76,10 @@ void __throw_error(const char * func_name, const char * fmt, ...) {
     va_end(args);
     // print exception message and throw an exception object
     std::fprintf(stderr, "\033[1;31m[FAILURE]\033[0m [%s] %s", func_name, buffer);
-    #if defined(__MERLIN_DEBUG__)
-    print_stacktrace(2);  // skip this function and print_stacktrace function
-    #endif   // __MERLIN_DEBUG__
-    if constexpr(std::is_same<Exception, std::filesystem::filesystem_error>::value) {
+#if defined(__MERLIN_DEBUG__)
+    print_stacktrace(2);  // print_stacktrace function
+#endif  // __MERLIN_DEBUG__
+    if constexpr (std::is_same<Exception, std::filesystem::filesystem_error>::value) {
         throw std::filesystem::filesystem_error(const_cast<char *>(buffer),
                                                 std::error_code(1, std::iostream_category()));
     } else {
@@ -91,21 +91,21 @@ void __throw_error(const char * func_name, const char * fmt, ...) {
 class cuda_compile_error : public std::runtime_error {
   public:
     cuda_compile_error(const char * message) : std::runtime_error(message) {}
-    const char * what() const noexcept {return std::runtime_error::what();}
+    const char * what() const noexcept { return std::runtime_error::what(); }
 };
 
 /** @brief Exception class to be thrown when CUDA runtime error is encountered.*/
 class cuda_runtime_error : public std::runtime_error {
   public:
     cuda_runtime_error(const char * message) : std::runtime_error(message) {}
-    const char * what() const noexcept {return std::runtime_error::what();}
+    const char * what() const noexcept { return std::runtime_error::what(); }
 };
 
 /** @brief Exception class to be thrown when a feature that is not yet implemented.*/
 class not_implemented_error : public std::runtime_error {
   public:
     not_implemented_error(const char * message) : std::runtime_error(message) {}
-    const char * what() const noexcept {return std::runtime_error::what();}
+    const char * what() const noexcept { return std::runtime_error::what(); }
 };
 
 }  // namespace merlin
@@ -127,51 +127,51 @@ MERLINSHARED_EXPORTS std::string throw_linux_last_error(void);
 // -------------------
 
 #ifdef __NVCC__
-/** @brief Print message to the standard output (for usage inside a GPU function).
- *  @details Example:
- *  @code {.cu}
- *  __global__ void dummy_gpu_function {
- *      CUDAOUT("Hello World from thread %d block %d.\n", threadIdx.x, blockIdx.x);
- *  }
- *  @endcode
- *  @note This macro is only available when option ``MERLIN_CUDA`` is ``ON``.
- *  @param fmt Formatted string (same syntax as ``std::printf``).
- */
-#define CUDAOUT(fmt, ...) std::printf("\033[1;36m[CUDAOUT]\033[0m [%s] " fmt, __FUNCNAME__, ##__VA_ARGS__)
+    /** @brief Print message to the standard output (for usage inside a GPU function).
+     *  @details Example:
+     *  @code {.cu}
+     *  __global__ void dummy_gpu_function {
+     *      CUDAOUT("Hello World from thread %d block %d.\n", threadIdx.x, blockIdx.x);
+     *  }
+     *  @endcode
+     *  @note This macro is only available when option ``MERLIN_CUDA`` is ``ON``.
+     *  @param fmt Formatted string (same syntax as ``std::printf``).
+     */
+    #define CUDAOUT(fmt, ...) std::printf("\033[1;36m[CUDAOUT]\033[0m [%s] " fmt, __FUNCNAME__, ##__VA_ARGS__)
 
-/** @brief Print error message (for usage inside a GPU function) and terminate GPU kernel.
- *  @details Example:
- *  @code {.cu}
- *  __global__ void errorred_gpu_function {
- *      CUDAERR("Error from thread %d block %d.\n", threadIdx.x, blockIdx.x);
- *  }
- *  @endcode
- *  @note This macro is only available when option ``MERLIN_CUDA`` is ``ON``.
- *  @param fmt Formatted string (same syntax as ``std::printf``).
- */
-#define CUDAERR(fmt, ...) \
-    std::printf("\033[1;35m[CUDAERR]\033[0m [%s] " fmt, __FUNCNAME__, ##__VA_ARGS__);\
-    asm("trap;")
+    /** @brief Print error message (for usage inside a GPU function) and terminate GPU kernel.
+     *  @details Example:
+     *  @code {.cu}
+     *  __global__ void errorred_gpu_function {
+     *      CUDAERR("Error from thread %d block %d.\n", threadIdx.x, blockIdx.x);
+     *  }
+     *  @endcode
+     *  @note This macro is only available when option ``MERLIN_CUDA`` is ``ON``.
+     *  @param fmt Formatted string (same syntax as ``std::printf``).
+     */
+    #define CUDAERR(fmt, ...)                                                                                          \
+        std::printf("\033[1;35m[CUDAERR]\033[0m [%s] " fmt, __FUNCNAME__, ##__VA_ARGS__);                              \
+        asm("trap;")
 #endif  // __NVCC__
 
 // Log CUHDERR for host-device error
 // ---------------------------------
 
 #ifdef __CUDA_ARCH__
-#define CUHDERR(exception, fmt, ...) CUDAERR(fmt, ##__VA_ARGS__)
+    #define CUHDERR(exception, fmt, ...) CUDAERR(fmt, ##__VA_ARGS__)
 #else
-/** @brief Print error message and terminate CUDA host-device function.
- *  @details Example:
- *  @code {.cu}
- *  __host__ __device__ void errorred_function {
- *      CUDAERR("Error.\n");
- *  }
- *  @endcode
- *  @param exception Name of the exception class (like ``std::runtime_error``, ``std::invalid_argument``, etc) to be
- *  thrown in case of ``__host__`` function.
- *  @param fmt Formatted string (same syntax as ``std::printf``).
- */
-#define CUHDERR(exception, fmt, ...) FAILURE(exception, fmt, ##__VA_ARGS__)
+    /** @brief Print error message and terminate CUDA host-device function.
+     *  @details Example:
+     *  @code {.cu}
+     *  __host__ __device__ void errorred_function {
+     *      CUDAERR("Error.\n");
+     *  }
+     *  @endcode
+     *  @param exception Name of the exception class (like ``std::runtime_error``, ``std::invalid_argument``, etc) to be
+     *  thrown in case of ``__host__`` function.
+     *  @param fmt Formatted string (same syntax as ``std::printf``).
+     */
+    #define CUHDERR(exception, fmt, ...) FAILURE(exception, fmt, ##__VA_ARGS__)
 #endif  // __CUDA_ARCH__
 
 #endif  // MERLIN_LOGGER_HPP_

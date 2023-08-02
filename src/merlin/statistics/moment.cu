@@ -2,13 +2,13 @@
 #include "merlin/statistics/moment.hpp"
 
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/utils.hpp"  // merlin::flatten_thread_index, merlin::size_of_block
+#include "merlin/utils.hpp"         // merlin::flatten_thread_index, merlin::size_of_block
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Mean
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 __cudevice__ void statistics::mean_gpu(const array::Parcel & data, double * buffer) {
     // get thread index and total number of threads
@@ -21,7 +21,7 @@ __cudevice__ void statistics::mean_gpu(const array::Parcel & data, double * buff
     // initialize index vector
     std::uint64_t * index_buffer_start = reinterpret_cast<std::uint64_t *>(storing.end());
     intvec index;
-    index.assign(index_buffer_start + thread_idx*data.ndim(), data.ndim());
+    index.assign(index_buffer_start + thread_idx * data.ndim(), data.ndim());
     // add to storing vector
     for (std::uint64_t i_point = thread_idx; i_point < data.size(); i_point += n_threads) {
         contiguous_to_ndim_idx(i_point, data.shape(), index.data());
@@ -30,7 +30,7 @@ __cudevice__ void statistics::mean_gpu(const array::Parcel & data, double * buff
     __syncthreads();
     // reduce the sum
     if (thread_idx < 8) {
-        for (std::uint64_t i = thread_idx+8; i < n_threads; i += 8) {
+        for (std::uint64_t i = thread_idx + 8; i < n_threads; i += 8) {
             storing[thread_idx] += storing[i];
         }
     }

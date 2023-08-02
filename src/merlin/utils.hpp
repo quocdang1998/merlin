@@ -2,11 +2,11 @@
 #ifndef MERLIN_UTILS_HPP_
 #define MERLIN_UTILS_HPP_
 
-#include <array>  // std::array
+#include <array>   // std::array
 #include <string>  // std::string
 
-#include "merlin/cuda_decorator.hpp"  // __cudevice__, __cuhostdev__
-#include "merlin/vector.hpp"  // merlin::Vector
+#include "merlin/cuda_interface.hpp"  // __cudevice__, __cuhostdev__
+#include "merlin/vector.hpp"          // merlin::Vector
 
 namespace merlin {
 
@@ -35,7 +35,7 @@ __cuhostdev__ constexpr std::uint64_t get_block_count(std::uint64_t block_size, 
  *  @details Get the three-dimensional flattened index of the current thread in the current block.
  */
 __cudevice__ constexpr std::uint64_t flatten_thread_index(void) {
-    std::uint64_t result = threadIdx.x + threadIdx.y*blockDim.x + threadIdx.z*blockDim.x*blockDim.y;
+    std::uint64_t result = threadIdx.x + threadIdx.y * blockDim.x + threadIdx.z * blockDim.x * blockDim.y;
     return result;
 }
 
@@ -43,7 +43,7 @@ __cudevice__ constexpr std::uint64_t flatten_thread_index(void) {
  *  @details Get the number of threads in the current block.
  */
 __cudevice__ constexpr std::uint64_t size_of_block(void) {
-    std::uint64_t result = blockDim.x*blockDim.y*blockDim.z;
+    std::uint64_t result = blockDim.x * blockDim.y * blockDim.z;
     return result;
 }
 
@@ -51,7 +51,7 @@ __cudevice__ constexpr std::uint64_t size_of_block(void) {
  *  @details Get the three-dimensional flattened index of the current block in the current grid.
  */
 __cudevice__ constexpr std::uint64_t flatten_block_index(void) {
-    std::uint64_t result = blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y;
+    std::uint64_t result = blockIdx.x + blockIdx.y * gridDim.x + blockIdx.z * gridDim.x * gridDim.y;
     return result;
 }
 
@@ -59,10 +59,10 @@ __cudevice__ constexpr std::uint64_t flatten_block_index(void) {
  *  @details Get the index of the current thread in the current grid.
  */
 __cudevice__ constexpr std::uint64_t flatten_kernel_index(void) {
-    std::uint64_t index_in_block = threadIdx.x + threadIdx.y*blockDim.x + threadIdx.z*blockDim.x*blockDim.y;
-    std::uint64_t index_of_block = blockIdx.x + blockIdx.y*gridDim.x + blockIdx.z*gridDim.x*gridDim.y;
-    std::uint64_t size_of_one_block = blockDim.x*blockDim.y*blockDim.z;
-    return index_of_block*size_of_one_block + index_in_block;
+    std::uint64_t index_in_block = threadIdx.x + threadIdx.y * blockDim.x + threadIdx.z * blockDim.x * blockDim.y;
+    std::uint64_t index_of_block = blockIdx.x + blockIdx.y * gridDim.x + blockIdx.z * gridDim.x * gridDim.y;
+    std::uint64_t size_of_one_block = blockDim.x * blockDim.y * blockDim.z;
+    return index_of_block * size_of_one_block + index_in_block;
 }
 
 #endif  // __NVCC__
@@ -133,7 +133,7 @@ __cuhostdev__ intvec get_level_shape(const intvec & level_vector);
  *  @param rank Rank of the candecomp model.
  *  @param shape Shape of the candecomp model.
  */
-__cuhostdev__ std::uint64_t model_to_contiguous_idx(std::uint64_t i_dim, std::uint64_t i_point,  std::uint64_t i_rank,
+__cuhostdev__ std::uint64_t model_to_contiguous_idx(std::uint64_t i_dim, std::uint64_t i_point, std::uint64_t i_rank,
                                                     std::uint64_t rank, const intvec & shape);
 
 /** @brief Get model index from flattened index.

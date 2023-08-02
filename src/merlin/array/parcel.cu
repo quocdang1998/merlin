@@ -4,16 +4,16 @@
 #include <functional>  // std::bind, std::placeholders
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides, merlin::array::array_copy
+#include "merlin/array/copy.hpp"   // merlin::array::contiguous_strides, merlin::array::array_copy
 #include "merlin/array/slice.hpp"  // merlin::array::Slice
-#include "merlin/logger.hpp"  // FAILURE
-#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::inner_prod
+#include "merlin/logger.hpp"       // FAILURE
+#include "merlin/utils.hpp"        // merlin::contiguous_to_ndim_idx, merlin::inner_prod
 
 namespace merlin {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Parcel
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Free old data
 void array::Parcel::free_current_data(const cuda::Stream & stream) {
@@ -66,8 +66,8 @@ array::Parcel::Parcel(const array::Parcel & src) : array::NdData(src) {
     }
     // create copy function and copy data to GPU
     if (this->device_ != src.device_) {
-        auto copy_func = std::bind(::cudaMemcpyPeer, std::placeholders::_1, this->device_.id(),
-                                   std::placeholders::_2, src.device_.id(), std::placeholders::_3);
+        auto copy_func = std::bind(::cudaMemcpyPeer, std::placeholders::_1, this->device_.id(), std::placeholders::_2,
+                                   src.device_.id(), std::placeholders::_3);
         array::array_copy(this, &src, copy_func);
     } else {
         auto copy_func = std::bind(::cudaMemcpy, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
@@ -94,8 +94,8 @@ array::Parcel & array::Parcel::operator=(const array::Parcel & src) {
     }
     // create copy function and copy data to GPU
     if (this->device_ != src.device_) {
-        auto copy_func = std::bind(::cudaMemcpyPeer, std::placeholders::_1, this->device_.id(),
-                                   std::placeholders::_2, src.device_.id(), std::placeholders::_3);
+        auto copy_func = std::bind(::cudaMemcpyPeer, std::placeholders::_1, this->device_.id(), std::placeholders::_2,
+                                   src.device_.id(), std::placeholders::_3);
         array::array_copy(this, &src, copy_func);
     } else {
         auto copy_func = std::bind(::cudaMemcpy, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
@@ -150,9 +150,7 @@ double array::Parcel::get(const intvec & index) const {
 }
 
 // Get value of element at a C-contiguous index
-double array::Parcel::get(std::uint64_t index) const {
-    return this->get(contiguous_to_ndim_idx(index, this->shape()));
-}
+double array::Parcel::get(std::uint64_t index) const { return this->get(contiguous_to_ndim_idx(index, this->shape())); }
 
 // Set value of element at a n-dim index
 void array::Parcel::set(const intvec index, double value) {
@@ -212,8 +210,6 @@ void * array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_
 }
 
 // Destructor
-array::Parcel::~Parcel(void) {
-    this->free_current_data();
-}
+array::Parcel::~Parcel(void) { this->free_current_data(); }
 
 }  // namespace merlin
