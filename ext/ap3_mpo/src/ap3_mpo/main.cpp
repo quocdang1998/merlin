@@ -16,6 +16,7 @@ int main(int argc, char * argv[]) {
     unsigned int mode = 0;
     std::string geometry, energymesh, isotope, reaction, output = "output.txt", xstype = "micro";
     bool thread_safe = true;
+    bool verbose = false;
     std::vector<std::string> filenames;
     for (int i = 1; i < argc; i++) {
         std::string argument(argv[i]);
@@ -44,6 +45,9 @@ int main(int argc, char * argv[]) {
         } else if (!argument.compare("--no-thread-safe")) {
             thread_safe = false;
             mode |= 4;
+        } else if (!argument.compare("-v") || !argument.compare("--verbose")) {
+            verbose = true;
+            mode |= 4;
         } else {
             std::vector<std::string> glob_expanded = ap3_mpo::glob(argument);
             filenames.insert(filenames.end(), std::make_move_iterator(glob_expanded.begin()),
@@ -67,11 +71,12 @@ int main(int argc, char * argv[]) {
     if (mode == 4) {
         // build combined object
         ap3_mpo::Ap3HomogXS combined_mpo;
+        combined_mpo.verbose = verbose;
         std::vector<ap3_mpo::Ap3HomogXS *> component_ptr;
         for (int i = 0; i < filenames.size(); i++) {
             const std::string & filename = filenames[i];
             MESSAGE("Reading MPO file \"%s\"...\n", filename.c_str());
-            auto mpofile = new ap3_mpo::Ap3HomogXS(filename, geometry, energymesh, isotope, reaction);
+            auto mpofile = new ap3_mpo::Ap3HomogXS(filename, geometry, energymesh, isotope, reaction, verbose);
             component_ptr.push_back(mpofile);
             combined_mpo += *component_ptr[i];
         }

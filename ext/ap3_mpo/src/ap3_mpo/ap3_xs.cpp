@@ -18,24 +18,28 @@ namespace ap3_mpo {
 // --------------------------------------------------------------------------------------------------------------------
 
 // Constructor
-Ap3HomogXS::Ap3HomogXS(const std::string & filename,
-                                    const std::string & geometry_id, const std::string & energy_mesh_id,
-                                    const std::string & isotope, const std::string & reaction) :
-mpo_file_(filename.c_str(), H5F_ACC_RDONLY) {
+Ap3HomogXS::Ap3HomogXS(const std::string & filename, const std::string & geometry_id,
+                       const std::string & energy_mesh_id, const std::string & isotope,
+                       const std::string & reaction, bool verbose) :
+mpo_file_(filename.c_str(), H5F_ACC_RDONLY), verbose(verbose) {
     // open file and check input
-    std::printf("    Open HDF5 file \"%s\".\n", filename.c_str());
-    this->geometry_ = Ap3Geometry(geometry_id, this->mpo_file_);
-    this->energymesh_ = Ap3EnergyMesh(energy_mesh_id, this->mpo_file_);
-    this->isotope_ = Ap3Isotope(isotope, this->mpo_file_);
-    this->reaction_ = Ap3Reaction(reaction, this->mpo_file_);
-    this->state_param_ = Ap3StateParam(this->mpo_file_);
+    if (verbose) {
+        std::printf("    Open HDF5 file \"%s\".\n", filename.c_str());
+    }
+    this->geometry_ = Ap3Geometry(geometry_id, this->mpo_file_, verbose);
+    this->energymesh_ = Ap3EnergyMesh(energy_mesh_id, this->mpo_file_, verbose);
+    this->isotope_ = Ap3Isotope(isotope, this->mpo_file_, verbose);
+    this->reaction_ = Ap3Reaction(reaction, this->mpo_file_, verbose);
+    this->state_param_ = Ap3StateParam(this->mpo_file_, verbose);
     // get ouput id
     H5::Group outputs = this->mpo_file_.openGroup("output");
     auto [output_ids, _shape] = get_dset<int>(&outputs, "OUPUTID");
     int output_id = output_ids[merlin::ndim_to_contiguous_idx({this->geometry_.index, this->energymesh_.index},
                                                               _shape)];
     std::string output_id_str = append_suffix("output_", output_id);
-    std::printf("    Got output ID: %s.\n", output_id_str.c_str());
+    if (verbose) {
+        std::printf("    Got output ID: %s.\n", output_id_str.c_str());
+    }
     this->output_ = outputs.openGroup(output_id_str.c_str());
 }
 
@@ -118,21 +122,29 @@ void Ap3HomogXS::write_to_stock(const Ap3StateParam & pspace, const std::string 
         WARNING("Isotope not found in the geometry, doing nothing.\n");
         return;
     }
-    std::printf("    Found isotope in geometry (index %" PRIu64 ").\n", i_iso);
+    if (this->verbose) {
+        std::printf("    Found isotope in geometry (index %" PRIu64 ").\n", i_iso);
+    }
     auto [i_reac_in_geo, num_reac_in_geo] = get_dset<int>(&(this->output_), "info/REACTION");
     std::uint64_t i_reac = find_element(i_reac_in_geo, this->reaction_.index);
     if (i_reac == UINT64_MAX) {
         WARNING("Reaction is not considered in the geometry, doing nothing.\n");
         return;
     }
-    std::printf("    Found reaction in geometry (index %" PRIu64 ").\n", i_reac);
+    if (this->verbose) {
+        std::printf("    Found reaction in geometry (index %" PRIu64 ").\n", i_reac);
+    }
     // loop on each statept
     std::vector<std::string> statepts = ls_groups(&(this->output_), "statept_");
-    std::printf("    Loop on each statept:");
+    if (this->verbose) {
+        std::printf("    Loop on each statept:");
+    }
     for (const std::string & statept_str : statepts) {
         H5::Group statept = this->output_.openGroup(statept_str.c_str());
         std::uint64_t statept_idx = get_suffix(statept_str, "statept_");
-        std::printf(" %" PRIu64, statept_idx);
+        if (this->verbose) {
+            std::printf(" %" PRIu64, statept_idx);
+        }
         // calculate index of parameters wrt the storing array
         merlin::intvec stock_index(pspace.param_names.size()+2);
         auto [paramvalueord, paramvalueord_shape] = get_dset<int>(&statept, "PARAMVALUEORD");
@@ -195,7 +207,9 @@ void Ap3HomogXS::write_to_stock(const Ap3StateParam & pspace, const std::string 
             }
         }
     }
-    std::printf("\n");
+    if (this->verbose) {
+        std::printf("\n");
+    }
 }
 
 }  // namespace ap3_mpo

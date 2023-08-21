@@ -22,7 +22,7 @@ class Ap3HomogXS {
     Ap3HomogXS(void) = default;
     Ap3HomogXS(const std::string & filename,
                const std::string & geometry_id, const std::string & energy_mesh_id,
-               const std::string & isotope, const std::string & reaction);
+               const std::string & isotope, const std::string & reaction, bool verbose = false);
 
     Ap3HomogXS(const Ap3HomogXS & src) = default;
     Ap3HomogXS & operator=(const Ap3HomogXS & src) = default;
@@ -39,6 +39,9 @@ class Ap3HomogXS {
     void write_to_stock(const Ap3StateParam & pspace, const std::string & xstype = "micro");
 
     ~Ap3HomogXS(void) = default;
+
+    /** @brief Verbosity.*/
+    bool verbose = false;
 
   protected:
     /** @brief Geometry ID.*/

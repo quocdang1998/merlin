@@ -66,9 +66,12 @@ static void initialize_gaussian(candy::Model & model, const array::Array & train
             std::array<double, 2> means = statistics::powered_mean<2>(subset_data, n_thread);
             double deviation = statistics::moment_cpu<2>(means);
             deviation = std::sqrt(deviation);
+            // rescale mean and std
             double mean = means[0] / model.rank();
+            double std_deviation = deviation / model.rank();
+            std_deviation *= std::pow(mean, (1.f / train_data.ndim()) - 1.f);
             mean = std::pow(mean, 1.f / train_data.ndim());
-            std::normal_distribution<double> generator(mean, deviation);
+            std::normal_distribution<double> generator(mean, std_deviation);
             for (std::uint64_t r = 0; r < model.rank(); r++) {
                 double & param = model.parameters()[i_dim][i_division * model.rank() + r];
                 do {
