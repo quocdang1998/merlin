@@ -3,14 +3,15 @@ build
 
 # Cython compiled library
 merlin/**/*.cpp
-*.so
+merlin/*.so
 merlin/*.pyd
 
 # CMake generated cmake_config.py
 setup_cfg/config.py
 
-# Python __init__.py
-merlin/__init__.py
+# C++ library copied to Python source dir
+merlin/*.so
+merlin/*.dll
 
 # Ignore VC debug file
 *.pdb

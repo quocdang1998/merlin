@@ -1,0 +1,3 @@
+global-include merlin/merlin*.dll
+global-include merlin/libmerlin*.so
+global-exclude merlin/**/*.cpp

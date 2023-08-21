@@ -20,6 +20,7 @@ BraceWrapping:
   SplitEmptyFunction: false
   SplitEmptyRecord: false
   SplitEmptyNamespace: false
+BreakAfterAttributes: Always
 BreakConstructorInitializers: AfterColon
 BreakInheritanceList: AfterComma
 ColumnLimit:     120
@@ -47,6 +48,7 @@ IndentWidth:     4
 IndentCaseBlocks:    false
 IndentCaseLabels:    true
 InsertBraces:    true
+InsertNewlineAtEOF: true
 IndentPPDirectives: BeforeHash
 IndentWrappedFunctionNames: true
 KeepEmptyLinesAtTheStartOfBlocks: false
