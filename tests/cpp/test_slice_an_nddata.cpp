@@ -6,7 +6,7 @@
 #include <numeric>  // std::iota
 
 #include "merlin/logger.hpp"
-#include "merlin/array/copy.hpp"
+#include "merlin/array/operation.hpp"
 #include "merlin/array/slice.hpp"
 
 int main(void) {

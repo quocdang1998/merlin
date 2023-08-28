@@ -10,9 +10,9 @@
 #include <vector>     // std::vector
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/copy.hpp"   // merlin::array::contiguous_strides
 #include "merlin/array/slice.hpp"  // merlin::array::Slice
 #include "merlin/logger.hpp"       // FAILURE
+#include "merlin/utils.hpp"        // merlin::contiguous_to_ndim_idx
 
 namespace merlin {
 

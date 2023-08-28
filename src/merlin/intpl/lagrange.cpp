@@ -7,7 +7,6 @@
 #include <omp.h>  // #pragma omp, omp_get_num_threads
 
 #include "merlin/array/array.hpp"           // merlin::array::Array
-#include "merlin/array/copy.hpp"            // merlin::array::array_copy, merlin::array::contiguous_strides
 #include "merlin/array/parcel.hpp"          // merlin::array::Parcel
 #include "merlin/array/slice.hpp"           // merlin::array::Slice
 #include "merlin/intpl/cartesian_grid.hpp"  // merlin::intpl::CartesianGrid

@@ -1,3 +1,4 @@
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 
@@ -16,6 +17,7 @@ int main(void) {
     // [2.0, 6.0, 10.0]
 
     merlin::array::Array X({1024,256,8});
+    X.fill(std::nan(""));
 
     MESSAGE("Initialize Array A.\n");
     double A[10] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};

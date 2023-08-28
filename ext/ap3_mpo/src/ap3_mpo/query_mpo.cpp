@@ -3,8 +3,7 @@
 
 #include "H5Cpp.h"  // H5::H5File, H5::Group
 
-#include "ap3_mpo/hdf5_utils.hpp"  // ap3_mpo::ls_group, ap3_mpo::get_dset
-                                   // ap3_mpo::trim, ap3_mpo::append_suffix
+#include "ap3_mpo/hdf5_utils.hpp"  // ap3_mpo::ls_group, ap3_mpo::get_dset, ap3_mpo::trim, ap3_mpo::append_suffix
 
 namespace ap3_mpo {
 

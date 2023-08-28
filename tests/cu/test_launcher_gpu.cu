@@ -1,5 +1,5 @@
 #include "merlin/array/array.hpp"
-#include "merlin/array/copy.hpp"
+#include "merlin/array/operation.hpp"
 #include "merlin/array/parcel.hpp"
 #include "merlin/candy/launcher.hpp"
 #include "merlin/candy/model.hpp"
@@ -43,7 +43,11 @@ int main (void) {
                                    model.sharedmem_size() + train_data.sharedmem_size() + optimizer.sharedmem_size(),
                                    32);
     merlin::candy::Launcher launch_reference(model_ref_cpu, train_data_cpu, optimizer, 8);
-
+/*
+    merlin::candy::gpu_asynch_launch(model_gpu, train_data_gpu, optimizer_gpu, model.size(), train_data.ndim(),
+                                     model.sharedmem_size() + train_data.sharedmem_size() + optimizer.sharedmem_size(),
+                                     32, 5, merlin::candy::TrainMetric::RelativeSquare, 0);
+*/
     // launch and wait
     launch.launch_async(5);
     launch_reference.launch_async(5);

@@ -1,11 +1,11 @@
 // Copyright 2022 quocdang1998
-#ifndef EXT_AP3_MPO_SRC_AP3_MPO_PROPERTIES_HPP_
-#define EXT_AP3_MPO_SRC_AP3_MPO_PROPERTIES_HPP_
+#ifndef AP3_MPO_PROPERTIES_HPP_
+#define AP3_MPO_PROPERTIES_HPP_
 
 #include <cstdint>  // std::uint64_t
-#include <map>  // std::map
-#include <string>  // std::string
-#include <vector>  // std::vector
+#include <map>      // std::map
+#include <string>   // std::string
+#include <vector>   // std::vector
 
 #include "H5Cpp.h"  // H5::File
 
@@ -88,4 +88,4 @@ struct Ap3Reaction {
 
 }  // namespace ap3_mpo
 
-#endif  // EXT_AP3_MPO_SRC_AP3_MPO_PROPERTIES_HPP_
+#endif  // AP3_MPO_PROPERTIES_HPP_

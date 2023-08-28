@@ -1,6 +1,6 @@
 // Copyright 2022 quocdang1998
-#ifndef MERLIN_ARRAY_COPY_HPP_
-#define MERLIN_ARRAY_COPY_HPP_
+#ifndef MERLIN_ARRAY_OPERATION_HPP_
+#define MERLIN_ARRAY_OPERATION_HPP_
 
 #include <cstdint>  // std::uint64_t, std::int64_t
 #include <tuple>    // std::tuple
@@ -36,8 +36,8 @@ __cuhostdev__ std::tuple<std::uint64_t, std::int64_t> lcseg_and_brindex(const me
 
 /** @brief Copy data from an merlin::array::NdData to another.
  *  @details This function allows user to choose the copy function (for example, ``std::memcpy``, or ``cudaMemcpy``).
- *  @tparam CopyFunction Function copy an array to another. This function must take exactly 3 arguments:
- *  destination pointer, source pointer and length of copied memory in bytes.
+ *  @tparam CopyFunction Function copy an array to another, having the prototype of
+ *  ``void WriteFunction(void * dest, const void * src, std::size_t size_in_bytes)``.
  *  @param dest Pointer to destination merlin::array::NdData.
  *  @param src Pointer to source merlin::array::NdData.
  *  @param copy Name of the copy function.
@@ -45,8 +45,20 @@ __cuhostdev__ std::tuple<std::uint64_t, std::int64_t> lcseg_and_brindex(const me
 template <class CopyFunction>
 void array_copy(array::NdData * dest, const array::NdData * src, CopyFunction copy);
 
+/** @brief Fill all array with a given value.
+ *  @tparam WriteFunction Function writing from a CPU array to the target pointer data, having the prototype of
+ *  ``void WriteFunction(void * dest, const void * src, std::size_t size_in_bytes)``.
+ *  @param target Target array to fill.
+ *  @param fill_value Value to fill the array.
+ *  @param write_engine Name of the function writing to array.
+ *  @param buffer Size of the buffer to write to the array
+ */
+template <class CopyFunction>
+void fill(array::NdData * target, double fill_value, CopyFunction write_engine,
+          std::uint64_t buffer = 1024 * sizeof(double));
+
 }  // namespace merlin::array
 
-#include "merlin/array/copy.tpp"
+#include "merlin/array/operation.tpp"
 
-#endif  // MERLIN_ARRAY_COPY_HPP_
+#endif  // MERLIN_ARRAY_OPERATION_HPP_

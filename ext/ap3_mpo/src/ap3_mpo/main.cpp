@@ -1,15 +1,16 @@
 // Copyright 2022 quocdang1998
+#include <cmath>     // std::nan
 #include <iterator>  // std::make_move_iterator
-#include <string>  // std::string
-#include <vector>  // std::vector
+#include <string>    // std::string
+#include <vector>    // std::vector
 
 #include "merlin/array/stock.hpp"  // merlin::array::Stock
-#include "merlin/logger.hpp"  // MESSAGE
+#include "merlin/logger.hpp"       // MESSAGE
 
-#include "ap3_mpo/ap3_xs.hpp"  // ap3_mpo::Ap3HomogXS
+#include "ap3_mpo/ap3_xs.hpp"        // ap3_mpo::Ap3HomogXS
+#include "ap3_mpo/glob.hpp"          // ap3_mpo::glob
 #include "ap3_mpo/help_message.hpp"  // ap3_mpo::help_message
-#include "ap3_mpo/glob.hpp"  // ap3_mpo::glob
-#include "ap3_mpo/query_mpo.hpp"  // ap3_mpo::query_mpo
+#include "ap3_mpo/query_mpo.hpp"     // ap3_mpo::query_mpo
 
 int main(int argc, char * argv[]) {
     // parse argument
@@ -91,6 +92,7 @@ int main(int argc, char * argv[]) {
         }
         // write data to file
         merlin::array::Stock stock(output, combined_mpo.get_output_shape(), 0, thread_safe);
+        stock.fill(std::nan(""));
         combined_mpo.assign_destination_array(stock);
         combined_mpo.write_to_stock(combined_mpo.state_param(), xstype);
         // deallocate memory

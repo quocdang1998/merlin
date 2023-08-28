@@ -3,11 +3,11 @@
 
 #include <functional>  // std::bind, std::placeholders
 
-#include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/copy.hpp"   // merlin::array::contiguous_strides, merlin::array::array_copy
-#include "merlin/array/slice.hpp"  // merlin::array::Slice
-#include "merlin/logger.hpp"       // FAILURE
-#include "merlin/utils.hpp"        // merlin::contiguous_to_ndim_idx, merlin::inner_prod
+#include "merlin/array/array.hpp"      // merlin::array::Array
+#include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::copy, merlin::array::fill
+#include "merlin/array/slice.hpp"      // merlin::array::Slice
+#include "merlin/logger.hpp"           // FAILURE
+#include "merlin/utils.hpp"            // merlin::contiguous_to_ndim_idx, merlin::inner_prod
 
 namespace merlin {
 
@@ -174,6 +174,13 @@ void array::Parcel::set(std::uint64_t index, double value) {
     this->set(contiguous_to_ndim_idx(index, this->shape()), value);
 }
 
+// Set value of all elements
+void array::Parcel::fill(double value) {
+    auto copy_func = std::bind(::cudaMemcpy, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                               ::cudaMemcpyHostToDevice);
+    array::fill(this, value, copy_func);
+}
+
 // Transfer data to GPU
 void array::Parcel::transfer_data_to_gpu(const array::Array & cpu_array, const cuda::Stream & stream) {
     // get device id
@@ -184,7 +191,7 @@ void array::Parcel::transfer_data_to_gpu(const array::Array & cpu_array, const c
     auto copy_func = std::bind(::cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                                ::cudaMemcpyHostToDevice, copy_stream);
     // copy data to GPU
-    array::array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&cpu_array), copy_func);
+    array::array_copy(this, &cpu_array, copy_func);
 }
 
 // Copy data to a pre-allocated memory

@@ -5,7 +5,7 @@
 #include <omp.h>
 
 #include "merlin/array/array.hpp"
-#include "merlin/array/copy.hpp"
+#include "merlin/array/operation.hpp"
 #include "merlin/candy/optmz/grad_descent.hpp"
 #include "merlin/candy/launcher.hpp"
 // #include "merlin/candy/loss.hpp"
@@ -32,7 +32,6 @@ double get_max(const merlin::candy::Model & model, const merlin::array::Array & 
 }
 
 int main(void) {
-    std::printf("Initializing\n");
     double data[6] = {1.2, 2.3, 3.6, 4.8, 7.1, 2.5};
     // double data[6] = {2.5, 3.0, 3.5, 4.45, 5.34, 6.07};
     merlin::intvec data_dims = {2, 3}, data_strides = merlin::array::contiguous_strides(data_dims, sizeof(double));
@@ -43,11 +42,10 @@ int main(void) {
     model.initialize(train_data, merlin::candy::RandomInitializer::NormalDistribution, 24);
 
     merlin::Vector<double> gradient(model.size());
-    merlin::candy::optmz::GradDescent grad(0.5);
+    merlin::candy::optmz::GradDescent grad(0.1);
 
     merlin::candy::Launcher launch(model, train_data, grad, 24);
-    launch.launch_async(100);
-    launch.launch_async(900);
+    launch.launch_async(1000, merlin::candy::TrainMetric::AbsoluteSquare);
     launch.synchronize();
 
     MESSAGE("Model update after last steps: %s\n", model.str().c_str());

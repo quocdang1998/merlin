@@ -1,14 +1,14 @@
 // Copyright 2022 quocdang1998
 #include "merlin/intpl/regular_grid.hpp"
 
-#include <cinttypes>
-#include <cstring>  // std::memcpy
-#include <numeric>  // std::iota
-#include <utility>  // std::move
+#include <cinttypes>  // PRIu64
+#include <cstring>    // std::memcpy
+#include <numeric>    // std::iota
+#include <utility>    // std::move
 
-#include "merlin/array/copy.hpp"   // merlin::array::array_copy
-#include "merlin/array/slice.hpp"  // merlin::array:Slice
-#include "merlin/logger.hpp"       // FAILURE
+#include "merlin/array/operation.hpp"  // merlin::array::array_copy
+#include "merlin/array/slice.hpp"      // merlin::array:Slice
+#include "merlin/logger.hpp"           // FAILURE
 
 namespace merlin {
 

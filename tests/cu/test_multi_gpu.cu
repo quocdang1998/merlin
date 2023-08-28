@@ -2,7 +2,7 @@
 #include "merlin/cuda/context.hpp"
 #include "merlin/cuda/stream.hpp"
 #include "merlin/array/array.hpp"
-#include "merlin/array/copy.hpp"
+#include "merlin/array/operation.hpp"
 #include "merlin/array/parcel.hpp"
 #include "merlin/array/slice.hpp"
 #include "merlin/logger.hpp"

@@ -97,6 +97,8 @@ class array::Stock : public array::NdData {
      *  @param i_dim Index of dimension to collapse.
      */
     MERLIN_EXPORTS void remove_dim(std::uint64_t i_dim = 0);
+    /** @brief Set value of all elements.*/
+    MERLIN_EXPORTS void fill(double value);
     /// @}
 
     /// @name Write to file

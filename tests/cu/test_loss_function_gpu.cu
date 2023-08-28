@@ -1,5 +1,5 @@
 #include "merlin/array/array.hpp"
-#include "merlin/array/copy.hpp"
+#include "merlin/array/operation.hpp"
 #include "merlin/array/parcel.hpp"
 #include "merlin/candy/model.hpp"
 #include "merlin/candy/loss.hpp"

@@ -1,5 +1,5 @@
 #include "merlin/array/array.hpp"
-#include "merlin/array/copy.hpp"
+#include "merlin/array/operation.hpp"
 #include "merlin/shuffle.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/vector.hpp"

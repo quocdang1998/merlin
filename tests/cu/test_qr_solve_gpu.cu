@@ -49,7 +49,7 @@ __global__ void test_qr_solve(double * matrix_data, double * vector_data) {
     }
     __syncthreads();
 }
-    
+
 
 int main(void) {
     merlin::floatvec matrix_data = {12, -51, 4, 6, 167, -68, -4, 24, -41};

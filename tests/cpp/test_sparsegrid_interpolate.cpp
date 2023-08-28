@@ -1,7 +1,7 @@
 #include <cinttypes>
 
 #include "merlin/array/array.hpp"
-#include "merlin/array/copy.hpp"
+#include "merlin/array/operation.hpp"
 #include "merlin/array/slice.hpp"
 #include "merlin/interpolant/cartesian_grid.hpp"
 #include "merlin/interpolant/sparse_grid.hpp"

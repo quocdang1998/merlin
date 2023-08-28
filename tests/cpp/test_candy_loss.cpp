@@ -5,7 +5,7 @@
 #include <omp.h>
 
 #include "merlin/array/array.hpp"
-#include "merlin/array/copy.hpp"
+#include "merlin/array/operation.hpp"
 #include "merlin/candy/loss.hpp"
 #include "merlin/candy/model.hpp"
 #include "merlin/logger.hpp"

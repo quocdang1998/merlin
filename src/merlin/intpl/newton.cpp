@@ -1,14 +1,13 @@
 // Copyright 2022 quocdang1998
 #include "merlin/intpl/newton.hpp"
 
-#include <cinttypes>
 #include <cstring>  // std::memcpy
 #include <utility>  // std::move
 
 #include <omp.h>  // pragma omp, omp_get_num_threads
 
 #include "merlin/array/array.hpp"           // merlin::array::Array
-#include "merlin/array/copy.hpp"            // merlin::array::array_copy
+#include "merlin/array/operation.hpp"       // merlin::array::array_copy
 #include "merlin/array/slice.hpp"           // merlin::array::Slice
 #include "merlin/intpl/cartesian_grid.hpp"  // merlin::intpl::CartesianGrid
 #include "merlin/intpl/sparse_grid.hpp"     // merlin::intpl::SparseGrid

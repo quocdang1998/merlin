@@ -1,15 +1,15 @@
 // Copyright 2022 quocdang1998
-#ifndef EXT_AP3_MPO_SRC_AP3_MPO_HDF5_UTILS_HPP_
-#define EXT_AP3_MPO_SRC_AP3_MPO_HDF5_UTILS_HPP_
+#ifndef AP3_MPO_HDF5_UTILS_HPP_
+#define AP3_MPO_HDF5_UTILS_HPP_
 
 #include <algorithm>  // std::transform
-#include <cctype>  // std::tolower
+#include <cctype>     // std::tolower
 #include <cinttypes>  // SCNu64
-#include <cstdio>  // std::snprintf, std::sscanf
-#include <cstdint>  // std::uint64_t
-#include <string>  // std::string
-#include <utility>  // std::pair
-#include <vector>  // std::vector
+#include <cstdint>    // std::uint64_t
+#include <cstdio>     // std::snprintf, std::sscanf
+#include <string>     // std::string
+#include <utility>    // std::pair
+#include <vector>     // std::vector
 
 #include "H5Cpp.h"  // H5::Group
 
@@ -23,7 +23,7 @@ std::string & trim(std::string & s);
 /** @brief Get lowercased string.*/
 inline std::string lowercase(const std::string & s) {
     std::string result(s);
-    std::transform(s.begin(), s.end(), result.begin(), [] (char c) {return std::tolower(c);});
+    std::transform(s.begin(), s.end(), result.begin(), [](char c) { return std::tolower(c); });
     return result;
 }
 
@@ -60,4 +60,4 @@ std::uint64_t find_element(const std::vector<ArrayType> & array, const Sample & 
 
 #include "hdf5_utils.tpp"
 
-#endif  // EXT_AP3_MPO_SRC_AP3_MPO_HDF5_UTILS_HPP_
+#endif  // AP3_MPO_HDF5_UTILS_HPP_

@@ -98,6 +98,8 @@ class array::NdData {
      *  @param i_dim Index of dimension to collapse.
      */
     MERLIN_EXPORTS virtual void remove_dim(std::uint64_t i_dim = 0);
+    /** @brief Set value of all elements.*/
+    virtual void fill(double value) {}
     /// @}
 
     /// @name Representation

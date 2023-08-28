@@ -4,7 +4,7 @@
 #include <functional>  // std::bind, std::placeholders
 #include <utility>     // std::move, std::make_pair
 
-#include "merlin/array/copy.hpp"            // merlin::array::array_copy
+#include "merlin/array/operation.hpp"       // merlin::array::array_copy
 #include "merlin/array/parcel.hpp"          // merlin::array::Parcel
 #include "merlin/array/slice.hpp"           // merlin::array::Slice
 #include "merlin/cuda/memory.hpp"           // merlin::cuda::Memory

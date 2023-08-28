@@ -1,11 +1,11 @@
 // Copyright 2022 quocdang1998
 #include "ap3_mpo/properties.hpp"
 
-#include <algorithm>  // std::find
-#include <cstdlib>  // std::atoi
-#include <cinttypes>  // PRIu64
-#include <iterator>  // std::back_inserter
-#include <tuple>  // std::tie
+#include <algorithm>      // std::find
+#include <cinttypes>      // PRIu64
+#include <cstdlib>        // std::atoi
+#include <iterator>       // std::back_inserter
+#include <tuple>          // std::tie
 #include <unordered_set>  // std::unordered_set
 
 #include "merlin/logger.hpp"  // WARING, FAILURE
@@ -15,9 +15,9 @@
 
 namespace ap3_mpo {
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Ap3Geometry and Ap3EnergyMesh
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 Ap3Geometry::Ap3Geometry(const std::string & name, H5::H5File & mpo_file, bool verbose) : name(name) {
     if (name.empty()) {
@@ -63,9 +63,9 @@ Ap3EnergyMesh::Ap3EnergyMesh(const std::string & name, H5::H5File & mpo_file, bo
     this->energies = std::move(energies_);
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Ap3StateParam
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 Ap3StateParam::Ap3StateParam(H5::H5File & mpo_file, bool verbose) {
     H5::Group parameters = mpo_file.openGroup("parameters");
@@ -90,7 +90,9 @@ Ap3StateParam::Ap3StateParam(H5::H5File & mpo_file, bool verbose) {
         auto [param_value, n_value] = get_dset<float>(&parameters, param_dset_name.c_str());
         if (verbose) {
             std::printf("        %s:", param_name.c_str());
-            for (const float & pv : param_value) std::printf(" %.2f", pv);
+            for (const float & pv : param_value) {
+                std::printf(" %.2f", pv);
+            }
             std::printf("\n");
         }
         this->param_values[param_name] = std::vector<double>(param_value.begin(), param_value.end());
@@ -114,16 +116,15 @@ Ap3StateParam & Ap3StateParam::operator+=(Ap3StateParam & other) {
     for (const std::string & pname : this->param_names) {
         std::vector<double> old_values = this->param_values[pname];
         this->param_values[pname] = std::vector<double>();
-        std::set_union(old_values.begin(), old_values.end(),
-                       other.param_values[pname].begin(), other.param_values[pname].end(),
-                       std::back_inserter(this->param_values[pname]));
+        std::set_union(old_values.begin(), old_values.end(), other.param_values[pname].begin(),
+                       other.param_values[pname].end(), std::back_inserter(this->param_values[pname]));
     }
     return *this;
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 // Ap3Isotope and Ap3Reaction
-// --------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------------
 
 Ap3Isotope::Ap3Isotope(const std::string & name, H5::H5File & mpo_file, bool verbose) : name(name) {
     if (this->name.empty()) {

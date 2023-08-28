@@ -1,8 +1,8 @@
 // Copyright 2022 quocdang1998
-#ifndef EXT_AP3_MPO_SRC_AP3_MPO_AP3_XS_HPP_
-#define EXT_AP3_MPO_SRC_AP3_MPO_AP3_XS_HPP_
+#ifndef AP3_MPO_AP3_XS_HPP_
+#define AP3_MPO_AP3_XS_HPP_
 
-#include <list>  // std::list
+#include <list>    // std::list
 #include <string>  // std::string
 #include <vector>  // std::vector
 
@@ -11,8 +11,8 @@
 #include "merlin/array/nddata.hpp"  // merlin::array::NdData
 
 #include "ap3_mpo/declaration.hpp"  // ap3_mpo::Ap3HomogXS
-#include "ap3_mpo/properties.hpp"  // ap3_mpo::Ap3Geometry, ap3_mpo::Ap3EnergyMesh
-                                   // ap3_mpo::Ap3StateParam, ap3_mpo::Ap3Isotope
+#include "ap3_mpo/properties.hpp"   // ap3_mpo::Ap3Geometry, ap3_mpo::Ap3EnergyMesh
+                                    // ap3_mpo::Ap3StateParam, ap3_mpo::Ap3Isotope
 
 namespace ap3_mpo {
 
@@ -20,8 +20,7 @@ namespace ap3_mpo {
 class Ap3HomogXS {
   public:
     Ap3HomogXS(void) = default;
-    Ap3HomogXS(const std::string & filename,
-               const std::string & geometry_id, const std::string & energy_mesh_id,
+    Ap3HomogXS(const std::string & filename, const std::string & geometry_id, const std::string & energy_mesh_id,
                const std::string & isotope, const std::string & reaction, bool verbose = false);
 
     Ap3HomogXS(const Ap3HomogXS & src) = default;
@@ -29,9 +28,9 @@ class Ap3HomogXS {
     Ap3HomogXS(Ap3HomogXS && src) = default;
     Ap3HomogXS & operator=(Ap3HomogXS && src) = default;
 
-    constexpr Ap3StateParam & state_param(void) noexcept {return this->state_param_;}
-    constexpr const Ap3StateParam & state_param(void) const noexcept {return this->state_param_;}
-    int num_linked_instances(void) {return this->linked_instances_.size();}
+    constexpr Ap3StateParam & state_param(void) noexcept { return this->state_param_; }
+    constexpr const Ap3StateParam & state_param(void) const noexcept { return this->state_param_; }
+    int num_linked_instances(void) { return this->linked_instances_.size(); }
 
     Ap3HomogXS & operator+=(Ap3HomogXS & other);
     merlin::intvec get_output_shape(void);
@@ -67,4 +66,4 @@ class Ap3HomogXS {
 
 }  // namespace ap3_mpo
 
-#endif  // EXT_AP3_MPO_SRC_AP3_MPO_AP3_XS_HPP_
+#endif  // AP3_MPO_AP3_XS_HPP_

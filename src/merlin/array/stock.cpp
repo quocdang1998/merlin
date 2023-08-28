@@ -7,12 +7,12 @@
 #include <ios>         // std::ios_base::failure
 #include <sstream>     // std::ostringstream
 
-#include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/copy.hpp"   // merlin::array::array_copy, merlin::array::contiguous_strides
-#include "merlin/logger.hpp"       // WARNING, FAILURE
-#include "merlin/platform.hpp"     // __MERLIN_LINUX__, __MERLIN_WINDOWS__
-#include "merlin/utils.hpp"        // merlin::get_current_process_id, merlin::get_time
-#include "merlin/vector.hpp"       // merlin::intvec
+#include "merlin/array/array.hpp"      // merlin::array::Array
+#include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::copy, merlin::array::fill
+#include "merlin/logger.hpp"           // WARNING, FAILURE
+#include "merlin/platform.hpp"         // __MERLIN_LINUX__, __MERLIN_WINDOWS__
+#include "merlin/utils.hpp"            // merlin::get_current_process_id, merlin::get_time
+#include "merlin/vector.hpp"           // merlin::intvec
 
 // Acquire lockfile if thread safe
 #define EXCLUSIVE_LOCK_THREADSAFE()                                                                                    \
@@ -200,10 +200,17 @@ void array::Stock::reshape(const intvec & new_shape) { this->array::NdData::resh
 // Collapse dimension from felt (or right)
 void array::Stock::remove_dim(std::uint64_t i_dim) { this->array::NdData::remove_dim(i_dim); }
 
+// Set value of all elements
+void array::Stock::fill(double value) {
+    auto write_func = std::bind(write_to_file, this->file_ptr_, std::placeholders::_1, std::placeholders::_2,
+                                std::placeholders::_3);
+    array::fill(this, value, write_func);
+}
+
 // Write data from an array to a file
 void array::Stock::record_data_to_file(const array::Array & src) {
-    auto write_func =
-        std::bind(write_to_file, this->file_ptr_, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+    auto write_func = std::bind(write_to_file, this->file_ptr_, std::placeholders::_1, std::placeholders::_2,
+                                std::placeholders::_3);
     EXCLUSIVE_LOCK_THREADSAFE();
     array_copy(this, &src, write_func);
     UNLOCK_THREADSAFE();

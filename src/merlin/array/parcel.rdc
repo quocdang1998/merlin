@@ -1,9 +1,9 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/parcel.hpp"
 
-#include "merlin/array/copy.hpp"  // merlin::array::contiguous_strides
-#include "merlin/logger.hpp"      // CUDAERR
-#include "merlin/utils.hpp"       // merlin::inner_prod, merlin::contiguous_to_ndim_idx
+#include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides
+#include "merlin/logger.hpp"           // CUDAERR
+#include "merlin/utils.hpp"            // merlin::inner_prod, merlin::contiguous_to_ndim_idx
 
 namespace merlin {
 

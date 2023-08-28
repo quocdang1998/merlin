@@ -8,12 +8,12 @@
 #include <mutex>       // std::mutex
 #include <utility>     // std::move
 
-#include "merlin/array/copy.hpp"    // merlin::array::contiguous_strides, merlin::array::array_copy
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/array/slice.hpp"   // merlin::array::Slice
-#include "merlin/array/stock.hpp"   // merlin::array::Stock
-#include "merlin/logger.hpp"        // FAILURE
-#include "merlin/utils.hpp"         // merlin::contiguous_to_ndim_idx, merlin::inner_prod
+#include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::copy, merlin::array::fill
+#include "merlin/array/parcel.hpp"     // merlin::array::Parcel
+#include "merlin/array/slice.hpp"      // merlin::array::Slice
+#include "merlin/array/stock.hpp"      // merlin::array::Stock
+#include "merlin/logger.hpp"           // FAILURE
+#include "merlin/utils.hpp"            // merlin::contiguous_to_ndim_idx, merlin::inner_prod
 
 namespace merlin {
 
@@ -219,6 +219,11 @@ void array::Array::reshape(const intvec & new_shape) {
 void array::Array::remove_dim(std::uint64_t i_dim) {
     this->array::NdData::remove_dim(i_dim);
     this->initialize_iterator();
+}
+
+// Set value of all elements
+void array::Array::fill(double value) {
+    array::fill(this, value, std::memcpy);
 }
 
 // Copy data from GPU array

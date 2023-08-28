@@ -78,7 +78,7 @@ list(APPEND MERLIN_SRC_GLB
      intpl/newton.glb
 )
 list(APPEND MERLIN_SRC_RDC
-     array/copy.rdc
+     array/operation.rdc
      array/nddata.rdc
      array/parcel.rdc
      array/slice.rdc
