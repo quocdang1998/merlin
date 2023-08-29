@@ -38,6 +38,9 @@ cuda::Context::Context(const cuda::Device & gpu, cuda::ContextSchedule schedule)
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for context management.\n");
 }
 
+// Constructor from context pointer (to be improved for the case of primary context)
+cuda::Context::Context(std::uintptr_t context_ptr) : context_(context_ptr) { }
+
 // Check if the context is the top of context stack
 bool cuda::Context::is_current(void) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for context management.\n");

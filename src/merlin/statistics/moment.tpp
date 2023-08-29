@@ -2,7 +2,7 @@
 #ifndef MERLIN_STATISTICS_MOMENT_TPP_
 #define MERLIN_STATISTICS_MOMENT_TPP_
 
-#include <cmath>    // std::pow
+#include <cmath>    // std::isnormal, std::pow
 #include <cstring>  // std::memset
 
 #include <omp.h>  // #pragma omp
@@ -28,11 +28,14 @@ std::array<double, order> statistics::powered_mean(const array::Array & data, st
     // parallel calculate the sum of elements in array
     double * storing = new double[nthreads * order];
     std::memset(storing, 0, nthreads * order * sizeof(double));
-    #pragma omp parallel for num_threads(nthreads)
+    #pragma omp parallel for schedule(guided, Environment::parallel_chunk) num_threads(nthreads)
     for (std::int64_t i_point = 0; i_point < data.size(); i_point++) {
         std::uint64_t i_thread = ::omp_get_thread_num();
         intvec index = contiguous_to_ndim_idx(i_point, data.shape());
         double element = data.get(index);
+        if (!std::isnormal(element)) {
+            continue;
+        }
         double element_i_order = element;
         for (std::uint64_t i_order = 0; i_order < order; i_order++) {
             storing[i_thread * order + i_order] += element_i_order;
@@ -42,7 +45,7 @@ std::array<double, order> statistics::powered_mean(const array::Array & data, st
     // return mean
     std::array<double, order> result;
     result.fill(0.0);
-    #pragma omp parallel for num_threads(nthreads)
+    #pragma omp parallel for schedule(guided, Environment::parallel_chunk) num_threads(nthreads)
     for (std::int64_t i_order = 0; i_order < order; i_order++) {
         for (std::uint64_t i_thread = 0; i_thread < nthreads; i_thread++) {
             result[i_order] += storing[i_thread * order + i_order];

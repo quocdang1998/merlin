@@ -65,7 +65,8 @@ std::pair<std::vector<T>, merlin::intvec> get_dset(H5::Group * group, char const
 // Find index by value
 template <typename ArrayType, typename Sample>
 std::uint64_t find_element(const std::vector<ArrayType> & array, const Sample & element) {
-    auto it = std::find(array.cbegin(), array.cend(), element);
+    auto predicate = [&element] (const ArrayType & array_element) { return is_near(array_element, element); };
+    auto it = std::find_if(array.cbegin(), array.cend(), predicate);
     if (it == array.cend()) {
         return UINT64_MAX;
     }

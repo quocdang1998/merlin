@@ -13,6 +13,18 @@
 
 namespace merlin {
 
+namespace candy {
+
+/** @brief Loss function used for training Candecomp model.*/
+enum class TrainMetric {
+    /** @brief Relative square error, skipping all data points that are not normal (``0``, ``inf`` or ``nan``).*/
+    RelativeSquare = 0x00,
+    /** @brief Absolute square error, skipping all data points that are not finite (``inf`` or ``nan``).*/
+    AbsoluteSquare = 0x01,
+};
+
+}  // namespace candy
+
 /** @brief Class launching model training.*/
 class candy::Launcher {
   public:
@@ -47,8 +59,10 @@ class candy::Launcher {
 
     /** @brief Launch asynchronously the gradient update.
      *  @param rep Number of times to update model parameter.
+     *  @param metric Error metric to train the model.
      */
-    MERLIN_EXPORTS void launch_async(std::uint64_t rep = 1);
+    MERLIN_EXPORTS void launch_async(std::uint64_t rep = 1,
+                                     candy::TrainMetric metric = candy::TrainMetric::RelativeSquare);
     /** @brief Synchronize the launch.
      *  @details Force CPU to wait until the launch has finished.
      */
@@ -91,12 +105,14 @@ __cuhostdev__ intvec contiguous_to_ndim_idx_1(std::uint64_t index, const intvec 
 /** @brief Launch asynchronously model fitting algorithm on CPU.*/
 std::future<void> * cpu_async_launch(std::future<void> * current_job, candy::Model * p_model,
                                      const array::Array * p_train_data, candy::Optimizer * p_optimizer,
-                                     std::uint64_t model_size, std::uint64_t n_thread, std::uint64_t rep);
+                                     std::uint64_t model_size, std::uint64_t n_thread, std::uint64_t rep,
+                                     candy::TrainMetric metric);
 
 /** @brief Launch asynchronously model fitting algorithm on GPU.*/
 void gpu_asynch_launch(candy::Model * p_model, const array::Parcel * p_train_data, candy::Optimizer * p_optimizer,
                        std::uint64_t model_size, std::uint64_t ndim, std::uint64_t share_mem_size,
-                       std::uint64_t block_size, std::uint64_t rep, cuda::Stream * stream_ptr);
+                       std::uint64_t block_size, std::uint64_t rep, candy::TrainMetric metric,
+                       cuda::Stream * stream_ptr);
 
 /** @brief Push context and destroy the stream.*/
 void destroy_stream_in_context(std::uintptr_t context_ptr, cuda::Stream *& stream_ptr);

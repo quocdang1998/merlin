@@ -26,7 +26,7 @@ n_thread_(block_size) {
     this->synchronizer_ = reinterpret_cast<void *>(p_stream);
     Environment::mutex.unlock();
     // add share memory size for calculation
-    this->shared_mem_size_ = share_mem_size + model_size * sizeof(double) + ndim * sizeof(std::uint64_t);
+    this->shared_mem_size_ = share_mem_size + model_size * sizeof(double) + block_size * ndim * sizeof(std::uint64_t);
 }
 
 // Push context and destroy the stream

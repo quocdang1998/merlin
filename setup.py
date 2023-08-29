@@ -21,7 +21,7 @@ if v_cython < v_require:
 # import setuptools
 from setuptools import Extension, setup
 from Cython.Build import cythonize
-from setup_cfg import build_ext, ext_options
+from setup_cfg import build_ext, ext_options, copy_dll_libs
 
 # Cython extensions
 extensions = [
@@ -37,6 +37,7 @@ extensions = [
 
 # build extensions and install
 if __name__ == "__main__":
+    copy_dll_libs()
     cython_extensions = cythonize(extensions, language_level="3str",
                                   include_path=[package_dir],
                                   nthreads=os.cpu_count(), annotate=False)

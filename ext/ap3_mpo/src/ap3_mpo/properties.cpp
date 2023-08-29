@@ -1,7 +1,7 @@
 // Copyright 2022 quocdang1998
 #include "ap3_mpo/properties.hpp"
 
-#include <algorithm>      // std::find
+#include <algorithm>      // std::find, std::unique
 #include <cinttypes>      // PRIu64
 #include <cstdlib>        // std::atoi
 #include <iterator>       // std::back_inserter
@@ -11,7 +11,7 @@
 #include "merlin/logger.hpp"  // WARING, FAILURE
 
 #include "ap3_mpo/hdf5_utils.hpp"  // ap3_mpo::lowercase, ap3_mpo::check_string_in_array
-                                   // ap3_mpo::get_dset, ap3_mpo::append_suffix
+                                   // ap3_mpo::get_dset, ap3_mpo::append_suffix, ap3_mpo::is_near
 
 namespace ap3_mpo {
 
@@ -118,6 +118,10 @@ Ap3StateParam & Ap3StateParam::operator+=(Ap3StateParam & other) {
         this->param_values[pname] = std::vector<double>();
         std::set_union(old_values.begin(), old_values.end(), other.param_values[pname].begin(),
                        other.param_values[pname].end(), std::back_inserter(this->param_values[pname]));
+        std::sort(this->param_values[pname].begin(), this->param_values[pname].end());
+        auto last = std::unique(this->param_values[pname].begin(), this->param_values[pname].end(),
+                                is_near<double, double>);
+        this->param_values[pname].erase(last, this->param_values[pname].end());
     }
     return *this;
 }

@@ -38,12 +38,8 @@ cdef class Environment:
             CppEnvironment_parallel_chunk = n_chunks
         return CppEnvironment_parallel_chunk
 
-    @classmethod
-    def default_gpu(self):
-        """default_gpu(self)
-        Set ID of default GPU.
-        """
-        return CppEnvironment_default_gpu
+    def __repr__(self):
+        return "<Merlin execution Environment>"
 
     def __dealloc__(self):
         del self.core

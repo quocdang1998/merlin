@@ -12,5 +12,3 @@ cdef extern from "merlin/env.hpp":
     cdef atomic[unsigned int] CppEnvironment_num_instances "merlin::Environment::num_instances"
 
     cdef uint64_t CppEnvironment_parallel_chunk "merlin::Environment::parallel_chunk"
-
-    cdef int CppEnvironment_default_gpu "merlin::Environment::default_gpu"

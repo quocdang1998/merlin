@@ -208,7 +208,7 @@ void * candy::Model::copy_to_gpu(candy::Model * gpu_ptr, void * grid_vector_data
 }
 
 // Copy data from GPU to CPU
-void * candy::Model::copy_from_gpu(void * parameters_data_ptr, std::uintptr_t stream_ptr) {
+void * candy::Model::copy_from_gpu(candy::Model * parameters_data_ptr, std::uintptr_t stream_ptr) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
     return nullptr;
 }

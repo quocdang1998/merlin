@@ -14,6 +14,9 @@ namespace merlin {
 
 // Initialize CUDA context
 void initialize_cuda_context(void) {
+    // initialize context
+    ::cuInit(0);
+    // get number of CUDA capable GPUs
     int num_gpu;
     ::cudaError_t err_ = ::cudaGetDeviceCount(&num_gpu);
     if (err_ != 0) {
@@ -22,16 +25,6 @@ void initialize_cuda_context(void) {
     // return empty context if no GPU was found
     if (num_gpu == 0) {
         WARNING("No GPU was found. Return empty CUDA context (GPU functions will have no effect).\n");
-        return;
-    }
-    // try to get current context
-    ::CUcontext current_ctx;
-    err_ = static_cast<::cudaError_t>(::cuCtxGetCurrent(&current_ctx));
-    if ((err_ != 3) && (err_ != 0)) {
-        FAILURE(cuda_runtime_error, "Get current context failed with message \"%s\".\n", ::cudaGetErrorString(err_));
-    }
-    // initialized case (return success)
-    if ((err_ == 0) && (current_ctx != nullptr)) {
         return;
     }
 }

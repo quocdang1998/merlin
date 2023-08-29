@@ -7,7 +7,7 @@
 #include <omp.h>  // #pragma omp
 
 #include "merlin/candy/model.hpp"  // merlin::candy::Model
-#include "merlin/logger.hpp"       // FAILURE
+#include "merlin/logger.hpp"       // merlin::cuda_compile_error, FAILURE
 
 namespace merlin {
 
@@ -32,5 +32,15 @@ void candy::optmz::AdaGrad::update_cpu(candy::Model & model, floatvec & gradient
         param -= correction;
     }
 }
+
+#ifndef __MERLIN_CUDA__
+
+// Create an object on GPU by the GPU
+candy::Optimizer * candy::optmz::AdaGrad::new_gpu(void) const {
+    FAILURE(cuda_compile_error, "Compile with CUDA option enabled to access GPU features.\n");
+    return nullptr;
+}
+
+#endif  // __MERLIN_CUDA__
 
 }  // namespace merlin

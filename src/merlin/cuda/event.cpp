@@ -3,6 +3,8 @@
 
 #include <sstream>  // std::ostringstream
 
+#include "merlin/logger.hpp"  // cuda_compile_error, FAILURE
+
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------

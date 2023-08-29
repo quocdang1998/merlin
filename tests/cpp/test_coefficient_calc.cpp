@@ -3,8 +3,8 @@
 #include "merlin/array/array.hpp"
 #include "merlin/array/operation.hpp"
 #include "merlin/array/slice.hpp"
-#include "merlin/interpolant/cartesian_grid.hpp"
-#include "merlin/interpolant/interpolant.hpp"
+#include "merlin/intpl/cartesian_grid.hpp"
+#include "merlin/intpl/interpolant.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/vector.hpp"
 
@@ -17,7 +17,7 @@ int main(void) {
     merlin::intvec dims = {2, 4, 3};
     merlin::array::Array value(dims);
 
-    merlin::interpolant::CartesianGrid grid({{0.0, 2.5}, {0.0, 1.0, 2.0, 3.0}, {-1.0, 0.0, 1.0}});
+    merlin::intpl::CartesianGrid grid({{0.0, 2.5}, {0.0, 1.0, 2.0, 3.0}, {-1.0, 0.0, 1.0}});
     MESSAGE("Grid: %s\n", grid.str().c_str());
     for (std::uint64_t i_point = 0; i_point < grid.size(); i_point++) {
         merlin::Vector<double> point = grid[i_point];
@@ -26,7 +26,7 @@ int main(void) {
     MESSAGE("Initial array: %s\n", value.str().c_str());
     merlin::array::Array coeff(value.shape());
 
-    merlin::interpolant::PolynomialInterpolant pl_int(grid, value, merlin::interpolant::Method::Lagrange);
+    merlin::intpl::PolynomialInterpolant pl_int(grid, value, merlin::intpl::Method::Lagrange);
     MESSAGE("Coefficient: %s\n", pl_int.get_coeff().str().c_str());
 
 

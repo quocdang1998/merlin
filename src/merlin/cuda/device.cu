@@ -37,6 +37,7 @@ static int convert_SM_version_to_core(int major, int minor) {
         {0x80,  64},
         {0x86, 128},
         {0x87, 128},
+        {0x89, 128},
         {0x90, 128}
     };
     int SM = (major << 4) + minor;
@@ -102,11 +103,20 @@ bool cuda::Device::test_gpu(void) const {
     int * gpu_int;
     ::cudaError_t err_;
     int reference = cpu_int[0] + cpu_int[1];
-    // set device
+    // clone current context
+    cuda::Context current_ctx = cuda::Context::get_current();
+    if (current_ctx.get_context_ptr() != 0) {
+        current_ctx.push_current();
+    }
+    // set device (also change the current context)
     err_ = ::cudaSetDevice(this->id_);
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "cudaSetDevice for id = %d failed with message \"%s\".\n", this->id_,
                 ::cudaGetErrorName(err_));
+    }
+    if (current_ctx.get_context_ptr() != 0) {
+        cuda::Context current_gpu_ctx = cuda::Context::get_current();
+        current_gpu_ctx.pop_current();
     }
     // malloc
     err_ = ::cudaMalloc(&gpu_int, 3 * sizeof(int));
@@ -179,9 +189,8 @@ void cuda::print_all_gpu_specification(void) {
     int tot_device = cuda::Device::get_num_gpu();
     for (int i = 0; i < tot_device; i++) {
         std::printf("GPU Id: %d.\n", i);
-        ::cudaSetDevice(i);
-        cuda::Device current_device(i);
-        current_device.print_specification();
+        cuda::Device gpu(i);
+        gpu.print_specification();
     }
 }
 
@@ -191,9 +200,8 @@ bool cuda::test_all_gpu(void) {
     bool result = true;
     for (int i = 0; i < tot_device; i++) {
         std::printf("Checking device: %d...", i);
-        ::cudaSetDevice(i);
-        cuda::Device current_device(i);
-        result = result && current_device.test_gpu();
+        cuda::Device gpu(i);
+        result = result && gpu.test_gpu();
         if (!result) {
             WARNING("\rCheck on device %d has failed.\n", i);
         } else {

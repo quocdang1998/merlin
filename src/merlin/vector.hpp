@@ -119,35 +119,35 @@ class Vector {
 
     /// @name Transfer data from/to GPU
     /// @{
-    /** @brief Calculate the minimum number of bytes to allocate in the memory to store the object and its data.*/
+    /** @brief Calculate the minimum amount of memory (in bytes) to allocate for the object and its associated data.*/
     constexpr std::uint64_t cumalloc_size(void) const { return sizeof(Vector<T>) + this->size_ * sizeof(T); }
     /** @brief Copy data from CPU to a pre-allocated memory on GPU.
-     *  @details The object and its data is copied to the global memory of the GPU.
-     *  @param gpu_ptr Pointer to a pre-allocated GPU memory storing the object.
-     *  @param data_ptr Pre-allocated pointer to memory region storing data of the vector.
-     *  @param stream_ptr Pointer to CUDA stream for asynchronous copy.
+     *  @param gpu_ptr Pointer to the GPU memory region for the vector.
+     *  @param data_ptr Pointer to the GPU memory region for elements of the vector.
+     *  @param stream_ptr Pointer to the CUDA stream in case of an asynchronous copy.
      */
     void * copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr, std::uintptr_t stream_ptr = 0) const;
-    /** @brief Copy data from GPU to CPU.
-     *  @param gpu_ptr Pointer to object on GPU global memory.
-     *  @param stream_ptr Pointer to CUDA stream for asynchronous memory copy.
+    /** @brief Copy data from GPU back to CPU.
+     *  @param gpu_ptr Pointer to object on GPU.
+     *  @param stream_ptr Pointer to the CUDA stream in case of asynchronous copy.
      */
     void * copy_from_gpu(Vector<T> * gpu_ptr, std::uintptr_t stream_ptr = 0);
-    /** @brief Calculate the minimum number of bytes to allocate in CUDA shared memory to store the object.*/
+    /** @brief Calculate the minimum memory (in bytes) to store the object in CUDA block's shared memory.*/
     constexpr std::uint64_t sharedmem_size(void) const { return this->cumalloc_size(); }
 #ifdef __NVCC__
-    /** @brief Copy data to a pre-allocated memory region by a GPU block of threads.
-     *  @details The copy action is performed by the whole CUDA thread block.
-     *  @param dest_ptr Memory region where the vector is copied to.
-     *  @param data_ptr Memory region where the data of the new created vector is stored.
+    /** @brief Copy data to a pre-allocated memory region by a block of threads.
+     *  @details The copy action is performed parallely by the whole CUDA thread block.
+     *  @param dest_ptr Pointer to destination (where the vector is copied to).
+     *  @param data_ptr Pointer to memory region for storing elements of the destination vector.
      *  @param thread_idx Flatten ID of the current CUDA thread in the block.
      *  @param block_size Number of threads in the current CUDA block.
      */
     __cudevice__ void * copy_by_block(Vector<T> * dest_ptr, void * data_ptr, std::uint64_t thread_idx,
                                       std::uint64_t block_size) const;
     /** @brief Copy data to a pre-allocated memory region by a single GPU threads.
-     *  @param dest_ptr Memory region where the vector is copied to.
-     *  @param data_ptr Pre-allocated pointer to memory region storing data of the vector.
+     *  @details The copy action is perfomed by the current calling CUDA thread.
+     *  @param dest_ptr Pointer to destination (where the vector is copied to).
+     *  @param data_ptr Pointer to memory region for storing elements of the destination vector.
      */
     __cudevice__ void * copy_by_thread(Vector<T> * dest_ptr, void * data_ptr) const;
 #endif  // __NVCC__
@@ -190,14 +190,10 @@ class Vector {
     bool assigned_ = false;
 };
 
-/** @brief Vector of unsigned integer values.
- *  @details This class is reserved for storing array indices, array shape and array strides.
- */
+/** @brief Vector of unsigned integer values.*/
 using intvec = Vector<std::uint64_t>;
 
-/** @brief Vector of floating-point type.
- *  @details This class is reserved for storing grid vectors.
- */
+/** @brief Vector of floating-point type.*/
 using floatvec = Vector<double>;
 
 /** @brief Create a vector from its arguments.*/

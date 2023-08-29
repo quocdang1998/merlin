@@ -52,9 +52,6 @@ std::uint64_t Environment::parallel_chunk = static_cast<std::uint64_t>(96);
 // CUDA environment
 // ---------------------------------------------------------------------------------------------------------------------
 
-// ID of default GPU
-int Environment::default_gpu = 0;
-
 // Constructor from elements
 Environment::ContextAttribute::ContextAttribute(std::uint64_t ref_count, int gpu_id) :
 reference_count(ref_count), gpu(gpu_id) {}

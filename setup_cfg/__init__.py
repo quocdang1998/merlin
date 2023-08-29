@@ -6,4 +6,3 @@ from .config import *
 
 ext_options = get_extension_options()
 # create_merlin_init()
-copy_dll_libs()

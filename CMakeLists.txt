@@ -29,6 +29,7 @@ list(APPEND MERLIN_SRC_CPP
      candy/launcher.cpp
      candy/loss.cpp
      candy/model.cpp
+     candy/optimizer.cpp
      candy/partition.cpp
      cuda/context.cpp
      cuda/device.cpp

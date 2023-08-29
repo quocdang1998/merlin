@@ -6,9 +6,6 @@ namespace merlin::candy {
 class Launcher;
 class Model;
 class Optimizer;
-// class GradDescent;
-// class AdaGrad;
-// class Adam;
 }  // namespace merlin::candy
 
 #endif  // MERLIN_CANDY_DECLARATION_HPP_

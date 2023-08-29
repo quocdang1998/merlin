@@ -26,8 +26,7 @@ void intpl::calc_lagrange_coeffs_cpu(const intpl::CartesianGrid & grid, const ar
     std::uint64_t ndim = grid.ndim();
     intvec grid_shape = grid.get_grid_shape();
     // parallel loop calculation
-    bool parallel_exec = value.size() > 2 * omp_get_num_threads();
-    #pragma omp parallel for if (parallel_exec) num_threads(nthreads)
+    #pragma omp parallel for schedule(guided, Environment::parallel_chunk) num_threads(nthreads)
     for (std::int64_t i = 0; i < value.size(); i++) {
         intvec index = contiguous_to_ndim_idx(i, grid_shape);
         // calculate the denomiantor (product of diferences of node values)

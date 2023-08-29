@@ -43,6 +43,7 @@ class cuda::Context {
     }
     /** @brief Copy assignment (deleted).*/
     cuda::Context & operator=(const cuda::Context & src) {
+        this->~Context();
         this->context_ = src.context_;
         Environment::attribute[src.context_].reference_count += 1;
         return *this;
@@ -51,6 +52,7 @@ class cuda::Context {
     Context(cuda::Context && src) { this->context_ = std::exchange(src.context_, 0); }
     /** @brief Move assignment.*/
     cuda::Context & operator=(cuda::Context && src) {
+        this->~Context();
         this->context_ = std::exchange(src.context_, 0);
         return *this;
     }

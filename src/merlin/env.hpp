@@ -23,11 +23,11 @@ class MERLINSHARED_EXPORTS Environment {
     Environment(void);
     /// @}
 
-    /// @name Environment class-bounded properties
+    /// @name Shared variables
     /// @{
     /** @brief Check if the environment is initialized or not.*/
     static bool is_initialized;
-    /** @brief Number of instances.*/
+    /** @brief Number of Environment instances created.*/
     static std::atomic_uint num_instances;
     /** @brief Mutex for locking threads.*/
     static std::mutex mutex;
@@ -45,8 +45,6 @@ class MERLINSHARED_EXPORTS Environment {
 
     /// @name CUDA related settings
     /// @{
-    /** @brief ID of default GPU.*/
-    static int default_gpu;
     /** @brief Attributes of the context.*/
     struct ContextAttribute {
         /// @name Constructor
@@ -85,7 +83,7 @@ class MERLINSHARED_EXPORTS Environment {
     };
     /** @brief Map from context pointers to their attributes.*/
     static std::map<std::uintptr_t, Environment::ContextAttribute> attribute;
-    /** @brief CUDA primary contexts.*/
+    /** @brief Map from GPU ID to its corresponding primary contexts.*/
     static std::map<int, std::uintptr_t> primary_contexts;
     /** @brief Default CUDA kernel block size.
      *  @details Should be multiple of 32.
@@ -103,10 +101,12 @@ class MERLINSHARED_EXPORTS Environment {
 /** @brief Default environment.*/
 MERLINSHARED_EXPORTS extern Environment default_environment;
 
-/** @brief Initialize CUDA primary contexts.*/
+/** @brief Initialize the default CUDA context.*/
 void initialize_cuda_context(void);
 
-/** @brief Alarm for CUDA error.*/
+/** @brief Alarm for CUDA error.
+ *  @details Double-check if CUDA operations have an unthrown error.
+ */
 void alarm_cuda_error(void);
 
 }  // namespace merlin

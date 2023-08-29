@@ -7,6 +7,7 @@
 #include "merlin/candy/optmz/adagrad.hpp"
 #include "merlin/candy/optmz/grad_descent.hpp"
 #include "merlin/cuda/memory.hpp"
+#include "merlin/cuda/stream.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/vector.hpp"
 #include "merlin/utils.hpp"
@@ -14,7 +15,7 @@
 
 int main (void) {
     // initialize train data
-    double data[6] = {1.2, 2.3, 3.6, 4.8, 7.1, 2.5};
+    double data[6] = {1.2, 2.3, 3.6, 4.8, 7.1, std::nan("")};
     // double data[6] = {2.5, 3.0, 3.5, 4.45, 5.34, 6.07};
     merlin::intvec data_dims = {2, 3}, data_strides = merlin::array::contiguous_strides(data_dims, sizeof(double));
     merlin::array::Array train_data_cpu(data, data_dims, data_strides);
@@ -42,15 +43,11 @@ int main (void) {
     merlin::candy::Launcher launch(model_gpu, train_data_gpu, optimizer_gpu, model.size(), train_data.ndim(),
                                    model.sharedmem_size() + train_data.sharedmem_size() + optimizer.sharedmem_size(),
                                    32);
-    merlin::candy::Launcher launch_reference(model_ref_cpu, train_data_cpu, optimizer, 8);
-/*
-    merlin::candy::gpu_asynch_launch(model_gpu, train_data_gpu, optimizer_gpu, model.size(), train_data.ndim(),
-                                     model.sharedmem_size() + train_data.sharedmem_size() + optimizer.sharedmem_size(),
-                                     32, 5, merlin::candy::TrainMetric::RelativeSquare, 0);
-*/
+    merlin::candy::Launcher launch_reference(model_ref_cpu, train_data_cpu, optimizer, 1);
+
     // launch and wait
-    launch.launch_async(5);
-    launch_reference.launch_async(5);
+    launch.launch_async(5, merlin::candy::TrainMetric::AbsoluteSquare);
+    launch_reference.launch_async(5, merlin::candy::TrainMetric::AbsoluteSquare);
     launch.synchronize();
     launch_reference.synchronize();
 

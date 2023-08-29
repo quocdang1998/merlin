@@ -55,7 +55,6 @@ static inline std::uintptr_t get_current_context_ptr(void) {
         }
     }
     // a dummy context initialized (return nullptr)
-    WARNING("Current CUDA context is nullptr.\n");
     safety_unlock();
     return reinterpret_cast<std::uintptr_t>(current_ctx);
 }
@@ -185,6 +184,7 @@ cuda::Context::~Context(void) {
             }
             Environment::attribute.erase(this->context_);
         }
+        this->context_ = 0;
         safety_unlock();
     }
 }

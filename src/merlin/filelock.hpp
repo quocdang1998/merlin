@@ -24,9 +24,9 @@ namespace merlin {
  *  @note Locking mechanism depends on operating system:
  *   - On **Windows**, the lock is bound to read/write permission. Shared lock only blocks write permission, but
  *  exclusive lock blocks both. If another file stream ``std::FILE`` associated to the locked file is created,
- *  read/write operations during the lock will successfully return, but the operation will have no effect.
- *   - On **Linux**, the lock is not bound to read/write permission. A thread/process can read/write the file normally
- *  even when the file is locked by another process.
+ *  read/write operations when the lock is acquired will successfully return, but the operation will have no effect.
+ *   - On **Linux**, the lock is not bound to read/write permission. Any other thread/process can read/write the file
+ *  normally even when the file is locked by another process.
  */
 class FileLock {
   public:
