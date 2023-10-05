@@ -1,0 +1,51 @@
+// Copyright 2022 quocdang1998
+#include "merlin/splint/intpl/linear.hpp"
+
+namespace merlin {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Linear interpolation
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Construct interpolation coefficients by linear interpolation method
+__cuhostdev__ void splint::intpl::construct_linear(double * coeff, const double * grid_nodes,
+                                                   const std::uint64_t & shape, const std::uint64_t & element_size,
+                                                   const std::uint64_t & thread_idx,
+                                                   const std::uint64_t & n_threads) noexcept {}
+
+// Evaluate interpolation at an unit step by linear interpolation method
+__cuhostdev__ void splint::intpl::evaluate_linear(const double * grid_nodes, const std::uint64_t & grid_shape,
+                                                  const double & point, const std::uint64_t & coeff_index,
+                                                  const double & coeff, double & result) noexcept {
+    // skip for out of range
+    if (point < grid_nodes[0] || point > grid_nodes[grid_shape-1]) {
+        return;
+    }
+    // exactly at the point
+    if (point == grid_nodes[coeff_index]) {
+        result += coeff;
+        return;
+    }
+    // get upper and lower
+    double upper = 0, lower = 0;
+    if (coeff_index != grid_shape-1) {
+        upper = grid_nodes[coeff_index+1] - point;
+    }
+    if (coeff_index != 0) {
+        lower = point - grid_nodes[coeff_index-1];
+    }
+    // skip if out of range
+    if ((upper < 0) || (lower < 0)) {
+        return;
+    }
+    // determine if it is lower of upper
+    if (point > grid_nodes[coeff_index]) {
+        result += coeff * upper / (grid_nodes[coeff_index+1] - grid_nodes[coeff_index]);
+        return;
+    } else {
+        result += coeff * lower / (grid_nodes[coeff_index] - grid_nodes[coeff_index-1]);
+        return;
+    }
+}
+
+}  // namespace merlin

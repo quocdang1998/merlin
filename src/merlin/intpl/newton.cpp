@@ -7,11 +7,11 @@
 #include <omp.h>  // pragma omp, omp_get_num_threads
 
 #include "merlin/array/array.hpp"           // merlin::array::Array
-#include "merlin/array/operation.hpp"       // merlin::array::array_copy
-#include "merlin/array/slice.hpp"           // merlin::array::Slice
+#include "merlin/array/operation.hpp"       // merlin::array::copy
 #include "merlin/intpl/cartesian_grid.hpp"  // merlin::intpl::CartesianGrid
 #include "merlin/intpl/sparse_grid.hpp"     // merlin::intpl::SparseGrid
 #include "merlin/logger.hpp"                // CUHDERR
+#include "merlin/slice.hpp"                 // merlin::Slice
 #include "merlin/utils.hpp"                 // merlin::prod_elements, merlin::contiguous_to_ndim_idx
 #include "merlin/vector.hpp"                // merlin::Vector
 
@@ -59,9 +59,9 @@ static void calc_newton_coeffs_cpu_recursive(const intpl::CartesianGrid & grid, 
     for (std::uint64_t i = 1; i < coeff.shape()[0]; i++) {
         for (std::uint64_t k = coeff.shape()[0] - 1; k >= i; k--) {
             // get NdData of sub slice
-            Vector<array::Slice> slice_k(coeff.ndim()), slice_k_1(coeff.ndim());
-            slice_k[0] = array::Slice({k});
-            slice_k_1[0] = array::Slice({k - 1});
+            slicevec slice_k(coeff.ndim()), slice_k_1(coeff.ndim());
+            slice_k[0] = Slice({k});
+            slice_k_1[0] = Slice({k - 1});
             const array::Array array_k(coeff, slice_k);
             const array::Array array_k_1(coeff, slice_k_1);
             array::Array array_result(coeff, slice_k);
@@ -80,8 +80,8 @@ static void calc_newton_coeffs_cpu_recursive(const intpl::CartesianGrid & grid, 
         // calculate new start index
         std::uint64_t new_start_index = start_index + i * start_index_jump;
         // get array assigned to slice
-        Vector<array::Slice> slice_i(coeff.ndim());
-        slice_i[0] = array::Slice({static_cast<std::uint64_t>(i)});
+        slicevec slice_i(coeff.ndim());
+        slice_i[0] = Slice({static_cast<std::uint64_t>(i)});
         array::Array array_coeff_i(coeff, slice_i);
         array_coeff_i.remove_dim(0);
         calc_newton_coeffs_cpu_recursive(grid, array_coeff_i, max_dimension, sub_slices, new_start_index, nthreads);
@@ -154,7 +154,7 @@ void intpl::calc_newton_coeffs_cpu(const intpl::CartesianGrid & grid, const arra
     std::uint64_t ndim = grid.ndim();
     // copy value to coeff
     if (&coeff != &value) {
-        array::array_copy(&coeff, &value, std::memcpy);
+        array::copy(&coeff, &value, std::memcpy);
     }
     // get max recursive dimension
     static std::uint64_t parallel_limit = Environment::parallel_chunk;
@@ -188,7 +188,7 @@ static void calc_newton_coeffs_of_added_grid_cpu(const intpl::CartesianGrid & ac
                                                  array::Array & coeff) {
     // copy value to coeff
     if (&coeff != &value) {
-        array::array_copy(&coeff, &value, std::memcpy);
+        array::copy(&coeff, &value, std::memcpy);
     }
     // update coefficient by a factor
     std::uint64_t ndim = grid.ndim();
@@ -227,7 +227,7 @@ void intpl::calc_newton_coeffs_cpu(const intpl::SparseGrid & grid, const array::
         intpl::CartesianGrid level_cartgrid = intpl::get_cartesian_grid(grid, i_subgrid);
         accumulated_cart_grid += level_cartgrid;
         intvec level_shape = get_level_shape(level_index);
-        array::Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid + 1]);
+        Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid + 1]);
         array::Array level_coeff(coeff, {level_slice});
         level_coeff.reshape(level_shape);
         calc_newton_coeffs_of_added_grid_cpu(accumulated_cart_grid, level_cartgrid, level_coeff, level_coeff);
@@ -291,7 +291,7 @@ double intpl::eval_newton_cpu(const intpl::SparseGrid & grid, const array::Array
         intpl::CartesianGrid level_cartgrid = intpl::get_cartesian_grid(grid, i_subgrid);
         accumulated_cart_grid += level_cartgrid;
         intvec level_shape = get_level_shape(level_index);
-        array::Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid + 1]);
+        Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid + 1]);
         array::Array level_coeff(coeff, {level_slice});
         level_coeff.reshape(level_shape);
         result += eval_newton_of_added_grid_cpu(accumulated_cart_grid, level_cartgrid, level_coeff, x);

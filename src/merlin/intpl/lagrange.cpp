@@ -8,10 +8,10 @@
 
 #include "merlin/array/array.hpp"           // merlin::array::Array
 #include "merlin/array/parcel.hpp"          // merlin::array::Parcel
-#include "merlin/array/slice.hpp"           // merlin::array::Slice
 #include "merlin/intpl/cartesian_grid.hpp"  // merlin::intpl::CartesianGrid
 #include "merlin/intpl/sparse_grid.hpp"     // merlin::intpl::SparseGrid
 #include "merlin/logger.hpp"                // FAILURE, cuda_compile_error
+#include "merlin/slice.hpp"                 // merlin::Slice
 #include "merlin/utils.hpp"                 // merlin::contiguous_to_ndim_idx, merlin::get_level_shape
 
 namespace merlin {
@@ -116,7 +116,7 @@ void intpl::calc_lagrange_coeffs_cpu(const intpl::SparseGrid & grid, const array
         intpl::CartesianGrid level_cartgrid = intpl::get_cartesian_grid(grid, i_subgrid);
         accumulated_cart_grid += level_cartgrid;
         intvec level_shape = get_level_shape(level_index);
-        array::Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid + 1]);
+        Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid + 1]);
         array::Array level_coeff(coeff, {level_slice});
         level_coeff.reshape(level_shape);
         calc_lagrange_coeffs_of_added_grid_cpu(accumulated_cart_grid, level_cartgrid, level_coeff, level_coeff);
@@ -158,7 +158,7 @@ double intpl::eval_lagrange_cpu(const intpl::SparseGrid & grid, const array::Arr
         intpl::CartesianGrid level_cartgrid = intpl::get_cartesian_grid(grid, i_subgrid);
         accumulated_cart_grid += level_cartgrid;
         intvec level_shape = get_level_shape(level_index);
-        array::Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid + 1]);
+        Slice level_slice(grid.sub_grid_start_index()[i_subgrid], grid.sub_grid_start_index()[i_subgrid + 1]);
         array::Array level_coeff(coeff, {level_slice});
         level_coeff.reshape(level_shape);
         result += eval_lagrange_of_added_grid_cpu(accumulated_cart_grid, level_cartgrid, level_coeff, x);

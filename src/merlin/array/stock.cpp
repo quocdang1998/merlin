@@ -5,10 +5,10 @@
 #include <filesystem>  // std::filesystem::filesystem_error, std::filesystem::file_size, std::filesystem::resize_file
 #include <functional>  // std::bind, std::placeholders
 #include <ios>         // std::ios_base::failure
-#include <sstream>     // std::ostringstream
 
 #include "merlin/array/array.hpp"      // merlin::array::Array
-#include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::copy, merlin::array::fill
+#include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::copy, merlin::array::fill,
+                                       // merlin::array::print
 #include "merlin/logger.hpp"           // WARNING, FAILURE
 #include "merlin/platform.hpp"         // __MERLIN_LINUX__, __MERLIN_WINDOWS__
 #include "merlin/utils.hpp"            // merlin::get_current_process_id, merlin::get_time
@@ -157,7 +157,7 @@ filename_(filename), offset_(offset), thread_safe_(thread_safe) {
 }
 
 // Constructor from a slice
-array::Stock::Stock(const array::Stock & whole, const Vector<array::Slice> & slices) : array::NdData(whole, slices) {
+array::Stock::Stock(const array::Stock & whole, const slicevec & slices) : array::NdData(whole, slices) {
     this->file_ptr_ = whole.file_ptr_;
     this->flock_ = whole.flock_;
     this->offset_ = whole.offset_;
@@ -194,12 +194,6 @@ void array::Stock::set(std::uint64_t index, double value) {
     this->set(contiguous_to_ndim_idx(index, this->shape()), value);
 }
 
-// Reshape
-void array::Stock::reshape(const intvec & new_shape) { this->array::NdData::reshape(new_shape); }
-
-// Collapse dimension from felt (or right)
-void array::Stock::remove_dim(std::uint64_t i_dim) { this->array::NdData::remove_dim(i_dim); }
-
 // Set value of all elements
 void array::Stock::fill(double value) {
     auto write_func = std::bind(write_to_file, this->file_ptr_, std::placeholders::_1, std::placeholders::_2,
@@ -212,8 +206,13 @@ void array::Stock::record_data_to_file(const array::Array & src) {
     auto write_func = std::bind(write_to_file, this->file_ptr_, std::placeholders::_1, std::placeholders::_2,
                                 std::placeholders::_3);
     EXCLUSIVE_LOCK_THREADSAFE();
-    array_copy(this, &src, write_func);
+    copy(this, &src, write_func);
     UNLOCK_THREADSAFE();
+}
+
+// String representation
+std::string array::Stock::str(bool first_call) const {
+    return array::print(this, "Stock", first_call);
 }
 
 // Destructor

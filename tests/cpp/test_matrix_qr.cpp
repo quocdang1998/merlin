@@ -1,7 +1,7 @@
 #include <cmath>
 
-#include "merlin/linalg/inverse.hpp"
 #include "merlin/linalg/matrix.hpp"
+#include "merlin/linalg/qr_solve.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/vector.hpp"
 

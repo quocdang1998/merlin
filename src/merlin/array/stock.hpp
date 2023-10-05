@@ -8,9 +8,9 @@
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array
 #include "merlin/array/nddata.hpp"       // merlin::array::NdData
-#include "merlin/array/slice.hpp"        // merlin::array::Slice
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/filelock.hpp"           // merlin::FileLock
+#include "merlin/slice.hpp"        // merlin::slicevec
 #include "merlin/vector.hpp"             // merlin::Vector
 
 namespace merlin {
@@ -48,7 +48,7 @@ class array::Stock : public array::NdData {
      *  @param whole merlin::array::Stock of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    MERLIN_EXPORTS Stock(const array::Stock & whole, const Vector<array::Slice> & slices);
+    MERLIN_EXPORTS Stock(const array::Stock & whole, const slicevec & slices);
     /// @}
 
     /// @name Copy and Move
@@ -89,14 +89,6 @@ class array::Stock : public array::NdData {
 
     /// @name Operations
     /// @{
-    /** @brief Reshape the dataset.
-     *  @param new_shape New shape.
-     */
-    MERLIN_EXPORTS void reshape(const intvec & new_shape);
-    /** @brief Collapse dimensions with size 1.
-     *  @param i_dim Index of dimension to collapse.
-     */
-    MERLIN_EXPORTS void remove_dim(std::uint64_t i_dim = 0);
     /** @brief Set value of all elements.*/
     MERLIN_EXPORTS void fill(double value);
     /// @}
@@ -105,6 +97,12 @@ class array::Stock : public array::NdData {
     /// @{
     /** @brief Write data from a merlin::array::Array to a file.*/
     MERLIN_EXPORTS void record_data_to_file(const Array & src);
+    /// @}
+
+    /// @name Representation
+    /// @{
+    /** @brief String representation.*/
+    MERLIN_EXPORTS std::string str(bool first_call = true) const;
     /// @}
 
     /** @brief Destructor.*/

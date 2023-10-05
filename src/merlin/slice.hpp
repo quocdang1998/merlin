@@ -1,21 +1,20 @@
 // Copyright 2022 quocdang1998
-#ifndef MERLIN_ARRAY_SLICE_HPP_
-#define MERLIN_ARRAY_SLICE_HPP_
+#ifndef MERLIN_SLICE_HPP_
+#define MERLIN_SLICE_HPP_
 
 #include <array>             // std::array
 #include <cstdint>           // std::uint64_t, UINT64_MAX
 #include <initializer_list>  // std::initializer_list
 #include <string>            // std::string
 
-#include "merlin/array/declaration.hpp"  // merlin::array::Slice
-#include "merlin/cuda_interface.hpp"     // __cuhostdev__
-#include "merlin/exports.hpp"            // MERLIN_EXPORTS
-#include "merlin/vector.hpp"             // merlin::Vector
+#include "merlin/cuda_interface.hpp"  // __cuhostdev__
+#include "merlin/exports.hpp"         // MERLIN_EXPORTS
+#include "merlin/vector.hpp"          // merlin::Vector
 
 namespace merlin {
 
 /** @brief %Slice of an array.*/
-class array::Slice {
+class Slice {
   public:
     /// @name Constructors
     /// @{
@@ -122,8 +121,8 @@ class array::Slice {
 };
 
 /** @brief %Vector of slices.*/
-using slicevec = Vector<array::Slice>;
+using slicevec = Vector<Slice>;
 
 }  // namespace merlin
 
-#endif  // MERLIN_ARRAY_SLICE_HPP_
+#endif  // MERLIN_SLICE_HPP_

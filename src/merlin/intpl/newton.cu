@@ -4,12 +4,12 @@
 #include <functional>  // std::bind, std::placeholders
 #include <utility>     // std::move, std::make_pair
 
-#include "merlin/array/operation.hpp"       // merlin::array::array_copy
+#include "merlin/array/operation.hpp"       // merlin::array::copy
 #include "merlin/array/parcel.hpp"          // merlin::array::Parcel
-#include "merlin/array/slice.hpp"           // merlin::array::Slice
 #include "merlin/cuda/memory.hpp"           // merlin::cuda::Memory
 #include "merlin/env.hpp"                   // merlin::Environment
 #include "merlin/intpl/cartesian_grid.hpp"  // merlin::intpl::CartesianGrid
+#include "merlin/slice.hpp"                 // merlin::Slice
 #include "merlin/utils.hpp"                 // merlin::prod_elements
 
 namespace merlin {
@@ -31,11 +31,11 @@ void intpl::calc_newton_coeffs_gpu(const intpl::CartesianGrid & grid, const arra
         if (coeff.device() != value.device()) {
             auto copy_func = std::bind(::cudaMemcpyPeerAsync, std::placeholders::_1, coeff.device().id(),
                                        std::placeholders::_2, value.device().id(), std::placeholders::_3, cuda_stream);
-            array::array_copy(&coeff, &value, copy_func);
+            array::copy(&coeff, &value, copy_func);
         } else {
             auto copy_func = std::bind(::cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2,
                                        std::placeholders::_3, ::cudaMemcpyDeviceToDevice, cuda_stream);
-            array::array_copy(&coeff, &value, copy_func);
+            array::copy(&coeff, &value, copy_func);
         }
     }
     // copy data to GPU

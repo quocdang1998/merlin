@@ -5,7 +5,6 @@
 
 #include "merlin/array/array.hpp"      // merlin::array::Array
 #include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::copy, merlin::array::fill
-#include "merlin/array/slice.hpp"      // merlin::array::Slice
 #include "merlin/logger.hpp"           // FAILURE
 #include "merlin/utils.hpp"            // merlin::contiguous_to_ndim_idx, merlin::inner_prod
 
@@ -68,11 +67,11 @@ array::Parcel::Parcel(const array::Parcel & src) : array::NdData(src) {
     if (this->device_ != src.device_) {
         auto copy_func = std::bind(::cudaMemcpyPeer, std::placeholders::_1, this->device_.id(), std::placeholders::_2,
                                    src.device_.id(), std::placeholders::_3);
-        array::array_copy(this, &src, copy_func);
+        array::copy(this, &src, copy_func);
     } else {
         auto copy_func = std::bind(::cudaMemcpy, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                                    ::cudaMemcpyDeviceToDevice);
-        array::array_copy(this, &src, copy_func);
+        array::copy(this, &src, copy_func);
     }
 }
 
@@ -96,11 +95,11 @@ array::Parcel & array::Parcel::operator=(const array::Parcel & src) {
     if (this->device_ != src.device_) {
         auto copy_func = std::bind(::cudaMemcpyPeer, std::placeholders::_1, this->device_.id(), std::placeholders::_2,
                                    src.device_.id(), std::placeholders::_3);
-        array::array_copy(this, &src, copy_func);
+        array::copy(this, &src, copy_func);
     } else {
         auto copy_func = std::bind(::cudaMemcpy, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                                    ::cudaMemcpyDeviceToDevice);
-        array::array_copy(this, &src, copy_func);
+        array::copy(this, &src, copy_func);
     }
     return *this;
 }
@@ -191,7 +190,7 @@ void array::Parcel::transfer_data_to_gpu(const array::Array & cpu_array, const c
     auto copy_func = std::bind(::cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                                ::cudaMemcpyHostToDevice, copy_stream);
     // copy data to GPU
-    array::array_copy(this, &cpu_array, copy_func);
+    array::copy(this, &cpu_array, copy_func);
 }
 
 // Copy data to a pre-allocated memory

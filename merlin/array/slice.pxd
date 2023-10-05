@@ -8,9 +8,9 @@ cdef extern from "<array>" namespace "std" nogil:
         array3() except+
         uint64_t & operator[](size_t)
 
-cdef extern from "merlin/array/slice.hpp":
+cdef extern from "merlin/slice.hpp":
 
-    cdef cppclass CppSlice "merlin::array::Slice":
+    cdef cppclass CppSlice "merlin::Slice":
         CppSlice(uint64_t start = 0, uint64_t stop = UINT64_MAX, uint64_t step = 1) except +
 
         CppSlice(const CppSlice & src)

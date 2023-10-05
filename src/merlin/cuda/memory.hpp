@@ -6,17 +6,13 @@
 #include <cstdint>  // std::uint64_t
 #include <tuple>    // std::tuple
 
-#include "merlin/cuda_interface.hpp"  // __cudevice__
+#include "merlin/cuda/declaration.hpp"  // merlin::cuda::Memory
+#include "merlin/cuda_interface.hpp"    // __cudevice__
 
 // CUDA nvcc guard
 #ifndef __NVCC__
     #error "Compile with CUDA compiler nvcc to use memory allocation tool."
 #endif
-
-namespace merlin::cuda {
-template <typename... Args>
-class Memory;
-}  // namespace merlin::cuda
 
 namespace merlin {
 

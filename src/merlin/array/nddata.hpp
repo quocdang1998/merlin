@@ -6,9 +6,10 @@
 #include <cstdint>  // std::int64_t, std::uint64_t, std::uintptr_t
 #include <string>   // std::string
 
-#include "merlin/array/declaration.hpp"  // merlin::array::NdData, merlin::array::Slice
+#include "merlin/array/declaration.hpp"  // merlin::array::NdData
 #include "merlin/cuda_interface.hpp"     // __cuhost__, __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/slice.hpp"              // merlin::slicevec
 #include "merlin/vector.hpp"             // merlin::intvec
 
 namespace merlin {
@@ -19,7 +20,7 @@ class array::NdData {
     /// @name Constructor
     /// @{
     /** @brief Default constructor (do nothing).*/
-    __cuhostdev__ NdData(void) {}
+    NdData(void) = default;
     /** @brief Constructor from data pointer and meta-data.
      *  @details This constructor is used to construct explicitly an NdData in C++ interface.
      *  @param data Pointer to data.
@@ -33,7 +34,7 @@ class array::NdData {
      *  @param whole merlin::array::NdData of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    __cuhostdev__ NdData(const array::NdData & whole, const Vector<array::Slice> & slices);
+    MERLIN_EXPORTS NdData(const array::NdData & whole, const slicevec & slices);
     /// @}
 
     /// @name Copy and move
@@ -78,26 +79,16 @@ class array::NdData {
     virtual void set(std::uint64_t index, double value) {}
     /// @}
 
-    /// @name Partite data
-    /// @{
-    /** @brief Partite a big array into smaller array given a limit size to each subsidary array.
-     *  @param max_memory Limit size of each subsidary array.
-     *  @return A tuple of limit dimension and number of sub-array. If the original array fits in the memory, a tuple
-     *  of ``UINT64_MAX, UINT64_MAX`` is returned.
-     */
-    MERLIN_EXPORTS Vector<Vector<array::Slice>> partite(std::uint64_t max_memory);
-    /// @}
-
     /// @name Operations
     /// @{
     /** @brief Reshape the dataset.
      *  @param new_shape New shape.
      */
-    MERLIN_EXPORTS virtual void reshape(const intvec & new_shape);
+    MERLIN_EXPORTS void reshape(const intvec & new_shape);
     /** @brief Collapse dimensions with size 1.
      *  @param i_dim Index of dimension to collapse.
      */
-    MERLIN_EXPORTS virtual void remove_dim(std::uint64_t i_dim = 0);
+    MERLIN_EXPORTS void remove_dim(std::uint64_t i_dim = 0);
     /** @brief Set value of all elements.*/
     virtual void fill(double value) {}
     /// @}
@@ -105,7 +96,7 @@ class array::NdData {
     /// @name Representation
     /// @{
     /** @brief String representation.*/
-    MERLIN_EXPORTS std::string str(bool first_call = true) const;
+    MERLIN_EXPORTS virtual std::string str(bool first_call = true) const;
     /// @}
 
     /// @name Destructor
@@ -131,15 +122,8 @@ class array::NdData {
     bool release_ = false;
 
     /** @brief Calculate size of array.*/
-    __cuhostdev__ void calc_array_size(void) noexcept;
+    MERLIN_EXPORTS void calc_array_size(void) noexcept;
 };
-
-namespace array {
-
-/** @brief Slice current array to a new array with the same polymorphic type.*/
-MERLIN_EXPORTS array::NdData * slice_on(const array::NdData & original, const Vector<array::Slice> & slices);
-
-}  // namespace array
 
 }  // namespace merlin
 

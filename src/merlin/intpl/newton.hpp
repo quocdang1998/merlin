@@ -2,11 +2,12 @@
 #ifndef MERLIN_INTPL_NEWTON_HPP_
 #define MERLIN_INTPL_NEWTON_HPP_
 
-#include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Parcel, merlin::array::Slice
+#include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Parcel
 #include "merlin/cuda/stream.hpp"        // merlin::cuda::Stream
 #include "merlin/cuda_interface.hpp"     // __cuhostdev__
 #include "merlin/env.hpp"                // merlin::Environment
 #include "merlin/intpl/grid.hpp"         // merlin::intpl::CartesianGrid
+#include "merlin/slice.hpp"              // merlin::Slice
 #include "merlin/vector.hpp"             // merlin::Vector
 
 namespace merlin::intpl {

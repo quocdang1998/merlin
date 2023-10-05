@@ -21,7 +21,6 @@ list(APPEND MERLIN_SRC_CPP
      array/nddata.cpp
      array/array.cpp
      array/parcel.cpp
-     array/slice.cpp
      array/stock.cpp
      candy/optmz/adam.cpp
      candy/optmz/adagrad.cpp
@@ -48,14 +47,17 @@ list(APPEND MERLIN_SRC_CPP
      intpl/sparse_grid.cpp
      linalg/qr_solve.cpp
      linalg/matrix.cpp
+     slice.cpp
      shuffle.cpp
+     splint/cartesian_grid.cpp
+     splint/interpolator.cpp
+     splint/tools.cpp
      statistics/moment.cpp
 )
 list(APPEND MERLIN_SRC_CU
      array/array.cu
      array/parcel.cu
      candy/launcher.cu
-     #candy/loss.cu
      candy/model.cu
      cuda/context.cu
      cuda/device.cu
@@ -65,6 +67,7 @@ list(APPEND MERLIN_SRC_CU
      intpl/cartesian_grid.cu
      intpl/lagrange.cu
      intpl/newton.cu
+     splint/cartesian_grid.cu
      statistics/moment.cu
 )
 list(APPEND MERLIN_SRC_GLB
@@ -77,12 +80,11 @@ list(APPEND MERLIN_SRC_GLB
      cuda/device.glb
      intpl/lagrange.glb
      intpl/newton.glb
+     splint/tools.glb
 )
 list(APPEND MERLIN_SRC_RDC
      array/operation.rdc
-     array/nddata.rdc
      array/parcel.rdc
-     array/slice.rdc
      candy/launcher.rdc
      candy/loss.rdc
      candy/model.rdc
@@ -96,6 +98,12 @@ list(APPEND MERLIN_SRC_RDC
      intpl/newton.rdc
      linalg/qr_solve.rdc
      linalg/matrix.rdc
+     slice.rdc
+     splint/cartesian_grid.rdc
+     splint/intpl/lagrange.rdc
+     splint/intpl/linear.rdc
+     splint/intpl/newton.rdc
+     splint/tools.rdc
      utils.rdc
 )
 list(APPEND MERLIN_SRC_SHR

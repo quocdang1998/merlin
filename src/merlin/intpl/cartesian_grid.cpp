@@ -10,7 +10,6 @@
 #include <vector>     // std::vector
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/slice.hpp"  // merlin::array::Slice
 #include "merlin/logger.hpp"       // FAILURE
 #include "merlin/utils.hpp"        // merlin::contiguous_to_ndim_idx
 
@@ -63,7 +62,7 @@ intpl::CartesianGrid::CartesianGrid(Vector<floatvec> && grid_vectors) : grid_vec
 }
 
 // Constructor as subgrid of another grid
-intpl::CartesianGrid::CartesianGrid(const intpl::CartesianGrid & whole, const Vector<array::Slice> & slices) {
+intpl::CartesianGrid::CartesianGrid(const intpl::CartesianGrid & whole, const slicevec & slices) {
     // check size
     if (slices.size() != whole.ndim()) {
         FAILURE(std::invalid_argument, "Dimension of Slices and CartesianGrid not compatible (expected %u, got %u).\n",

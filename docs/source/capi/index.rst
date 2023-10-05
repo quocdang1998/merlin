@@ -82,10 +82,9 @@ Array manipulation
 .. doxysummary::
    :toctree: generated
 
-   merlin::array::Slice
-   merlin::array::array_copy
-   merlin::array::shuffle_array
-   merlin::array::shuffled_read
+   merlin::array::copy
+   merlin::array::fill
+   merlin::array::print
 
 
 Interpolant API

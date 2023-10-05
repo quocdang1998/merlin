@@ -4,7 +4,7 @@
 
 #include <cstdint>  // std::uint64_t, std::uintptr_t
 
-#include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Slice
+#include "merlin/array/declaration.hpp"  // merlin::array::Array
 #include "merlin/cuda/stream.hpp"        // merlin::cuda::Stream
 #include "merlin/cuda_interface.hpp"     // __cuhostdev__
 #include "merlin/env.hpp"                // merlin::Environment

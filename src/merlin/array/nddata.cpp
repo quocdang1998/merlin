@@ -2,16 +2,15 @@
 #include "merlin/array/nddata.hpp"
 
 #include <cinttypes>  // PRIu64
-#include <sstream>    // std::ostringstream
 #include <utility>    // std::move
 #include <vector>     // std::vector
 
 #include "merlin/array/array.hpp"      // merlin::array::Array
 #include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides
 #include "merlin/array/parcel.hpp"     // merlin::array::Parcel
-#include "merlin/array/slice.hpp"      // merlin::array::Slice
 #include "merlin/array/stock.hpp"      // merlin::array::Stock
 #include "merlin/logger.hpp"           // FAILURE
+#include "merlin/slice.hpp"            // merlin::Slice
 #include "merlin/utils.hpp"            // merlin::contiguous_to_ndim_idx
 
 namespace merlin {
@@ -19,6 +18,14 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 // NdData
 // ---------------------------------------------------------------------------------------------------------------------
+
+// Calculate size of array
+void array::NdData::calc_array_size(void) noexcept {
+    this->size_ = 1;
+    for (std::uint64_t i = 0; i < this->ndim(); i++) {
+        this->size_ *= this->shape_[i];
+    }
+}
 
 // Member initialization for C++ interface
 array::NdData::NdData(double * data, const intvec & shape, const intvec & strides) :
@@ -37,35 +44,26 @@ array::NdData::NdData(const intvec & shape) : shape_(shape) {
     this->calc_array_size();
 }
 
-// Partite an array into multiple parts
-Vector<Vector<array::Slice>> array::NdData::partite(std::uint64_t max_memory) {
-    // if memory fit in, skip
-    std::uint64_t data_size = this->size() * sizeof(double);
-    if (data_size < max_memory) {
-        return Vector<Vector<array::Slice>>(1, Vector<array::Slice>(this->ndim()));
+// Constructor from a slice
+array::NdData::NdData(const array::NdData & whole, const slicevec & slices) {
+    // check size
+    if (slices.size() != whole.ndim()) {
+        FAILURE(std::invalid_argument, "Dimension of Slices and NdData not compatible (expected %u, got %u).\n",
+                static_cast<unsigned int>(whole.ndim()), static_cast<unsigned int>(slices.size()));
     }
-    // find dimension at which index = 1 -> memory just fit
-    intvec size_per_dimension = array::contiguous_strides(this->shape_, sizeof(double));
-    std::uint64_t divide_dimension = 0;
-    while (size_per_dimension[divide_dimension] > max_memory) {
-        --divide_dimension;
+    // create result
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(whole.data_);
+    this->shape_ = intvec(whole.ndim());
+    this->strides_ = intvec(whole.ndim());
+    for (std::uint64_t i_dim = 0; i_dim < whole.ndim(); i_dim++) {
+        auto [offset, shape, stride] = slices[i_dim].slice_on(whole.shape_[i_dim], whole.strides_[i_dim]);
+        data_ptr += offset;
+        this->shape_[i_dim] = shape;
+        this->strides_[i_dim] = stride;
     }
-    // calculate number of partition
-    std::uint64_t num_partition = 1;
-    for (std::uint64_t i = 0; i < divide_dimension; i++) {
-        num_partition *= this->shape_[i];
-    }
-    // get slices for each partition
-    intvec divident_shape(this->shape_.cbegin(), divide_dimension);  // shape of array of which elements are sub-arrays
-    Vector<Vector<array::Slice>> result(num_partition, Vector<array::Slice>(this->ndim()));
-    for (std::uint64_t i_partition = 0; i_partition < num_partition; i_partition++) {
-        // slices of dividing index
-        intvec index = contiguous_to_ndim_idx(i_partition, divident_shape);
-        for (std::uint64_t i_dim = 0; i_dim < divident_shape.size(); i_dim++) {
-            result[i_partition][i_dim] = array::Slice({index[i_dim]});
-        }
-    }
-    return result;
+    this->calc_array_size();
+    this->data_ = reinterpret_cast<double *>(data_ptr);
+    this->release_ = false;
 }
 
 // Reshape
@@ -106,68 +104,10 @@ void array::NdData::remove_dim(std::uint64_t i_dim) {
 
 // String representation
 std::string array::NdData::str(bool first_call) const {
-    std::ostringstream os;
-    // trivial case
-    if (this->ndim() == 1) {
-        os << "<";
-        for (std::uint64_t i = 0; i < this->shape_[0]; i++) {
-            if (i > 0) {
-                os << " ";
-            }
-            os << this->get({i});
-        }
-        os << ">";
-        return os.str();
-    }
-    // recursively call str function of sub_array
-    os << "<";
-    if (first_call) {
-        if (dynamic_cast<const array::Array *>(this) != nullptr) {
-            os << "Array(";
-        } else if (dynamic_cast<const array::Parcel *>(this) != nullptr) {
-            os << "Parcel(";
-        } else if (dynamic_cast<const array::Stock *>(this) != nullptr) {
-            os << "Stock(";
-        } else {
-            os << "NdData(";
-        }
-    }
-    for (std::uint64_t i = 0; i < this->shape_[0]; i++) {
-        if (i > 0) {
-            os << " ";
-        }
-        Vector<array::Slice> slice_i(this->ndim());
-        slice_i[0] = array::Slice({i});
-        array::NdData * p_sliced = array::slice_on(*this, slice_i);
-        p_sliced->remove_dim(0);
-        os << p_sliced->str(false);
-        delete p_sliced;
-    }
-    if (first_call) {
-        os << ")";
-    }
-    os << ">";
-    return os.str();
+    return array::print(this, "NdData", first_call);
 }
 
 // Destructor
 array::NdData::~NdData(void) {}
-
-// Slice an array and get a new instance of the same polymorphic type
-array::NdData * array::slice_on(const array::NdData & original, const Vector<array::Slice> & slices) {
-    array::NdData * result;
-    if (const array::Array * p_ori = dynamic_cast<const array::Array *>(&original); p_ori != nullptr) {
-        result = new array::Array(*p_ori, slices);
-        return result;
-    } else if (const array::Parcel * p_ori = dynamic_cast<const array::Parcel *>(&original); p_ori != nullptr) {
-        result = new array::Parcel(*p_ori, slices);
-        return result;
-    } else if (const array::Stock * p_ori = dynamic_cast<const array::Stock *>(&original); p_ori != nullptr) {
-        result = new array::Stock(*p_ori, slices);
-        return result;
-    }
-    result = new array::NdData(original, slices);
-    return result;
-}
 
 }  // namespace merlin

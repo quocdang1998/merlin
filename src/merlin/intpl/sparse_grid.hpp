@@ -139,7 +139,7 @@ MERLIN_EXPORTS void copy_value_from_cartesian_array(array::NdData & dest, const 
 MERLIN_EXPORTS intpl::CartesianGrid get_cartesian_grid(const SparseGrid & grid, std::uint64_t subgrid_index);
 
 /** @brief Get slice of a given level index.*/
-Vector<array::Slice> get_slice(const SparseGrid & grid, std::uint64_t subgrid_index);
+slicevec get_slice(const SparseGrid & grid, std::uint64_t subgrid_index);
 
 }  // namespace intpl
 

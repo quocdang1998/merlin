@@ -8,8 +8,8 @@
 #include <omp.h>  // #pragma omp
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/slice.hpp"  // merlin::array::Slice
 #include "merlin/logger.hpp"       // FAILURE
+#include "merlin/slice.hpp"        // merlin::slicevec
 #include "merlin/utils.hpp"        // merlin::contiguous_to_ndim_idx, merlin::prod_elements
 #include "merlin/vector.hpp"       // merlin::intvec
 
@@ -87,7 +87,7 @@ array::Array statistics::mean_cpu(const array::Array & data, const intvec & dims
     #pragma omp parallel for schedule(guided, Environment::parallel_chunk) num_threads(nthreads)
     for (std::int64_t i_point = 0; i_point < result_size; i_point++) {
         intvec non_collapsed_index = contiguous_to_ndim_idx(i_point, result_shape);
-        Vector<array::Slice> slices(data.ndim());
+        slicevec slices(data.ndim());
         for (std::uint64_t i_dim = 0; i_dim < non_collapsed_dims.size(); i_dim++) {
             slices[non_collapsed_dims[i_dim]] = {non_collapsed_index[i_dim]};
         }

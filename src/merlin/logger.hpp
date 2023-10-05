@@ -62,6 +62,19 @@ MERLINSHARED_EXPORTS void print_stacktrace(int skip = 1);
  *  @param fmt Formatted string (same syntax as ``std::printf``).
  */
 #define FAILURE(exception, fmt, ...) ::merlin::__throw_error<exception>(__FUNCNAME__, fmt, ##__VA_ARGS__)
+/** @brief Perform a check only in debug mode.
+ *  @details Example:
+ *  @code {.cpp}
+ *  CASSERT(i < j, FAILURE, std::runtime_error, "A runtime error message.\n");
+ *  @endcode
+ */
+#if defined(__MERLIN_DEBUG__)
+    #define CASSERT(condition, ERROR_MACRO, exception, fmt, ...)                                                       \
+        if (condition)                                                                                                 \
+            ERROR_MACRO(exception, fmt, ##__VA_ARGS__)
+#else
+    #define CASSERT(condition, ERROR_MACRO, exception, fmt, ...)
+#endif  // __MERLIN_DEBUG__
 
 namespace merlin {
 
@@ -78,7 +91,7 @@ void __throw_error(const char * func_name, const char * fmt, ...) {
     std::fprintf(stderr, "\033[1;31m[FAILURE]\033[0m [%s] %s", func_name, buffer);
 #if defined(__MERLIN_DEBUG__)
     print_stacktrace(2);  // print_stacktrace function
-#endif  // __MERLIN_DEBUG__
+#endif                    // __MERLIN_DEBUG__
     if constexpr (std::is_same<Exception, std::filesystem::filesystem_error>::value) {
         throw std::filesystem::filesystem_error(const_cast<char *>(buffer),
                                                 std::error_code(1, std::iostream_category()));
