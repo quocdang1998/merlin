@@ -49,13 +49,13 @@ list(APPEND MERLIN_SRC_CPP
      linalg/qr_solve.cpp
      linalg/matrix.cpp
      shuffle.cpp
+     splint/cartesian_grid.cpp
      statistics/moment.cpp
 )
 list(APPEND MERLIN_SRC_CU
      array/array.cu
      array/parcel.cu
      candy/launcher.cu
-     #candy/loss.cu
      candy/model.cu
      cuda/context.cu
      cuda/device.cu
@@ -96,6 +96,7 @@ list(APPEND MERLIN_SRC_RDC
      intpl/newton.rdc
      linalg/qr_solve.rdc
      linalg/matrix.rdc
+     splint/cartesian_grid.rdc
      utils.rdc
 )
 list(APPEND MERLIN_SRC_SHR

@@ -15,7 +15,7 @@ __cudevice__ void statistics::mean_gpu(const array::Parcel & data, double * buff
     std::uint64_t thread_idx = flatten_thread_index();
     std::uint64_t n_threads = size_of_block();
     // initialize storing vector
-    Vector<double> storing;
+    floatvec storing;
     storing.assign(buffer, n_threads);
     storing[thread_idx] = 0.0;
     // initialize index vector

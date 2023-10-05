@@ -7,6 +7,7 @@
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Parcel
 #include "merlin/array/nddata.hpp"       // merlin::array::NdData
+#include "merlin/array/slice.hpp"        // merlin::slicevec
 #include "merlin/cuda/stream.hpp"        // merlin::cuda::Stream
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/iterator.hpp"           // merlin::Iterator
@@ -64,7 +65,7 @@ class array::Array : public array::NdData {
      *  @param whole merlin::array::Array of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    MERLIN_EXPORTS Array(const array::Array & whole, const Vector<array::Slice> & slices);
+    MERLIN_EXPORTS Array(const array::Array & whole, const slicevec & slices);
     /// @}
 
     /// @name Copy and move

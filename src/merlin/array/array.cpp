@@ -10,7 +10,6 @@
 
 #include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::copy, merlin::array::fill
 #include "merlin/array/parcel.hpp"     // merlin::array::Parcel
-#include "merlin/array/slice.hpp"      // merlin::array::Slice
 #include "merlin/array/stock.hpp"      // merlin::array::Stock
 #include "merlin/logger.hpp"           // FAILURE
 #include "merlin/utils.hpp"            // merlin::contiguous_to_ndim_idx, merlin::inner_prod
@@ -114,7 +113,7 @@ array::Array::Array(double * data, const intvec & shape, const intvec & strides,
 }
 
 // Constructor from a slice
-array::Array::Array(const array::Array & whole, const Vector<array::Slice> & slices) : array::NdData(whole, slices) {
+array::Array::Array(const array::Array & whole, const slicevec & slices) : array::NdData(whole, slices) {
     this->release_ = false;
     this->initialize_iterator();
 }

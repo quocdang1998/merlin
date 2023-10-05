@@ -8,6 +8,9 @@ class Context;  // CUDA runtime context
 class Event;    // CUDA events (milestone in the stream)
 class Stream;   // CUDA streams (queues of tasks)
 class Graph;    // CUDA Execution Graph
+
+template <typename... Args>
+class Memory;   // CUDA Memory copy interface
 }  // namespace merlin::cuda
 
 #endif  // MERLIN_CUDA_DECLARATION_HPP_

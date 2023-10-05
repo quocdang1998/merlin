@@ -172,6 +172,27 @@ __cuhostdev__ std::uint64_t decrement_index(intvec & index, const intvec & shape
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// List Division
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Get a list of pointers divided from an original array
+__cuhostdev__ Vector<double *> ptr_to_subsequence(double * original, const intvec & divider_length,
+                                                  double ** data_ptr) {
+    Vector<double *> result;
+    if (data_ptr != nullptr) {
+        result.assign(data_ptr, divider_length.size());
+    } else {
+        result = Vector<double *>(divider_length.size());
+    }
+    std::uint64_t jump = 0;
+    for (std::uint64_t i = 0; i < divider_length.size(); i++) {
+        result[i] = original + jump;
+        jump += divider_length[i];
+    }
+    return result;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Sparse Grid
 // ---------------------------------------------------------------------------------------------------------------------
 

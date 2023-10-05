@@ -114,6 +114,17 @@ __cuhostdev__ std::uint64_t increment_index(intvec & index, const intvec & shape
  */
 __cuhostdev__ std::uint64_t decrement_index(intvec & index, const intvec & shape);
 
+// List Division
+// -------------
+
+/** @brief Get a list of pointers divided from an original array.
+ *  @param original Pointer to the first element of the original array.
+ *  @param divider_length Size of each subsequence.
+ *  @param data_ptr Pointer to result data. If the value is ``nullptr``, new instance is allocated.
+ */
+__cuhostdev__ Vector<double *> ptr_to_subsequence(double * original, const intvec & divider_length,
+                                                  double ** data_ptr = nullptr);
+
 // Sparse Grid
 // -----------
 
