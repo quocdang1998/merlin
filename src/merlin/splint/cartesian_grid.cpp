@@ -44,7 +44,7 @@ static bool has_duplicated_element(const std::vector<double> & grid_vector) {
 
 // Construct from initializer list
 splint::CartesianGrid::CartesianGrid(const Vector<floatvec> & grid_vectors) :
-grid_shape_(grid_vectors.size()), node_per_dim_ptr_(grid_vectors.size()) {
+grid_shape_(grid_vectors.size()), grid_vectors_(grid_vectors.size()) {
     std::uint64_t num_nodes = 0;
     for (std::uint64_t i_dim = 0; i_dim < grid_vectors.size(); i_dim++) {
         // check for duplicate element
@@ -67,18 +67,18 @@ grid_shape_(grid_vectors.size()), node_per_dim_ptr_(grid_vectors.size()) {
         }
     }
     // calculate pointers per dimension
-    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->node_per_dim_ptr_.data());
+    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->grid_vectors_.data());
 }
 
 // Constructor from list of nodes and shape
 splint::CartesianGrid::CartesianGrid(floatvec && grid_nodes, intvec && shape) :
-grid_nodes_(grid_nodes), grid_shape_(shape), node_per_dim_ptr_(shape.size()) {
+grid_nodes_(grid_nodes), grid_shape_(shape), grid_vectors_(shape.size()) {
     // calculate pointers per dimension
-    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->node_per_dim_ptr_.data());
+    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->grid_vectors_.data());
     // check for duplicate element
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
-        std::vector<double> grid_vector(this->node_per_dim_ptr_[i_dim],
-                                        this->node_per_dim_ptr_[i_dim]+this->grid_shape_[i_dim]);
+        std::vector<double> grid_vector(this->grid_vectors_[i_dim],
+                                        this->grid_vectors_[i_dim]+this->grid_shape_[i_dim]);
         if (has_duplicated_element(std::vector<double>(grid_vector))) {
             FAILURE(std::invalid_argument, "Found duplicated elements.\n");
         }
@@ -87,7 +87,7 @@ grid_nodes_(grid_nodes), grid_shape_(shape), node_per_dim_ptr_(shape.size()) {
 
 // Constructor as a sub-grid from a larger grid
 splint::CartesianGrid::CartesianGrid(const splint::CartesianGrid & whole, const slicevec & slices) :
-grid_shape_(whole.ndim()), node_per_dim_ptr_(whole.ndim()) {
+grid_shape_(whole.ndim()), grid_vectors_(whole.ndim()) {
     // check size
     if (slices.size() != whole.ndim()) {
         FAILURE(std::invalid_argument,
@@ -111,23 +111,34 @@ grid_shape_(whole.ndim()), node_per_dim_ptr_(whole.ndim()) {
         }
     }
     // calculate pointers per dimension
-    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->node_per_dim_ptr_.data());
+    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->grid_vectors_.data());
 }
 
 // Copy constructor
 splint::CartesianGrid::CartesianGrid(const splint::CartesianGrid & src) :
-grid_nodes_(src.grid_nodes_), grid_shape_(src.grid_shape_), node_per_dim_ptr_(src.ndim()) {
-    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->node_per_dim_ptr_.data());
+grid_nodes_(src.grid_nodes_), grid_shape_(src.grid_shape_), grid_vectors_(src.ndim()) {
+    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->grid_vectors_.data());
 }
 
 // Copy assignment
 splint::CartesianGrid & splint::CartesianGrid::operator=(const splint::CartesianGrid & src) {
     this->grid_nodes_ = src.grid_nodes_;
     this->grid_shape_ = src.grid_shape_;
-    this->node_per_dim_ptr_ = Vector<double *>(this->ndim());
-    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->node_per_dim_ptr_.data());
+    this->grid_vectors_ = Vector<double *>(this->ndim());
+    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->grid_vectors_.data());
     return *this;
 }
+
+#ifndef __MERLIN_CUDA__
+
+// Copy data to a pre-allocated memory
+void * splint::CartesianGrid::copy_to_gpu(splint::CartesianGrid * gpu_ptr, void * grid_vector_data_ptr,
+                                         std::uintptr_t stream_ptr) const {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
+    return nullptr;
+}
+
+#endif  // __MERLIN_CUDA__
 
 // String representation
 std::string splint::CartesianGrid::str(void) const {

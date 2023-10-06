@@ -51,9 +51,11 @@ class splint::CartesianGrid {
     /** @brief Get grid vector of a given dimension.*/
     __cuhostdev__ const floatvec grid_vector(std::uint64_t i_dim) const noexcept {
         floatvec grid_vector;
-        grid_vector.assign(const_cast<double *>(this->node_per_dim_ptr_[i_dim]), this->grid_shape_[i_dim]);
+        grid_vector.assign(const_cast<double *>(this->grid_vectors_[i_dim]), this->grid_shape_[i_dim]);
         return grid_vector;
     }
+    /** @brief Get constant reference to grid vector pointers.*/
+    __cuhostdev__ const Vector<double *> & grid_vectors(void) const noexcept { return this->grid_vectors_; }
     /** @brief Get dimensions of the grid.*/
     __cuhostdev__ constexpr std::uint64_t ndim(void) const noexcept { return this->grid_shape_.size(); }
     /** @brief Get shape of the grid.*/
@@ -62,6 +64,56 @@ class splint::CartesianGrid {
     __cuhostdev__ std::uint64_t size(void) const;
     /** @brief Get total number of nodes on all dimension.*/
     __cuhostdev__ std::uint64_t num_nodes(void) const noexcept { return this->grid_nodes_.size(); }
+    /// @}
+
+    /// @name Slicing operator
+    /// @{
+    /** @brief Get element at a given flatten index.
+     *  @param index Flatten index of point in the grid (in C order).
+     */
+    __cuhostdev__ floatvec operator[](std::uint64_t index) const noexcept;
+    /** @brief Get element at a given index vector.
+     *  @param index Vector of index on each dimension.
+     */
+    __cuhostdev__ floatvec operator[](const intvec & index) const noexcept;
+    /// @}
+
+        /// @name GPU related features
+    /// @{
+    /** @brief Calculate the minimum number of bytes to allocate in the memory to store the grid and its data.*/
+    std::uint64_t cumalloc_size(void) const noexcept {
+        std::uint64_t size = sizeof(splint::CartesianGrid);
+        size += this->num_nodes()*sizeof(double) + this->ndim()*(sizeof(std::uint64_t)+sizeof(double *));
+        return size;
+    }
+    /** @brief Copy the grid from CPU to a pre-allocated memory on GPU.
+     *  @details Values of vectors should be copied to the memory region that comes right after the copied object.
+     *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
+     *  @param grid_data_ptr Pointer to a pre-allocated GPU memory storing data of grid vectors.
+     *  @param stream_ptr Pointer to CUDA stream for asynchronous copy.
+     */
+    MERLIN_EXPORTS void * copy_to_gpu(splint::CartesianGrid * gpu_ptr, void * grid_data_ptr,
+                                      std::uintptr_t stream_ptr = 0) const;
+    /** @brief Calculate the minimum number of bytes to allocate in CUDA shared memory to store the grid.*/
+    std::uint64_t sharedmem_size(void) const noexcept { return this->cumalloc_size(); }
+#ifdef __NVCC__
+    /** @brief Copy grid to a pre-allocated memory region by a GPU block of threads.
+     *  @details The copy action is performed by the whole CUDA thread block.
+     *  @param dest_ptr Memory region where the grid is copied to.
+     *  @param grid_data_ptr Pointer to a pre-allocated GPU memory storing data of grid vectors, size of
+     *  ``floatvec[this->ndim()] + double[this->size()]``.
+     *  @param thread_idx Flatten ID of the current CUDA thread in the block.
+     *  @param block_size Number of threads in the current CUDA block.
+     */
+    __cudevice__ void * copy_by_block(splint::CartesianGrid * dest_ptr, void * grid_data_ptr, std::uint64_t thread_idx,
+                                      std::uint64_t block_size) const;
+    /** @brief Copy grid to a pre-allocated memory region by a single GPU threads.
+     *  @param dest_ptr Memory region where the grid is copied to.
+     *  @param grid_data_ptr Pointer to a pre-allocated GPU memory storing data of grid vectors, size of
+     *  ``floatvec[this->ndim()] + double[this->size()]``.
+     */
+    __cudevice__ void * copy_by_thread(splint::CartesianGrid * dest_ptr, void * grid_data_ptr) const;
+#endif  // __NVCC__
     /// @}
 
     /// @name Representation
@@ -84,7 +136,7 @@ class splint::CartesianGrid {
 
   private:
     /** @brief Pointer to first node in each dimension.*/
-    Vector<double *> node_per_dim_ptr_;
+    Vector<double *> grid_vectors_;
 };
 
 }  // namespace merlin

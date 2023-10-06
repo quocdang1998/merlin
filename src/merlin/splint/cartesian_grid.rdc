@@ -1,6 +1,8 @@
 // Copyright 2022 quocdang1998
 #include "merlin/splint/cartesian_grid.hpp"
 
+#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::ptr_to_subsequence
+
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -15,5 +17,88 @@ __cuhostdev__ std::uint64_t splint::CartesianGrid::size(void) const {
     }
     return result;
 }
+
+// Get element at a C-contiguous index
+__cuhostdev__ floatvec splint::CartesianGrid::operator[](std::uint64_t index) const noexcept {
+    intvec nd_index = contiguous_to_ndim_idx(index, this->grid_shape_);
+    floatvec point(this->ndim(), 0);
+    for (std::uint64_t i = 0; i < point.size(); i++) {
+        point[i] = this->grid_vectors_[i][nd_index[i]];
+    }
+    return point;
+}
+
+// Get element at a multi-dimensional index
+__cuhostdev__ floatvec splint::CartesianGrid::operator[](const intvec & index) const noexcept {
+    floatvec point(this->ndim());
+    for (std::uint64_t i = 0; i < point.size(); i++) {
+        point[i] = this->grid_vectors_[i][index[i]];
+    }
+    return point;
+}
+
+#ifdef __NVCC__
+
+// Copy to shared memory
+__cudevice__ void * splint::CartesianGrid::copy_by_block(splint::CartesianGrid * dest_ptr, void * grid_data_ptr,
+                                                         std::uint64_t thread_idx, std::uint64_t block_size) const {
+    // shallow copy of grid node, grid shape and grid vectors
+    double * grid_nodes_ptr = reinterpret_cast<double *>(grid_data_ptr);
+    std::uint64_t * grid_shape_ptr = reinterpret_cast<std::uint64_t *>(grid_nodes_ptr + this->num_nodes());
+    double ** grid_vectors_ptr = reinterpret_cast<double **>(grid_shape_ptr + this->ndim());
+    if (thread_idx == 0) {
+        dest_ptr->grid_nodes_.data() = grid_nodes_ptr;
+        dest_ptr->grid_nodes_.size() = this->num_nodes();
+        dest_ptr->grid_shape_.data() = grid_shape_ptr;
+        dest_ptr->grid_shape_.size() = this->ndim();
+        dest_ptr->grid_vectors_.data() = grid_vectors_ptr;
+        dest_ptr->grid_vectors_.size() = this->ndim();
+    }
+    __syncthreads();
+    // copy data of grid nodes and grid shape
+    std::uint64_t num_nodes = this->num_nodes(), ndim = this->ndim();
+    for (std::uint64_t i_node = thread_idx; i_node < num_nodes; i_node++) {
+        dest_ptr->grid_nodes_[i_node] = this->grid_nodes_[i_node];
+    }
+    __syncthreads();
+    for (std::uint64_t i_dim = thread_idx; i_dim < ndim; i_dim++) {
+        dest_ptr->grid_shape_[i_dim] = this->grid_shape_[i_dim];
+    }
+    __syncthreads();
+    // re-calculate grid vectors
+    if (thread_idx == 0) {
+        ptr_to_subsequence(grid_nodes_ptr, dest_ptr->grid_shape_, grid_vectors_ptr);
+    }
+    __syncthreads();
+    return reinterpret_cast<void *>(grid_vectors_ptr + this->ndim());
+}
+
+// Copy to shared memory
+__cudevice__ void * splint::CartesianGrid::copy_by_thread(splint::CartesianGrid * dest_ptr,
+                                                          void * grid_data_ptr) const {
+    // shallow copy of grid node, grid shape and grid vectors
+    double * grid_nodes_ptr = reinterpret_cast<double *>(grid_data_ptr);
+    std::uint64_t * grid_shape_ptr = reinterpret_cast<std::uint64_t *>(grid_nodes_ptr + this->num_nodes());
+    double ** grid_vectors_ptr = reinterpret_cast<double **>(grid_shape_ptr + this->ndim());
+    dest_ptr->grid_nodes_.data() = grid_nodes_ptr;
+    dest_ptr->grid_nodes_.size() = this->num_nodes();
+    dest_ptr->grid_shape_.data() = grid_shape_ptr;
+    dest_ptr->grid_shape_.size() = this->ndim();
+    dest_ptr->grid_vectors_.data() = grid_vectors_ptr;
+    dest_ptr->grid_vectors_.size() = this->ndim();
+    // copy data of grid nodes and grid shape
+    std::uint64_t num_nodes = this->num_nodes(), ndim = this->ndim();
+    for (std::uint64_t i_node = 0; i_node < num_nodes; i_node++) {
+        dest_ptr->grid_nodes_[i_node] = this->grid_nodes_[i_node];
+    }
+    for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
+        dest_ptr->grid_shape_[i_dim] = this->grid_shape_[i_dim];
+    }
+    // re-calculate grid vectors
+    ptr_to_subsequence(grid_nodes_ptr, dest_ptr->grid_shape_, grid_vectors_ptr);
+    return reinterpret_cast<void *>(grid_vectors_ptr + this->ndim());
+}
+
+#endif  // __NVCC__
 
 }  // namespace merlin
