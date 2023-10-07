@@ -3,6 +3,7 @@
 #define MERLIN_ARRAY_OPERATION_HPP_
 
 #include <cstdint>  // std::uint64_t, std::int64_t
+#include <string>   // std::string
 #include <tuple>    // std::tuple
 
 #include "merlin/array/nddata.hpp"    // merlin::array::NdData
@@ -56,6 +57,12 @@ void array_copy(array::NdData * dest, const array::NdData * src, CopyFunction co
 template <class CopyFunction>
 void fill(array::NdData * target, double fill_value, CopyFunction write_engine,
           std::uint64_t buffer = 1024 * sizeof(double));
+
+/** @brief String representation of an array.
+ *  @param target Target array to print.
+ */
+template <class NdArray>
+std::string print(const NdArray * target, const std::string & nametype, bool first_call);
 
 }  // namespace merlin::array
 

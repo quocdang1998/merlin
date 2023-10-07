@@ -80,33 +80,8 @@ class array::Array : public array::NdData {
     MERLIN_EXPORTS Array & operator=(array::Array && src);
     /// @}
 
-    /// @name Iterator
+    /// @name Sciling operator
     /// @{
-    /** @brief Iterator class.*/
-    // using iterator = Iterator;
-    class iterator : public Iterator {
-      public:
-        /** @brief Default constructor.*/
-        iterator(void) = default;
-        /** @brief Constructor from index.*/
-        iterator(const intvec & index, const intvec & shape, const double * data_ptr) :
-        Iterator(index, shape), data_ptr_(const_cast<double *>(data_ptr)) {}
-        /** @brief Dereference operator.*/
-        double & operator*(void) const {
-            return this->data_ptr_[this->item_ptr_];  // not counting non contiguous
-        }
-
-      private:
-        mutable double * data_ptr_ = nullptr;
-    };
-    /** @brief Begin iterator.
-     *  @details Vector of index \f$(0, 0, ..., 0)\f$.
-     */
-    constexpr const array::Array::iterator & begin(void) const noexcept { return this->begin_; }
-    /** @brief End iterator.
-     *  @details Vector of index \f$(d_0, 0, ..., 0)\f$.
-     */
-    constexpr const array::Array::iterator & end(void) const noexcept { return this->end_; }
     /** @brief Sciling operator.
      *  @details Get an element at a given index.
      *  @param index Vector of indices along each dimension.
@@ -135,14 +110,6 @@ class array::Array : public array::NdData {
 
     /// @name Operations
     /// @{
-    /** @brief Reshape the dataset.
-     *  @param new_shape New shape.
-     */
-    MERLIN_EXPORTS void reshape(const intvec & new_shape);
-    /** @brief Collapse dimensions with size 1.
-     *  @param i_dim Index of dimension to collapse.
-     */
-    MERLIN_EXPORTS void remove_dim(std::uint64_t i_dim = 0);
     /** @brief Set value of all elements.*/
     MERLIN_EXPORTS void fill(double value);
     /// @}
@@ -157,35 +124,18 @@ class array::Array : public array::NdData {
     MERLIN_EXPORTS void extract_data_from_file(const array::Stock & src);
     /// @}
 
+    /// @name Representation
+    /// @{
+    /** @brief String representation.*/
+    MERLIN_EXPORTS std::string str(bool first_call = true) const;
+    /// @}
+
     /// @name Destructor
     /// @{
     /** @brief Destructor.*/
     MERLIN_EXPORTS ~Array(void);
     /// @}
-
-  protected:
-    /** @brief Index vector of begin element.*/
-    array::Array::iterator begin_;
-    /** @brief Index vector of last element.*/
-    array::Array::iterator end_;
-
-  private:
-    /** @brief Initialize begin and end iterators.*/
-    void initialize_iterator(void) noexcept;
 };
-
-namespace array {
-
-// Random shuffle
-// --------------
-
-/** @brief %Shuffle array.*/
-array::Array shuffle_array(const array::Array & src, const Shuffle & suffle_index);
-
-/** @brief Read an array with shuffled index.*/
-array::Array shuffled_read(const array::Stock & src, const Shuffle & suffle_index);
-
-}  // namespace array
 
 }  // namespace merlin
 

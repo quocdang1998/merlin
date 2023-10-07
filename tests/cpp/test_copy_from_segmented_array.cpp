@@ -32,14 +32,5 @@ int main(void) {
 
     // print array
     MESSAGE("Expected values : 1.0 2.0 5.0 6.0 9.0 10.0\n");
-    MESSAGE("Result          : ");
-    /*
-    for (merlin::array::Array::iterator it = Ar_copy.begin(); it != Ar_copy.end(); ++it) {
-        std::printf("%.1f ", Ar_copy[it.index()]);
-    }
-    */
-    for (double & value : Ar_copy) {
-        std::printf("%.1f ", value);
-    }
-    std::printf("\n");
+    MESSAGE("Result          : %s\n", Ar_copy.str().c_str());
 }

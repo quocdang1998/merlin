@@ -21,14 +21,14 @@ class array::Parcel : public array::NdData {
     /// @name Constructors
     /// @{
     /** @brief Default constructor (do nothing).*/
-    __cuhostdev__ Parcel(void) {}
+    Parcel(void) = default;
     /** @brief Construct a contiguous array from shape on GPU.*/
     MERLIN_EXPORTS Parcel(const intvec & shape, const cuda::Stream & stream = cuda::Stream());
     /** @brief Constructor from a slice.
      *  @param whole merlin::array::NdData of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    __cuhostdev__ Parcel(const array::Parcel & whole, const slicevec & slices);
+    MERLIN_EXPORTS Parcel(const array::Parcel & whole, const slicevec & slices);
     /// @}
 
     /// @name Copy and Move
@@ -77,14 +77,6 @@ class array::Parcel : public array::NdData {
 
     /// @name Operations
     /// @{
-    /** @brief Reshape the dataset.
-     *  @param new_shape New shape.
-     */
-    MERLIN_EXPORTS void reshape(const intvec & new_shape);
-    /** @brief Collapse dimensions with size 1.
-     *  @param i_dim Index of dimension to collapse.
-     */
-    MERLIN_EXPORTS void remove_dim(std::uint64_t i_dim = 0);
     /** @brief Set value of all elements.*/
     MERLIN_EXPORTS void fill(double value);
     /// @}
@@ -133,6 +125,12 @@ class array::Parcel : public array::NdData {
      */
     __cudevice__ void * copy_by_thread(array::Parcel * dest_ptr, void * shape_strides_ptr) const;
 #endif  // __NVCC__
+    /// @}
+
+    /// @name Representation
+    /// @{
+    /** @brief String representation.*/
+    MERLIN_EXPORTS std::string str(bool first_call = true) const;
     /// @}
 
     /// @name Destructor

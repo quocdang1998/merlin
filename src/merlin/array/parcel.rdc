@@ -11,15 +11,6 @@ namespace merlin {
 // Parcel
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Constructor from a slice
-__cuhostdev__ array::Parcel::Parcel(const array::Parcel & whole, const slicevec & slices) :
-array::NdData(whole, slices) {
-    this->device_ = whole.device_;
-#ifndef __CUDA_ARCH__
-    this->context_ = whole.context_;
-#endif  // __CUDA_ARCH__
-}
-
 #ifdef __NVCC__
 
 // Get reference to an element at a given n-dim index

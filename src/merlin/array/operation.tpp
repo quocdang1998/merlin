@@ -4,6 +4,7 @@
 
 #include <algorithm>  // std::fill_n, std::min, std::max
 #include <cstdlib>    // std::lldiv
+#include <sstream>    // std::ostringstream
 
 #include "merlin/logger.hpp"  // FAILURE
 #include "merlin/utils.hpp"   // merlin::inner_prod
@@ -116,6 +117,48 @@ void array::fill(array::NdData * target, double fill_value, CopyFunction write_e
     }
     // deallocate buffer
     delete[] reinterpret_cast<char *>(buffer_data);
+}
+
+// String representation of an array
+template <class NdArray>
+std::string array::print(const NdArray * target, const std::string & nametype, bool first_call) {
+    if (target->data() == nullptr) {
+        FAILURE(std::runtime_error, "Cannot access elements of non-initialized array.\n");
+    }
+    std::ostringstream os;
+    // trivial case
+    if (target->ndim() == 1) {
+        os << "<";
+        for (std::uint64_t i = 0; i < target->shape()[0]; i++) {
+            if (i > 0) {
+                os << " ";
+            }
+            os << target->get({i});
+        }
+        os << ">";
+        return os.str();
+    }
+    // recursively call str function of sub_array
+    os << "<";
+    if (first_call) {
+        os << nametype << "(";
+    }
+    for (std::uint64_t i = 0; i < target->shape()[0]; i++) {
+        if (i != 0) {
+            os << " ";
+        }
+        slicevec slice_i(target->ndim());
+        slice_i[0] = Slice({i});
+        NdArray * p_sliced = new NdArray(*target, slice_i);
+        p_sliced->remove_dim(0);
+        os << p_sliced->str(false);
+        delete p_sliced;
+    }
+    if (first_call) {
+        os << ")";
+    }
+    os << ">";
+    return os.str();
 }
 
 }  // namespace merlin

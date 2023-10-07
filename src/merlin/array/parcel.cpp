@@ -1,9 +1,10 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/parcel.hpp"
 
-#include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/env.hpp"          // merlin::Environment
-#include "merlin/logger.hpp"       // FAILURE, cuda_compile_error
+#include "merlin/array/array.hpp"      // merlin::array::Array
+#include "merlin/array/operation.hpp"  // merlin::array::print
+#include "merlin/env.hpp"              // merlin::Environment
+#include "merlin/logger.hpp"           // FAILURE, cuda_compile_error
 
 namespace merlin {
 
@@ -14,11 +15,16 @@ namespace merlin {
 // Initialize mutex
 std::mutex & array::Parcel::mutex_ = Environment::mutex;
 
-// Reshape
-void array::Parcel::reshape(const intvec & new_shape) { this->array::NdData::reshape(new_shape); }
+// Constructor from a slice
+array::Parcel::Parcel(const array::Parcel & whole, const slicevec & slices) : array::NdData(whole, slices) {
+    this->device_ = whole.device_;
+    this->context_ = whole.context_;
+}
 
-// Collapse dimension from felt (or right)
-void array::Parcel::remove_dim(std::uint64_t i_dim) { this->array::NdData::remove_dim(i_dim); }
+// String representation
+std::string array::Parcel::str(bool first_call) const {
+    return array::print(this, "Parcel", first_call);
+}
 
 #ifndef __MERLIN_CUDA__
 

@@ -50,6 +50,7 @@ list(APPEND MERLIN_SRC_CPP
      slice.cpp
      shuffle.cpp
      splint/cartesian_grid.cpp
+     splint/interpolant.cpp
      statistics/moment.cpp
 )
 list(APPEND MERLIN_SRC_CU
@@ -81,7 +82,6 @@ list(APPEND MERLIN_SRC_GLB
 )
 list(APPEND MERLIN_SRC_RDC
      array/operation.rdc
-     array/nddata.rdc
      array/parcel.rdc
      candy/launcher.rdc
      candy/loss.rdc
