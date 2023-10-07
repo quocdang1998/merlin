@@ -28,7 +28,7 @@ class array::Parcel : public array::NdData {
      *  @param whole merlin::array::NdData of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    __cuhostdev__ Parcel(const array::Parcel & whole, const Vector<array::Slice> & slices);
+    __cuhostdev__ Parcel(const array::Parcel & whole, const slicevec & slices);
     /// @}
 
     /// @name Copy and Move

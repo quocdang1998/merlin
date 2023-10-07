@@ -12,7 +12,7 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Constructor from a slice
-__cuhostdev__ array::Parcel::Parcel(const array::Parcel & whole, const Vector<array::Slice> & slices) :
+__cuhostdev__ array::Parcel::Parcel(const array::Parcel & whole, const slicevec & slices) :
 array::NdData(whole, slices) {
     this->device_ = whole.device_;
 #ifndef __CUDA_ARCH__

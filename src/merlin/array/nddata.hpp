@@ -6,9 +6,10 @@
 #include <cstdint>  // std::int64_t, std::uint64_t, std::uintptr_t
 #include <string>   // std::string
 
-#include "merlin/array/declaration.hpp"  // merlin::array::NdData, merlin::array::Slice
+#include "merlin/array/declaration.hpp"  // merlin::array::NdData
 #include "merlin/cuda_interface.hpp"     // __cuhost__, __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/slice.hpp"              // merlin::slicevec
 #include "merlin/vector.hpp"             // merlin::intvec
 
 namespace merlin {
@@ -33,7 +34,7 @@ class array::NdData {
      *  @param whole merlin::array::NdData of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    __cuhostdev__ NdData(const array::NdData & whole, const Vector<array::Slice> & slices);
+    __cuhostdev__ NdData(const array::NdData & whole, const slicevec & slices);
     /// @}
 
     /// @name Copy and move
@@ -85,7 +86,7 @@ class array::NdData {
      *  @return A tuple of limit dimension and number of sub-array. If the original array fits in the memory, a tuple
      *  of ``UINT64_MAX, UINT64_MAX`` is returned.
      */
-    MERLIN_EXPORTS Vector<Vector<array::Slice>> partite(std::uint64_t max_memory);
+    MERLIN_EXPORTS Vector<slicevec> partite(std::uint64_t max_memory);
     /// @}
 
     /// @name Operations
@@ -137,7 +138,7 @@ class array::NdData {
 namespace array {
 
 /** @brief Slice current array to a new array with the same polymorphic type.*/
-MERLIN_EXPORTS array::NdData * slice_on(const array::NdData & original, const Vector<array::Slice> & slices);
+MERLIN_EXPORTS array::NdData * slice_on(const array::NdData & original, const slicevec & slices);
 
 }  // namespace array
 

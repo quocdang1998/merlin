@@ -6,9 +6,9 @@
 #include <initializer_list>  // std::initializer_list
 #include <string>            // std::string
 
-#include "merlin/array/slice.hpp"         // merlin::slicevec
 #include "merlin/cuda_interface.hpp"      // __cuhostdev__
 #include "merlin/exports.hpp"             // MERLIN_EXPORTS
+#include "merlin/slice.hpp"               // merlin::slicevec
 #include "merlin/splint/declaration.hpp"  // merlin::splint::CartesianGrid
 #include "merlin/vector.hpp"              // merlin::floatvec, merlin::intvec, merlin::Vector
 

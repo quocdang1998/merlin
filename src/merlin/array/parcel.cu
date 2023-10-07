@@ -5,7 +5,6 @@
 
 #include "merlin/array/array.hpp"      // merlin::array::Array
 #include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::copy, merlin::array::fill
-#include "merlin/array/slice.hpp"      // merlin::array::Slice
 #include "merlin/logger.hpp"           // FAILURE
 #include "merlin/utils.hpp"            // merlin::contiguous_to_ndim_idx, merlin::inner_prod
 

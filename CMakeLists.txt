@@ -21,7 +21,6 @@ list(APPEND MERLIN_SRC_CPP
      array/nddata.cpp
      array/array.cpp
      array/parcel.cpp
-     array/slice.cpp
      array/stock.cpp
      candy/optmz/adam.cpp
      candy/optmz/adagrad.cpp
@@ -48,6 +47,7 @@ list(APPEND MERLIN_SRC_CPP
      intpl/sparse_grid.cpp
      linalg/qr_solve.cpp
      linalg/matrix.cpp
+     slice.cpp
      shuffle.cpp
      splint/cartesian_grid.cpp
      statistics/moment.cpp
@@ -83,7 +83,6 @@ list(APPEND MERLIN_SRC_RDC
      array/operation.rdc
      array/nddata.rdc
      array/parcel.rdc
-     array/slice.rdc
      candy/launcher.rdc
      candy/loss.rdc
      candy/model.rdc
@@ -97,6 +96,7 @@ list(APPEND MERLIN_SRC_RDC
      intpl/newton.rdc
      linalg/qr_solve.rdc
      linalg/matrix.rdc
+     slice.rdc
      splint/cartesian_grid.rdc
      utils.rdc
 )

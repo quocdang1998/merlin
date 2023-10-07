@@ -7,15 +7,14 @@
 #include <initializer_list>  // std::initializer_list
 #include <string>            // std::string
 
-#include "merlin/array/declaration.hpp"  // merlin::array::Slice
-#include "merlin/cuda_interface.hpp"     // __cuhostdev__
-#include "merlin/exports.hpp"            // MERLIN_EXPORTS
-#include "merlin/vector.hpp"             // merlin::Vector
+#include "merlin/cuda_interface.hpp"  // __cuhostdev__
+#include "merlin/exports.hpp"         // MERLIN_EXPORTS
+#include "merlin/vector.hpp"          // merlin::Vector
 
 namespace merlin {
 
 /** @brief %Slice of an array.*/
-class array::Slice {
+class Slice {
   public:
     /// @name Constructors
     /// @{
@@ -122,7 +121,7 @@ class array::Slice {
 };
 
 /** @brief %Vector of slices.*/
-using slicevec = Vector<array::Slice>;
+using slicevec = Vector<Slice>;
 
 }  // namespace merlin
 

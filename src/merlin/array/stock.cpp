@@ -157,7 +157,7 @@ filename_(filename), offset_(offset), thread_safe_(thread_safe) {
 }
 
 // Constructor from a slice
-array::Stock::Stock(const array::Stock & whole, const Vector<array::Slice> & slices) : array::NdData(whole, slices) {
+array::Stock::Stock(const array::Stock & whole, const slicevec & slices) : array::NdData(whole, slices) {
     this->file_ptr_ = whole.file_ptr_;
     this->flock_ = whole.flock_;
     this->offset_ = whole.offset_;

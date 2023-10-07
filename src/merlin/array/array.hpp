@@ -7,11 +7,11 @@
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Parcel
 #include "merlin/array/nddata.hpp"       // merlin::array::NdData
-#include "merlin/array/slice.hpp"        // merlin::slicevec
 #include "merlin/cuda/stream.hpp"        // merlin::cuda::Stream
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/iterator.hpp"           // merlin::Iterator
 #include "merlin/shuffle.hpp"            // merlin::Shuffle
+#include "merlin/slice.hpp"              // merlin::slicevec
 #include "merlin/vector.hpp"             // merlin::intvec
 
 namespace merlin {

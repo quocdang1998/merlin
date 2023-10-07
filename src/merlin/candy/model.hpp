@@ -7,10 +7,10 @@
 #include <string>   // std::string
 
 #include "merlin/array/nddata.hpp"       // merlin::array::Array
-#include "merlin/array/slice.hpp"        // merlin::slicevec
 #include "merlin/candy/declaration.hpp"  // merlin::candy::Model
 #include "merlin/cuda_interface.hpp"     // __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/slice.hpp"              // merlin::slicevec
 #include "merlin/vector.hpp"             // merlin::Vector, merlin::floatvec
 
 namespace merlin {

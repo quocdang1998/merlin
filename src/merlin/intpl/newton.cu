@@ -6,10 +6,10 @@
 
 #include "merlin/array/operation.hpp"       // merlin::array::array_copy
 #include "merlin/array/parcel.hpp"          // merlin::array::Parcel
-#include "merlin/array/slice.hpp"           // merlin::array::Slice
 #include "merlin/cuda/memory.hpp"           // merlin::cuda::Memory
 #include "merlin/env.hpp"                   // merlin::Environment
 #include "merlin/intpl/cartesian_grid.hpp"  // merlin::intpl::CartesianGrid
+#include "merlin/slice.hpp"                 // merlin::Slice
 #include "merlin/utils.hpp"                 // merlin::prod_elements
 
 namespace merlin {

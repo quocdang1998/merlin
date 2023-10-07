@@ -8,9 +8,9 @@
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array
 #include "merlin/array/nddata.hpp"       // merlin::array::NdData
-#include "merlin/array/slice.hpp"        // merlin::array::Slice
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/filelock.hpp"           // merlin::FileLock
+#include "merlin/slice.hpp"        // merlin::slicevec
 #include "merlin/vector.hpp"             // merlin::Vector
 
 namespace merlin {
@@ -48,7 +48,7 @@ class array::Stock : public array::NdData {
      *  @param whole merlin::array::Stock of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    MERLIN_EXPORTS Stock(const array::Stock & whole, const Vector<array::Slice> & slices);
+    MERLIN_EXPORTS Stock(const array::Stock & whole, const slicevec & slices);
     /// @}
 
     /// @name Copy and Move

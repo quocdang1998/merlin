@@ -1,8 +1,8 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/nddata.hpp"
 
-#include "merlin/array/slice.hpp"  // merlin::array::Slice
-#include "merlin/logger.hpp"       // CUHDERR
+#include "merlin/logger.hpp"  // CUHDERR
+#include "merlin/slice.hpp"   // merlin::slicevec
 
 namespace merlin {
 
@@ -11,7 +11,7 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Constructor from a slice
-__cuhostdev__ array::NdData::NdData(const array::NdData & whole, const Vector<array::Slice> & slices) {
+__cuhostdev__ array::NdData::NdData(const array::NdData & whole, const slicevec & slices) {
     // check size
     if (slices.size() != whole.ndim()) {
         CUHDERR(std::invalid_argument, "Dimension of Slices and NdData not compatible (expected %u, got %u).\n",

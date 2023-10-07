@@ -9,9 +9,9 @@
 #include "merlin/array/array.hpp"      // merlin::array::Array
 #include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides
 #include "merlin/array/parcel.hpp"     // merlin::array::Parcel
-#include "merlin/array/slice.hpp"      // merlin::array::Slice
 #include "merlin/array/stock.hpp"      // merlin::array::Stock
 #include "merlin/logger.hpp"           // FAILURE
+#include "merlin/slice.hpp"            // merlin::Slice
 #include "merlin/utils.hpp"            // merlin::contiguous_to_ndim_idx
 
 namespace merlin {
@@ -38,11 +38,11 @@ array::NdData::NdData(const intvec & shape) : shape_(shape) {
 }
 
 // Partite an array into multiple parts
-Vector<Vector<array::Slice>> array::NdData::partite(std::uint64_t max_memory) {
+Vector<slicevec> array::NdData::partite(std::uint64_t max_memory) {
     // if memory fit in, skip
     std::uint64_t data_size = this->size() * sizeof(double);
     if (data_size < max_memory) {
-        return Vector<Vector<array::Slice>>(1, Vector<array::Slice>(this->ndim()));
+        return Vector<slicevec>(1, slicevec(this->ndim()));
     }
     // find dimension at which index = 1 -> memory just fit
     intvec size_per_dimension = array::contiguous_strides(this->shape_, sizeof(double));
@@ -57,12 +57,12 @@ Vector<Vector<array::Slice>> array::NdData::partite(std::uint64_t max_memory) {
     }
     // get slices for each partition
     intvec divident_shape(this->shape_.cbegin(), divide_dimension);  // shape of array of which elements are sub-arrays
-    Vector<Vector<array::Slice>> result(num_partition, Vector<array::Slice>(this->ndim()));
+    Vector<slicevec> result(num_partition, slicevec(this->ndim()));
     for (std::uint64_t i_partition = 0; i_partition < num_partition; i_partition++) {
         // slices of dividing index
         intvec index = contiguous_to_ndim_idx(i_partition, divident_shape);
         for (std::uint64_t i_dim = 0; i_dim < divident_shape.size(); i_dim++) {
-            result[i_partition][i_dim] = array::Slice({index[i_dim]});
+            result[i_partition][i_dim] = Slice({index[i_dim]});
         }
     }
     return result;
@@ -136,8 +136,8 @@ std::string array::NdData::str(bool first_call) const {
         if (i > 0) {
             os << " ";
         }
-        Vector<array::Slice> slice_i(this->ndim());
-        slice_i[0] = array::Slice({i});
+        slicevec slice_i(this->ndim());
+        slice_i[0] = Slice({i});
         array::NdData * p_sliced = array::slice_on(*this, slice_i);
         p_sliced->remove_dim(0);
         os << p_sliced->str(false);
@@ -154,7 +154,7 @@ std::string array::NdData::str(bool first_call) const {
 array::NdData::~NdData(void) {}
 
 // Slice an array and get a new instance of the same polymorphic type
-array::NdData * array::slice_on(const array::NdData & original, const Vector<array::Slice> & slices) {
+array::NdData * array::slice_on(const array::NdData & original, const slicevec & slices) {
     array::NdData * result;
     if (const array::Array * p_ori = dynamic_cast<const array::Array *>(&original); p_ori != nullptr) {
         result = new array::Array(*p_ori, slices);

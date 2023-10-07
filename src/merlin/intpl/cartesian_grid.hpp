@@ -11,6 +11,7 @@
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/intpl/grid.hpp"         //  merlin::intpl::Grid
 #include "merlin/iterator.hpp"           // merlin::Iterator
+#include "merlin/slice.hpp"              // merlin::slicevec
 #include "merlin/vector.hpp"             // merlin::Vector, merlin::intvec, merlin::floatvec
 
 namespace merlin {
@@ -27,7 +28,7 @@ class intpl::CartesianGrid : public intpl::Grid {
     /** @brief Constructor from an r-value reference to a vector of values.*/
     MERLIN_EXPORTS CartesianGrid(Vector<floatvec> && grid_vectors);
     /** @brief Get a subgrid from original grid.*/
-    MERLIN_EXPORTS CartesianGrid(const intpl::CartesianGrid & whole, const Vector<array::Slice> & slices);
+    MERLIN_EXPORTS CartesianGrid(const intpl::CartesianGrid & whole, const slicevec & slices);
     /** @brief Constructor from the number of dimension.*/
     CartesianGrid(std::uint64_t ndim) : grid_vectors_(ndim) {}
     /// @}

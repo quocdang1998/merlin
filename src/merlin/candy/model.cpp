@@ -11,9 +11,9 @@
 #include <omp.h>  // pragma omp, ::omp_get_threa
 
 #include "merlin/array/array.hpp"        // merlin::array::Array
-#include "merlin/array/slice.hpp"        // merlin::Slice, merlin::slicevec
 #include "merlin/env.hpp"                // merlin::Environment
 #include "merlin/logger.hpp"             // FAILURE
+#include "merlin/slice.hpp"              // merlin::Slice, merlin::slicevec
 #include "merlin/statistics/moment.hpp"  // merlin::statistics::powered_mean, merlin::statistics::moment_cpu
                                          // merlin::statistics::max_cpu
 #include "merlin/utils.hpp"              // merlin::prod_elements
@@ -61,7 +61,7 @@ static void initialize_gaussian(candy::Model & model, const array::Array & train
         for (std::uint64_t i_division = 0; i_division < num_division; i_division++) {
             // calculate mean value for each hyper-slice
             slicevec slice_division(train_data.ndim());
-            slice_division[i_dim] = array::Slice({static_cast<std::uint64_t>(i_division)});
+            slice_division[i_dim] = Slice({static_cast<std::uint64_t>(i_division)});
             array::Array subset_data(train_data, slice_division);
             std::array<double, 2> means = statistics::powered_mean<2>(subset_data, n_thread);
             double deviation = statistics::moment_cpu<2>(means);
