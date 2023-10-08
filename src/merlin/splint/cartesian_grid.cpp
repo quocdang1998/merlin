@@ -62,7 +62,9 @@ grid_shape_(grid_vectors.size()), grid_vectors_(grid_vectors.size()) {
     // re-arrange each node into grid node vector
     std::uint64_t node_idx = 0;
     for (const floatvec & grid_vector : grid_vectors) {
-        for (const double & node : grid_vector) {
+        std::vector<double> sorted_nodes(grid_vector.begin(), grid_vector.end());
+        std::stable_sort(sorted_nodes.begin(), sorted_nodes.end());
+        for (double & node : sorted_nodes) {
             this->grid_nodes_[node_idx++] = node;
         }
     }
@@ -78,10 +80,14 @@ grid_nodes_(grid_nodes), grid_shape_(shape), grid_vectors_(shape.size()) {
     // check for duplicate element
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
         std::vector<double> grid_vector(this->grid_vectors_[i_dim],
-                                        this->grid_vectors_[i_dim]+this->grid_shape_[i_dim]);
+                                        this->grid_vectors_[i_dim] + this->grid_shape_[i_dim]);
         if (has_duplicated_element(std::vector<double>(grid_vector))) {
             FAILURE(std::invalid_argument, "Found duplicated elements.\n");
         }
+    }
+    // sort elements
+    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+        std::stable_sort(this->grid_vectors_[i_dim], this->grid_vectors_[i_dim] + this->grid_shape_[i_dim]);
     }
 }
 
@@ -133,7 +139,7 @@ splint::CartesianGrid & splint::CartesianGrid::operator=(const splint::Cartesian
 
 // Copy data to a pre-allocated memory
 void * splint::CartesianGrid::copy_to_gpu(splint::CartesianGrid * gpu_ptr, void * grid_vector_data_ptr,
-                                         std::uintptr_t stream_ptr) const {
+                                          std::uintptr_t stream_ptr) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
     return nullptr;
 }

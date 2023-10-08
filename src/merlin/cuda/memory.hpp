@@ -6,8 +6,8 @@
 #include <cstdint>  // std::uint64_t
 #include <tuple>    // std::tuple
 
-#include "merlin/cuda_interface.hpp"    // __cudevice__
 #include "merlin/cuda/declaration.hpp"  // merlin::cuda::Memory
+#include "merlin/cuda_interface.hpp"    // __cudevice__
 
 // CUDA nvcc guard
 #ifndef __NVCC__

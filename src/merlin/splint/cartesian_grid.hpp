@@ -78,12 +78,12 @@ class splint::CartesianGrid {
     __cuhostdev__ floatvec operator[](const intvec & index) const noexcept;
     /// @}
 
-        /// @name GPU related features
+    /// @name GPU related features
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the grid and its data.*/
     std::uint64_t cumalloc_size(void) const noexcept {
         std::uint64_t size = sizeof(splint::CartesianGrid);
-        size += this->num_nodes()*sizeof(double) + this->ndim()*(sizeof(std::uint64_t)+sizeof(double *));
+        size += this->num_nodes() * sizeof(double) + this->ndim() * (sizeof(std::uint64_t) + sizeof(double *));
         return size;
     }
     /** @brief Copy the grid from CPU to a pre-allocated memory on GPU.

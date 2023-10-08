@@ -51,6 +51,9 @@ list(APPEND MERLIN_SRC_CPP
      shuffle.cpp
      splint/cartesian_grid.cpp
      splint/interpolant.cpp
+     splint/intpl/lagrange.cpp
+     splint/intpl/linear.cpp
+     splint/intpl/map.cpp
      statistics/moment.cpp
 )
 list(APPEND MERLIN_SRC_CU

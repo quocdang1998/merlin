@@ -5,6 +5,6 @@
 namespace merlin::splint {
 class CartesianGrid;
 class Interpolant;
-}
+}  // namespace merlin::splint
 
 #endif  // MERLIN_SPLINT_DECLARATION_HPP_
