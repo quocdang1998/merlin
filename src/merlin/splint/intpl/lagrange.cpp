@@ -11,7 +11,8 @@ namespace merlin {
 
 // Construct interpolation coefficients by Lagrange method on CPU
 void splint::intpl::construction_lagrange_cpu(double * coeff, double * grid_nodes, std::uint64_t shape,
-                                              std::uint64_t element_size, std::uint64_t n_threads) noexcept {
+                                              std::uint64_t element_size, std::uint64_t thread_idx,
+                                              std::uint64_t n_threads) noexcept {
     for (std::uint64_t i_node = 0; i_node < shape; i_node++) {
         // calculate solvent = prod (x_i_node - x_j) for all j != i_node
         double solvent = 1.0;
@@ -21,8 +22,7 @@ void splint::intpl::construction_lagrange_cpu(double * coeff, double * grid_node
         // inverse the solvent
         solvent = 1.f / solvent;
         // multiply each sub-array by solvent
-        #pragma omp parallel for num_threads(n_threads) if (n_threads > 1)
-        for (std::int64_t i_coeff = 0; i_coeff < element_size; i_coeff++) {
+        for (std::int64_t i_coeff = thread_idx; i_coeff < element_size; i_coeff += n_threads) {
             coeff[i_node*element_size + i_coeff] *= solvent;
         }
     }

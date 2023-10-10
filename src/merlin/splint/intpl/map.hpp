@@ -12,7 +12,7 @@ namespace merlin::splint::intpl {
 
 /** @brief Type of construction methods.*/
 using ConstructionMethod =
-    std::add_pointer<void(double *, double *, std::uint64_t, std::uint64_t, std::uint64_t)>::type;
+    std::add_pointer<void(double *, double *, std::uint64_t, std::uint64_t, std::uint64_t, std::uint64_t)>::type;
 
 /** @brief Array of functor for constructing interpolation coefficients by different methods.*/
 MERLIN_EXPORTS extern std::array<ConstructionMethod, 2> construction_func_cpu;

@@ -146,6 +146,25 @@ void * splint::CartesianGrid::copy_to_gpu(splint::CartesianGrid * gpu_ptr, void 
 
 #endif  // __MERLIN_CUDA__
 
+// Get element at a C-contiguous index
+floatvec splint::CartesianGrid::operator[](std::uint64_t index) const noexcept {
+    intvec nd_index = contiguous_to_ndim_idx(index, this->grid_shape_);
+    floatvec point(this->ndim(), 0);
+    for (std::uint64_t i = 0; i < point.size(); i++) {
+        point[i] = this->grid_vectors_[i][nd_index[i]];
+    }
+    return point;
+}
+
+// Get element at a multi-dimensional index
+floatvec splint::CartesianGrid::operator[](const intvec & index) const noexcept {
+    floatvec point(this->ndim());
+    for (std::uint64_t i = 0; i < point.size(); i++) {
+        point[i] = this->grid_vectors_[i][index[i]];
+    }
+    return point;
+}
+
 // String representation
 std::string splint::CartesianGrid::str(void) const {
     std::ostringstream os;

@@ -1,6 +1,8 @@
 // Copyright 2022 quocdang1998
 #include "merlin/splint/interpolant.hpp"
 
+#include <omp.h>  // #pragma omp
+
 #include "merlin/array/array.hpp"            // merlin::array::Array
 #include "merlin/logger.hpp"                 // FAILURE
 #include "merlin/splint/cartesian_grid.hpp"  // merlin::splint::CartesianGrid
@@ -20,19 +22,47 @@ void splint::construct_coeff_cpu(double * coeff, const splint::CartesianGrid & g
     const intvec & shape = grid.shape();
     std::uint64_t num_subsystem = 1, element_size = prod_elements(shape);
     // solve matrix for each dimension
-    for (std::uint64_t i_dim = 0; i_dim < grid.ndim(); i_dim++) {
-        std::uint64_t subsystem_size = element_size;
-        element_size /= shape[i_dim];
-        unsigned int i_method = static_cast<unsigned int>(method[i_dim]);
-        std::uint64_t thread_per_subsystem = ((num_subsystem >= n_threads) ? 1 : n_threads);
-        // parallel at subsystem level when num_subsystem >= n_threads
-        #pragma omp parallel for num_threads(n_threads) if (num_subsystem >= n_threads)
-        for (std::uint64_t i_subsystem = 0; i_subsystem < num_subsystem; i_subsystem++) {
-            double * subsystem_start = coeff + i_subsystem * subsystem_size;
-            splint::intpl::construction_func_cpu[i_method](subsystem_start, grid.grid_vectors()[i_dim], shape[i_dim],
-                                                           element_size, thread_per_subsystem);
+    std::uint64_t subsystem_size = 0, numthreads_subsystem = 0, num_groups = 0;
+    unsigned int i_method = 0;
+    #pragma omp parallel shared(element_size, subsystem_size, numthreads_subsystem, i_method, num_subsystem, num_groups)
+    {
+        int thread_idx = ::omp_get_thread_num();
+        for (std::uint64_t i_dim = 0; i_dim < grid.ndim(); i_dim++) {
+            // calculate number of thread per groups
+            #pragma omp single
+            {
+                subsystem_size = element_size;
+                element_size /= shape[i_dim];
+                i_method = static_cast<unsigned int>(method[i_dim]);
+                numthreads_subsystem = n_threads / num_subsystem;
+                if (numthreads_subsystem == 0) {
+                    num_groups = n_threads;
+                    numthreads_subsystem = 1;
+                } else {
+                    num_groups = num_subsystem;
+                }
+                MESSAGE("i_dim = %lld: \n", i_dim);
+                std::printf("    Num groups: %llu\n", num_groups);
+                std::printf("    Num thread per subsystem: %llu\n", numthreads_subsystem);
+            }
+            #pragma omp barrier
+            // parallel subsystem over the number of groups
+            std::uint64_t thread_idx_in_group = thread_idx % numthreads_subsystem;
+            std::uint64_t group_idx = thread_idx / numthreads_subsystem;
+            for (std::uint64_t i_subsystem = group_idx; i_subsystem < num_subsystem; i_subsystem += num_groups) {
+                double * subsystem_start = coeff + i_subsystem * subsystem_size;
+                splint::intpl::construction_func_cpu[i_method](subsystem_start, grid.grid_vectors()[i_dim],
+                                                               shape[i_dim], element_size, thread_idx_in_group,
+                                                               numthreads_subsystem);
+            }
+            #pragma omp barrier
+            // update number of sub-system
+            #pragma omp single
+            {
+                num_subsystem *= shape[i_dim];
+            }
+            #pragma omp barrier
         }
-        num_subsystem *= shape[i_dim];
     }
 }
 

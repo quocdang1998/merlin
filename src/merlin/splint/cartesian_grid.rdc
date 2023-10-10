@@ -18,25 +18,6 @@ __cuhostdev__ std::uint64_t splint::CartesianGrid::size(void) const {
     return result;
 }
 
-// Get element at a C-contiguous index
-__cuhostdev__ floatvec splint::CartesianGrid::operator[](std::uint64_t index) const noexcept {
-    intvec nd_index = contiguous_to_ndim_idx(index, this->grid_shape_);
-    floatvec point(this->ndim(), 0);
-    for (std::uint64_t i = 0; i < point.size(); i++) {
-        point[i] = this->grid_vectors_[i][nd_index[i]];
-    }
-    return point;
-}
-
-// Get element at a multi-dimensional index
-__cuhostdev__ floatvec splint::CartesianGrid::operator[](const intvec & index) const noexcept {
-    floatvec point(this->ndim());
-    for (std::uint64_t i = 0; i < point.size(); i++) {
-        point[i] = this->grid_vectors_[i][index[i]];
-    }
-    return point;
-}
-
 #ifdef __NVCC__
 
 // Copy to shared memory
