@@ -26,16 +26,16 @@ int main(void) {
     // calculate Lagrange coefficients
     merlin::array::Array coeff(value);
     merlin::Vector<merlin::splint::Method> methods = {
-        merlin::splint::Method::Lagrange,
-        merlin::splint::Method::Lagrange,
-        merlin::splint::Method::Lagrange
+        merlin::splint::Method::Newton,
+        merlin::splint::Method::Newton,
+        merlin::splint::Method::Newton
     };
-    construct_coeff_cpu(coeff.data(), cart_gr, methods, 100);
+    construct_coeff_cpu(coeff.data(), cart_gr, methods, 10);
 
     // print
-    MESSAGE("Value: %f\n", value[{1,2,0}]);
-    MESSAGE("Lagrange coefficients: %f\n", coeff[{1,2,0}]);
+    MESSAGE("Value: %s\n", value.str().c_str());
+    MESSAGE("Lagrange coefficients: %s\n", coeff.str().c_str());
     merlin::intpl::CartesianGrid grid({{0.1, 0.2, 0.3}, {1.0, 2.0, 3.0, 4.0}, {0.0, 0.25}});
-    merlin::intpl::PolynomialInterpolant pl_int(grid, value, merlin::intpl::Method::Lagrange);
-    MESSAGE("Reference coefficients: %f\n", pl_int.get_coeff().get({1,2,0}));
+    merlin::intpl::PolynomialInterpolant pl_int(grid, value, merlin::intpl::Method::Newton);
+    MESSAGE("Reference coefficients: %s\n", pl_int.get_coeff().str().c_str());
 }

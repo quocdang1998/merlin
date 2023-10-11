@@ -55,15 +55,15 @@ class splint::CartesianGrid {
         return grid_vector;
     }
     /** @brief Get constant reference to grid vector pointers.*/
-    __cuhostdev__ const Vector<double *> & grid_vectors(void) const noexcept { return this->grid_vectors_; }
+    __cuhostdev__ constexpr const Vector<double *> & grid_vectors(void) const noexcept { return this->grid_vectors_; }
     /** @brief Get dimensions of the grid.*/
     __cuhostdev__ constexpr std::uint64_t ndim(void) const noexcept { return this->grid_shape_.size(); }
     /** @brief Get shape of the grid.*/
     __cuhostdev__ constexpr const intvec & shape(void) const noexcept { return this->grid_shape_; }
     /** @brief Get total number of points in the grid.*/
-    __cuhostdev__ std::uint64_t size(void) const;
+    __cuhostdev__ constexpr std::uint64_t size(void) const noexcept { return this->size_; }
     /** @brief Get total number of nodes on all dimension.*/
-    __cuhostdev__ std::uint64_t num_nodes(void) const noexcept { return this->grid_nodes_.size(); }
+    __cuhostdev__ constexpr::uint64_t num_nodes(void) const noexcept { return this->grid_nodes_.size(); }
     /// @}
 
     /// @name Slicing operator
@@ -133,6 +133,8 @@ class splint::CartesianGrid {
     floatvec grid_nodes_;
     /** @brief Shape of the grid.*/
     intvec grid_shape_;
+    /** @brief Number of points in the grid.*/
+    std::uint64_t size_ = 0;
 
   private:
     /** @brief Pointer to first node in each dimension.*/

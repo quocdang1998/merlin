@@ -1,6 +1,6 @@
 // Copyright 2022 quocdang1998
-#ifndef MERLIN_SPLINT_INTPL_LAGRANGE_HPP_
-#define MERLIN_SPLINT_INTPL_LAGRANGE_HPP_
+#ifndef MERLIN_SPLINT_INTPL_NEWTON_HPP_
+#define MERLIN_SPLINT_INTPL_NEWTON_HPP_
 
 #include <cstdint>  // std::uint64_t
 
@@ -22,4 +22,4 @@ MERLIN_EXPORTS void construction_newton_cpu(double * coeff, double * grid_nodes,
 
 }  // namespace merlin::splint::intpl
 
-#endif  // MERLIN_SPLINT_INTPL_LAGRANGE_HPP_
+#endif  // MERLIN_SPLINT_INTPL_NEWTON_HPP_

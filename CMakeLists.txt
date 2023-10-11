@@ -53,6 +53,7 @@ list(APPEND MERLIN_SRC_CPP
      splint/interpolant.cpp
      splint/intpl/lagrange.cpp
      splint/intpl/linear.cpp
+     splint/intpl/newton.cpp
      splint/intpl/map.cpp
      statistics/moment.cpp
 )

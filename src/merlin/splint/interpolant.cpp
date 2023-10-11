@@ -24,7 +24,7 @@ void splint::construct_coeff_cpu(double * coeff, const splint::CartesianGrid & g
     // solve matrix for each dimension
     std::uint64_t subsystem_size = 0, numthreads_subsystem = 0, num_groups = 0;
     unsigned int i_method = 0;
-    #pragma omp parallel shared(element_size, subsystem_size, numthreads_subsystem, i_method, num_subsystem, num_groups)
+    #pragma omp parallel num_threads(n_threads)
     {
         int thread_idx = ::omp_get_thread_num();
         for (std::uint64_t i_dim = 0; i_dim < grid.ndim(); i_dim++) {
@@ -41,9 +41,6 @@ void splint::construct_coeff_cpu(double * coeff, const splint::CartesianGrid & g
                 } else {
                     num_groups = num_subsystem;
                 }
-                MESSAGE("i_dim = %lld: \n", i_dim);
-                std::printf("    Num groups: %llu\n", num_groups);
-                std::printf("    Num thread per subsystem: %llu\n", numthreads_subsystem);
             }
             #pragma omp barrier
             // parallel subsystem over the number of groups

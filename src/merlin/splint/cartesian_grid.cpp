@@ -10,7 +10,7 @@
 #include <vector>     // std::vector
 
 #include "merlin/logger.hpp"  // FAILURE
-#include "merlin/utils.hpp"   // merlin::ptr_to_subsequence
+#include "merlin/utils.hpp"   // merlin::ptr_to_subsequence, merlin::prod_elements
 
 namespace merlin {
 
@@ -62,14 +62,24 @@ grid_shape_(grid_vectors.size()), grid_vectors_(grid_vectors.size()) {
     // re-arrange each node into grid node vector
     std::uint64_t node_idx = 0;
     for (const floatvec & grid_vector : grid_vectors) {
-        std::vector<double> sorted_nodes(grid_vector.begin(), grid_vector.end());
-        std::stable_sort(sorted_nodes.begin(), sorted_nodes.end());
-        for (double & node : sorted_nodes) {
-            this->grid_nodes_[node_idx++] = node;
+        // if nodes are already sorted
+        if (std::is_sorted(grid_vector.begin(), grid_vector.end())) {
+            for (const double & node : grid_vector) {
+                this->grid_nodes_[node_idx++] = node;
+            }
+        } else {
+            WARNING("Input nodes are not sorted in increasing order, sorting the nodes...\n");
+            std::vector<double> sorted_nodes(grid_vector.begin(), grid_vector.end());
+            std::stable_sort(sorted_nodes.begin(), sorted_nodes.end());
+            for (double & node : sorted_nodes) {
+                this->grid_nodes_[node_idx++] = node;
+            }
         }
     }
     // calculate pointers per dimension
     ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->grid_vectors_.data());
+    // calculate size
+    this->size_ = prod_elements(this->grid_shape_);
 }
 
 // Constructor from list of nodes and shape
@@ -87,8 +97,13 @@ grid_nodes_(grid_nodes), grid_shape_(shape), grid_vectors_(shape.size()) {
     }
     // sort elements
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
-        std::stable_sort(this->grid_vectors_[i_dim], this->grid_vectors_[i_dim] + this->grid_shape_[i_dim]);
+        if (!std::is_sorted(this->grid_vectors_[i_dim], this->grid_vectors_[i_dim] + this->grid_shape_[i_dim])) {
+            WARNING("Input nodes are not sorted in increasing order, sorting the nodes...\n");
+            std::stable_sort(this->grid_vectors_[i_dim], this->grid_vectors_[i_dim] + this->grid_shape_[i_dim]);
+        }
     }
+    // calculate size
+    this->size_ = prod_elements(this->grid_shape_);
 }
 
 // Constructor as a sub-grid from a larger grid
@@ -118,6 +133,8 @@ grid_shape_(whole.ndim()), grid_vectors_(whole.ndim()) {
     }
     // calculate pointers per dimension
     ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->grid_vectors_.data());
+    // calculate size
+    this->size_ = prod_elements(this->grid_shape_);
 }
 
 // Copy constructor

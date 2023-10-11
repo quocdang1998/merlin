@@ -9,15 +9,6 @@ namespace merlin {
 // CartesianGrid
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Get total number of points
-__cuhostdev__ std::uint64_t splint::CartesianGrid::size(void) const {
-    std::uint64_t result = 1;
-    for (std::uint64_t i = 0; i < this->grid_shape_.size(); i++) {
-        result *= this->grid_shape_[i];
-    }
-    return result;
-}
-
 #ifdef __NVCC__
 
 // Copy to shared memory
