@@ -10,7 +10,7 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Construct interpolation coefficients by Newton method on CPU
-void splint::intpl::construction_newton_cpu(double * coeff, double * grid_nodes, std::uint64_t shape,
+void splint::intpl::construction_newton_cpu(double * coeff, const double * grid_nodes, std::uint64_t shape,
                                             std::uint64_t element_size, std::uint64_t thread_idx,
                                             std::uint64_t n_threads) noexcept {
     for (std::uint64_t i_node = 1; i_node < shape; i_node++) {

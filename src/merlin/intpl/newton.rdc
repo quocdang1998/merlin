@@ -41,7 +41,7 @@ __cuhostdev__ double intpl::eval_newton_single_core(const intpl::CartesianGrid &
     cum[max_dim] = (*p_coeff)[iterator];
     // loop over each point in coeff array
     while (!is_zeros(iterator)) {
-        std::uint64_t i_dim = decrement_index(iterator, shape);
+        std::int64_t i_dim = decrement_index(iterator, shape);
         if (i_dim == max_dim) {
             cum[i_dim] *= x[i_dim] - grid.grid_vectors()[i_dim][iterator[i_dim]];
             cum[i_dim] += (*p_coeff)[iterator];

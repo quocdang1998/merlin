@@ -1,6 +1,6 @@
 #include "merlin/array/array.hpp"
 #include "merlin/splint/cartesian_grid.hpp"
-#include "merlin/splint/interpolant.hpp"
+#include "merlin/splint/tools.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
 #include "merlin/vector.hpp"

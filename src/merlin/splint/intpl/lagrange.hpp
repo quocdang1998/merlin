@@ -16,9 +16,15 @@ namespace merlin::splint::intpl {
  *  @param thread_idx Index of the thread in group.
  *  @param n_threads Number of threads performing the action.
  */
-MERLIN_EXPORTS void construction_lagrange_cpu(double * coeff, double * grid_nodes, std::uint64_t shape,
+MERLIN_EXPORTS void construction_lagrange_cpu(double * coeff, const double * grid_nodes, std::uint64_t shape,
                                               std::uint64_t element_size, std::uint64_t thread_idx,
                                               std::uint64_t n_threads) noexcept;
+
+/** @brief Interpolate recursively on each dimension.
+ */
+MERLIN_EXPORTS void eval_lagrange_cpu(const double * coeff, std::uint64_t num_coeff, std::uint64_t i_coeff,
+                                      double * cache_array, std::uint64_t i_dim, std::uint64_t ndim,
+                                      const double * grid_nodes);
 
 }  // namespace merlin::splint::intpl
 

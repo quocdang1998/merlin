@@ -105,14 +105,14 @@ __cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & 
  *  @param shape Shape vector.
  *  @return Lowest changed dimension.
  */
-__cuhostdev__ std::uint64_t increment_index(intvec & index, const intvec & shape);
+__cuhostdev__ std::int64_t increment_index(intvec & index, const intvec & shape);
 
 /** @brief Decrease an n-dimensional index by one unit.
  *  @param index Multi-dimensional index.
  *  @param shape Shape vector.
  *  @return Lowest changed dimension.
  */
-__cuhostdev__ std::uint64_t decrement_index(intvec & index, const intvec & shape);
+__cuhostdev__ std::int64_t decrement_index(intvec & index, const intvec & shape);
 
 // List Division
 // -------------

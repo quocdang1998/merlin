@@ -1,13 +1,12 @@
 // Copyright 2022 quocdang1998
-#include "merlin/splint/interpolant.hpp"
+#include "merlin/splint/tools.hpp"
 
 #include <omp.h>  // #pragma omp
 
-#include "merlin/array/array.hpp"            // merlin::array::Array
-#include "merlin/logger.hpp"                 // FAILURE
+#include "merlin/array/operation.hpp"        // merlin::array::contiguous_strides
 #include "merlin/splint/cartesian_grid.hpp"  // merlin::splint::CartesianGrid
 #include "merlin/splint/intpl/map.hpp"       // merlin::splint::intpl::construction_func_cpu
-#include "merlin/utils.hpp"                  // merlin::prod_elements
+#include "merlin/utils.hpp"                  // merlin::prod_elements, merlin::increment_index
 
 namespace merlin {
 
@@ -64,25 +63,33 @@ void splint::construct_coeff_cpu(double * coeff, const splint::CartesianGrid & g
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Interpolant
+// Evaluate interpolation by CPU
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Construct from a CPU array
-splint::Interpolant::Interpolant(const splint::CartesianGrid & grid, const array::Array & data,
-                                 const Vector<splint::Method> & method) :
-p_grid_(&grid), method_(method) {
-    // check shape
-    if (grid.shape() != data.shape()) {
-        FAILURE(std::invalid_argument, "Grid and data have different shape.\n");
-    }
-    // copy data
-    this->p_coeff_ = new array::Array(data);
-}
+// Evaluate interpolation from constructed coefficients
+void splint::eval_intpl_cpu(const double * coeff, const splint::CartesianGrid & grid,
+                            const Vector<splint::Method> & method, const double * points, std::uint64_t n_points,
+                            double * result, std::uint64_t n_threads) noexcept {
+    // initialize index vector and cache memory for each thread
+    intvec total_index(grid.ndim() * n_threads, 0);
+    floatvec cache_memory(grid.ndim() * n_threads);
+    // parallel calculation
+    #pragma omp parallel num_threads(n_threads)
+    {
+        // get corresponding index vector and cache memory
+        int thread_idx = ::omp_get_thread_num();
+        intvec loop_index;
+        loop_index.assign(total_index.data() + grid.ndim() * thread_idx, grid.ndim());
+        floatvec cache;
+        cache.assign(cache_memory.data() + grid.ndim() * thread_idx, grid.ndim());
+        // parallel calculation for each point
+        for (std::uint64_t i_point = thread_idx; i_point < n_points; i_point += n_threads) {
+            std::int64_t last_updated_dim = grid.ndim()-1;
+            do {
 
-// Destructor
-splint::Interpolant::~Interpolant(void) {
-    if (this->p_coeff_ != nullptr) {
-        delete this->p_coeff_;
+                last_updated_dim = decrement_index(loop_index, grid.shape());
+            } while (last_updated_dim != -1);
+        }
     }
 }
 

@@ -2,7 +2,7 @@
 
 #include "merlin/array/array.hpp"
 #include "merlin/array/operation.hpp"
-#include "merlin/array/slice.hpp"
+#include "merlin/slice.hpp"
 #include "merlin/intpl/cartesian_grid.hpp"
 #include "merlin/intpl/interpolant.hpp"
 #include "merlin/logger.hpp"
@@ -26,7 +26,7 @@ int main(void) {
     MESSAGE("Initial array: %s\n", value.str().c_str());
     merlin::array::Array coeff(value.shape());
 
-    merlin::intpl::PolynomialInterpolant pl_int(grid, value, merlin::intpl::Method::Lagrange);
+    merlin::intpl::PolynomialInterpolant pl_int(grid, value, merlin::intpl::Method::Newton);
     MESSAGE("Coefficient: %s\n", pl_int.get_coeff().str().c_str());
 
 

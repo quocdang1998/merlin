@@ -16,7 +16,7 @@ namespace merlin::splint::intpl {
  *  @param thread_idx Index of the thread in group.
  *  @param n_threads Number of threads performing the action.
  */
-MERLIN_EXPORTS void construction_linear_cpu(double * coeff, double * grid_nodes, std::uint64_t shape,
+MERLIN_EXPORTS void construction_linear_cpu(double * coeff, const double * grid_nodes, std::uint64_t shape,
                                             std::uint64_t element_size, std::uint64_t thread_idx,
                                             std::uint64_t n_threads) noexcept;
 

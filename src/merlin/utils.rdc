@@ -111,64 +111,37 @@ __cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & 
 }
 
 // Increment of n-dim index
-__cuhostdev__ std::uint64_t increment_index(intvec & index, const intvec & shape) {
+__cuhostdev__ std::int64_t increment_index(intvec & index, const intvec & shape) {
     // check size of 2 vectors
-    if (!is_same_size(index, shape)) {
-        CUHDERR(std::invalid_argument, "Size of index (%" PRIu64 ") and size of shape (%" PRIu64 ") are not equal.\n",
-                index.size(), shape.size());
-    }
-    // trivial case: size zero -> do nothing
-    std::uint64_t result = index.size();
-    if (result == 0) {
-        return result;
-    }
-    // increment of index
-    result -= 1;
-    index[result]++;
-    while (index[result] >= shape[result]) {
-        if (result == 0) {
-            if (index[result] == shape[result]) {
-                break;
-            } else {
-                CUHDERR(std::out_of_range, "Maximum size reached, cannot increase more.\n");
-            }
-        }
-        index[result] = 0;
-        index[--result] += 1;
-    }
-    return result;
+    CASSERT(!is_same_size(index, shape), CUHDERR, std::invalid_argument,
+            "Size of index (%" PRIu64 ") and size of shape (%" PRIu64 ") are not equal.\n", index.size(), shape.size());
+    // increasing index
+    std::int64_t i_dim = index.size();
+    bool keep_decresing, not_dim_break;
+    do {
+        i_dim--;
+        keep_decresing = (index[i_dim] == shape[i_dim] - 1);
+        index[i_dim] = (keep_decresing) ? 0 : index[i_dim] + 1;
+        not_dim_break = (i_dim != 0);
+    } while (keep_decresing && not_dim_break);
+    return (keep_decresing) ? i_dim-1 : i_dim;
 }
 
 // Increment of n-dim index
-__cuhostdev__ std::uint64_t decrement_index(intvec & index, const intvec & shape) {
+__cuhostdev__ std::int64_t decrement_index(intvec & index, const intvec & shape) {
     // check size of 2 vectors
-    if (!is_same_size(index, shape)) {
-        CUHDERR(std::invalid_argument, "Size of index (%" PRIu64 ") and size of shape (%" PRIu64 ") are not equal.\n",
-                index.size(), shape.size());
-    }
-    // trivial case: size zero -> do nothing
-    std::uint64_t result = index.size();
-    if (result == 0) {
-        return result;
-    }
-    // decrement of index
-    result -= 1;
+    CASSERT(!is_same_size(index, shape), CUHDERR, std::invalid_argument,
+            "Size of index (%" PRIu64 ") and size of shape (%" PRIu64 ") are not equal.\n", index.size(), shape.size());
+    // decresing index
+    std::int64_t i_dim = index.size();
+    bool keep_decresing, not_dim_break;
     do {
-        if (index[result] != 0) {
-            index[result] -= 1;
-            break;
-        }
-        index[result] = shape[result] - 1;
-        if (result == 0) {
-            for (std::uint64_t i = 0; i < index.size(); i++) {
-                index[i] = 0;
-            }
-            CUHDERR(std::invalid_argument, "Minimum reached, cannot decrease more.\n");
-            break;
-        }
-        result--;
-    } while (true);
-    return result;
+        i_dim--;
+        keep_decresing = (index[i_dim] == 0);
+        index[i_dim] = (keep_decresing) ? shape[i_dim] - 1 : index[i_dim] - 1;
+        not_dim_break = (i_dim != 0);
+    } while (keep_decresing && not_dim_break);
+    return (keep_decresing) ? i_dim-1 : i_dim;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

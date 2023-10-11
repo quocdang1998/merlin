@@ -50,11 +50,12 @@ list(APPEND MERLIN_SRC_CPP
      slice.cpp
      shuffle.cpp
      splint/cartesian_grid.cpp
-     splint/interpolant.cpp
+     splint/interpolator.cpp
      splint/intpl/lagrange.cpp
      splint/intpl/linear.cpp
      splint/intpl/newton.cpp
      splint/intpl/map.cpp
+     splint/tools.cpp
      statistics/moment.cpp
 )
 list(APPEND MERLIN_SRC_CU
