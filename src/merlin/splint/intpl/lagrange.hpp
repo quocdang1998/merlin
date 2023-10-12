@@ -21,10 +21,22 @@ MERLIN_EXPORTS void construction_lagrange_cpu(double * coeff, const double * gri
                                               std::uint64_t n_threads) noexcept;
 
 /** @brief Interpolate recursively on each dimension.
+ *  @param coeff C-contiguous array of coefficients.
+ *  @param num_coeff Size of coefficient array.
+ *  @param c_index_coeff C-contiguous index of the current coefficient.
+ *  @param ndim_index_coeff Multi-dimensional index of the current coefficient.
+ *  @param cache_array Pointer to cache memory.
+ *  @param i_dim Index of the current dimension.
+ *  @param ndim Number of dimension.
+ *  @param grid_nodes Pointer to the grid node array of the current dimension.
+ *  @param last_dim_nodes Pointer to the grid node array of the last dimension.
+ *  @param point Coordinates of the point.
  */
-MERLIN_EXPORTS void eval_lagrange_cpu(const double * coeff, std::uint64_t num_coeff, std::uint64_t i_coeff,
-                                      double * cache_array, std::uint64_t i_dim, std::uint64_t ndim,
-                                      const double * grid_nodes);
+MERLIN_EXPORTS void eval_lagrange_cpu(const double * coeff, const std::uint64_t & num_coeff,
+                                      const std::uint64_t & c_index_coeff, const std::uint64_t * ndim_index_coeff,
+                                      double * cache_array, const double * point, const std::int64_t & i_dim,
+                                      const std::uint64_t * grid_shape, double * const * grid_vectors,
+                                      const std::uint64_t & ndim);
 
 }  // namespace merlin::splint::intpl
 

@@ -8,6 +8,8 @@
 #include "merlin/splint/intpl/map.hpp"       // merlin::splint::intpl::construction_func_cpu
 #include "merlin/utils.hpp"                  // merlin::prod_elements, merlin::increment_index
 
+#include "merlin/splint/intpl/lagrange.hpp"
+
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -84,10 +86,15 @@ void splint::eval_intpl_cpu(const double * coeff, const splint::CartesianGrid & 
         cache.assign(cache_memory.data() + grid.ndim() * thread_idx, grid.ndim());
         // parallel calculation for each point
         for (std::uint64_t i_point = thread_idx; i_point < n_points; i_point += n_threads) {
+            const double * point_data = points + i_point * grid.ndim();
             std::int64_t last_updated_dim = grid.ndim()-1;
+            std::uint64_t contiguous_index = 0;
             do {
-
-                last_updated_dim = decrement_index(loop_index, grid.shape());
+                splint::intpl::eval_lagrange_cpu(coeff, grid.size(), contiguous_index, loop_index.data(),
+                                                 cache.data(), point_data, last_updated_dim, grid.shape().data(),
+                                                 grid.grid_vectors().data(), grid.ndim());
+                last_updated_dim = increment_index(loop_index, grid.shape());
+                contiguous_index++;
             } while (last_updated_dim != -1);
         }
     }
