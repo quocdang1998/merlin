@@ -51,10 +51,6 @@ list(APPEND MERLIN_SRC_CPP
      shuffle.cpp
      splint/cartesian_grid.cpp
      splint/interpolator.cpp
-     splint/intpl/lagrange.cpp
-     splint/intpl/linear.cpp
-     splint/intpl/newton.cpp
-     splint/intpl/map.cpp
      splint/tools.cpp
      statistics/moment.cpp
 )
@@ -103,6 +99,10 @@ list(APPEND MERLIN_SRC_RDC
      linalg/matrix.rdc
      slice.rdc
      splint/cartesian_grid.rdc
+     splint/intpl/lagrange.rdc
+     splint/intpl/linear.rdc
+     splint/intpl/newton.rdc
+     splint/tools.rdc
      utils.rdc
 )
 list(APPEND MERLIN_SRC_SHR

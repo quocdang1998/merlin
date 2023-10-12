@@ -4,7 +4,7 @@
 
 #include <cstdint>  // std::uint64_t
 
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/cuda_interface.hpp"  // __cuhostdev__
 
 namespace merlin::splint::intpl {
 
@@ -16,9 +16,21 @@ namespace merlin::splint::intpl {
  *  @param thread_idx Index of the thread in group.
  *  @param n_threads Number of threads performing the action.
  */
-MERLIN_EXPORTS void construction_linear_cpu(double * coeff, const double * grid_nodes, std::uint64_t shape,
-                                            std::uint64_t element_size, std::uint64_t thread_idx,
-                                            std::uint64_t n_threads) noexcept;
+__cuhostdev__ void construct_linear(double * coeff, const double * grid_nodes, std::uint64_t shape,
+                                    std::uint64_t element_size, std::uint64_t thread_idx,
+                                    std::uint64_t n_threads) noexcept;
+
+/** @brief Evaluate interpolation at an unit step by linear interpolation method.
+ *  @param grid_nodes Array of nodes to interpolate.
+ *  @param grid_shape Number of nodes.
+ *  @param point Coordinate of the point.
+ *  @param coeff_index Index of the coefficient.
+ *  @param coeff Value of interpolation coefficient.
+ *  @param result Variable to which the result of the interpolation is added to.
+ */
+__cuhostdev__ void evaluate_linear(const double * grid_nodes, const std::uint64_t & grid_shape,
+                                     const double & point, const std::uint64_t & coeff_index, const double & coeff,
+                                     double & result) noexcept;
 
 }  // namespace merlin::splint::intpl
 

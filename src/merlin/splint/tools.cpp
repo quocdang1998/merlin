@@ -5,7 +5,6 @@
 
 #include "merlin/array/operation.hpp"        // merlin::array::contiguous_strides
 #include "merlin/splint/cartesian_grid.hpp"  // merlin::splint::CartesianGrid
-#include "merlin/splint/intpl/map.hpp"       // merlin::splint::intpl::construction_func_cpu
 #include "merlin/utils.hpp"                  // merlin::prod_elements, merlin::increment_index
 
 #include "merlin/splint/intpl/lagrange.hpp"
@@ -49,9 +48,8 @@ void splint::construct_coeff_cpu(double * coeff, const splint::CartesianGrid & g
             std::uint64_t group_idx = thread_idx / numthreads_subsystem;
             for (std::uint64_t i_subsystem = group_idx; i_subsystem < num_subsystem; i_subsystem += num_groups) {
                 double * subsystem_start = coeff + i_subsystem * subsystem_size;
-                splint::intpl::construction_func_cpu[i_method](subsystem_start, grid.grid_vectors()[i_dim],
-                                                               shape[i_dim], element_size, thread_idx_in_group,
-                                                               numthreads_subsystem);
+                splint::construction_funcs[i_method](subsystem_start, grid.grid_vectors()[i_dim], shape[i_dim],
+                                                     element_size, thread_idx_in_group, numthreads_subsystem);
             }
             #pragma omp barrier
             // update number of sub-system
@@ -89,13 +87,32 @@ void splint::eval_intpl_cpu(const double * coeff, const splint::CartesianGrid & 
             const double * point_data = points + i_point * grid.ndim();
             std::int64_t last_updated_dim = grid.ndim()-1;
             std::uint64_t contiguous_index = 0;
+            // loop on each index and save evaluation by each coefficient to the cache array
             do {
+                /*
                 splint::intpl::eval_lagrange_cpu(coeff, grid.size(), contiguous_index, loop_index.data(),
                                                  cache.data(), point_data, last_updated_dim, grid.shape().data(),
                                                  grid.grid_vectors().data(), grid.ndim());
+                */
+                splint::recursive_interpolate(coeff, grid.size(), contiguous_index, loop_index.data(), cache.data(),
+                                              point_data, last_updated_dim, grid.shape().data(),
+                                              grid.grid_vectors().data(), method, grid.ndim());
                 last_updated_dim = increment_index(loop_index, grid.shape());
                 contiguous_index++;
             } while (last_updated_dim != -1);
+            // perform one last iteration on the last coefficient
+            /*
+            splint::intpl::eval_lagrange_cpu(coeff, grid.size(), contiguous_index, loop_index.data(), cache.data(),
+                                             point_data, 0, grid.shape().data(),
+                                             grid.grid_vectors().data(), grid.ndim());
+            */
+            splint::recursive_interpolate(coeff, grid.size(), contiguous_index, loop_index.data(), cache.data(),
+                                          point_data, 0, grid.shape().data(), grid.grid_vectors().data(), method,
+                                          grid.ndim());
+            // save result and reset the cache
+            result[i_point] = cache[0];
+            cache[0] = 0.0;
+            // MESSAGE("Evaluation at point %s: %s\n", floatvec(point_data, grid.ndim()).str().c_str(), cache.str().c_str());
         }
     }
 }

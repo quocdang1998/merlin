@@ -4,7 +4,7 @@
 
 #include <cstdint>  // std::uint64_t
 
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/cuda_interface.hpp"  // __cuhostdev__
 
 namespace merlin::splint::intpl {
 
@@ -16,9 +16,9 @@ namespace merlin::splint::intpl {
  *  @param thread_idx Index of the thread in group.
  *  @param n_threads Number of threads performing the action.
  */
-MERLIN_EXPORTS void construction_newton_cpu(double * coeff, const double * grid_nodes, std::uint64_t shape,
-                                            std::uint64_t element_size, std::uint64_t thread_idx,
-                                            std::uint64_t n_threads) noexcept;
+__cuhostdev__ void construction_newton(double * coeff, const double * grid_nodes, std::uint64_t shape,
+                                       std::uint64_t element_size, std::uint64_t thread_idx,
+                                       std::uint64_t n_threads) noexcept;
 
 }  // namespace merlin::splint::intpl
 

@@ -1,0 +1,42 @@
+// Copyright 2022 quocdang1998
+#include "merlin/splint/intpl/lagrange.hpp"
+
+namespace merlin {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Lagrange interpolation
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Construct interpolation coefficients by Lagrange method on CPU
+__cuhostdev__ void splint::intpl::construct_lagrange(double * coeff, const double * grid_nodes, std::uint64_t shape,
+                                                     std::uint64_t element_size, std::uint64_t thread_idx,
+                                                     std::uint64_t n_threads) noexcept {
+    for (std::uint64_t i_node = 0; i_node < shape; i_node++) {
+        // calculate solvent = prod (x_i_node - x_j) for all j != i_node
+        double solvent = 1.0;
+        for (std::uint64_t j = 0; j < shape; j++) {
+            solvent *= (j != i_node) ? (grid_nodes[i_node] - grid_nodes[j]) : 1.0;
+        }
+        // inverse the solvent
+        solvent = 1.f / solvent;
+        // multiply each sub-array by solvent
+        for (std::int64_t i_coeff = thread_idx; i_coeff < element_size; i_coeff += n_threads) {
+            coeff[i_node*element_size + i_coeff] *= solvent;
+        }
+    }
+}
+
+// Evaluate interpolation at an unit step by Lagrange method
+__cuhostdev__ void splint::intpl::evaluate_lagrange(const double * grid_nodes, const std::uint64_t & grid_shape,
+                                                    const double & point, const std::uint64_t & coeff_index,
+                                                    const double & coeff, double & result) noexcept {
+    // calculate prod. of (point - x[i]) for i != i_node
+    double evaluated_value = 1.0;
+    for (std::uint64_t i_node = 0; i_node < grid_shape; i_node++) {
+        evaluated_value *= (i_node != coeff_index) ? (point - grid_nodes[i_node]) : 1.0;
+    }
+    // multiply by coeff and add to result
+    result += coeff * evaluated_value;
+}
+
+}  // namespace merlin
