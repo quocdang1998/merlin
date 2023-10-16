@@ -23,7 +23,7 @@ namespace merlin {
 // Construct interpolation coefficients with CPU parallelism
 void splint::construct_coeff_cpu(double * coeff, const splint::CartesianGrid & grid,
                                  const Vector<splint::Method> & method, std::uint64_t n_threads) noexcept {
-    
+
     // functor to coefficient construction methods
     static const std::array<splint::ConstructionMethod, 3> construction_funcs {
         splint::intpl::construct_linear,
@@ -134,7 +134,7 @@ void splint::eval_intpl_cpu(const double * coeff, const splint::CartesianGrid & 
 // Evaluate interpolation with GPU parallelism
 void splint::eval_intpl_gpu(double * coeff, const splint::CartesianGrid * p_grid,
                             const Vector<splint::Method> * p_method, double * points, std::uint64_t n_points,
-                            double * result, std::uint64_t n_threads, std::uint64_t shared_mem_size,
+                            double * result, std::uint64_t n_threads, std::uint64_t ndim, std::uint64_t shared_mem_size,
                             cuda::Stream * stream_ptr) noexcept {
     FAILURE(cuda_compile_error, "The library is not compiled with CUDA.\n");
 }

@@ -42,7 +42,7 @@ int main(void) {
     MESSAGE("Expected value: %f\n", f(points[{0,0}], points[{0,1}], points[{0,2}]));
     MESSAGE("Evaluated value GPU vs CPU: %f %f\n", eval_value[0], plm_int_cpu({2.2, 1.0, 2.0}));
     */
-    
+
     // initialize data and grid
     merlin::splint::CartesianGrid cart_gr({{0.1, 0.2, 0.3}, {1.0, 2.0, 3.0, 4.0}, {0.0, 0.25, 0.5}});
     merlin::array::Array value(cart_gr.shape());
@@ -71,4 +71,23 @@ int main(void) {
     merlin::splint::construct_coeff_gpu(coeff_gpu.data(), mem.get<0>(), mem.get<1>(), 4, shared_mem, &stream);
     // ::cudaDeviceSynchronize();
     MESSAGE("GPU calculated coefficients: %s\n", coeff_gpu.str().c_str());
+
+    // calculate interpolation (CPU)
+    merlin::floatvec point_coordinates({0.0, 2.0, 1.0, 1.0, 1.0, 1.2, 0.5, 0.25, 2.4});
+    merlin::floatvec result_cpu(3, 0.0);
+    merlin::splint::eval_intpl_cpu(coeff.data(), cart_gr, methods, point_coordinates.data(), 3, result_cpu.data(), 3);
+    MESSAGE("Reference interpolated values: %s\n", result_cpu.str().c_str());
+
+    // calculate interpolation (GPU)
+    double * points_gpu;
+    double * result_gpu_ptr;
+    ::cudaMalloc(&points_gpu, 9*sizeof(double));
+    ::cudaMemcpy(points_gpu, point_coordinates.data(), 9*sizeof(double), ::cudaMemcpyHostToDevice);
+    merlin::floatvec result_gpu(3, 0.0);
+    ::cudaMalloc(&result_gpu_ptr, 3*sizeof(double));
+    ::cudaMemcpy(result_gpu_ptr, result_gpu.data(), 3*sizeof(double), ::cudaMemcpyHostToDevice);
+    merlin::splint::eval_intpl_gpu(coeff_gpu.data(), mem.get<0>(), mem.get<1>(),
+                                   points_gpu, 3, result_gpu_ptr, 5, 3, shared_mem, &stream);
+    ::cudaFree(points_gpu);
+    ::cudaFree(result_gpu_ptr);
 }

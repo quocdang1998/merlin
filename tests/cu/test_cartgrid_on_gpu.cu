@@ -16,6 +16,7 @@ __global__ void print_grid_from_shared_mem(merlin::splint::CartesianGrid * grid_
         }
         std::printf("\n");
     }
+    CUDAOUT("Cartesian Grid size on GPU (shared mem): %lu\n", share_ptr->size());
 }
 
 __global__ void print_grid(merlin::splint::CartesianGrid * grid_ptr) {

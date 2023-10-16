@@ -24,6 +24,7 @@ void * splint::CartesianGrid::copy_to_gpu(splint::CartesianGrid * gpu_ptr, void 
     double ** grid_vectors_ptr = reinterpret_cast<double **>(grid_shape_ptr + this->ndim());
     copy_on_gpu.grid_vectors_.data() = grid_vectors_ptr;
     copy_on_gpu.grid_vectors_.size() = this->ndim();
+    copy_on_gpu.size_ = this->size_;
     // copy data of each vector
     ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
     ::cudaMemcpyAsync(grid_nodes_ptr, this->grid_nodes_.data(), this->num_nodes() * sizeof(double),

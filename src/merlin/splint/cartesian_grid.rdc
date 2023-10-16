@@ -25,6 +25,7 @@ __cudevice__ void * splint::CartesianGrid::copy_by_block(splint::CartesianGrid *
         dest_ptr->grid_shape_.size() = this->ndim();
         dest_ptr->grid_vectors_.data() = grid_vectors_ptr;
         dest_ptr->grid_vectors_.size() = this->ndim();
+        dest_ptr->size_ = this->size();
     }
     __syncthreads();
     // copy data of grid nodes and grid shape
@@ -58,6 +59,7 @@ __cudevice__ void * splint::CartesianGrid::copy_by_thread(splint::CartesianGrid 
     dest_ptr->grid_shape_.size() = this->ndim();
     dest_ptr->grid_vectors_.data() = grid_vectors_ptr;
     dest_ptr->grid_vectors_.size() = this->ndim();
+    dest_ptr->size_ = this->size();
     // copy data of grid nodes and grid shape
     std::uint64_t num_nodes = this->num_nodes(), ndim = this->ndim();
     for (std::uint64_t i_node = 0; i_node < num_nodes; i_node++) {

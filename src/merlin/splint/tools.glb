@@ -103,4 +103,70 @@ void splint::construct_coeff_gpu(double * coeff, const splint::CartesianGrid * p
 // Evaluate interpolation
 // ---------------------------------------------------------------------------------------------------------------------
 
+// Kernel evaluating interpolation
+__global__ static void eval_intpl_kernel(double * coeff, const splint::CartesianGrid * p_grid,
+                                         const Vector<splint::Method> * p_method, double * points,
+                                         std::uint64_t n_points, double * result) {
+    // get thread index and num threads
+    std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
+    // copy to share memory
+    extern __shared__ char dynamic_shmem[];
+    auto [end_shr_ptr, grid_shr, method_shr] = cuda::copy_class_to_shared_mem(dynamic_shmem, *p_grid, *p_method);
+    if (thread_idx == 0) {
+        std::printf("share mem: %p, grid_ptr: %p, method_ptr: %p, available: %p\n", dynamic_shmem, grid_shr, method_shr, end_shr_ptr);
+    }
+    // assigning + initializing the index vector and cache vector
+    std::uint64_t ndim = grid_shr->ndim();
+    std::uintptr_t free_shared_mem = reinterpret_cast<std::uintptr_t>(end_shr_ptr);
+    free_shared_mem += thread_idx * ndim * (sizeof(std::uint64_t) + sizeof(double));
+    std::uint64_t * loop_index_data = reinterpret_cast<std::uint64_t *>(free_shared_mem);
+    double * cache_data = reinterpret_cast<double *>(loop_index_data + ndim);
+    std::printf("Loop index data: %p\n", loop_index_data);
+    for (std::uint64_t i = 0; i < ndim; i++) {
+        loop_index_data[i] = 0;
+        cache_data[i] = 0.0;
+    }
+    std::printf("Pass\n");
+    intvec loop_index;
+    loop_index.assign(loop_index_data, ndim);
+    floatvec cache;
+    cache.assign(cache_data, ndim);
+    // parallel calculation for each point
+    std::uint64_t grid_size = grid_shr->size();
+    for (std::uint64_t i_point = thread_idx; i_point < n_points; i_point += block_size) {
+        const double * point_data = points + i_point * ndim;
+        std::int64_t last_updated_dim = ndim-1;
+        std::uint64_t contiguous_index = 0;
+        // loop on each index and save evaluation by each coefficient to the cache array
+        do {
+            splint::recursive_interpolate(coeff, grid_size, contiguous_index, loop_index.data(), cache.data(),
+                                          point_data, last_updated_dim, grid_shr->shape().data(),
+                                          grid_shr->grid_vectors().data(), *method_shr, grid_shr->ndim());
+            last_updated_dim = increment_index(loop_index, grid_shr->shape());
+            last_updated_dim = last_updated_dim;
+            contiguous_index++;
+        } while (last_updated_dim != -1);
+        // perform one last iteration on the last coefficient
+        splint::recursive_interpolate(coeff, grid_size, contiguous_index, loop_index.data(), cache.data(),
+                                      point_data, 0, grid_shr->shape().data(), grid_shr->grid_vectors().data(),
+                                      *method_shr, grid_shr->ndim());
+        // save result and reset the cache
+        result[i_point] = cache[0];
+        cache[0] = 0.0;
+    }
+}
+
+// Evaluate interpolation with GPU parallelism
+void splint::eval_intpl_gpu(double * coeff, const splint::CartesianGrid * p_grid,
+                            const Vector<splint::Method> * p_method, double * points, std::uint64_t n_points,
+                            double * result, std::uint64_t n_threads, std::uint64_t ndim, std::uint64_t shared_mem_size,
+                            cuda::Stream * stream_ptr) noexcept {
+    // create an asynchrnous CUDA stream
+    ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr->get_stream_ptr());
+    // launch calculation
+    shared_mem_size += ndim * n_threads * (sizeof(double) + sizeof(std::uint64_t));
+    std::printf("Shared memory: %llu\n", shared_mem_size);
+    eval_intpl_kernel<<<1, n_threads, shared_mem_size, stream>>>(coeff, p_grid, p_method, points, n_points, result);
+}
+
 }  // namespace merlin

@@ -101,12 +101,13 @@ void eval_intpl_cpu(const double * coeff, const splint::CartesianGrid & grid, co
  *  @param n_points Number of points to interpolate.
  *  @param result Pointer to the array storing the result.
  *  @param n_threads Number of threads to calculate.
- *  @param shared_mem_size Size of share memory (at least ``p_grid`` and ``p_method``).
+ *  @param ndim Number of dimension of the grid and data.
+ *  @param shared_mem_size Size of share memory (at least ``p_grid``, ``p_method``).
  *  @param stream_ptr Pointer to the CUDA stream performing this calculation.
  */
 void eval_intpl_gpu(double * coeff, const splint::CartesianGrid * p_grid, const Vector<splint::Method> * p_method,
                     double * points, std::uint64_t n_points, double * result, std::uint64_t n_threads,
-                    std::uint64_t shared_mem_size, cuda::Stream * stream_ptr) noexcept;
+                    std::uint64_t ndim, std::uint64_t shared_mem_size, cuda::Stream * stream_ptr) noexcept;
 
 }  // namespace splint
 
