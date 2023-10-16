@@ -1,23 +1,35 @@
 // Copyright 2022 quocdang1998
 #include "merlin/splint/tools.hpp"
 
+#include <array>  // std::array
+
 #include <omp.h>  // #pragma omp
 
 #include "merlin/array/operation.hpp"        // merlin::array::contiguous_strides
+#include "merlin/cuda/stream.hpp"            // merlin::cuda::Stream
 #include "merlin/splint/cartesian_grid.hpp"  // merlin::splint::CartesianGrid
+#include "merlin/splint/intpl/linear.hpp"    // merlin::splint::intpl::construct_linear
+#include "merlin/splint/intpl/lagrange.hpp"  // merlin::splint::intpl::construct_lagrange
+#include "merlin/splint/intpl/newton.hpp"    // merlin::splint::intpl::construction_newton
+#include "merlin/logger.hpp"                 // FAILURE
 #include "merlin/utils.hpp"                  // merlin::prod_elements, merlin::increment_index
-
-#include "merlin/splint/intpl/lagrange.hpp"
 
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Construct coefficients by CPU
+// Construct coefficients
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Construct interpolation coefficients
+// Construct interpolation coefficients with CPU parallelism
 void splint::construct_coeff_cpu(double * coeff, const splint::CartesianGrid & grid,
                                  const Vector<splint::Method> & method, std::uint64_t n_threads) noexcept {
+    
+    // functor to coefficient construction methods
+    static const std::array<splint::ConstructionMethod, 3> construction_funcs {
+        splint::intpl::construct_linear,
+        splint::intpl::construct_lagrange,
+        splint::intpl::construction_newton
+    };
     // initialization
     const intvec & shape = grid.shape();
     std::uint64_t num_subsystem = 1, element_size = prod_elements(shape);
@@ -48,8 +60,8 @@ void splint::construct_coeff_cpu(double * coeff, const splint::CartesianGrid & g
             std::uint64_t group_idx = thread_idx / numthreads_subsystem;
             for (std::uint64_t i_subsystem = group_idx; i_subsystem < num_subsystem; i_subsystem += num_groups) {
                 double * subsystem_start = coeff + i_subsystem * subsystem_size;
-                splint::construction_funcs[i_method](subsystem_start, grid.grid_vectors()[i_dim], shape[i_dim],
-                                                     element_size, thread_idx_in_group, numthreads_subsystem);
+                construction_funcs[i_method](subsystem_start, grid.grid_vectors()[i_dim], shape[i_dim], element_size,
+                                             thread_idx_in_group, numthreads_subsystem);
             }
             #pragma omp barrier
             // update number of sub-system
@@ -62,11 +74,22 @@ void splint::construct_coeff_cpu(double * coeff, const splint::CartesianGrid & g
     }
 }
 
+#ifndef __MERLIN_CUDA__
+
+// Construct interpolation coefficients with GPU parallelism
+void splint::construct_coeff_gpu(double * coeff, const splint::CartesianGrid * p_grid,
+                                 const Vector<splint::Method> * p_method, std::uint64_t n_threads,
+                                 std::uint64_t shared_mem_size, cuda::Stream * stream_ptr) noexcept {
+    FAILURE(cuda_compile_error, "The library is not compiled with CUDA.\n");
+}
+
+#endif  // __MERLIN_CUDA__
+
 // ---------------------------------------------------------------------------------------------------------------------
-// Evaluate interpolation by CPU
+// Evaluate interpolation
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Evaluate interpolation from constructed coefficients
+// Evaluate interpolation with CPU parallelism
 void splint::eval_intpl_cpu(const double * coeff, const splint::CartesianGrid & grid,
                             const Vector<splint::Method> & method, const double * points, std::uint64_t n_points,
                             double * result, std::uint64_t n_threads) noexcept {
@@ -89,11 +112,6 @@ void splint::eval_intpl_cpu(const double * coeff, const splint::CartesianGrid & 
             std::uint64_t contiguous_index = 0;
             // loop on each index and save evaluation by each coefficient to the cache array
             do {
-                /*
-                splint::intpl::eval_lagrange_cpu(coeff, grid.size(), contiguous_index, loop_index.data(),
-                                                 cache.data(), point_data, last_updated_dim, grid.shape().data(),
-                                                 grid.grid_vectors().data(), grid.ndim());
-                */
                 splint::recursive_interpolate(coeff, grid.size(), contiguous_index, loop_index.data(), cache.data(),
                                               point_data, last_updated_dim, grid.shape().data(),
                                               grid.grid_vectors().data(), method, grid.ndim());
@@ -101,20 +119,26 @@ void splint::eval_intpl_cpu(const double * coeff, const splint::CartesianGrid & 
                 contiguous_index++;
             } while (last_updated_dim != -1);
             // perform one last iteration on the last coefficient
-            /*
-            splint::intpl::eval_lagrange_cpu(coeff, grid.size(), contiguous_index, loop_index.data(), cache.data(),
-                                             point_data, 0, grid.shape().data(),
-                                             grid.grid_vectors().data(), grid.ndim());
-            */
             splint::recursive_interpolate(coeff, grid.size(), contiguous_index, loop_index.data(), cache.data(),
                                           point_data, 0, grid.shape().data(), grid.grid_vectors().data(), method,
                                           grid.ndim());
             // save result and reset the cache
             result[i_point] = cache[0];
             cache[0] = 0.0;
-            // MESSAGE("Evaluation at point %s: %s\n", floatvec(point_data, grid.ndim()).str().c_str(), cache.str().c_str());
         }
     }
 }
+
+#ifndef __MERLIN_CUDA__
+
+// Evaluate interpolation with GPU parallelism
+void splint::eval_intpl_gpu(double * coeff, const splint::CartesianGrid * p_grid,
+                            const Vector<splint::Method> * p_method, double * points, std::uint64_t n_points,
+                            double * result, std::uint64_t n_threads, std::uint64_t shared_mem_size,
+                            cuda::Stream * stream_ptr) noexcept {
+    FAILURE(cuda_compile_error, "The library is not compiled with CUDA.\n");
+}
+
+#endif  // __MERLIN_CUDA__
 
 }  // namespace merlin

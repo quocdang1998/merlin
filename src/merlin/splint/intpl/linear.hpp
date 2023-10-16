@@ -8,7 +8,7 @@
 
 namespace merlin::splint::intpl {
 
-/** @brief Construct interpolation coefficients by linear interpolation method on CPU.
+/** @brief Construct interpolation coefficients by linear interpolation method.
  *  @param coeff Pointer to the first element in the coefficient array.
  *  @param grid_nodes Pointer to the grid node array of the current dimension.
  *  @param shape Number of nodes on the current dimension.
@@ -16,9 +16,9 @@ namespace merlin::splint::intpl {
  *  @param thread_idx Index of the thread in group.
  *  @param n_threads Number of threads performing the action.
  */
-__cuhostdev__ void construct_linear(double * coeff, const double * grid_nodes, std::uint64_t shape,
-                                    std::uint64_t element_size, std::uint64_t thread_idx,
-                                    std::uint64_t n_threads) noexcept;
+__cuhostdev__ void construct_linear(double * coeff, const double * grid_nodes, const std::uint64_t & shape,
+                                    const std::uint64_t & element_size, const std::uint64_t & thread_idx,
+                                    const std::uint64_t & n_threads) noexcept;
 
 /** @brief Evaluate interpolation at an unit step by linear interpolation method.
  *  @param grid_nodes Array of nodes to interpolate.

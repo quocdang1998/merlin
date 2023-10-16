@@ -7,10 +7,11 @@ namespace merlin {
 // Lagrange interpolation
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Construct interpolation coefficients by Lagrange method on CPU
-__cuhostdev__ void splint::intpl::construct_lagrange(double * coeff, const double * grid_nodes, std::uint64_t shape,
-                                                     std::uint64_t element_size, std::uint64_t thread_idx,
-                                                     std::uint64_t n_threads) noexcept {
+// Construct interpolation coefficients by Lagrange method
+__cuhostdev__ void splint::intpl::construct_lagrange(double * coeff, const double * grid_nodes,
+                                                     const std::uint64_t & shape, const std::uint64_t & element_size,
+                                                     const std::uint64_t & thread_idx,
+                                                     const std::uint64_t & n_threads) noexcept {
     for (std::uint64_t i_node = 0; i_node < shape; i_node++) {
         // calculate solvent = prod (x_i_node - x_j) for all j != i_node
         double solvent = 1.0;

@@ -80,6 +80,7 @@ list(APPEND MERLIN_SRC_GLB
      cuda/device.glb
      intpl/lagrange.glb
      intpl/newton.glb
+     splint/tools.glb
 )
 list(APPEND MERLIN_SRC_RDC
      array/operation.rdc

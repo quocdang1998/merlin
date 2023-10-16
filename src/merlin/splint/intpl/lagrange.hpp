@@ -18,9 +18,9 @@ namespace merlin::splint::intpl {
  *  @param thread_idx Index of the thread in group.
  *  @param n_threads Number of threads performing the action.
  */
-__cuhostdev__ void construct_lagrange(double * coeff, const double * grid_nodes, std::uint64_t shape,
-                                      std::uint64_t element_size, std::uint64_t thread_idx,
-                                      std::uint64_t n_threads) noexcept;
+__cuhostdev__ void construct_lagrange(double * coeff, const double * grid_nodes, const std::uint64_t & shape,
+                                      const std::uint64_t & element_size, const std::uint64_t & thread_idx,
+                                      const std::uint64_t & n_threads) noexcept;
 
 /** @brief Evaluate interpolation at an unit step by Lagrange method.
  *  @param grid_nodes Array of nodes to interpolate.
@@ -30,9 +30,8 @@ __cuhostdev__ void construct_lagrange(double * coeff, const double * grid_nodes,
  *  @param coeff Value of interpolation coefficient.
  *  @param result Variable to which the result of the interpolation is added to.
  */
-__cuhostdev__ void evaluate_lagrange(const double * grid_nodes, const std::uint64_t & grid_shape,
-                                     const double & point, const std::uint64_t & coeff_index, const double & coeff,
-                                     double & result) noexcept;
+__cuhostdev__ void evaluate_lagrange(const double * grid_nodes, const std::uint64_t & grid_shape, const double & point,
+                                     const std::uint64_t & coeff_index, const double & coeff, double & result) noexcept;
 
 }  // namespace merlin::splint::intpl
 

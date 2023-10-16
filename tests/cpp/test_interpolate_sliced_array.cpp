@@ -16,7 +16,7 @@ double foo(const merlin::floatvec & v) {
 
 int main(void) {
     // initialize data and grid
-    merlin::splint::CartesianGrid cart_gr({{0.1, 0.2, 0.3}, {1.0, 2.0, 3.0, 4.0}, {0.0, 0.25}});
+    merlin::splint::CartesianGrid cart_gr({{0.1, 0.2, 0.3}, {1.0, 2.0, 3.0, 4.0}, {0.0, 0.25, 0.5}});
     merlin::array::Array value(cart_gr.shape());
     for (std::uint64_t i = 0; i < cart_gr.size(); i++) {
         merlin::intvec index(merlin::contiguous_to_ndim_idx(i, cart_gr.shape()));
@@ -26,16 +26,16 @@ int main(void) {
     // calculate Lagrange coefficients
     merlin::array::Array coeff(value);
     merlin::Vector<merlin::splint::Method> methods = {
-        merlin::splint::Method::Lagrange,
-        merlin::splint::Method::Lagrange,
-        merlin::splint::Method::Lagrange
+        merlin::splint::Method::Newton,
+        merlin::splint::Method::Newton,
+        merlin::splint::Method::Newton
     };
-    construct_coeff_cpu(coeff.data(), cart_gr, methods, 10);
+    merlin::splint::construct_coeff_cpu(coeff.data(), cart_gr, methods, 1);
 
     // print coefficients
     MESSAGE("Value: %s\n", value.str().c_str());
     MESSAGE("Lagrange coefficients: %s\n", coeff.str().c_str());
-    merlin::intpl::CartesianGrid grid({{0.1, 0.2, 0.3}, {1.0, 2.0, 3.0, 4.0}, {0.0, 0.25}});
+    merlin::intpl::CartesianGrid grid({{0.1, 0.2, 0.3}, {1.0, 2.0, 3.0, 4.0}, {0.0, 0.25, 0.5}});
     merlin::intpl::PolynomialInterpolant pl_int(grid, value, merlin::intpl::Method::Lagrange);
     MESSAGE("Reference coefficients: %s\n", pl_int.get_coeff().str().c_str());
 
