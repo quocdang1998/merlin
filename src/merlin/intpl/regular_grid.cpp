@@ -6,7 +6,7 @@
 #include <numeric>    // std::iota
 #include <utility>    // std::move
 
-#include "merlin/array/operation.hpp"  // merlin::array::array_copy
+#include "merlin/array/operation.hpp"  // merlin::array::copy
 #include "merlin/logger.hpp"           // FAILURE
 #include "merlin/slice.hpp"            // merlin::Slice
 
@@ -43,7 +43,7 @@ intpl::RegularGrid::RegularGrid(const array::Array & points) {
     array::Array * points_array_ptr;
     this->points_ = points_array_ptr = new array::Array(intvec({capacity, points.ndim()}));
     array::Array temporary(*points_array_ptr, {Slice(0, this->npoint_), Slice()});
-    array_copy(this->points_, &temporary, std::memcpy);
+    copy(this->points_, &temporary, std::memcpy);
 }
 
 // Copy constructor

@@ -206,7 +206,7 @@ void array::Stock::record_data_to_file(const array::Array & src) {
     auto write_func = std::bind(write_to_file, this->file_ptr_, std::placeholders::_1, std::placeholders::_2,
                                 std::placeholders::_3);
     EXCLUSIVE_LOCK_THREADSAFE();
-    array_copy(this, &src, write_func);
+    copy(this, &src, write_func);
     UNLOCK_THREADSAFE();
 }
 

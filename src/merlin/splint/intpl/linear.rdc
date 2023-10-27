@@ -17,24 +17,35 @@ __cuhostdev__ void splint::intpl::construct_linear(double * coeff, const double 
 __cuhostdev__ void splint::intpl::evaluate_linear(const double * grid_nodes, const std::uint64_t & grid_shape,
                                                   const double & point, const std::uint64_t & coeff_index,
                                                   const double & coeff, double & result) noexcept {
-    /*
-    // calculate prod. of (point - x[i]) for i != i_node
-    double evaluated_value = 1.0;
-    for (std::uint64_t i_node = 0; i_node < grid_shape; i_node++) {
-        evaluated_value *= (i_node != coeff_index) ? (point - grid_nodes[i_node]) : 1.0;
+    // skip for out of range
+    if (point < grid_nodes[0] || point > grid_nodes[grid_shape-1]) {
+        return;
     }
-    // multiply by coeff and add to result
-    result += coeff * evaluated_value;
-    */
-    // evaluate (point - x[i]), (point - x[i-1]) and (point - x[i+1])
-    /*
-    double eval_i = point - grid_nodes[coeff_index];
-    double eval_i_less = (coeff_index != 0) ? point - grid_nodes[coeff_index-1] : 0.0;
-
-    if (eval > 0) {
-        result += (point >= grid_nodes)
+    // exactly at the point
+    if (point == grid_nodes[coeff_index]) {
+        result += coeff;
+        return;
     }
-    */
+    // get upper and lower
+    double upper = 0, lower = 0;
+    if (coeff_index != grid_shape-1) {
+        upper = grid_nodes[coeff_index+1] - point;
+    }
+    if (coeff_index != 0) {
+        lower = point - grid_nodes[coeff_index-1];
+    }
+    // skip if out of range
+    if ((upper < 0) || (lower < 0)) {
+        return;
+    }
+    // determine if it is lower of upper
+    if (point > grid_nodes[coeff_index]) {
+        result += coeff * upper / (grid_nodes[coeff_index+1] - grid_nodes[coeff_index]);
+        return;
+    } else {
+        result += coeff * lower / (grid_nodes[coeff_index] - grid_nodes[coeff_index-1]);
+        return;
+    }
 }
 
 }  // namespace merlin

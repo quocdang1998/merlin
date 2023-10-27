@@ -71,6 +71,7 @@ using EvaluationMethod = std::add_pointer<void(const double *, const std::uint64
  *  @param i_dim Index of the current dimension.
  *  @param grid_shape Grid shape array.
  *  @param grid_vectors Array of array of nodes in the grid.
+ *  @param method Method vector to interpolate.
  *  @param ndim Number of dimension.
  */
 __cuhostdev__ void recursive_interpolate(const double * coeff, const std::uint64_t & num_coeff,

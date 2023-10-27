@@ -44,7 +44,7 @@ __cuhostdev__ std::tuple<std::uint64_t, std::int64_t> lcseg_and_brindex(const me
  *  @param copy Name of the copy function.
  */
 template <class CopyFunction>
-void array_copy(array::NdData * dest, const array::NdData * src, CopyFunction copy);
+void copy(array::NdData * dest, const array::NdData * src, CopyFunction copy);
 
 /** @brief Fill all array with a given value.
  *  @tparam WriteFunction Function writing from a CPU array to the target pointer data, having the prototype of
@@ -60,6 +60,8 @@ void fill(array::NdData * target, double fill_value, CopyFunction write_engine,
 
 /** @brief String representation of an array.
  *  @param target Target array to print.
+ *  @param nametype Typename of the array to be printed (``Array``, ``Parcel``, ``Stock`` or ``NdData``).
+ *  @param first_call Check if the print is called on the first level (highest dimension).
  */
 template <class NdArray>
 std::string print(const NdArray * target, const std::string & nametype, bool first_call);

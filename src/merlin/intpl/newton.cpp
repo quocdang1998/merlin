@@ -7,7 +7,7 @@
 #include <omp.h>  // pragma omp, omp_get_num_threads
 
 #include "merlin/array/array.hpp"           // merlin::array::Array
-#include "merlin/array/operation.hpp"       // merlin::array::array_copy
+#include "merlin/array/operation.hpp"       // merlin::array::copy
 #include "merlin/intpl/cartesian_grid.hpp"  // merlin::intpl::CartesianGrid
 #include "merlin/intpl/sparse_grid.hpp"     // merlin::intpl::SparseGrid
 #include "merlin/logger.hpp"                // CUHDERR
@@ -154,7 +154,7 @@ void intpl::calc_newton_coeffs_cpu(const intpl::CartesianGrid & grid, const arra
     std::uint64_t ndim = grid.ndim();
     // copy value to coeff
     if (&coeff != &value) {
-        array::array_copy(&coeff, &value, std::memcpy);
+        array::copy(&coeff, &value, std::memcpy);
     }
     // get max recursive dimension
     static std::uint64_t parallel_limit = Environment::parallel_chunk;
@@ -188,7 +188,7 @@ static void calc_newton_coeffs_of_added_grid_cpu(const intpl::CartesianGrid & ac
                                                  array::Array & coeff) {
     // copy value to coeff
     if (&coeff != &value) {
-        array::array_copy(&coeff, &value, std::memcpy);
+        array::copy(&coeff, &value, std::memcpy);
     }
     // update coefficient by a factor
     std::uint64_t ndim = grid.ndim();

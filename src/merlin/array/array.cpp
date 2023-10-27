@@ -90,7 +90,7 @@ array::Array::Array(double * data, const intvec & shape, const intvec & strides,
         this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
         // copy data from old tensor to new tensor (optimized with memcpy)
         array::NdData src(data, shape, strides);
-        array::array_copy(dynamic_cast<array::NdData *>(this), &src, std::memcpy);
+        array::copy(dynamic_cast<array::NdData *>(this), &src, std::memcpy);
     } else {
         this->strides_ = strides;
         this->data_ = data;
@@ -110,7 +110,7 @@ array::Array::Array(const array::Array & src) : array::NdData(src) {
     this->release_ = true;
     // copy data
     this->data_ = array::allocate_memory(this->size());
-    array::array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), std::memcpy);
+    array::copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), std::memcpy);
 }
 
 // Copy assignment
@@ -125,7 +125,7 @@ array::Array & array::Array::operator=(const array::Array & src) {
     this->release_ = true;
     // copy data
     this->data_ = array::allocate_memory(this->size());
-    array::array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), std::memcpy);
+    array::copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), std::memcpy);
     return *this;
 }
 
@@ -208,7 +208,7 @@ void array::Array::extract_data_from_file(const array::Stock & src) {
     if (src.is_thread_safe()) {
         src.get_file_lock().lock();
     }
-    array::array_copy(this, &src, read_func);
+    array::copy(this, &src, read_func);
     if (src.is_thread_safe()) {
         src.get_file_lock().unlock();
     }

@@ -26,11 +26,11 @@ int main(void) {
     // calculate Lagrange coefficients
     merlin::array::Array coeff(value);
     merlin::Vector<merlin::splint::Method> methods = {
-        merlin::splint::Method::Newton,
-        merlin::splint::Method::Newton,
-        merlin::splint::Method::Newton
+        merlin::splint::Method::Lagrange,
+        merlin::splint::Method::Lagrange,
+        merlin::splint::Method::Lagrange
     };
-    merlin::splint::construct_coeff_cpu(coeff.data(), cart_gr, methods, 1);
+    merlin::splint::construct_coeff_cpu(coeff.data(), cart_gr, methods, 5);
 
     // print coefficients
     MESSAGE("Value: %s\n", value.str().c_str());

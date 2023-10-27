@@ -17,7 +17,7 @@ namespace merlin {
 
 // Copy each segment from source to destination
 template <class CopyFunction>
-void array::array_copy(array::NdData * dest, const array::NdData * src, CopyFunction copy) {
+void array::copy(array::NdData * dest, const array::NdData * src, CopyFunction copy) {
     // check if shape vector are the same
     if (src->ndim() != dest->ndim()) {
         FAILURE(std::invalid_argument, "Cannot copy array of different ndim (%u to %u).\n", src->ndim(), dest->ndim());

@@ -1,6 +1,6 @@
 // Copyright 2022 quocdang1998
-#ifndef MERLIN_ARRAY_SLICE_HPP_
-#define MERLIN_ARRAY_SLICE_HPP_
+#ifndef MERLIN_SLICE_HPP_
+#define MERLIN_SLICE_HPP_
 
 #include <array>             // std::array
 #include <cstdint>           // std::uint64_t, UINT64_MAX
@@ -125,4 +125,4 @@ using slicevec = Vector<Slice>;
 
 }  // namespace merlin
 
-#endif  // MERLIN_ARRAY_SLICE_HPP_
+#endif  // MERLIN_SLICE_HPP_

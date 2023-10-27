@@ -12,6 +12,7 @@
 #include "merlin/splint/intpl/lagrange.hpp"  // merlin::splint::intpl::construct_lagrange
 #include "merlin/splint/intpl/newton.hpp"    // merlin::splint::intpl::construction_newton
 #include "merlin/logger.hpp"                 // FAILURE
+#include "merlin/thread_divider.hpp"         // merlin::ThreadDivider
 #include "merlin/utils.hpp"                  // merlin::prod_elements, merlin::increment_index
 
 namespace merlin {
@@ -34,7 +35,8 @@ void splint::construct_coeff_cpu(double * coeff, const splint::CartesianGrid & g
     const intvec & shape = grid.shape();
     std::uint64_t num_subsystem = 1, element_size = prod_elements(shape);
     // solve matrix for each dimension
-    std::uint64_t subsystem_size = 0, numthreads_subsystem = 0, num_groups = 0;
+    // std::uint64_t subsystem_size = 0, numthreads_subsystem = 0, num_groups = 0;
+    std::uint64_t subsystem_size = 0;
     unsigned int i_method = 0;
     #pragma omp parallel num_threads(n_threads)
     {
@@ -46,22 +48,14 @@ void splint::construct_coeff_cpu(double * coeff, const splint::CartesianGrid & g
                 subsystem_size = element_size;
                 element_size /= shape[i_dim];
                 i_method = static_cast<unsigned int>(method[i_dim]);
-                numthreads_subsystem = n_threads / num_subsystem;
-                if (numthreads_subsystem == 0) {
-                    num_groups = n_threads;
-                    numthreads_subsystem = 1;
-                } else {
-                    num_groups = num_subsystem;
-                }
             }
             #pragma omp barrier
             // parallel subsystem over the number of groups
-            std::uint64_t thread_idx_in_group = thread_idx % numthreads_subsystem;
-            std::uint64_t group_idx = thread_idx / numthreads_subsystem;
-            for (std::uint64_t i_subsystem = group_idx; i_subsystem < num_subsystem; i_subsystem += num_groups) {
-                double * subsystem_start = coeff + i_subsystem * subsystem_size;
+            ThreadDivider thr_grp(num_subsystem, thread_idx, n_threads);
+            for (std::uint64_t i_task = thr_grp.group_idx; i_task < num_subsystem; i_task += thr_grp.num_groups) {
+                double * subsystem_start = coeff + i_task * subsystem_size;
                 construction_funcs[i_method](subsystem_start, grid.grid_vectors()[i_dim], shape[i_dim], element_size,
-                                             thread_idx_in_group, numthreads_subsystem);
+                                             thr_grp.thread_idx_in_group, thr_grp.numthreads_pertask);
             }
             #pragma omp barrier
             // update number of sub-system

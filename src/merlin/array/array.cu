@@ -4,7 +4,7 @@
 #include <cinttypes>   // PRIu64
 #include <functional>  // std::bind, std::placeholders
 
-#include "merlin/array/operation.hpp"  // merlin::array::array_copy
+#include "merlin/array/operation.hpp"  // merlin::array::copy
 #include "merlin/array/parcel.hpp"     // merlin::array::Parcel
 #include "merlin/cuda/device.hpp"      // merlin::cuda::Device
 #include "merlin/logger.hpp"           // FAILURE
@@ -62,7 +62,7 @@ void array::Array::clone_data_from_gpu(const array::Parcel & src, const cuda::St
                                ::cudaMemcpyDeviceToHost, copy_stream);
     // copy data to GPU
     src.device().set_as_current();
-    array::array_copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), copy_func);
+    array::copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), copy_func);
     current_gpu.set_as_current();
 }
 
