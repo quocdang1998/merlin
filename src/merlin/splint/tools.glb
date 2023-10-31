@@ -9,6 +9,7 @@
 #include "merlin/splint/intpl/linear.hpp"    // merlin::splint::intpl::construct_linear
 #include "merlin/splint/intpl/lagrange.hpp"  // merlin::splint::intpl::construct_lagrange
 #include "merlin/splint/intpl/newton.hpp"    // merlin::splint::intpl::construction_newton
+#include "merlin/thread_divider.hpp"         // merlin::ThreadDivider
 #include "merlin/utils.hpp"                  // merlin::prod_elements, merlin::flatten_thread_index,
                                              // merlin::size_of_block
 
@@ -34,21 +35,15 @@ __global__ static void construct_coeff_kernel(double * coeff, const splint::Cart
     auto [end_shr_ptr, grid_shr, method_shr] = cuda::copy_class_to_shared_mem(dynamic_shmem, *p_grid, *p_method);
     // assign variable to static share memory
     const intvec & shape = grid_shr->shape();
-    __shared__ char static_shmem[5 * sizeof(std::uint64_t) + sizeof(unsigned int)];
-    std::uint64_t & num_subsystem = *(reinterpret_cast<std::uint64_t *>(static_shmem));
-    std::uint64_t & element_size = *(&num_subsystem + 1);
-    std::uint64_t & subsystem_size = *(&element_size + 1);
-    std::uint64_t & numthreads_subsystem = *(&subsystem_size + 1);
-    std::uint64_t & num_groups = *(&numthreads_subsystem + 1);
-    unsigned int & i_method = *(reinterpret_cast<unsigned int *>(&num_groups + 1));
+    __shared__ std::uint64_t static_shmem[3];
+    std::uint64_t & num_subsystem = static_shmem[0];
+    std::uint64_t & subsystem_size = static_shmem[1];
+    std::uint64_t & element_size = static_shmem[2];
     // initialization
     if (thread_idx == 0) {
         num_subsystem = 1;
         element_size = prod_elements(shape);
         subsystem_size = 0;
-        numthreads_subsystem = 0;
-        num_groups = 0;
-        i_method = 0;
     }
     __syncthreads();
     // solve matrix for each dimension
@@ -57,28 +52,18 @@ __global__ static void construct_coeff_kernel(double * coeff, const splint::Cart
         if (thread_idx == 0) {
             subsystem_size = element_size;
             element_size /= shape[i_dim];
-            i_method = static_cast<unsigned int>((*method_shr)[i_dim]);
-            numthreads_subsystem = block_size / num_subsystem;
-            if (numthreads_subsystem == 0) {
-                num_groups = block_size;
-                numthreads_subsystem = 1;
-            } else {
-                num_groups = num_subsystem;
-            }
         }
         __syncthreads();
         // parallel subsystem over the number of groups
-        std::uint64_t numthreads_subsystem_local = numthreads_subsystem;
-        std::uint64_t thread_idx_in_group = thread_idx % numthreads_subsystem_local;
-        std::uint64_t group_idx = thread_idx / numthreads_subsystem_local;
-        // copy some variable to thread local memory
-        std::uint64_t num_subsystem_thr = num_subsystem, num_groups_thr = num_groups;
-        std::uint64_t subsystem_size_thr = subsystem_size;
-        std::uint64_t element_size_thr = element_size;
-        for (std::uint64_t i_subsystem = group_idx; i_subsystem < num_subsystem_thr; i_subsystem += num_groups_thr) {
-            double * subsystem_start = coeff + i_subsystem * subsystem_size_thr;
+        ThreadDivider thr_grp(num_subsystem, thread_idx, block_size);
+        std::uint64_t local_num_subsystem = num_subsystem;
+        std::uint64_t local_subsystem_size = subsystem_size;
+        std::uint64_t local_element_size = element_size;
+        unsigned int i_method = static_cast<unsigned int>((*method_shr)[i_dim]);
+        for (std::uint64_t i_task = thr_grp.group_idx; i_task < local_num_subsystem; i_task += thr_grp.num_groups) {
+            double * subsystem_start = coeff + i_task * local_subsystem_size;
             construction_funcs[i_method](subsystem_start, grid_shr->grid_vectors()[i_dim], shape[i_dim],
-                                         element_size_thr, thread_idx_in_group, numthreads_subsystem_local);
+                                         local_element_size, thr_grp.thread_idx_in_group, thr_grp.numthreads_pertask);
         }
         __syncthreads();
         // update number of sub-system
@@ -111,26 +96,25 @@ __global__ static void eval_intpl_kernel(double * coeff, const splint::Cartesian
     std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
     // copy to share memory
     extern __shared__ char dynamic_shmem[];
-    auto [end_shr_ptr, grid_shr, method_shr] = cuda::copy_class_to_shared_mem(dynamic_shmem, *p_grid, *p_method);
-    if (thread_idx == 0) {
-        std::printf("share mem: %p, grid_ptr: %p, method_ptr: %p, available: %p\n", dynamic_shmem, grid_shr, method_shr, end_shr_ptr);
-    }
+    auto [end_shr_ptr, grid_shr] = cuda::copy_class_to_shared_mem(dynamic_shmem, *p_grid);
     // assigning + initializing the index vector and cache vector
     std::uint64_t ndim = grid_shr->ndim();
     std::uintptr_t free_shared_mem = reinterpret_cast<std::uintptr_t>(end_shr_ptr);
     free_shared_mem += thread_idx * ndim * (sizeof(std::uint64_t) + sizeof(double));
     std::uint64_t * loop_index_data = reinterpret_cast<std::uint64_t *>(free_shared_mem);
     double * cache_data = reinterpret_cast<double *>(loop_index_data + ndim);
-    std::printf("Loop index data: %p\n", loop_index_data);
     for (std::uint64_t i = 0; i < ndim; i++) {
         loop_index_data[i] = 0;
         cache_data[i] = 0.0;
     }
-    std::printf("Pass\n");
     intvec loop_index;
     loop_index.assign(loop_index_data, ndim);
     floatvec cache;
     cache.assign(cache_data, ndim);
+    // assign value to vector of enum
+    std::uintptr_t method_ptr = reinterpret_cast<std::uintptr_t>(end_shr_ptr);
+    method_ptr += block_size * ndim * (sizeof(std::uint64_t) + sizeof(double));
+    auto [_, method_shr] = cuda::copy_class_to_shared_mem(reinterpret_cast<void *>(method_ptr), *p_method);
     // parallel calculation for each point
     std::uint64_t grid_size = grid_shr->size();
     for (std::uint64_t i_point = thread_idx; i_point < n_points; i_point += block_size) {
@@ -165,7 +149,6 @@ void splint::eval_intpl_gpu(double * coeff, const splint::CartesianGrid * p_grid
     ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr->get_stream_ptr());
     // launch calculation
     shared_mem_size += ndim * n_threads * (sizeof(double) + sizeof(std::uint64_t));
-    std::printf("Shared memory: %llu\n", shared_mem_size);
     eval_intpl_kernel<<<1, n_threads, shared_mem_size, stream>>>(coeff, p_grid, p_method, points, n_points, result);
 }
 

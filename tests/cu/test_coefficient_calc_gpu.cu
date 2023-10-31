@@ -88,6 +88,8 @@ int main(void) {
     ::cudaMemcpy(result_gpu_ptr, result_gpu.data(), 3*sizeof(double), ::cudaMemcpyHostToDevice);
     merlin::splint::eval_intpl_gpu(coeff_gpu.data(), mem.get<0>(), mem.get<1>(),
                                    points_gpu, 3, result_gpu_ptr, 5, 3, shared_mem, &stream);
+    ::cudaMemcpy(result_gpu.data(), result_gpu_ptr, 3*sizeof(double), ::cudaMemcpyDeviceToHost);
+    MESSAGE("GPU calculated values: %s\n", result_gpu.str().c_str());
     ::cudaFree(points_gpu);
     ::cudaFree(result_gpu_ptr);
 }

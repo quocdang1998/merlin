@@ -31,14 +31,6 @@ struct ThreadDivider {
     }
     /// @}
 
-    /// @name Copy
-    /// @{
-    /** @brief Copy constructor.*/
-    __cuhostdev__ ThreadDivider(const ThreadDivider & src) = default;
-    /** @brief Copy assignment.*/
-    __cuhostdev__ ThreadDivider & operator=(const ThreadDivider & src) = default;
-    /// @}
-
     /// @name Attributes
     /// @{
     /** @brief Number of threads per task.*/

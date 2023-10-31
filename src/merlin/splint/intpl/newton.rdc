@@ -12,24 +12,10 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Construct interpolation coefficients by Newton method
-__cuhostdev__ void splint::intpl::construction_newton(double * coeff, const double * grid_nodes, 
+__cuhostdev__ void splint::intpl::construction_newton(double * coeff, const double * grid_nodes,
                                                       const std::uint64_t & shape, const std::uint64_t & element_size,
                                                       const std::uint64_t & thread_idx,
                                                       const std::uint64_t & n_threads) noexcept {
-    /* // Forward mode
-    for (std::uint64_t jump = 1; jump < shape; jump++) {
-        for (std::uint64_t i_node = shape-1; i_node >= jump; i_node--) {
-            // calculate 1 / (x_j - x_{j-i})
-            double solvent = grid_nodes[i_node] - grid_nodes[i_node-jump];
-            solvent = 1.f / solvent;
-            // calculate divide difference: a[j] <- (a[j] - a[j-1]) /  (x[j] - x[j-i])
-            for (std::int64_t i_coeff = thread_idx; i_coeff < element_size; i_coeff += n_threads) {
-                coeff[i_node*element_size + i_coeff] -= coeff[(i_node-1)*element_size + i_coeff];
-                coeff[i_node*element_size + i_coeff] *= solvent;
-            }
-        }
-    }
-    */
     for (std::uint64_t jump = 1; jump < shape; jump++) {
         std::int64_t last_node = shape - 1 - jump;
         for (std::uint64_t i_node = 0; i_node <= last_node; i_node++) {
