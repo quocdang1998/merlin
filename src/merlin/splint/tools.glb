@@ -77,7 +77,7 @@ __global__ static void construct_coeff_kernel(double * coeff, const splint::Cart
 // Construct interpolation coefficients with GPU parallelism
 void splint::construct_coeff_gpu(double * coeff, const splint::CartesianGrid * p_grid,
                                  const Vector<splint::Method> * p_method, std::uint64_t n_threads,
-                                 std::uint64_t shared_mem_size, cuda::Stream * stream_ptr) noexcept {
+                                 std::uint64_t shared_mem_size, const cuda::Stream * stream_ptr) noexcept {
     // create an asynchrnous CUDA stream
     ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr->get_stream_ptr());
     // launch calculation

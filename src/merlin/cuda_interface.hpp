@@ -47,6 +47,13 @@ MERLINSHARED_EXPORTS void cuda_mem_cpy_host_to_device(void * destination, void *
 MERLINSHARED_EXPORTS void cuda_mem_cpy_device_to_host(void * destination, void * source, std::uint64_t size,
                                                       std::uint64_t stream_ptr = 0);
 
+/** @brief Deallocate memory on the global memory space of the current GPU.
+ *  @details CUDA de-allocation wrapper for the Python interface.
+ *  @param ptr Pointer to the memory region to deallocate.
+ *  @param stream_ptr CUDA stream performing the deallocation.
+ */
+MERLINSHARED_EXPORTS void cuda_mem_free(void * ptr, std::uint64_t stream_ptr = 0);
+
 /** @brief CUDA memory deleter.
  *  @details Class wrapping the ``cudaFree`` function.
  */

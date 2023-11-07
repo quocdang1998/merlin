@@ -66,6 +66,18 @@ array::NdData::NdData(const array::NdData & whole, const slicevec & slices) {
     this->release_ = false;
 }
 
+// Check if the array is C-contiguous
+bool array::NdData::is_c_contiguous(void) {
+    std::uint64_t c_strides = sizeof(double);
+    for (std::int64_t i = this->ndim() - 1; i >= 0; i--) {
+        if (this->strides_[i] != c_strides) {
+            return false;
+        }
+        c_strides *= this->shape_[i];
+    }
+    return true;
+}
+
 // Reshape
 void array::NdData::reshape(const intvec & new_shape) {
     if (this->ndim() != 1) {

@@ -73,7 +73,7 @@ void splint::construct_coeff_cpu(double * coeff, const splint::CartesianGrid & g
 // Construct interpolation coefficients with GPU parallelism
 void splint::construct_coeff_gpu(double * coeff, const splint::CartesianGrid * p_grid,
                                  const Vector<splint::Method> * p_method, std::uint64_t n_threads,
-                                 std::uint64_t shared_mem_size, cuda::Stream * stream_ptr) noexcept {
+                                 std::uint64_t shared_mem_size, const cuda::Stream * stream_ptr) noexcept {
     FAILURE(cuda_compile_error, "The library is not compiled with CUDA.\n");
 }
 

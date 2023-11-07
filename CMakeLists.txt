@@ -66,6 +66,7 @@ list(APPEND MERLIN_SRC_CU
      intpl/lagrange.cu
      intpl/newton.cu
      splint/cartesian_grid.cu
+     splint/interpolator.cu
      statistics/moment.cu
 )
 list(APPEND MERLIN_SRC_GLB

@@ -52,7 +52,8 @@ void construct_coeff_cpu(double * coeff, const splint::CartesianGrid & grid, con
  *  @param stream_ptr Pointer to the CUDA stream performing this calculation.
  */
 void construct_coeff_gpu(double * coeff, const splint::CartesianGrid * p_grid, const Vector<splint::Method> * p_method,
-                         std::uint64_t n_threads, std::uint64_t shared_mem_size, cuda::Stream * stream_ptr) noexcept;
+                         std::uint64_t n_threads, std::uint64_t shared_mem_size,
+                         const cuda::Stream * stream_ptr) noexcept;
 
 // Evaluate Interpolation
 // ----------------------

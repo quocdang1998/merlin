@@ -26,12 +26,24 @@ class splint::Interpolator {
     /// @{
     /** @brief Default constructor.*/
     Interpolator(void) = default;
-    /** @brief Construct from a CPU array.*/
-    MERLIN_EXPORTS Interpolator(const splint::CartesianGrid & grid, array::Array & data,
-                                const Vector<splint::Method> & method);
-    /** @brief Construct from a GPU array*/
-    MERLIN_EXPORTS Interpolator(const splint::CartesianGrid & grid, array::Parcel & data,
-                                const Vector<splint::Method> & method, const cuda::Stream & stream = cuda::Stream());
+    /** @brief Construct from a CPU array.
+     *  @param grid Cartesian grid to interpolate.
+     *  @param values C-contiguous array containing the data.
+     *  @param method Interpolation method to use for each dimension.
+     *  @param num_threads Number of CPU threads to calculate the interpolation.
+    */
+    MERLIN_EXPORTS Interpolator(const splint::CartesianGrid & grid, array::Array & values,
+                                const Vector<splint::Method> & method, std::uint64_t num_threads = 1);
+    /** @brief Construct from a GPU array.
+     *  @param grid Cartesian grid to interpolate.
+     *  @param values C-contiguous array containing the data on GPU.
+     *  @param method Interpolation method to use for each dimension.
+     *  @param stream CUDA Stream on which the calculation is launched.
+     *  @param num_threads Number of CPU threads to calculate the interpolation.
+     */
+    MERLIN_EXPORTS Interpolator(const splint::CartesianGrid & grid, array::Parcel & values,
+                                const Vector<splint::Method> & method, const cuda::Stream & stream = cuda::Stream(),
+                                std::uint64_t num_threads = 32);
     /// @}
 
     /// @name Calculate coefficient
@@ -48,11 +60,15 @@ class splint::Interpolator {
 
   private:
     /** @brief Cartesian grid to interpolate.*/
-    const splint::CartesianGrid * p_grid_ = nullptr;
+    splint::CartesianGrid * p_grid_ = nullptr;
     /** @brief Pointer to coefficient array.*/
     array::NdData * p_coeff_ = nullptr;
     /** @brief Interpolation method to applied on each dimension.*/
-    Vector<splint::Method> method_;
+    Vector<splint::Method> * p_method_ = nullptr;
+    /** @brief Pointer to the CUDA Stream used for memory allocation and de-allocation.*/
+    std::uintptr_t allocation_stream_;
+    /** @brief GPU ID on which the memory are allocated.*/
+    unsigned int gpu_id_ = static_cast<unsigned int>(-1);
 };
 
 }  // namespace merlin
