@@ -77,7 +77,7 @@ __global__ static void construct_coeff_kernel(double * coeff, const splint::Cart
 // Construct interpolation coefficients with GPU parallelism
 void splint::construct_coeff_gpu(double * coeff, const splint::CartesianGrid * p_grid,
                                  const Vector<splint::Method> * p_method, std::uint64_t n_threads,
-                                 std::uint64_t shared_mem_size, cuda::Stream * stream_ptr) noexcept {
+                                 std::uint64_t shared_mem_size, const cuda::Stream * stream_ptr) noexcept {
     // create an asynchrnous CUDA stream
     ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr->get_stream_ptr());
     // launch calculation
@@ -97,39 +97,60 @@ __global__ static void eval_intpl_kernel(double * coeff, const splint::Cartesian
     // copy to share memory
     extern __shared__ char dynamic_shmem[];
     auto [end_shr_ptr, grid_shr] = cuda::copy_class_to_shared_mem(dynamic_shmem, *p_grid);
-    // assigning + initializing the index vector and cache vector
+    __shared__ std::int64_t last_updated_dim;
+    // assign loop index vector
     std::uint64_t ndim = grid_shr->ndim();
     std::uintptr_t free_shared_mem = reinterpret_cast<std::uintptr_t>(end_shr_ptr);
-    free_shared_mem += thread_idx * ndim * (sizeof(std::uint64_t) + sizeof(double));
     std::uint64_t * loop_index_data = reinterpret_cast<std::uint64_t *>(free_shared_mem);
-    double * cache_data = reinterpret_cast<double *>(loop_index_data + ndim);
-    for (std::uint64_t i = 0; i < ndim; i++) {
-        loop_index_data[i] = 0;
-        cache_data[i] = 0.0;
-    }
     intvec loop_index;
     loop_index.assign(loop_index_data, ndim);
+    if (thread_idx == 0) {
+        for (std::uint64_t i = 0; i < ndim; i++) {
+            loop_index[i] = 0;
+        }
+    }
+    __syncthreads();
+    // assign memory for storing point coordinates and cache
+    free_shared_mem = reinterpret_cast<std::uintptr_t>(loop_index.end()) + thread_idx * ndim * 2 * sizeof(double);
+    double * point_data = reinterpret_cast<double *>(free_shared_mem);
+    floatvec point;
+    point.assign(point_data, ndim);
+    double * cache_data = point_data + ndim;
     floatvec cache;
     cache.assign(cache_data, ndim);
+    for (std::uint64_t i = 0; i < ndim; i++) {
+        cache[i] = 0.0;
+    }
     // assign value to vector of enum
-    std::uintptr_t method_ptr = reinterpret_cast<std::uintptr_t>(end_shr_ptr);
-    method_ptr += block_size * ndim * (sizeof(std::uint64_t) + sizeof(double));
+    std::uintptr_t method_ptr = reinterpret_cast<std::uintptr_t>(loop_index.end());
+    method_ptr += block_size * ndim * 2 * sizeof(double);
     auto [_, method_shr] = cuda::copy_class_to_shared_mem(reinterpret_cast<void *>(method_ptr), *p_method);
     // parallel calculation for each point
     std::uint64_t grid_size = grid_shr->size();
     for (std::uint64_t i_point = thread_idx; i_point < n_points; i_point += block_size) {
-        const double * point_data = points + i_point * ndim;
-        std::int64_t last_updated_dim = ndim-1;
+        // copy point coordinate to shared memory
+        for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
+            point[i_dim] = points[i_point * ndim + i_dim];
+        }
+        // set last updated dimension and contiguous index
+        if (thread_idx == 0) {
+            last_updated_dim = ndim-1;
+        }
+        __syncthreads();
+        std::int64_t register_last_updated_dim = last_updated_dim;
         std::uint64_t contiguous_index = 0;
         // loop on each index and save evaluation by each coefficient to the cache array
         do {
             splint::recursive_interpolate(coeff, grid_size, contiguous_index, loop_index.data(), cache.data(),
-                                          point_data, last_updated_dim, grid_shr->shape().data(),
+                                          point_data, register_last_updated_dim, grid_shr->shape().data(),
                                           grid_shr->grid_vectors().data(), *method_shr, grid_shr->ndim());
-            last_updated_dim = increment_index(loop_index, grid_shr->shape());
-            last_updated_dim = last_updated_dim;
+            if (thread_idx == 0) {
+                last_updated_dim = increment_index(loop_index, grid_shr->shape());
+            }
+            __syncthreads();
+            register_last_updated_dim = last_updated_dim;
             contiguous_index++;
-        } while (last_updated_dim != -1);
+        } while (register_last_updated_dim != -1);
         // perform one last iteration on the last coefficient
         splint::recursive_interpolate(coeff, grid_size, contiguous_index, loop_index.data(), cache.data(),
                                       point_data, 0, grid_shr->shape().data(), grid_shr->grid_vectors().data(),
@@ -144,11 +165,11 @@ __global__ static void eval_intpl_kernel(double * coeff, const splint::Cartesian
 void splint::eval_intpl_gpu(double * coeff, const splint::CartesianGrid * p_grid,
                             const Vector<splint::Method> * p_method, double * points, std::uint64_t n_points,
                             double * result, std::uint64_t n_threads, std::uint64_t ndim, std::uint64_t shared_mem_size,
-                            cuda::Stream * stream_ptr) noexcept {
+                            const cuda::Stream * stream_ptr) noexcept {
     // create an asynchrnous CUDA stream
     ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr->get_stream_ptr());
     // launch calculation
-    shared_mem_size += ndim * n_threads * (sizeof(double) + sizeof(std::uint64_t));
+    shared_mem_size += ndim * (n_threads * 2 * sizeof(double) + sizeof(std::uint64_t));
     eval_intpl_kernel<<<1, n_threads, shared_mem_size, stream>>>(coeff, p_grid, p_method, points, n_points, result);
 }
 

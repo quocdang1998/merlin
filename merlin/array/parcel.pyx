@@ -21,15 +21,16 @@ cdef class Parcel(NdData):
         cdef CppIntvec array_shape
 
         if not kwargs:
-            self.core = new CppArray()
+            self.core = new CppParcel()
         elif kwargs.get("shape") is not None:
             shape_arg = kwargs.pop("shape")
             array_shape = intvec_from_iteratable(shape_arg)
-            self.core = new CppArray(array_shape)
+            self.core = new CppParcel(array_shape)
 
         if kwargs:
             raise ValueError("Invalid keywords: " + ", ".join(k for k in kwargs.keys()))
 
+    @property
     def device(self):
         """Get the GPU holding the data."""
         cdef object result = Device()
@@ -39,6 +40,9 @@ cdef class Parcel(NdData):
         return result
 
     def transfer_data_to_gpu(self, Array src, object stream = Stream()):
+        """transfer_data_to_gpu(self, src, stream = merlin.cuda.Stream())
+        Transfer data from CPU to GPU.
+        """
         if not isinstance(stream, Stream):
             raise TypeError("Expected argument \"stream\" has type \"merlin.cuda.Stream\".")
         cdef uintptr_t str_uintptr = stream.pointer()

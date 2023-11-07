@@ -5,15 +5,12 @@ from libcpp.string cimport string
 
 from merlin.vector cimport CppVector, CppIntvec
 
-from merlin.array.slice cimport CppSlice
-
 cdef extern from "merlin/array/nddata.hpp":
 
     cdef cppclass CppNdData "merlin::array::NdData":
         CppNdData()
         CppNdData(double * data, const CppIntvec & shape, const CppIntvec & strides)
         CppNdData(const CppIntvec & shape)
-        CppNdData(const CppNdData & whole, const CppVector[CppSlice] & slices)
 
         CppNdData(const CppNdData & src)
         CppNdData & operator=(const CppNdData & src)
@@ -30,5 +27,3 @@ cdef extern from "merlin/array/nddata.hpp":
         void set(uint64_t index, double value) except +
 
         string str() except +
-
-        CppVector[CppVector[CppSlice]] partite(uint64_t max_memory)

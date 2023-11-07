@@ -6,7 +6,12 @@ from libc.stdint cimport uint64_t, UINT64_MAX
 from merlin.env cimport *
 
 cdef class Environment:
-    """Execution environment of package."""
+    """
+    Execution environment of the ``merlin`` library.
+    
+    Wrapper of the class :cpp:class:`merlin::Environment`.
+    """
+
     cdef CppEnvironment * core
 
     def __init__(self):
@@ -25,18 +30,6 @@ cdef class Environment:
         Get number of isntances initialized.
         """
         return CppEnvironment_num_instances.load()
-
-    @classmethod
-    def parallel_chunk(self, uint64_t n_chunks = UINT64_MAX):
-        """parallel_chunk(self, n_chunks=UINT64_MAX)
-        Get or set the minimum size of loops so CPU parallelization is applied.
-
-        Default value is ``96``.
-        """
-        global CppEnvironment_parallel_chunk
-        if n_chunks != UINT64_MAX:
-            CppEnvironment_parallel_chunk = n_chunks
-        return CppEnvironment_parallel_chunk
 
     def __repr__(self):
         return "<Merlin execution Environment>"

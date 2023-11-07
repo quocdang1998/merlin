@@ -63,7 +63,7 @@ class splint::CartesianGrid {
     /** @brief Get total number of points in the grid.*/
     __cuhostdev__ constexpr std::uint64_t size(void) const noexcept { return this->size_; }
     /** @brief Get total number of nodes on all dimension.*/
-    __cuhostdev__ constexpr::uint64_t num_nodes(void) const noexcept { return this->grid_nodes_.size(); }
+    __cuhostdev__ constexpr std::uint64_t num_nodes(void) const noexcept { return this->grid_nodes_.size(); }
     /// @}
 
     /// @name Slicing operator
@@ -71,11 +71,11 @@ class splint::CartesianGrid {
     /** @brief Get element at a given flatten index.
      *  @param index Flatten index of point in the grid (in C order).
      */
-    floatvec operator[](std::uint64_t index) const noexcept;
+    MERLIN_EXPORTS floatvec operator[](std::uint64_t index) const noexcept;
     /** @brief Get element at a given index vector.
      *  @param index Vector of index on each dimension.
      */
-    floatvec operator[](const intvec & index) const noexcept;
+    MERLIN_EXPORTS floatvec operator[](const intvec & index) const noexcept;
     /// @}
 
     /// @name GPU related features

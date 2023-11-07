@@ -36,11 +36,11 @@ void cuda_mem_cpy_device_to_host(void * destination, void * source, std::uint64_
     }
 }
 
-// Call CUDA deallocation on pointer
-void CudaDeleter::operator()(void * pointer) {
-    ::cudaError_t err_ = ::cudaFree(pointer);
+// Deallocate memory on the global memory space of the current GPU.
+void cuda_mem_free(void * ptr, std::uint64_t stream_ptr) {
+    ::cudaError_t err_ = ::cudaFreeAsync(ptr, reinterpret_cast<::cudaStream_t>(stream_ptr));
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "CUDA synchronously deallocate memory to GPU failed with error \"%s\"",
+        FAILURE(cuda_runtime_error, "CUDA asynchronous memory deallocation failed with error \"%s\"",
                 ::cudaGetErrorString(err_));
     }
 }

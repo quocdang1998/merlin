@@ -23,8 +23,8 @@ void cuda_mem_cpy_device_to_host(void * destination, void * source, std::uint64_
     FAILURE(cuda_compile_error, "Compile the library with CUDA option to enable data transfering from GPU.\n");
 }
 
-// Call CUDA deallocation on pointer
-void CudaDeleter::operator()(void * pointer) {
+// Deallocate memory on the global memory space of the current GPU.
+void cuda_mem_free(void * ptr, std::uint64_t stream_ptr) {
     FAILURE(cuda_compile_error, "Compile the library with CUDA option to enable memory deallocation on GPU.\n");
 }
 

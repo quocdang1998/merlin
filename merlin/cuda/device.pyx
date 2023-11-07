@@ -136,11 +136,11 @@ cdef class Device:
     def __dealloc__(self):
         del self.core
 
-def print_all_gpu_specification():
+def print_gpus_spec():
     """print_all_gpu_specification()
     Print specification of all detected GPUs.
     """
-    cpp_print_all_gpu_specification()
+    print_gpus_spec()
 
 def test_all_gpu():
     """test_all_gpu()

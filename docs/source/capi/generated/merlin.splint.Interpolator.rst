@@ -1,7 +1,7 @@
-merlin::intpl::CartesianGrid
+merlin::splint::Interpolator
 ============================
 
-.. doxygenclass:: merlin::intpl::CartesianGrid
+.. doxygenclass:: merlin::splint::Interpolator
    :members:
    :protected-members:
    :private-members:

@@ -85,7 +85,7 @@ bool cuda::Stream::is_capturing(void) const {
 
 // Check valid GPU and context
 void cuda::Stream::check_cuda_context(void) const {
-    if (this->device_ != cuda::Device::get_current_gpu()) {
+    if ((this->device_ != cuda::Device::get_current_gpu()) && (this->stream_ != 0)) {
         FAILURE(cuda_runtime_error, "Current GPU is not the one associated the stream.\n");
     }
 }

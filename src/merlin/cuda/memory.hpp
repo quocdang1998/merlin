@@ -42,6 +42,11 @@ class cuda::Memory {
     template <std::uint64_t index>
     typename std::tuple_element<index, std::tuple<Args *...>>::type get(void);
 
+    /** @brief Force release the memory.
+     *  @details The pointer to GPU data is set to ``nullptr``.
+     */
+    void force_release(void) noexcept { this->gpu_ptr_ = nullptr; }
+
     /** @brief Destructor.*/
     ~Memory(void);
 

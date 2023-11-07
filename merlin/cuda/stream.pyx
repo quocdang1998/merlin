@@ -113,4 +113,5 @@ cdef class Stream:
         self.core.synchronize()
 
     def __dealloc__(self):
+        print("Deallocating stream")
         del self.core

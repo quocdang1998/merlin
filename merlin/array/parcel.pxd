@@ -8,14 +8,12 @@ from merlin.cuda.stream cimport CppStream
 
 from merlin.array.array cimport CppArray
 from merlin.array.nddata cimport CppNdData
-from merlin.array.slice cimport CppSlice
 
 cdef extern from "merlin/array/parcel.hpp":
 
     cdef cppclass CppParcel "merlin::array::Parcel" (CppNdData):
         CppParcel()
         CppParcel(const CppIntvec & shape) except +
-        CppParcel(const CppParcel & whole, const CppVector[CppSlice] & slices) except +
 
         CppParcel(const CppParcel & src) except +
         CppParcel & operator=(const CppParcel & src) except +

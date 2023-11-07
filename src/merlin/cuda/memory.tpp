@@ -71,7 +71,7 @@ cuda::Memory<Args...>::Memory(std::uintptr_t stream_ptr, const Args &... args) {
     ::cudaError_t err_ = ::cudaMallocAsync(&(this->gpu_ptr_), this->total_malloc_size_,
                                            reinterpret_cast<::cudaStream_t>(stream_ptr));
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Alloc data faile with message \"%s\"\n", ::cudaGetErrorString(err_));
+        FAILURE(cuda_runtime_error, "Alloc data failed with message \"%s\"\n", ::cudaGetErrorString(err_));
     }
     // storing source pointers
     this->type_ptr_ = std::make_tuple<Args *...>(const_cast<Args *>(&(args))...);

@@ -32,5 +32,5 @@ cdef extern from "merlin/cuda/device.hpp":
     bint operator==(const CppDevice & left, const CppDevice & right) except +
     bint operator!=(const CppDevice & left, const CppDevice & right) except +
 
-    void cpp_print_all_gpu_specification "merlin::cuda::print_all_gpu_specification" () except +
+    void cpp_print_gpus_spec "merlin::cuda::print_gpus_spec" () except +
     bint cpp_test_all_gpu "merlin::cuda::test_all_gpu" () except +

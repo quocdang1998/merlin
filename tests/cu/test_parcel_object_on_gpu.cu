@@ -3,7 +3,6 @@
 #include <cstdint>
 
 #include "merlin/array/array.hpp"
-#include "merlin/cuda/context.hpp"
 #include "merlin/cuda/memory.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/vector.hpp"
