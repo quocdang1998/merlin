@@ -1,5 +1,4 @@
 #include "merlin/cuda/device.hpp"
-#include "merlin/cuda/context.hpp"
 #include "merlin/cuda/event.hpp"
 #include "merlin/cuda/graph.hpp"
 #include "merlin/cuda/stream.hpp"
@@ -32,10 +31,6 @@ int main(void) {
     std::uint64_t stack_size = merlin::cuda::Device::limit(merlin::cuda::DeviceLimit::StackSize);
     MESSAGE("Stack size: %" PRIu64 ".\n", stack_size);
     merlin::cuda::test_all_gpu();
-
-    merlin::cuda::Context new_ctx(0, merlin::cuda::ContextSchedule::BlockSync);
-    merlin::cuda::Context c = merlin::cuda::Context::get_current();
-    MESSAGE("Current context: %s.\n", c.str().c_str());
 
     merlin::cuda::Event ev(merlin::cuda::EventCategory::BlockingSyncEvent | merlin::cuda::EventCategory::DisableTimingEvent);
 

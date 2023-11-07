@@ -28,11 +28,6 @@ void cuda_mem_free(void * ptr, std::uint64_t stream_ptr) {
     FAILURE(cuda_compile_error, "Compile the library with CUDA option to enable memory deallocation on GPU.\n");
 }
 
-// Call CUDA deallocation on pointer
-void CudaDeleter::operator()(void * pointer) {
-    FAILURE(cuda_compile_error, "Compile the library with CUDA option to enable memory deallocation on GPU.\n");
-}
-
 #endif  // __MERLIN_CUDA__
 
 }  // namespace merlin

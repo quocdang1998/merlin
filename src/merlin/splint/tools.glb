@@ -144,7 +144,7 @@ __global__ static void eval_intpl_kernel(double * coeff, const splint::Cartesian
 void splint::eval_intpl_gpu(double * coeff, const splint::CartesianGrid * p_grid,
                             const Vector<splint::Method> * p_method, double * points, std::uint64_t n_points,
                             double * result, std::uint64_t n_threads, std::uint64_t ndim, std::uint64_t shared_mem_size,
-                            cuda::Stream * stream_ptr) noexcept {
+                            const cuda::Stream * stream_ptr) noexcept {
     // create an asynchrnous CUDA stream
     ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr->get_stream_ptr());
     // launch calculation

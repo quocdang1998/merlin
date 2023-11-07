@@ -66,7 +66,7 @@ class array::NdData {
     /** @brief Number of element.*/
     __cuhostdev__ constexpr const std::uint64_t & size(void) const noexcept { return this->size_; }
     /** @brief Check if the array is C-contiguous.*/
-    bool is_c_contiguous(void);
+    bool is_c_contiguous(void) const;
     /// @}
 
     /// @name Get and set element

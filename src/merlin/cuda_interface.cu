@@ -45,13 +45,4 @@ void cuda_mem_free(void * ptr, std::uint64_t stream_ptr) {
     }
 }
 
-// Call CUDA deallocation on pointer
-void CudaDeleter::operator()(void * pointer) {
-    ::cudaError_t err_ = ::cudaFree(pointer);
-    if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "CUDA synchronously deallocate memory to GPU failed with error \"%s\"",
-                ::cudaGetErrorString(err_));
-    }
-}
-
 }  // namespace merlin

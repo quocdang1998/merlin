@@ -67,7 +67,7 @@ array::NdData::NdData(const array::NdData & whole, const slicevec & slices) {
 }
 
 // Check if the array is C-contiguous
-bool array::NdData::is_c_contiguous(void) {
+bool array::NdData::is_c_contiguous(void) const {
     std::uint64_t c_strides = sizeof(double);
     for (std::int64_t i = this->ndim() - 1; i >= 0; i--) {
         if (this->strides_[i] != c_strides) {

@@ -1,6 +1,6 @@
 #include "merlin/array/array.hpp"
 #include "merlin/splint/cartesian_grid.hpp"
-#include "merlin/splint/tools.hpp"
+#include "merlin/splint/interpolator.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
 #include "merlin/vector.hpp"
@@ -28,8 +28,18 @@ int main(void) {
     merlin::Vector<merlin::splint::Method> methods = {
         merlin::splint::Method::Lagrange,
         merlin::splint::Method::Lagrange,
-        merlin::splint::Method::Lagrange
+        merlin::splint::Method::Newton
     };
+    merlin::splint::Interpolator interp(cart_gr, coeff, methods, 16);
+    MESSAGE("Interpolation coefficients: %s\n", interp.get_coeff().str().c_str());
+
+    // interpolation
+    double point_data[9] = {0.0, 2.0, 1.0, 1.0, 1.0, 1.2, 0.5, 0.25, 2.4};
+    merlin::array::Array points(point_data, {3, 3}, {3*sizeof(double), sizeof(double)}, false);
+    merlin::floatvec eval_values = interp.interpolate(points, 3);
+    MESSAGE("Evaluated values: %s.\n", eval_values.str().c_str());
+
+/*
     merlin::splint::construct_coeff_cpu(coeff.data(), cart_gr, methods, 5);
 
     // print coefficients
@@ -60,5 +70,5 @@ int main(void) {
     MESSAGE("Evaluated value: %f.\n", result_p3);
     MESSAGE("Evaluated value: %f.\n", pl_int(p3));
     MESSAGE("Reference value: %f.\n", foo(p3));
-
+*/
 }

@@ -74,7 +74,7 @@ class CudaDeleter {
     /// @name Call fucntion
     /// @{
     /** @brief Call CUDA deallocation (synchronous) on pointer.*/
-    MERLINSHARED_EXPORTS void operator()(void * pointer);
+    void operator()(void * pointer) { cuda_mem_free(pointer); }
     /// @}
 };
 
