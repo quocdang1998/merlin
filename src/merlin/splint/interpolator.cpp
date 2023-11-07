@@ -10,23 +10,21 @@
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Interpolant
+// Interpolator
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Construct from a CPU array
-splint::Interpolant::Interpolant(const splint::CartesianGrid & grid, const array::Array & data,
-                                 const Vector<splint::Method> & method) :
-p_grid_(&grid), method_(method) {
+splint::Interpolator::Interpolator(const splint::CartesianGrid & grid, array::Array & data,
+                                   const Vector<splint::Method> & method) :
+p_grid_(&grid), p_coeff_(&data), method_(method) {
     // check shape
     if (grid.shape() != data.shape()) {
         FAILURE(std::invalid_argument, "Grid and data have different shape.\n");
     }
-    // copy data
-    this->p_coeff_ = new array::Array(data);
 }
 
 // Destructor
-splint::Interpolant::~Interpolant(void) {
+splint::Interpolator::~Interpolator(void) {
     if (this->p_coeff_ != nullptr) {
         delete this->p_coeff_;
     }

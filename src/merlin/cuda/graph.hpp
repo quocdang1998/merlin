@@ -4,7 +4,6 @@
 
 #include <array>    // std::array
 #include <cstdint>  // std::uintptr_t
-#include <mutex>    // std::mutex
 #include <string>   // std::string
 #include <tuple>    // std::tuple
 
@@ -162,8 +161,6 @@ class cuda::Graph {
   protected:
     /** @brief Pointer to CUDA graph object.*/
     std::uintptr_t graph_ptr_ = 0;
-    /** @brief Mutex.*/
-    static std::mutex & mutex_;
 
   private:
     /** @brief Destroy current CUDA graph instance.*/

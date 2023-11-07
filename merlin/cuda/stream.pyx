@@ -74,15 +74,6 @@ cdef class Stream:
         """
         return self.core.priority()
 
-    def get_context(self):
-        """get_context(self)
-        Return the context binded to the stream.
-        """
-        result = Context()
-        cdef CppContext * c_result = new CppContext(self.core.get_context())
-        result.c_assign(c_result)
-        return result
-
     def get_gpu(self):
         """get_gpu(self)
         Return the GPU binded to the stream.

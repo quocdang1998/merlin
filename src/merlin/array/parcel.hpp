@@ -3,10 +3,8 @@
 #define MERLIN_ARRAY_PARCEL_HPP_
 
 #include <cstdint>  // std::uint64_t, std::uintptr_t
-#include <mutex>    // std::mutex
 
 #include "merlin/array/nddata.hpp"    // merlin::array::Array, merlin::array::NdData
-#include "merlin/cuda/context.hpp"    // merlin::cuda::Context
 #include "merlin/cuda/device.hpp"     // merlin::cuda::Device
 #include "merlin/cuda/stream.hpp"     // merlin::cuda::Stream
 #include "merlin/cuda_interface.hpp"  // __cudevice__, __cuhostdev__
@@ -144,10 +142,6 @@ class array::Parcel : public array::NdData {
   protected:
     /** @brief Device containing data of Parcel.*/
     cuda::Device device_;
-    /** @brief Context containing data of Parcel.*/
-    cuda::Context context_;
-    /** @brief Mutex lock at destruction time.*/
-    static std::mutex & mutex_;
 };
 
 }  // namespace merlin

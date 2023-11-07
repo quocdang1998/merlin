@@ -43,48 +43,6 @@ class MERLINSHARED_EXPORTS Environment {
     static std::uint64_t parallel_chunk;
     /// @}
 
-    /// @name CUDA related settings
-    /// @{
-    /** @brief Attributes of the context.*/
-    struct ContextAttribute {
-        /// @name Constructor
-        /// @{
-        /** @brief Default constructor.*/
-        ContextAttribute(void) = default;
-        /** @brief Member constructor.*/
-        MERLINSHARED_EXPORTS ContextAttribute(std::uint64_t ref_count, int gpu_id);
-        /// @}
-
-        /// @name Copy and move
-        /// @{
-        /** @brief Copy constructor.*/
-        MERLINSHARED_EXPORTS ContextAttribute(const Environment::ContextAttribute & src);
-        /** @brief Copy assignment.*/
-        MERLINSHARED_EXPORTS Environment::ContextAttribute & operator=(const Environment::ContextAttribute & src);
-        /// @}
-
-        /// @name Members
-        /// @{
-        /** @brief Reference count of the current context.
-         *  @details Number of instances representing the same context.
-         */
-        std::atomic_uint64_t reference_count;
-        /** @brief GPU of the current context.
-         *  @details GPU device binded to the context.
-         */
-        int gpu;
-        /// @}
-
-        /// @name Destructor
-        /// @{
-        /** @brief Destructor.*/
-        ~ContextAttribute(void) = default;
-        /// @}
-    };
-    /** @brief Map from context pointers to their attributes.*/
-    static std::map<std::uintptr_t, Environment::ContextAttribute> attribute;
-    /** @brief Map from GPU ID to its corresponding primary contexts.*/
-    static std::map<int, std::uintptr_t> primary_contexts;
     /** @brief Default CUDA kernel block size.
      *  @details Should be multiple of 32.
      */

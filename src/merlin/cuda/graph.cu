@@ -10,6 +10,10 @@
 #include "merlin/env.hpp"          // merlin::Environment
 #include "merlin/logger.hpp"       // FAILURE
 
+#define safety_lock() bool lock_success = Environment::mutex.try_lock()
+#define safety_unlock()                                                                                                \
+    if (lock_success) Environment::mutex.unlock()
+
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -63,9 +67,9 @@ cuda::Graph::Graph(int flag) {
 // Copy constructor
 cuda::Graph::Graph(const cuda::Graph & src) {
     ::cudaGraph_t graph_, graph_src = reinterpret_cast<::cudaGraph_t>(src.graph_ptr_);
-    cuda::Graph::mutex_.lock();
+    safety_lock();
     ::cudaError_t err_ = ::cudaGraphClone(&graph_, graph_src);
-    cuda::Graph::mutex_.unlock();
+    safety_unlock();
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "CUDA clone graph failed with message \"%s\".\n", ::cudaGetErrorString(err_));
     }
@@ -78,9 +82,9 @@ cuda::Graph & cuda::Graph::operator=(const cuda::Graph & src) {
     this->destroy_graph();
     // Clone graph
     ::cudaGraph_t graph_, graph_src = reinterpret_cast<::cudaGraph_t>(src.graph_ptr_);
-    cuda::Graph::mutex_.lock();
+    safety_lock();
     ::cudaError_t err_ = ::cudaGraphClone(&graph_, graph_src);
-    cuda::Graph::mutex_.unlock();
+    safety_unlock();
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "CUDA clone graph failed with message \"%s\".\n", ::cudaGetErrorString(err_));
     }
@@ -179,10 +183,10 @@ std::tuple<cuda::GraphNode, void *> cuda::Graph::add_mem_alloc_node(std::uint64_
     for (std::uint64_t i = 0; i < dependancies.size(); i++) {
         dependancies[i] = reinterpret_cast<::cudaGraphNode_t>(deps[i].graphnode_ptr);
     }
-    cuda::Graph::mutex_.lock();
+    safety_lock();
     ::cudaError_t err_ = ::cudaGraphAddMemAllocNode(&graph_node, reinterpret_cast<::cudaGraph_t>(this->graph_ptr_),
                                                     dependancies.data(), dependancies.size(), &node_params);
-    cuda::Graph::mutex_.unlock();
+    safety_unlock();
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Add memory allocation node to graph failed with message \"%s\".\n",
                 ::cudaGetErrorString(err_));
@@ -316,9 +320,9 @@ void cuda::Graph::execute(const cuda::Stream & stream) {
     if (log_buffer[0]) {  // not a null started string
         WARNING("Launch graph executable failed with error \"%s\"\n", log_buffer);
     }
-    cuda::Graph::mutex_.lock();
+    safety_lock();
     err_ = ::cudaGraphLaunch(exec_graph, reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr()));
-    cuda::Graph::mutex_.unlock();
+    safety_unlock();
 }
 
 // Destructor

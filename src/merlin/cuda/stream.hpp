@@ -64,8 +64,6 @@ class cuda::Stream {
     MERLIN_EXPORTS cuda::StreamSetting setting(void) const;
     /** @brief Get priority of the stream.*/
     MERLIN_EXPORTS int priority(void) const;
-    /** @brief Get context associated to stream.*/
-    MERLIN_EXPORTS cuda::Context get_context(void) const;
     /** @brief Get GPU.*/
     constexpr const cuda::Device & get_gpu(void) const noexcept { return this->device_; }
     /// @}

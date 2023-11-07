@@ -4,7 +4,6 @@
 
 namespace merlin::cuda {
 class Device;   // GPU device
-class Context;  // CUDA runtime context
 class Event;    // CUDA events (milestone in the stream)
 class Stream;   // CUDA streams (queues of tasks)
 class Graph;    // CUDA Execution Graph

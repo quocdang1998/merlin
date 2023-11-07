@@ -4,7 +4,6 @@ from libc.stdint cimport uintptr_t
 from libcpp.string cimport string
 
 from merlin.cuda.device cimport CppDevice
-from merlin.cuda.context cimport CppContext
 from merlin.cuda.enum_types cimport EventCategory
 
 cdef extern from "merlin/cuda/event.hpp":
@@ -17,7 +16,6 @@ cdef extern from "merlin/cuda/event.hpp":
 
         uintptr_t get_event_ptr()
         unsigned int category()
-        const CppContext & get_context() except +
         const CppDevice & get_gpu()
 
         bint is_complete() except +

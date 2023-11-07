@@ -10,8 +10,7 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Contruct an event with a given flag
-cuda::Event::Event(unsigned int category) :
-    category_(category), device_(cuda::Device::get_current_gpu()), context_(cuda::Context::get_current()) {
+cuda::Event::Event(unsigned int category) : category_(category), device_(cuda::Device::get_current_gpu()) {
     ::cudaEvent_t event;
     ::cudaError_t err_ = ::cudaEventCreateWithFlags(&event, category);
     if (err_ != 0) {
@@ -34,10 +33,7 @@ bool cuda::Event::is_complete(void) const {
 
 // Check valid GPU and context
 void cuda::Event::check_cuda_context(void) const {
-    if (this->context_ != cuda::Context::get_current()) {
-        FAILURE(cuda_runtime_error, "Current context is not the one associated the event.\n");
-    }
-    if (this->device_ != cuda::Context::get_gpu_of_current_context()) {
+    if (this->device_ != cuda::Device::get_current_gpu()) {
         FAILURE(cuda_runtime_error, "Current GPU is not the one associated the event.\n");
     }
 }

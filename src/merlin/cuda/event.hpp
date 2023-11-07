@@ -5,7 +5,6 @@
 #include <string>   // std::string
 #include <utility>  // std::exchange
 
-#include "merlin/cuda/context.hpp"       // merlin::cuda::Context
 #include "merlin/cuda/device.hpp"        // merlin::cuda::Device
 #include "merlin/cuda/enum_wrapper.hpp"  // merlin::cuda::EventCategory
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
@@ -36,13 +35,11 @@ class cuda::Event {
     Event(cuda::Event && src) {
         this->event_ = std::exchange(src.event_, 0);
         this->device_ = src.device_;
-        this->context_ = src.context_;
     }
     /** @brief Move assignment.*/
     cuda::Event & operator=(cuda::Event && src) {
         this->event_ = std::exchange(src.event_, 0);
         this->device_ = src.device_;
-        this->context_ = src.context_;
         return *this;
     }
     /// @}
@@ -53,8 +50,6 @@ class cuda::Event {
     constexpr std::uintptr_t get_event_ptr(void) const noexcept { return this->event_; }
     /** @brief Get setting flag of the event.*/
     constexpr unsigned int category(void) const { return this->category_; }
-    /** @brief Get context associated to event.*/
-    constexpr const cuda::Context & get_context(void) const noexcept { return this->context_; };
     /** @brief Get GPU.*/
     constexpr const cuda::Device & get_gpu(void) const noexcept { return this->device_; }
     /// @}
@@ -100,8 +95,6 @@ class cuda::Event {
     unsigned int category_;
     /** @brief GPU associated to the event.*/
     cuda::Device device_;
-    /** @brief Context associated to the event.*/
-    cuda::Context context_;
 };
 
 namespace cuda {

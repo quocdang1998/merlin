@@ -30,7 +30,6 @@ list(APPEND MERLIN_SRC_CPP
      candy/model.cpp
      candy/optimizer.cpp
      candy/partition.cpp
-     cuda/context.cpp
      cuda/device.cpp
      cuda/event.cpp
      cuda/graph.cpp
@@ -59,7 +58,6 @@ list(APPEND MERLIN_SRC_CU
      array/parcel.cu
      candy/launcher.cu
      candy/model.cu
-     cuda/context.cu
      cuda/device.cu
      cuda/event.cu
      cuda/graph.cu

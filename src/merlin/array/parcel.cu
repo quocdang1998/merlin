@@ -5,8 +5,13 @@
 
 #include "merlin/array/array.hpp"      // merlin::array::Array
 #include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::copy, merlin::array::fill
+#include "merlin/env.hpp"              // merlin::Environment
 #include "merlin/logger.hpp"           // FAILURE
 #include "merlin/utils.hpp"            // merlin::contiguous_to_ndim_idx, merlin::inner_prod
+
+#define safety_lock() bool lock_success = Environment::mutex.try_lock()
+#define safety_unlock()                                                                                                \
+    if (lock_success) Environment::mutex.unlock()
 
 namespace merlin {
 
@@ -17,23 +22,15 @@ namespace merlin {
 // Free old data
 void array::Parcel::free_current_data(const cuda::Stream & stream) {
     // lock mutex
-    array::Parcel::mutex_.lock();
+    safety_lock();
     // switch to appropriate context
-    bool pushed_context = false;
-    if (!this->context_.is_current() && (this->context_ != cuda::Context())) {
-        this->context_.push_current();
-        pushed_context = true;
-    }
+    this->device_.set_as_current();
     // free data
     if ((this->data_ != nullptr) && this->release_) {
         ::cudaFreeAsync(this->data_, reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr()));
         this->data_ = nullptr;
     }
-    // finalize: set back the original GPU and unlock the mutex
-    if (pushed_context) {
-        this->context_.pop_current();
-    }
-    array::Parcel::mutex_.unlock();
+    safety_unlock();
 }
 
 // Constructor from shape vector
@@ -47,14 +44,12 @@ array::Parcel::Parcel(const intvec & shape, const cuda::Stream & stream) : array
     }
     // set device and context
     this->device_ = cuda::Device::get_current_gpu();
-    this->context_ = cuda::Context::get_current();
 }
 
 // Copy constructor
 array::Parcel::Parcel(const array::Parcel & src) : array::NdData(src) {
     // get device id and context
     this->device_ = cuda::Device::get_current_gpu();
-    this->context_ = cuda::Context::get_current();
     // reform strides vector
     this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
     // allocate data
@@ -84,7 +79,6 @@ array::Parcel & array::Parcel::operator=(const array::Parcel & src) {
     this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
     // get device and context
     this->device_ = cuda::Device::get_current_gpu();
-    this->context_ = cuda::Context::get_current();
     // allocate data
     this->release_ = true;
     cudaError_t err_ = ::cudaMalloc(&(this->data_), sizeof(double) * this->size());
@@ -108,7 +102,6 @@ array::Parcel & array::Parcel::operator=(const array::Parcel & src) {
 array::Parcel::Parcel(array::Parcel && src) : array::NdData(src) {
     // move device id and context
     this->device_ = src.device_;
-    this->context_ = src.context_;
     // take over pointer to source
     this->release_ = src.release_;
     src.data_ = nullptr;
@@ -120,7 +113,6 @@ array::Parcel & array::Parcel::operator=(array::Parcel && src) {
     this->free_current_data();
     // move device id and context
     this->device_ = src.device_;
-    this->context_ = src.context_;
     // copy metadata
     this->array::NdData::operator=(src);
     // take over pointer to source
@@ -134,17 +126,10 @@ double array::Parcel::get(const intvec & index) const {
     std::uint64_t leap = inner_prod(index, this->strides_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     double result;
-    array::Parcel::mutex_.lock();
-    bool must_pop_current = false;
-    if (!(this->context_.is_current())) {
-        this->context_.push_current();
-        must_pop_current = true;
-    }
+    safety_lock();
+    this->device_.set_as_current();
     ::cudaMemcpy(&result, reinterpret_cast<double *>(data_ptr), sizeof(double), ::cudaMemcpyDeviceToHost);
-    if (must_pop_current) {
-        this->context_.pop_current();
-    }
-    array::Parcel::mutex_.unlock();
+    safety_unlock();
     return result;
 }
 
@@ -155,17 +140,10 @@ double array::Parcel::get(std::uint64_t index) const { return this->get(contiguo
 void array::Parcel::set(const intvec index, double value) {
     std::uint64_t leap = inner_prod(index, this->strides_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
-    array::Parcel::mutex_.lock();
-    bool must_pop_current = false;
-    if (!this->context_.is_current()) {
-        this->context_.push_current();
-        must_pop_current = true;
-    }
+    safety_lock();
+    this->device_.set_as_current();
     ::cudaMemcpy(reinterpret_cast<double *>(data_ptr), &value, sizeof(double), ::cudaMemcpyHostToDevice);
-    if (must_pop_current) {
-        this->context_.pop_current();
-    }
-    array::Parcel::mutex_.unlock();
+    safety_unlock();
 }
 
 // Set value of element at a C-contiguous index
@@ -201,7 +179,6 @@ void * array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_
     copy_on_gpu.data_ = this->data_;
     copy_on_gpu.size_ = this->size_;
     copy_on_gpu.device_ = this->device_;
-    copy_on_gpu.context_ = this->context_;
     // copy temporary object to GPU
     ::cudaMemcpyAsync(gpu_ptr, &copy_on_gpu, sizeof(array::Parcel), ::cudaMemcpyHostToDevice,
                       reinterpret_cast<::cudaStream_t>(stream_ptr));

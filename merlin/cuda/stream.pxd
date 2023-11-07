@@ -4,7 +4,6 @@ from libc.stdint cimport uintptr_t
 from libcpp.string cimport string
 
 from merlin.cuda.device cimport CppDevice
-from merlin.cuda.context cimport CppContext
 from merlin.cuda.event cimport CppEvent
 from merlin.cuda.enum_types cimport StreamSetting
 
@@ -19,7 +18,6 @@ cdef extern from "merlin/cuda/stream.hpp":
         uintptr_t get_stream_ptr()
         StreamSetting setting() except +
         int priority() except +
-        CppContext get_context() except +
         const CppDevice & get_gpu()
 
         bint is_complete() except +

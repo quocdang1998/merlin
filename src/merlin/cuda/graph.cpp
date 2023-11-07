@@ -1,7 +1,6 @@
 // Copyright 2022 quocdang1998
 #include "merlin/cuda/graph.hpp"
 
-#include "merlin/env.hpp"     // merlin::Environment
 #include "merlin/logger.hpp"  // cuda_compile_error, FAILURE
 
 namespace merlin {
@@ -9,9 +8,6 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 // Graph
 // ---------------------------------------------------------------------------------------------------------------------
-
-// Mutex
-std::mutex & cuda::Graph::mutex_ = Environment::mutex;
 
 #ifndef __MERLIN_CUDA__
 

@@ -3,7 +3,6 @@
 
 #include <cuda.h>  // ::cuStreamGetCtx, ::CUcontext, ::CUstream
 
-#include "merlin/cuda/context.hpp"  // merlin::cuda::Context
 #include "merlin/cuda/event.hpp"    // merlin::cuda::Event
 #include "merlin/cuda/graph.hpp"    // merlin::cuda::Graph
 #include "merlin/logger.hpp"        // cuda_runtime_error, FAILURE, WARNING
@@ -33,7 +32,7 @@ cuda::Stream::Stream(cuda::StreamSetting setting, int priority) {
         FAILURE(cuda_runtime_error, "Create stream failed with message \"%s\".\n", ::cudaGetErrorString(err_));
     }
     this->stream_ = reinterpret_cast<std::uintptr_t>(stream);
-    this->device_ = cuda::Context::get_gpu_of_current_context();
+    this->device_ = cuda::Device::get_current_gpu();
 }
 
 // Get flag
@@ -54,14 +53,6 @@ int cuda::Stream::priority(void) const {
         FAILURE(cuda_runtime_error, "Get priority of stream failed with message \"%s\".\n", ::cudaGetErrorString(err_));
     }
     return priority;
-}
-
-// Get context associated to stream
-cuda::Context cuda::Stream::get_context(void) const {
-    ::CUcontext context;
-    ::CUstream stream = reinterpret_cast<::CUstream>(this->stream_);
-    ::cudaError_t err_ = static_cast<::cudaError_t>(::cuStreamGetCtx(stream, &context));
-    return cuda::Context(reinterpret_cast<std::uintptr_t>(context));
 }
 
 // Query for completion status
@@ -94,10 +85,7 @@ bool cuda::Stream::is_capturing(void) const {
 
 // Check valid GPU and context
 void cuda::Stream::check_cuda_context(void) const {
-    if (this->get_context() != cuda::Context::get_current()) {
-        FAILURE(cuda_runtime_error, "Current context is not the one associated the stream.\n");
-    }
-    if (this->device_ != cuda::Context::get_gpu_of_current_context()) {
+    if (this->device_ != cuda::Device::get_current_gpu()) {
         FAILURE(cuda_runtime_error, "Current GPU is not the one associated the stream.\n");
     }
 }
@@ -123,9 +111,9 @@ void cuda::Stream::record_event(const cuda::Event & event) const {
 
 // Wait on an event
 void cuda::Stream::wait_event(const cuda::Event & event, cuda::EventWaitFlag flag) const {
-    ::cudaError_t err_ =
-        ::cudaStreamWaitEvent(reinterpret_cast<::cudaStream_t>(this->stream_),
-                              reinterpret_cast<::cudaEvent_t>(event.get_event_ptr()), static_cast<unsigned int>(flag));
+    ::cudaError_t err_ = ::cudaStreamWaitEvent(reinterpret_cast<::cudaStream_t>(this->stream_),
+                                               reinterpret_cast<::cudaEvent_t>(event.get_event_ptr()),
+                                               static_cast<unsigned int>(flag));
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Record event failed with message \"%s\".\n", ::cudaGetErrorString(err_));
     }
