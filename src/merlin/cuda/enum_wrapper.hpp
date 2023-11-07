@@ -18,20 +18,6 @@ enum class DeviceLimit : unsigned int {
     LaunchPendingCount = 0x04
 };
 
-/** @brief Schedule GPU task.
- *  @details Parameter controlling how the CPU process schedules tasks when waiting for results from the GPU.
- */
-enum class ContextSchedule : unsigned int {
-    /** Automatic schedule based on the number of context and number of logical process.*/
-    Auto = 0x00,
-    /** Actively spins when waiting for results from the GPU.*/
-    Spin = 0x01,
-    /** Yield the CPU process when waiting for results from the GPU.*/
-    Yield = 0x02,
-    /** Block CPU process until synchronization.*/
-    BlockSync = 0x04
-};
-
 /** @brief Parameter describing the purpose of the event.*/
 enum EventCategory : unsigned int {
     /** Default event.*/

@@ -19,22 +19,6 @@ cdef extern from "merlin/cuda/enum_wrapper.hpp":
         SyncDepth,
         LaunchPendingCount
 
-    cpdef enum class ContextSchedule "merlin::cuda::ContextSchedule":
-        """
-        CUDA Context setting flags.
-
-        *Values*
-
-         - ``Auto``: Automatic schedule based on the number of context and number of logical process.
-         - ``Spin``: Actively spins when waiting for results from the GPU.
-         - ``Yield``: Yield the CPU process when waiting for results from the GPU.
-         - ``BlockSync``: Block CPU process until synchronization.
-        """
-        Auto,
-        Spin,
-        Yield,
-        BlockSync
-
     cpdef enum class EventCategory "merlin::cuda::EventCategory":
         """Parameter controlling the behavior of the stream.
 

@@ -3,7 +3,6 @@
 
 #include <sstream>  // std::ostringstream
 
-#include "merlin/cuda/context.hpp"  // merlin::cuda::Context
 #include "merlin/cuda/graph.hpp"    // merlin::cuda::Graph
 #include "merlin/logger.hpp"        // cuda_compile_error, FAILURE
 
@@ -40,12 +39,6 @@ cuda::StreamSetting cuda::Stream::setting(void) const {
 int cuda::Stream::priority(void) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for stream management.\n");
     return 0;
-}
-
-// Get context associated to stream
-cuda::Context cuda::Stream::get_context(void) const {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for stream management.\n");
-    return cuda::Context();
 }
 
 // Query for completion status

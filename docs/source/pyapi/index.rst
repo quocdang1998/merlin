@@ -33,18 +33,6 @@ GPU query
    merlin.cuda.print_all_gpu_specification
    merlin.cuda.test_all_gpu
 
-Manage CUDA Context
-^^^^^^^^^^^^^^^^^^^
-
-.. autosummary::
-   :toctree: generated
-   :nosignatures:
-   :template: pyclass.rst
-
-   merlin.cuda.Context
-   merlin.cuda.ContextSchedule
-   merlin.cuda.create_primary_context
-
 CUDA Stream and Event
 ^^^^^^^^^^^^^^^^^^^^^
 

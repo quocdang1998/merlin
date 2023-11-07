@@ -169,9 +169,6 @@ void candy::gpu_asynch_launch(candy::Model * p_model, const array::Parcel * p_tr
     FAILURE(cuda_compile_error, "Cannot asynchronously on GPU without CUDA enabled.\n");
 }
 
-// Push context and destroy the stream
-void candy::destroy_stream_in_context(std::uintptr_t context_ptr, cuda::Stream *& stream_ptr) {}
-
 #endif  // __MERLIN_CUDA__
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -219,13 +216,11 @@ void candy::Launcher::launch_async(std::uint64_t rep, candy::TrainMetric metric)
     } else {
         const array::Parcel * p_train_data = static_cast<const array::Parcel *>(this->p_data_);
         cuda::Stream * stream_ptr = reinterpret_cast<cuda::Stream *>(this->synchronizer_);
-        cuda::Context context(this->processor_id_);
+        cuda::Device current_gpu(this->processor_id_);
         safety_lock();
-        context.push_current();
+        current_gpu.set_as_current();
         candy::gpu_asynch_launch(this->p_model_, p_train_data, this->p_optimizer_, this->model_size_, this->ndim_,
                                  this->shared_mem_size_, this->n_thread_, rep, metric, stream_ptr);
-        context.pop_current();
-        context.assign(0);
         safety_unlock();
     }
 }
@@ -242,12 +237,10 @@ void candy::Launcher::synchronize(void) {
         this->synchronizer_ = nullptr;
     } else {
         cuda::Stream * stream_ptr = reinterpret_cast<cuda::Stream *>(this->synchronizer_);
-        cuda::Context context(this->processor_id_);
+        cuda::Device current_gpu(this->processor_id_);
         safety_lock();
-        context.push_current();
+        current_gpu.set_as_current();
         stream_ptr->synchronize();
-        context.pop_current();
-        context.assign(0);
         safety_unlock();
     }
 }
@@ -261,7 +254,11 @@ candy::Launcher::~Launcher(void) {
             delete p_future;
         } else {
             cuda::Stream * p_stream = reinterpret_cast<cuda::Stream *>(this->synchronizer_);
-            candy::destroy_stream_in_context(this->processor_id_, p_stream);
+            cuda::Device current_gpu(this->processor_id_);
+            safety_lock();
+            current_gpu.set_as_current();
+            delete p_stream;
+            safety_unlock();
         }
     }
 }

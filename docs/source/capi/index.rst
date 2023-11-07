@@ -31,7 +31,6 @@ Device Management
    :toctree: generated
 
    merlin::cuda::Device
-   merlin::cuda::Context
    merlin::cuda::print_all_gpu_specification
    merlin::cuda::test_all_gpu
 
@@ -55,7 +54,6 @@ Enum types
    :toctree: generated
 
    merlin::cuda::DeviceLimit
-   merlin::cuda::ContextSchedule
    merlin::cuda::EventCategory
    merlin::cuda::EventWaitFlag
    merlin::cuda::MemcpyKind

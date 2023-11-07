@@ -55,7 +55,7 @@ class candy::Launcher {
     /// @}
 
     /** @brief Check if the processor is a GPU.*/
-    bool is_gpu(void) const noexcept { return this->processor_id_ != static_cast<std::uintptr_t>(-1); }
+    bool is_gpu(void) const noexcept { return this->processor_id_ != static_cast<unsigned int>(-1); }
 
     /** @brief Launch asynchronously the gradient update.
      *  @param rep Number of times to update model parameter.
@@ -81,7 +81,7 @@ class candy::Launcher {
     /** @brief Processor ID.
      *  @details Value ``-1`` indicates CPU processor. Positive values represent CUDA context.
      */
-    std::uintptr_t processor_id_ = static_cast<std::uintptr_t>(-1);
+    unsigned int processor_id_ = static_cast<unsigned int>(-1);
     /** @brief Number of threads to use.*/
     std::uint64_t n_thread_ = 1;
 
@@ -113,9 +113,6 @@ void gpu_asynch_launch(candy::Model * p_model, const array::Parcel * p_train_dat
                        std::uint64_t model_size, std::uint64_t ndim, std::uint64_t share_mem_size,
                        std::uint64_t block_size, std::uint64_t rep, candy::TrainMetric metric,
                        cuda::Stream * stream_ptr);
-
-/** @brief Push context and destroy the stream.*/
-void destroy_stream_in_context(std::uintptr_t context_ptr, cuda::Stream *& stream_ptr);
 
 }  // namespace candy
 

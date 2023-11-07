@@ -3,7 +3,6 @@
 
 #include "merlin/array/array.hpp"      // merlin::array::Array
 #include "merlin/array/operation.hpp"  // merlin::array::print
-#include "merlin/env.hpp"              // merlin::Environment
 #include "merlin/logger.hpp"           // FAILURE, cuda_compile_error
 
 namespace merlin {
@@ -12,13 +11,9 @@ namespace merlin {
 // Parcel
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Initialize mutex
-std::mutex & array::Parcel::mutex_ = Environment::mutex;
-
 // Constructor from a slice
 array::Parcel::Parcel(const array::Parcel & whole, const slicevec & slices) : array::NdData(whole, slices) {
     this->device_ = whole.device_;
-    this->context_ = whole.context_;
 }
 
 // String representation

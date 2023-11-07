@@ -3,6 +3,7 @@
 #define MERLIN_SPLINT_INTERPOLATOR_HPP_
 
 #include "merlin/array/nddata.hpp"        // merlin::array::NdData, merlin::array::Array
+#include "merlin/cuda/stream.hpp"         // merlin::cuda::Stream
 #include "merlin/exports.hpp"             // MERLIN_EXPORTS
 #include "merlin/splint/declaration.hpp"  // merlin::splint::CartesianGrid, merlin::splint::Interpolant
 #include "merlin/splint/tools.hpp"        // merlin::splint::Method
@@ -19,15 +20,18 @@ namespace merlin {
  *  matrix. Furthermore, the process of solving each component matrix can be parallelized over each linear sub-system
  *  created, thus reducing the calculation time of the coefficients.
  */
-class splint::Interpolant {
+class splint::Interpolator {
   public:
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
-    Interpolant(void) = default;
+    Interpolator(void) = default;
     /** @brief Construct from a CPU array.*/
-    MERLIN_EXPORTS Interpolant(const splint::CartesianGrid & grid, const array::Array & data,
-                               const Vector<splint::Method> & method);
+    MERLIN_EXPORTS Interpolator(const splint::CartesianGrid & grid, array::Array & data,
+                                const Vector<splint::Method> & method);
+    /** @brief Construct from a GPU array*/
+    MERLIN_EXPORTS Interpolator(const splint::CartesianGrid & grid, array::Parcel & data,
+                                const Vector<splint::Method> & method, const cuda::Stream & stream = cuda::Stream());
     /// @}
 
     /// @name Calculate coefficient
@@ -39,7 +43,7 @@ class splint::Interpolant {
     /// @name Destructor
     /// @{
     /** @brief Destructor.*/
-    MERLIN_EXPORTS ~Interpolant(void);
+    MERLIN_EXPORTS ~Interpolator(void);
     /// @}
 
   private:

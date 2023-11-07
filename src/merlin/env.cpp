@@ -52,27 +52,6 @@ std::uint64_t Environment::parallel_chunk = static_cast<std::uint64_t>(96);
 // CUDA environment
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Constructor from elements
-Environment::ContextAttribute::ContextAttribute(std::uint64_t ref_count, int gpu_id) :
-reference_count(ref_count), gpu(gpu_id) {}
-
-// Copy constructor
-Environment::ContextAttribute::ContextAttribute(const Environment::ContextAttribute & src) :
-reference_count(src.reference_count.load()), gpu(src.gpu) {}
-
-// Copy assignment
-Environment::ContextAttribute & Environment::ContextAttribute::operator=(const Environment::ContextAttribute & src) {
-    this->reference_count.store(src.reference_count.load());
-    this->gpu = src.gpu;
-    return *this;
-}
-
-// Attributes of instances
-std::map<std::uintptr_t, Environment::ContextAttribute> Environment::attribute;
-
-// CUDA primary contexts
-std::map<int, std::uintptr_t> Environment::primary_contexts;
-
 // Default CUDA kernel block size
 std::uint64_t Environment::default_block_size = 64;
 

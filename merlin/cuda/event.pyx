@@ -61,15 +61,6 @@ cdef class Event:
         """
         return self.core.category()
 
-    def get_context(self):
-        """get_context(self)
-        Return the context binded to the event.
-        """
-        result = Context()
-        cdef CppContext * c_result = new CppContext(move(self.core.get_context()))
-        result.c_assign(c_result)
-        return result
-
     def get_gpu(self):
         """get_gpu(self)
         Return the GPU binded to the event.
