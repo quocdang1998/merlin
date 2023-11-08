@@ -5,6 +5,12 @@ C++ API
 
    \setcounter{codelanguage}{1}
 
+In this documentation, the function and class method decorator ``__host__ __device__`` annotates a callable on both CPU
+and GPU, whereas the decorator ``__device__`` indicates the callable is available only on GPU. Functions and class
+methods without any annotations can be executed exclusively by CPU.
+
+In case of non-CUDA compilation, ``__host__ __device__`` functions will becomes regular CPU function, while
+``__device__`` functions are discarded in preprocessing step.
 
 Preliminary
 -----------
@@ -31,7 +37,7 @@ Device Management
    :toctree: generated
 
    merlin::cuda::Device
-   merlin::cuda::print_all_gpu_specification
+   merlin::cuda::print_gpus_spec
    merlin::cuda::test_all_gpu
 
 Concurrency
@@ -85,8 +91,8 @@ Array manipulation
    merlin::array::print
 
 
-Interpolant API
----------------
+Interpolator API
+----------------
 
 Grid
 ^^^^
@@ -94,19 +100,16 @@ Grid
 .. doxysummary::
    :toctree: generated
 
-   merlin::intpl::Grid
-   merlin::intpl::RegularGrid
-   merlin::intpl::CartesianGrid
-   merlin::intpl::SparseGrid
+   merlin::splint::CartesianGrid
 
-Polynomial interpolant
-^^^^^^^^^^^^^^^^^^^^^^
+Polynomial interpolation
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxysummary::
    :toctree: generated
 
-   merlin::intpl::PolynomialInterpolant
-   merlin::intpl::Method
+   merlin::splint::Interpolator
+   merlin::splint::Method
 
 
 Statistics API

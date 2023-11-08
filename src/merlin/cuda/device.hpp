@@ -120,7 +120,7 @@ void add_integers_on_gpu(int * p_a, int * p_b, int * p_result);
  *  @details Print GPU specifications (number of threads, total global memory, max shared memory) and API limitation
  *  (max thread per block, max block per grid) of all CUDA capable GPUs.
  */
-MERLIN_EXPORTS void print_all_gpu_specification(void);
+MERLIN_EXPORTS void print_gpus_spec(void);
 
 /** @brief Test if the compiled library is compatible with all CUDA capable GPUs.
  *  @details Perform an addition of two integers on each CUDA capable GPU.

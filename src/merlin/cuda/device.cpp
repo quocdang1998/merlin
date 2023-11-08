@@ -45,7 +45,7 @@ std::string cuda::Device::str(void) const {
 }
 
 // Print limit of all GPU
-void cuda::print_all_gpu_specification(void) {
+void cuda::print_gpus_spec(void) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
 }
 

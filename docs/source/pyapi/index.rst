@@ -30,7 +30,7 @@ GPU query
 
    merlin.cuda.Device
    merlin.cuda.DeviceLimit
-   merlin.cuda.print_all_gpu_specification
+   merlin.cuda.print_gpus_spec
    merlin.cuda.test_all_gpu
 
 CUDA Stream and Event
@@ -71,3 +71,28 @@ Multi-dimensional array
    merlin.array.Array
    merlin.array.Parcel
    merlin.array.Stock
+
+Interpolator API
+----------------
+
+Grid
+^^^^
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.splint.CartesianGrid
+
+Polynomial interpolation
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.splint.Interpolator
+   merlin.splint.Method
+

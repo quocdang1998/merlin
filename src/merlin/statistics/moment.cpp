@@ -35,7 +35,7 @@ double statistics::max_cpu(const array::Array & data, std::uint64_t nthreads) {
     // parallel get max element in array
     double * storing = new double[nthreads];
     std::memset(storing, 0, nthreads * sizeof(double));
-    #pragma omp parallel for schedule(guided, Environment::parallel_chunk) num_threads(nthreads)
+    #pragma omp parallel for schedule(guided, 96) num_threads(nthreads)
     for (std::int64_t i_point = 0; i_point < data.size(); i_point++) {
         std::uint64_t i_thread = ::omp_get_thread_num();
         intvec index = contiguous_to_ndim_idx(i_point, data.shape());
@@ -84,7 +84,7 @@ array::Array statistics::mean_cpu(const array::Array & data, const intvec & dims
     std::uint64_t result_size = prod_elements(result_shape);
     // calculate mean by collapsed index
     array::Array result(result_shape);
-    #pragma omp parallel for schedule(guided, Environment::parallel_chunk) num_threads(nthreads)
+    #pragma omp parallel for schedule(guided, 96) num_threads(nthreads)
     for (std::int64_t i_point = 0; i_point < result_size; i_point++) {
         intvec non_collapsed_index = contiguous_to_ndim_idx(i_point, result_shape);
         slicevec slices(data.ndim());

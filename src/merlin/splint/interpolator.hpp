@@ -11,7 +11,7 @@
 
 namespace merlin {
 
-/** @brief Interpolate on a multi-dimensional object.
+/** @brief Interpolation on a multi-dimensional data.
  *  @details A multi-dimensional interpolation is a linear combination of basis functions. Each basis function is a
  *  product of mono-variable functions.
  *

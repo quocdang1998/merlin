@@ -175,7 +175,7 @@ std::string cuda::Device::str(void) const {
 }
 
 // Print limit of all GPU
-void cuda::print_all_gpu_specification(void) {
+void cuda::print_gpus_spec(void) {
     int tot_device = cuda::Device::get_num_gpu();
     for (int i = 0; i < tot_device; i++) {
         std::printf("GPU Id: %d.\n", i);

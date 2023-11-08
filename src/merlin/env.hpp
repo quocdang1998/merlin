@@ -35,14 +35,6 @@ class MERLINSHARED_EXPORTS Environment {
     static std::mt19937_64 random_generator;
     /// @}
 
-    /// @name CPU parallelism
-    /// @{
-    /** @brief Minimum size over which the loop is parallelized.
-     *  @details Default value: 96 (LCM of 24, 32 and 48).
-     */
-    static std::uint64_t parallel_chunk;
-    /// @}
-
     /** @brief Default CUDA kernel block size.
      *  @details Should be multiple of 32.
      */

@@ -26,7 +26,7 @@ static void divide_difference_cpu_parallel(const array::Array & a1, const array:
                                            array::Array & result, std::uint64_t nthreads) {
     long double denominator = x1 - x2;
     std::uint64_t size = a1.size();
-    #pragma omp parallel for schedule(guided, Environment::parallel_chunk) num_threads(nthreads)
+    #pragma omp parallel for schedule(guided, 96) num_threads(nthreads)
     for (std::int64_t i = 0; i < size; i++) {
         intvec index = contiguous_to_ndim_idx(i, a1.shape());
         double div_diff = (a1.get(index) - a2.get(index)) / denominator;
@@ -157,7 +157,7 @@ void intpl::calc_newton_coeffs_cpu(const intpl::CartesianGrid & grid, const arra
         array::copy(&coeff, &value, std::memcpy);
     }
     // get max recursive dimension
-    static std::uint64_t parallel_limit = Environment::parallel_chunk;
+    static std::uint64_t parallel_limit = 96;
     intvec total_shape = grid.get_grid_shape();
     std::uint64_t cumulative_size = 1, dim_max = 0;
     while (dim_max < ndim) {
@@ -176,7 +176,7 @@ void intpl::calc_newton_coeffs_cpu(const intpl::CartesianGrid & grid, const arra
     Vector<array::Array> sub_slices = make_vector<array::Array>(cumulative_size);
     calc_newton_coeffs_cpu_recursive(grid, coeff, dim_max, sub_slices, 0, nthreads);
     // parallel calculation after that
-    #pragma omp parallel for schedule(guided, Environment::parallel_chunk) num_threads(nthreads)
+    #pragma omp parallel for schedule(guided, 96) num_threads(nthreads)
     for (std::int64_t i = 0; i < sub_slices.size(); i++) {
         calc_newton_coeffs_single_core(grid, sub_slices[i]);
     }
