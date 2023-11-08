@@ -56,7 +56,7 @@ int main(void) {
     merlin::array::Array coeff(value);
     merlin::Vector<merlin::splint::Method> methods = {
         merlin::splint::Method::Newton,
-        merlin::splint::Method::Newton,
+        merlin::splint::Method::Lagrange,
         merlin::splint::Method::Newton
     };
     merlin::splint::construct_coeff_cpu(coeff.data(), cart_gr, methods, 1);
@@ -87,7 +87,7 @@ int main(void) {
     ::cudaMalloc(&result_gpu_ptr, 3*sizeof(double));
     ::cudaMemcpy(result_gpu_ptr, result_gpu.data(), 3*sizeof(double), ::cudaMemcpyHostToDevice);
     merlin::splint::eval_intpl_gpu(coeff_gpu.data(), mem.get<0>(), mem.get<1>(),
-                                   points_gpu, 3, result_gpu_ptr, 5, 3, shared_mem, &stream);
+                                   points_gpu, 3, result_gpu_ptr, 18, 3, shared_mem, &stream);
     ::cudaMemcpy(result_gpu.data(), result_gpu_ptr, 3*sizeof(double), ::cudaMemcpyDeviceToHost);
     MESSAGE("GPU calculated values: %s\n", result_gpu.str().c_str());
     ::cudaFree(points_gpu);

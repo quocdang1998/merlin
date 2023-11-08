@@ -63,7 +63,7 @@ class splint::CartesianGrid {
     /** @brief Get total number of points in the grid.*/
     __cuhostdev__ constexpr std::uint64_t size(void) const noexcept { return this->size_; }
     /** @brief Get total number of nodes on all dimension.*/
-    __cuhostdev__ constexpr::uint64_t num_nodes(void) const noexcept { return this->grid_nodes_.size(); }
+    __cuhostdev__ constexpr std::uint64_t num_nodes(void) const noexcept { return this->grid_nodes_.size(); }
     /// @}
 
     /// @name Slicing operator

@@ -31,7 +31,7 @@ extensions = [
               language="c++", **ext_options),
     Extension("merlin.array", ["merlin/array/core.pyx"],
               language="c++", **ext_options),
-    Extension("merlin.intpl", ["merlin/intpl/core.pyx"],
+    Extension("merlin.splint", ["merlin/splint/core.pyx"],
               language="c++", **ext_options)
 ]
 

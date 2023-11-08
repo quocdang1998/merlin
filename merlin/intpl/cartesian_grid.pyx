@@ -1,7 +1,11 @@
 # Copyright 2023 quocdang1998
 
 cdef class CartesianGrid:
-    """Cartesian grid."""
+    """
+    Cartesian grid.
+    
+    Wrapper of the class :cpp:class:`merlin::splint::CartesianGrid`
+    """
 
     cdef CppCartesianGrid * core
 
