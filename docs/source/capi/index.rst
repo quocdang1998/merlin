@@ -111,6 +111,17 @@ Polynomial interpolation
    merlin::splint::Interpolator
    merlin::splint::Method
 
+Low-level API
+^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::splint::construct_coeff_cpu
+   merlin::splint::construct_coeff_gpu
+   merlin::splint::eval_intpl_cpu
+   merlin::splint::eval_intpl_gpu
+
 
 Statistics API
 --------------

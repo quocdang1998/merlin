@@ -19,7 +19,7 @@ namespace merlin {
 
 // Construct from a GPU array
 splint::Interpolator::Interpolator(const splint::CartesianGrid & grid, array::Parcel & values,
-                                   const Vector<splint::Method> & method, const cuda::Stream & stream,
+                                   const Vector<splint::Method> & method, cuda::Stream & stream,
                                    std::uint64_t n_threads) : ndim_(grid.ndim()) {
     // check shape
     if (grid.shape() != values.shape()) {

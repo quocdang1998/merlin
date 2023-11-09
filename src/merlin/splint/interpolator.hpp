@@ -42,7 +42,7 @@ class splint::Interpolator {
      *  @param n_threads Number of GPU threads to calculate the coefficients.
      */
     MERLIN_EXPORTS Interpolator(const splint::CartesianGrid & grid, array::Parcel & values,
-                                const Vector<splint::Method> & method, const cuda::Stream & stream = cuda::Stream(),
+                                const Vector<splint::Method> & method, cuda::Stream & stream,
                                 std::uint64_t n_threads = 32);
     /// @}
 

@@ -96,8 +96,8 @@ void eval_intpl_cpu(const double * coeff, const splint::CartesianGrid & grid, co
 
 /** @brief Evaluate interpolation with GPU parallelism.
  *  @param coeff C-contiguous array of coefficients on GPU (value are pre-copied to this array).
- *  @param p_grid Pointer to Cartesian grid to interpolate (pre-copied to GPU).
- *  @param p_method Pointer to interpolation method to use on each dimension.
+ *  @param p_grid Pointer to Cartesian grid to interpolate on GPU.
+ *  @param p_method Pointer to vector of interpolation method to use on each dimension on GPU.
  *  @param points Pointer to the first coordinate of the first point on GPU. Coordinates of the same point are placed
  *  side-by-side in the array.
  *  @param n_points Number of points to interpolate.

@@ -78,6 +78,33 @@ cdef class CartesianGrid:
         """
         return self.core.num_nodes()
 
+    def get_pt_index(self, object index):
+        """get_pt_index(self, object index)
+        Get point at a given index
+
+        index: Sequence[int]
+            Index vector of the desired point.
+        """
+        cdef CppIntvec cpp_index = intvec_from_iteratable(index)
+        cdef CppFloatvec cpp_point = self.core[0][cpp_index]
+        cdef list py_point = []
+        for i in range(cpp_point.size()):
+            py_point.append(cpp_point[i])
+        return py_point
+
+    def get_pt_cindex(self, uint64_t index):
+        """get_pt_cindex(self, uint64_t index)
+        Get point at a given index
+
+        index: int
+            Flatten index of the desired point.
+        """
+        cdef CppFloatvec cpp_point = self.core[0][index]
+        cdef list py_point = []
+        for i in range(cpp_point.size()):
+            py_point.append(cpp_point[i])
+        return py_point
+
     def __repr__(self):
         return PyUnicode_FromString(self.core.str().c_str())
 

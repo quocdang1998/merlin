@@ -15,7 +15,6 @@ from merlin.cuda.stream cimport CppStream
 from merlin.array.array cimport CppArray
 from merlin.array.nddata cimport CppNdData
 from merlin.array.parcel cimport CppParcel
-from merlin.array.slice cimport CppSlice
 from merlin.array.stock cimport CppStock
 
 from merlin.cuda import Device, Stream
