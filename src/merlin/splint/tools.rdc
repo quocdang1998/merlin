@@ -1,6 +1,8 @@
 // Copyright 2022 quocdang1998
 #include "merlin/splint/tools.hpp"
 
+#include <array>  // std::array
+
 #include "merlin/splint/intpl/linear.hpp"    // merlin::splint::intpl::evaluate_linear
 #include "merlin/splint/intpl/lagrange.hpp"  // merlin::splint::intpl::evaluate_lagrange
 #include "merlin/splint/intpl/newton.hpp"    // merlin::splint::intpl::evaluate_newton

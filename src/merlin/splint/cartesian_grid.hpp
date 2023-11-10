@@ -71,11 +71,11 @@ class splint::CartesianGrid {
     /** @brief Get element at a given flatten index.
      *  @param index Flatten index of point in the grid (in C order).
      */
-    floatvec operator[](std::uint64_t index) const noexcept;
+    MERLIN_EXPORTS floatvec operator[](std::uint64_t index) const noexcept;
     /** @brief Get element at a given index vector.
      *  @param index Vector of index on each dimension.
      */
-    floatvec operator[](const intvec & index) const noexcept;
+    MERLIN_EXPORTS floatvec operator[](const intvec & index) const noexcept;
     /// @}
 
     /// @name GPU related features
