@@ -22,8 +22,8 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Construct interpolation coefficients with CPU parallelism
-void splint::construct_coeff_cpu(double * coeff, const splint::CartesianGrid & grid,
-                                 const Vector<splint::Method> & method, std::uint64_t n_threads) noexcept {
+void splint::construct_coeff_cpu(std::future<void> * current_job, double * coeff, const splint::CartesianGrid * p_grid,
+                                 const Vector<splint::Method> * p_method, std::uint64_t n_threads) noexcept {
 
     // functor to coefficient construction methods
     static const std::array<splint::ConstructionMethod, 3> construction_funcs {
@@ -31,8 +31,13 @@ void splint::construct_coeff_cpu(double * coeff, const splint::CartesianGrid & g
         splint::intpl::construct_lagrange,
         splint::intpl::construction_newton
     };
+    // finish old job
+    if (current_job->valid()) {
+        current_job->get();
+    }
+    delete current_job;
     // initialization
-    const intvec & shape = grid.shape();
+    const intvec & shape = p_grid->shape();
     std::uint64_t num_subsystem = 1, element_size = prod_elements(shape);
     // solve matrix for each dimension
     // std::uint64_t subsystem_size = 0, numthreads_subsystem = 0, num_groups = 0;
@@ -41,20 +46,20 @@ void splint::construct_coeff_cpu(double * coeff, const splint::CartesianGrid & g
     #pragma omp parallel num_threads(n_threads)
     {
         int thread_idx = ::omp_get_thread_num();
-        for (std::uint64_t i_dim = 0; i_dim < grid.ndim(); i_dim++) {
+        for (std::uint64_t i_dim = 0; i_dim < p_grid->ndim(); i_dim++) {
             // calculate number of thread per groups
             #pragma omp single
             {
                 subsystem_size = element_size;
                 element_size /= shape[i_dim];
-                i_method = static_cast<unsigned int>(method[i_dim]);
+                i_method = static_cast<unsigned int>((*p_method)[i_dim]);
             }
             #pragma omp barrier
             // parallel subsystem over the number of groups
             ThreadDivider thr_grp(num_subsystem, thread_idx, n_threads);
             for (std::uint64_t i_task = thr_grp.group_idx; i_task < num_subsystem; i_task += thr_grp.num_groups) {
                 double * subsystem_start = coeff + i_task * subsystem_size;
-                construction_funcs[i_method](subsystem_start, grid.grid_vectors()[i_dim], shape[i_dim], element_size,
+                construction_funcs[i_method](subsystem_start, p_grid->grid_vectors()[i_dim], shape[i_dim], element_size,
                                              thr_grp.thread_idx_in_group, thr_grp.numthreads_pertask);
             }
             #pragma omp barrier

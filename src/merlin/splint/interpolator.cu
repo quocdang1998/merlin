@@ -14,9 +14,20 @@
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Interpolator
+// Utility
 // ---------------------------------------------------------------------------------------------------------------------
 
+// Create pointer to copied members of merlin::splint::Interpolator on GPU
+void splint::create_intpl_gpuptr(const splint::CartesianGrid & cpu_grid, const Vector<splint::Method> & cpu_methods,
+                                 splint::CartesianGrid *& gpu_pgrid, Vector<splint::Method> *& gpu_pmethods,
+                                 std::uintptr_t stream_ptr) {
+    cuda::Memory gpu_mem(stream_ptr, cpu_grid, cpu_methods);
+    gpu_pgrid = gpu_mem.get<0>();
+    gpu_pmethods = gpu_mem.get<1>();
+    gpu_mem.force_release();
+}
+
+/*
 // Construct from a GPU array
 splint::Interpolator::Interpolator(const splint::CartesianGrid & grid, array::Parcel & values,
                                    const Vector<splint::Method> & method, cuda::Stream & stream,
@@ -76,5 +87,5 @@ floatvec splint::Interpolator::interpolate(const array::Parcel & points, const c
     cuda_mem_free(result_gpu, stream.get_stream_ptr());
     return evaluated_values;
 }
-
+*/
 }  // namespace merlin

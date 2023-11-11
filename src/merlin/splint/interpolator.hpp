@@ -2,14 +2,25 @@
 #ifndef MERLIN_SPLINT_INTERPOLATOR_HPP_
 #define MERLIN_SPLINT_INTERPOLATOR_HPP_
 
-#include "merlin/array/nddata.hpp"        // merlin::array::NdData, merlin::array::Array, merlin::array::Parcel
-#include "merlin/cuda/stream.hpp"         // merlin::cuda::Stream
+#include <tuple>  // std::tuple
+
+#include "merlin/array/nddata.hpp"        // merlin::array::NdData
 #include "merlin/exports.hpp"             // MERLIN_EXPORTS
-#include "merlin/splint/declaration.hpp"  // merlin::splint::CartesianGrid, merlin::splint::Interpolant
+#include "merlin/splint/declaration.hpp"  // merlin::splint::CartesianGrid
 #include "merlin/splint/tools.hpp"        // merlin::splint::Method
+#include "merlin/synchronizer.hpp"        // merlin::ProcessorType, merlin::Synchronizer
 #include "merlin/vector.hpp"              // merlin::Vector, merlin::floatvec
 
 namespace merlin {
+
+namespace splint {
+
+/** @brief Create pointer to copied members for merlin::splint::Interpolator on GPU.*/
+void create_intpl_gpuptr(const splint::CartesianGrid & cpu_grid, const Vector<splint::Method> & cpu_methods,
+                         splint::CartesianGrid *& gpu_pgrid, Vector<splint::Method> *& gpu_pmethods,
+                         std::uintptr_t stream_ptr);
+
+}  // namespace splint
 
 /** @brief Interpolation on a multi-dimensional data.
  *  @details A multi-dimensional interpolation is a linear combination of basis functions. Each basis function is a
@@ -26,24 +37,14 @@ class splint::Interpolator {
     /// @{
     /** @brief Default constructor.*/
     Interpolator(void) = default;
-    /** @brief Construct from a CPU array.
+    /** @brief Construct from an array of values.
      *  @param grid Cartesian grid to interpolate.
      *  @param values C-contiguous array containing the data.
      *  @param method Interpolation method to use for each dimension.
      *  @param n_threads Number of CPU threads to calculate the coefficients.
     */
-    MERLIN_EXPORTS Interpolator(const splint::CartesianGrid & grid, array::Array & values,
-                                const Vector<splint::Method> & method, std::uint64_t n_threads = 1);
-    /** @brief Construct from a GPU array.
-     *  @param grid Cartesian grid to interpolate.
-     *  @param values C-contiguous array containing the data on GPU.
-     *  @param method Interpolation method to use for each dimension.
-     *  @param stream CUDA Stream on which the calculation is launched.
-     *  @param n_threads Number of GPU threads to calculate the coefficients.
-     */
-    MERLIN_EXPORTS Interpolator(const splint::CartesianGrid & grid, array::Parcel & values,
-                                const Vector<splint::Method> & method, cuda::Stream & stream,
-                                std::uint64_t n_threads = 32);
+    MERLIN_EXPORTS Interpolator(const splint::CartesianGrid & grid, const array::Array & values,
+                                const Vector<splint::Method> & method, ProcessorType processor = ProcessorType::Cpu);
     /// @}
 
     /// @name Get elements and attributes
@@ -56,12 +57,23 @@ class splint::Interpolator {
     constexpr array::NdData & get_coeff(void) noexcept { return *(this->p_coeff_); }
     /** @brief Get const reference to the coefficient array.*/
     constexpr const array::NdData & get_coeff(void) const noexcept { return *(this->p_coeff_); }
+    /** @brief Get reference to the interpolation methods applied to each dimension.*/
+    constexpr Vector<splint::Method> & get_method(void) noexcept { return *(this->p_method_); }
+    /** @brief Get constant reference to the interpolation methods applied to each dimension.*/
+    constexpr const Vector<splint::Method> & get_method(void) const noexcept { return *(this->p_method_); }
     /** @brief Get GPU ID.*/
     constexpr unsigned int gpu_id(void) const noexcept { return this->gpu_id_; }
     /** @brief Check if the interpolator is executed on GPU.*/
     constexpr bool on_gpu(void) const noexcept { return (this->gpu_id_ != static_cast<unsigned int>(-1)); }
     /// @}
 
+    /// @name Construct coefficients
+    /// @{
+    /** @brief Calculate interpolation coefficients based on provided method.*/
+    void build_coefficients(std::uint64_t n_threads = 1);
+    /// @}
+
+#ifdef __comment
     /// @name Interpolate on a set of points
     /// @{
     /** @brief Interpolation by CPU.
@@ -78,6 +90,14 @@ class splint::Interpolator {
      */
     floatvec interpolate(const array::Parcel & points, const cuda::Stream & stream = cuda::Stream(),
                          std::uint64_t n_threads = 32);
+    /// @}
+#endif
+    /// @name Synchronization
+    /// @{
+    /** @brief Force the current CPU to wait until all asynchronous tasks have finished.*/
+    void synchronize(void) {
+        this->synchronizer_.synchronize();
+    }
     /// @}
 
     /// @name Destructor
@@ -97,10 +117,10 @@ class splint::Interpolator {
     std::uint64_t ndim_;
     /** @brief Size of dynamic shared memory needed to perform the calculations on GPU.*/
     std::uint64_t shared_mem_size_ = 0;
-    /** @brief Pointer to the CUDA Stream used for memory allocation and de-allocation.*/
-    std::uintptr_t allocation_stream_;
     /** @brief GPU ID on which the memory are allocated.*/
-    unsigned int gpu_id_ = static_cast<unsigned int>(-1);
+    unsigned int gpu_id_;
+    /** @brief Synchronizer.*/
+    Synchronizer synchronizer_;
 };
 
 }  // namespace merlin

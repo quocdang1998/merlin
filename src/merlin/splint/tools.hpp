@@ -2,6 +2,7 @@
 #ifndef MERLIN_SPLINT_TOOLS_HPP_
 #define MERLIN_SPLINT_TOOLS_HPP_
 
+#include <future>       // std::future
 #include <type_traits>  // std::add_pointer
 
 #include "merlin/cuda_interface.hpp"      // __cuhostdev__
@@ -40,8 +41,8 @@ using ConstructionMethod = std::add_pointer<void(double *, const double *, const
  *  @param method Interpolation method to use on each dimension.
  *  @param n_threads Number of threads to calculate.
  */
-void construct_coeff_cpu(double * coeff, const splint::CartesianGrid & grid, const Vector<splint::Method> & method,
-                         std::uint64_t n_threads) noexcept;
+void construct_coeff_cpu(std::future<void> * current_job, double * coeff, const splint::CartesianGrid * p_grid,
+                         const Vector<splint::Method> * p_method, std::uint64_t n_threads) noexcept;
 
 /** @brief Construct interpolation coefficients with GPU parallelism.
  *  @param coeff C-contiguous array of coefficients on GPU (value are pre-copied to this array).
