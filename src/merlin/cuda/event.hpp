@@ -22,7 +22,7 @@ class cuda::Event {
      *  @details Construct a CUDA event with a specific flag.
      *  @param category Event flag.
      */
-    MERLIN_EXPORTS Event(unsigned int category = cuda::EventCategory::DefaultEvent);
+    MERLIN_EXPORTS Event(unsigned int category = cuda::EventCategory::Default);
     /// @}
 
     /// @name Copy and Move
@@ -49,8 +49,8 @@ class cuda::Event {
     /** @brief Get event pointer.*/
     constexpr std::uintptr_t get_event_ptr(void) const noexcept { return this->event_; }
     /** @brief Get setting flag of the event.*/
-    constexpr unsigned int category(void) const { return this->category_; }
-    /** @brief Get GPU.*/
+    constexpr unsigned int get_category(void) const { return this->category_; }
+    /** @brief Get GPU associated to the event.*/
     constexpr const cuda::Device & get_gpu(void) const noexcept { return this->device_; }
     /// @}
 

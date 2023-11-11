@@ -2,7 +2,7 @@
 #ifndef MERLIN_CUDA_DEVICE_HPP_
 #define MERLIN_CUDA_DEVICE_HPP_
 
-#include <cstdint>  // std::uint64_t, UINT64_MAX
+#include <cstdint>  // std::uint64_t, std::uintptr_t, UINT64_MAX
 #include <string>   // std::string
 
 #include "merlin/cuda/declaration.hpp"   // merlin::cuda::Device
@@ -67,6 +67,12 @@ class cuda::Device {
      *  @details Replace the current CUDA context by the primary context associated the GPU.
      */
     MERLIN_EXPORTS void set_as_current(void) const;
+    /** @brief Push the primary context associated to the GPU to the context stack.
+     *  @return Pointer to old context.
+     */
+    MERLIN_EXPORTS std::uintptr_t push_context(void) const;
+    /** @brief Pop the current context out of the context stack.*/
+    MERLIN_EXPORTS static void pop_context(std::uintptr_t previous_context);
     /** @brief Get and set setting limits of the current GPU.
      *  @return Value of the limit of the current GPU if argument ``size`` is not given, and the value of size
      *  otherwise.

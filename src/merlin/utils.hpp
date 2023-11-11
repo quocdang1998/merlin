@@ -125,6 +125,16 @@ __cuhostdev__ std::int64_t decrement_index(intvec & index, const intvec & shape)
 __cuhostdev__ Vector<double *> ptr_to_subsequence(double * original, const intvec & divider_length,
                                                   double ** data_ptr = nullptr);
 
+/** @brief Get index of sequence and index in that sequence of an index in original array.
+ *  @param index_full_array Index in original array.
+ *  @param divider_length Size of each subsequence dividing the original array.
+ *  @returns Index of the list, and index of the element in the list.
+ *  @note If the index in full array overpass the last element in the sequence, the function will return the number of
+ *  dimension, and the offset with respect to the last element in the sequence.
+ */
+__cuhostdev__ std::array<std::uint64_t, 2> index_in_subsequence(std::uint64_t index_full_array,
+                                                                const intvec & divider_length) noexcept;
+
 // Sparse Grid
 // -----------
 

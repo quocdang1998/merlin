@@ -165,6 +165,19 @@ __cuhostdev__ Vector<double *> ptr_to_subsequence(double * original, const intve
     return result;
 }
 
+// Get index of sequence and index in that sequence of an index in original array
+__cuhostdev__ std::array<std::uint64_t, 2> index_in_subsequence(std::uint64_t index_full_array,
+                                                                const intvec & divider_length) noexcept {
+    std::uint64_t i_list = 0;
+    std::int64_t index_in_list = index_full_array;
+    for (std::uint64_t i = 0; i < divider_length.size(); i++) {
+        index_in_list -= divider_length[i];
+        i_list += (index_in_list >= 0) ? 1 : 0;
+        index_full_array = (index_in_list >= 0) ? index_in_list : index_full_array;
+    }
+    return {i_list, index_full_array};
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Sparse Grid
 // ---------------------------------------------------------------------------------------------------------------------

@@ -117,11 +117,10 @@ __cuhostdev__ void Vector<T>::assign(T * ptr_first, T * ptr_last) {
 // Copy data from CPU to a global memory on GPU
 template <typename T>
 void * Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr, std::uintptr_t stream_ptr) const {
-    // initialize buffer to store data of the copy before cloning it to GPU
-    Vector<T> copy_on_gpu;
     // copy data
     cuda_mem_cpy_host_to_device(data_ptr, this->data_, this->size_ * sizeof(T), stream_ptr);
-    // copy metadata
+    // initialize an object containing metadata and copy it to GPU
+    Vector<T> copy_on_gpu;
     copy_on_gpu.data_ = reinterpret_cast<T *>(data_ptr);
     copy_on_gpu.size_ = this->size_;
     cuda_mem_cpy_host_to_device(gpu_ptr, &copy_on_gpu, sizeof(Vector<T>), stream_ptr);
@@ -136,7 +135,7 @@ template <typename T>
 void * Vector<T>::copy_from_gpu(Vector<T> * gpu_ptr, std::uintptr_t stream_ptr) {
     // create a temporary object to get pointer to data
     Vector<T> gpu_object;
-    cuda_mem_cpy_device_to_host(&gpu_object, gpu_ptr, sizeof(Vector<T>), stream_ptr);
+    cuda_mem_cpy_device_to_host(&gpu_object, gpu_ptr, sizeof(Vector<T>), 0);
     T * gpu_data_ptr = gpu_object.data();
     // copy data from GPU
     cuda_mem_cpy_device_to_host(this->data_, gpu_data_ptr, this->size_ * sizeof(T), stream_ptr);

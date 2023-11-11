@@ -61,10 +61,10 @@ class cuda::Stream {
     /** @brief Get stream pointer.*/
     constexpr std::uintptr_t get_stream_ptr(void) const noexcept { return this->stream_; }
     /** @brief Get setting flag of the stream.*/
-    MERLIN_EXPORTS cuda::StreamSetting setting(void) const;
+    MERLIN_EXPORTS cuda::StreamSetting get_setting(void) const;
     /** @brief Get priority of the stream.*/
-    MERLIN_EXPORTS int priority(void) const;
-    /** @brief Get GPU.*/
+    MERLIN_EXPORTS int get_priority(void) const;
+    /** @brief Get GPU on which the stream resides.*/
     constexpr const cuda::Device & get_gpu(void) const noexcept { return this->device_; }
     /// @}
 

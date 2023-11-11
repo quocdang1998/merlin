@@ -18,4 +18,4 @@ from merlin.cuda import Stream
 
 include "enum_method.pxd"
 include "cartesian_grid.pyx"
-include "interpolator.pyx"
+# include "interpolator.pyx"

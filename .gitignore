@@ -1,10 +1,9 @@
 # C++ and Cython build dir
 build
 
-# Cython compiled library
-merlin/**/*.cpp
-merlin/*.so
-merlin/*.pyd
+# Pybind11 compiled library
+merlin.*.so
+merlin.*.pyd
 
 # CMake generated cmake_config.py
 setup_cfg/config.py

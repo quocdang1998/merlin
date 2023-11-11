@@ -21,16 +21,16 @@ enum class DeviceLimit : unsigned int {
 /** @brief Parameter describing the purpose of the event.*/
 enum EventCategory : unsigned int {
     /** Default event.*/
-    DefaultEvent = 0x00,
-    /** Event meant to be synchronize with CPU (process on CPU blocked until the event occurs).*/
-    BlockingSyncEvent = 0x01,
-    /** Event not recording time data.*/
-    DisableTimingEvent = 0x02,
-    /** Event might be used in an interprocess communication.*/
-    InterprocessEvent = 0x04
+    Default = 0x00,
+    /** %Event meant to be synchronize with CPU (process on CPU blocked until the event occurs).*/
+    BlockingSync = 0x01,
+    /** %Event not recording time data.*/
+    DisableTiming = 0x02,
+    /** %Event might be used in an interprocess communication.*/
+    Interprocess = 0x04
 };
 
-/** @brief Event wait flag.*/
+/** @brief %Event wait flag.*/
 enum class EventWaitFlag : unsigned int {
     /** Default event creation flag on stream.*/
     Default = 0x00,

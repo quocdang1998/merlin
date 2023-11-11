@@ -25,22 +25,38 @@ int main(void) {
     MESSAGE("Value: %s\n", value.str().c_str());
 
     // calculate Newton coefficients (CPU)
-    merlin::array::Array coeff(value);
     merlin::Vector<merlin::splint::Method> methods = {
         merlin::splint::Method::Newton,
         merlin::splint::Method::Lagrange,
         merlin::splint::Method::Newton
     };
-    merlin::splint::construct_coeff_cpu(coeff.data(), cart_gr, methods, 1);
-    MESSAGE("Reference coefficients: %s\n", coeff.str().c_str());
 
-    // calculate Newton coefficients (GPU)
-    merlin::cuda::Stream stream;
-    merlin::array::Parcel coeff_gpu(value.shape(), stream);
-    coeff_gpu.transfer_data_to_gpu(value, stream);
-    merlin::splint::Interpolator interp(cart_gr, coeff_gpu, methods, stream, 32);
-    stream.synchronize();
-    MESSAGE("GPU calculated coefficients: %s\n", coeff_gpu.str().c_str());
+    // initialize interpolator
+    merlin::splint::Interpolator interp_cpu(cart_gr, value, methods, merlin::ProcessorType::Cpu);
+    merlin::splint::Interpolator interp_gpu(cart_gr, value, methods, merlin::ProcessorType::Gpu);
+
+    // calculate coefficients
+    interp_cpu.build_coefficients(8);
+    interp_gpu.build_coefficients(32);
+    interp_cpu.synchronize();
+    MESSAGE("Coefficients calculated by CPU: %s\n", interp_cpu.get_coeff().str().c_str());
+    interp_gpu.synchronize();
+    MESSAGE("Coefficients calculated by GPU: %s\n", interp_gpu.get_coeff().str().c_str());
+
+    // initialize point
+    double point_coordinates_data[9] = {0.0, 2.0, 1.0, 1.0, 1.0, 1.2, 0.5, 0.25, 2.4};
+    merlin::array::Array point_cpu(point_coordinates_data, {3, 3}, {3*sizeof(double), sizeof(double)}, false);
+    merlin::array::Parcel point_gpu(point_cpu.shape());
+    point_gpu.transfer_data_to_gpu(point_cpu);
+
+    // calculate evaluation
+    merlin::floatvec cpu_result = interp_cpu.evaluate(point_cpu, 8);
+    merlin::floatvec gpu_result = interp_gpu.evaluate(point_gpu, 32);
+    interp_cpu.synchronize();
+    MESSAGE("Value evaluated by CPU: %s\n", cpu_result.str().c_str());
+    interp_gpu.synchronize();
+    MESSAGE("Value evaluated by GPU: %s\n", gpu_result.str().c_str());
+
 /*
     // calculate interpolation (CPU)
     merlin::floatvec point_coordinates({0.0, 2.0, 1.0, 1.0, 1.0, 1.2, 0.5, 0.25, 2.4});

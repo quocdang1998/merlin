@@ -1,4 +1,0 @@
-{% if platform == "win32" -%}
-import os
-os.add_dll_directory("{{ binary_dir }}")
-{% endif %}

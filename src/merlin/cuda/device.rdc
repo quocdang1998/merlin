@@ -14,7 +14,7 @@ __cuhostdev__ cuda::Device::Device(int id) {
 #ifdef __MERLIN_CUDA__
     int limit = cuda::Device::get_num_gpu();
     if ((id < 0) || (id >= limit)) {
-        CUHDERR(cuda_runtime_error, "Invalid ID of GPU (expected value between 0 and %d).\n", limit);
+        CUHDERR(cuda_runtime_error, "Invalid ID of GPU (expected value between 0 and less than %d).\n", limit);
     }
     this->id_ = id;
 #else
