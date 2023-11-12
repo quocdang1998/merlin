@@ -23,13 +23,13 @@ namespace merlin {
 void array::Parcel::free_current_data(const cuda::Stream & stream) {
     // lock mutex
     safety_lock();
-    // switch to appropriate context
-    this->device_.set_as_current();
+    std::uintptr_t current_ctx = this->device().push_context();
     // free data
     if ((this->data_ != nullptr) && this->release_) {
         ::cudaFreeAsync(this->data_, reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr()));
         this->data_ = nullptr;
     }
+    cuda::Device::pop_context(current_ctx);
     safety_unlock();
 }
 
@@ -127,8 +127,9 @@ double array::Parcel::get(const intvec & index) const {
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     double result;
     safety_lock();
-    this->device_.set_as_current();
+    std::uintptr_t current_ctx = this->device().push_context();
     ::cudaMemcpy(&result, reinterpret_cast<double *>(data_ptr), sizeof(double), ::cudaMemcpyDeviceToHost);
+    cuda::Device::pop_context(current_ctx);
     safety_unlock();
     return result;
 }
@@ -141,8 +142,9 @@ void array::Parcel::set(const intvec index, double value) {
     std::uint64_t leap = inner_prod(index, this->strides_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     safety_lock();
-    this->device_.set_as_current();
+    std::uintptr_t current_ctx = this->device().push_context();
     ::cudaMemcpy(reinterpret_cast<double *>(data_ptr), &value, sizeof(double), ::cudaMemcpyHostToDevice);
+    cuda::Device::pop_context(current_ctx);
     safety_unlock();
 }
 

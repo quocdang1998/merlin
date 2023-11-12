@@ -41,7 +41,7 @@ class splint::Interpolator {
      *  @param grid Cartesian grid to interpolate.
      *  @param values C-contiguous array containing the data.
      *  @param method Interpolation method to use for each dimension.
-     *  @param n_threads Number of CPU threads to calculate the coefficients.
+     *  @param processor Flag indicate the processor performing the interpolation (CPU or GPU).
     */
     MERLIN_EXPORTS Interpolator(const splint::CartesianGrid & grid, const array::Array & values,
                                 const Vector<splint::Method> & method, ProcessorType processor = ProcessorType::Cpu);
@@ -61,10 +61,15 @@ class splint::Interpolator {
     constexpr Vector<splint::Method> & get_method(void) noexcept { return *(this->p_method_); }
     /** @brief Get constant reference to the interpolation methods applied to each dimension.*/
     constexpr const Vector<splint::Method> & get_method(void) const noexcept { return *(this->p_method_); }
-    /** @brief Get GPU ID.*/
-    constexpr unsigned int gpu_id(void) const noexcept { return this->gpu_id_; }
+    /** @brief Get GPU ID on which the memory is allocated.*/
+    constexpr unsigned int gpu_id(void) const noexcept {
+        if (const cuda::Stream * stream_ptr = std::get_if<cuda::Stream>(&(this->synchronizer_.synchronizer))) {
+            return stream_ptr->get_gpu().id();
+        }
+        return static_cast<unsigned int>(-1);
+    }
     /** @brief Check if the interpolator is executed on GPU.*/
-    constexpr bool on_gpu(void) const noexcept { return (this->gpu_id_ != static_cast<unsigned int>(-1)); }
+    constexpr bool on_gpu(void) const noexcept { return (this->synchronizer_.proc_type == ProcessorType::Gpu); }
     /// @}
 
     /// @name Construct coefficients
@@ -73,25 +78,24 @@ class splint::Interpolator {
     void build_coefficients(std::uint64_t n_threads = 1);
     /// @}
 
-#ifdef __comment
     /// @name Interpolate on a set of points
     /// @{
-    /** @brief Interpolation by CPU.
+    /** @brief Evaluate interpolation by CPU.
+     *  @throw std::invalid_argument The input array must be C-contiguous.
      *  @param points 2D C-contiguous array of shape ``[npoint, ndim]``, in which ``npoint`` is the number of points to
      *  interpolate and ``ndim`` is the dimension of the point.
      *  @param n_threads Number of CPU threads to evaluate the interpolation.
      */
-    floatvec interpolate(const array::Array & points, std::uint64_t n_threads = 1);
-    /** @brief Interpolate by GPU.
+    floatvec evaluate(const array::Array & points, std::uint64_t n_threads = 1);
+    /** @brief Evaluate interpolate by GPU.
+     *  @throw std::invalid_argument The input array must be C-contiguous.
      *  @param points 2D C-contiguous array of shape ``[npoint, ndim]``, in which ``npoint`` is the number of points to
      *  interpolate and ``ndim`` is the dimension of the point.
-     *  @param stream CUDA Stream on which the calculation is launched.
      *  @param n_threads Number of GPU threads to calculate the coefficients.
      */
-    floatvec interpolate(const array::Parcel & points, const cuda::Stream & stream = cuda::Stream(),
-                         std::uint64_t n_threads = 32);
+    floatvec evaluate(const array::Parcel & points, std::uint64_t n_threads = 32);
     /// @}
-#endif
+
     /// @name Synchronization
     /// @{
     /** @brief Force the current CPU to wait until all asynchronous tasks have finished.*/
@@ -117,8 +121,6 @@ class splint::Interpolator {
     std::uint64_t ndim_;
     /** @brief Size of dynamic shared memory needed to perform the calculations on GPU.*/
     std::uint64_t shared_mem_size_ = 0;
-    /** @brief GPU ID on which the memory are allocated.*/
-    unsigned int gpu_id_;
     /** @brief Synchronizer.*/
     Synchronizer synchronizer_;
 };

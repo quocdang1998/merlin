@@ -27,6 +27,17 @@ void cuda::Device::set_as_current(void) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
 }
 
+// Push the primary context associated to the GPU to the context stack
+std::uintptr_t cuda::Device::push_context(void) const {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
+    return 0;
+}
+
+// Pop the current context out of the context stack
+void cuda::Device::pop_context(std::uintptr_t previous_context) {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
+}
+
 // Get and set limit
 std::uint64_t cuda::Device::limit(cuda::DeviceLimit limit, std::uint64_t size) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");

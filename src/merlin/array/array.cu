@@ -7,7 +7,12 @@
 #include "merlin/array/operation.hpp"  // merlin::array::copy
 #include "merlin/array/parcel.hpp"     // merlin::array::Parcel
 #include "merlin/cuda/device.hpp"      // merlin::cuda::Device
+#include "merlin/env.hpp"              // merlin::Environment
 #include "merlin/logger.hpp"           // FAILURE
+
+#define safety_lock() bool lock_success = Environment::mutex.try_lock()
+#define safety_unlock()                                                                                                \
+    if (lock_success) Environment::mutex.unlock()
 
 namespace merlin {
 
@@ -48,8 +53,6 @@ void array::free_memory(double * ptr) {
 
 // Copy data from GPU array
 void array::Array::clone_data_from_gpu(const array::Parcel & src, const cuda::Stream & stream) {
-    // save current gpu
-    cuda::Device current_gpu = cuda::Device::get_current_gpu();
     // check GPU of stream
     if (src.device() != stream.get_gpu()) {
         FAILURE(cuda_runtime_error, "Cannot copy from GPU array (%d) with stream pointing to another GPU (%d).\n",
@@ -61,9 +64,11 @@ void array::Array::clone_data_from_gpu(const array::Parcel & src, const cuda::St
     auto copy_func = std::bind(::cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                                ::cudaMemcpyDeviceToHost, copy_stream);
     // copy data to GPU
-    src.device().set_as_current();
+    safety_lock();
+    std::uintptr_t current_ctx = src.device().push_context();
     array::copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), copy_func);
-    current_gpu.set_as_current();
+    cuda::Device::pop_context(current_ctx);
+    safety_unlock();
 }
 
 }  // namespace merlin

@@ -7,9 +7,14 @@
 #include "merlin/cuda_interface.hpp"         // merlin::cuda_mem_alloc, merlin::cuda_mem_cpy_device_to_host,
                                              // merlin::cuda_mem_free
 #include "merlin/cuda/memory.hpp"            // merlin::cuda::Memory
+#include "merlin/env.hpp"                    // merlin::Environment
 #include "merlin/logger.hpp"                 // FAILURE
 #include "merlin/splint/cartesian_grid.hpp"  // merlin::splint::CartesianGrid
 #include "merlin/splint/tools.hpp"           // merlin::splint::construct_coeff_gpu
+
+#define safety_lock() bool lock_success = Environment::mutex.try_lock()
+#define safety_unlock()                                                                                                \
+    if (lock_success) Environment::mutex.unlock()
 
 namespace merlin {
 
@@ -58,10 +63,9 @@ splint::Interpolator::Interpolator(const splint::CartesianGrid & grid, array::Pa
     splint::construct_coeff_gpu(values.data(), this->p_grid_, this->p_method_, n_threads, this->shared_mem_size_,
                                 &stream);
 }
-
+*/
 // Interpolate by GPU
-floatvec splint::Interpolator::interpolate(const array::Parcel & points, const cuda::Stream & stream,
-                                           std::uint64_t n_threads) {
+floatvec splint::Interpolator::evaluate(const array::Parcel & points, std::uint64_t n_threads) {
     // check if interpolator is on CPU
     if (!this->on_gpu()) {
         FAILURE(std::invalid_argument, "Interpolator is initialized on CPU.\n");
@@ -76,6 +80,10 @@ floatvec splint::Interpolator::interpolate(const array::Parcel & points, const c
     if (points.shape()[1] != this->ndim_) {
         FAILURE(std::invalid_argument, "Array of coordinates and interpolator have different dimension.\n");
     }
+    // get CUDA Stream
+    safety_lock();
+    cuda::Stream & stream = std::get<cuda::Stream>(this->synchronizer_.synchronizer);
+    stream.get_gpu().set_as_current();
     // evaluate interpolation
     floatvec evaluated_values(points.shape()[0]);
     std::uint64_t bytes_size = evaluated_values.size() * sizeof(double);
@@ -85,7 +93,8 @@ floatvec splint::Interpolator::interpolate(const array::Parcel & points, const c
                            this->shared_mem_size_, &stream);
     cuda_mem_cpy_device_to_host(evaluated_values.data(), result_gpu, bytes_size, stream.get_stream_ptr());
     cuda_mem_free(result_gpu, stream.get_stream_ptr());
+    safety_unlock();
     return evaluated_values;
 }
-*/
+
 }  // namespace merlin

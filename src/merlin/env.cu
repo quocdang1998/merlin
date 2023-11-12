@@ -1,7 +1,7 @@
 // Copyright quocdang1998
 #include "merlin/env.hpp"
 
-#include <cuda.h>  // ::cuCtxGetCurrent, ::cuDeviceGetCount, ::cuInit
+#include <cuda.h>  // ::cuInit
 
 #include "merlin/logger.hpp"    // FAILURE
 #include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__

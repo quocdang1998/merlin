@@ -5,15 +5,18 @@
 
 #include "merlin/array/array.hpp"            // merlin::array::Array
 #include "merlin/array/parcel.hpp"           // merlin::array::Parcel
-#include "merlin/cuda_interface.hpp"         // merlin::cuda_mem_free
 #include "merlin/cuda/device.hpp"            // merlin::cuda::Device
+#include "merlin/cuda_interface.hpp"         // merlin::cuda_mem_free
 #include "merlin/env.hpp"                    // merlin::Environment
 #include "merlin/logger.hpp"                 // FAILURE, merlin::cuda_compile_error
 #include "merlin/splint/cartesian_grid.hpp"  // merlin::splint::CartesianGrid
 #include "merlin/splint/tools.hpp"           // merlin::splint::construct_coeff_cpu
 
-#define safety_lock() bool lock_success = Environment::mutex.try_lock()
-#define safety_unlock()                                                                                                \
+#define push_gpu(gpu)                                                                                                  \
+    bool lock_success = Environment::mutex.try_lock();                                                                 \
+    std::uintptr_t current_ctx = gpu.push_context()
+#define pop_gpu()                                                                                                      \
+    cuda::Device::pop_context(current_ctx);                                                                            \
     if (lock_success) Environment::mutex.unlock()
 
 namespace merlin {
@@ -55,7 +58,6 @@ ndim_(grid.ndim()), shared_mem_size_(grid.sharedmem_size() + method.sharedmem_si
         this->p_grid_ = new splint::CartesianGrid(grid);
         this->p_method_ = new Vector<splint::Method>(method);
         this->p_coeff_ = new array::Array(values);
-        this->gpu_id_ = -1;
     } else if (processor == ProcessorType::Gpu) {
         // GPU
         this->synchronizer_ = Synchronizer(cuda::Stream(cuda::StreamSetting::NonBlocking));
@@ -63,7 +65,6 @@ ndim_(grid.ndim()), shared_mem_size_(grid.sharedmem_size() + method.sharedmem_si
         splint::create_intpl_gpuptr(grid, method, this->p_grid_, this->p_method_, stream.get_stream_ptr());
         this->p_coeff_ = new array::Parcel(values.shape());
         static_cast<array::Parcel *>(this->p_coeff_)->transfer_data_to_gpu(values, stream);
-        this->gpu_id_ = cuda::Device::get_current_gpu().id();
     }
 }
 
@@ -75,18 +76,17 @@ void splint::Interpolator::build_coefficients(std::uint64_t n_threads) {
                                                 this->p_coeff_->data(), this->p_grid_, this->p_method_, n_threads);
         this->synchronizer_ = Synchronizer(new std::future<void>(std::move(new_sync)));
     } else {
-        safety_lock();
         cuda::Stream & stream = std::get<cuda::Stream>(this->synchronizer_.synchronizer);
+        push_gpu(stream.get_gpu());
         stream.get_gpu().set_as_current();
         splint::construct_coeff_gpu(this->p_coeff_->data(), this->p_grid_, this->p_method_, n_threads,
                                     this->shared_mem_size_, &stream);
-        safety_unlock();
+        pop_gpu();
     }
 }
 
-/*
 // Interpolation by CPU.
-floatvec splint::Interpolator::interpolate(const array::Array & points, std::uint64_t n_threads) {
+floatvec splint::Interpolator::evaluate(const array::Array & points, std::uint64_t n_threads) {
     // check if interpolator is on CPU
     if (this->on_gpu()) {
         FAILURE(std::invalid_argument, "Interpolator is initialized on GPU.\n");
@@ -103,37 +103,36 @@ floatvec splint::Interpolator::interpolate(const array::Array & points, std::uin
     }
     // evaluate interpolation
     floatvec evaluated_values(points.shape()[0]);
-    splint::eval_intpl_cpu(this->p_coeff_->data(), *(this->p_grid_), *(this->p_method_), points.data(),
-                           evaluated_values.size(), evaluated_values.data(), n_threads);
+    std::future<void> * current_sync = std::get<std::future<void> *>(this->synchronizer_.synchronizer);
+    std::future<void> new_sync = std::async(std::launch::async, splint::eval_intpl_cpu, current_sync,
+                                            this->p_coeff_->data(), this->p_grid_, this->p_method_, points.data(),
+                                            evaluated_values.size(), evaluated_values.data(), n_threads);
+    this->synchronizer_ = Synchronizer(new std::future<void>(std::move(new_sync)));
     return evaluated_values;
 }
-*/
+
 // Destructor
 splint::Interpolator::~Interpolator(void) {
+    // deallocate coeff memory
     if (this->p_coeff_ != nullptr) {
         delete this->p_coeff_;
     }
+    // delete grid and method memory
     if (!(this->on_gpu())) {
-        // delete pointer to grid and method if the interpolator are on CPU
+        // delete memory of each member on CPU
         if (this->p_grid_ != nullptr) {
             delete this->p_grid_;
         }
         if (this->p_method_ != nullptr) {
             delete this->p_method_;
         }
-        std::future<void> * current_sync = std::get<std::future<void> *>(this->synchronizer_.synchronizer);
-        if (current_sync != nullptr) {
-            delete current_sync;
-        }
     } else {
-        // delete pointer to everything on GPU
-        safety_lock();
-        cuda::Device gpu(this->gpu_id_);
-        gpu.set_as_current();
+        // delete joint memory of both on GPU
+        push_gpu(cuda::Device(this->gpu_id()));
         if (this->p_grid_ != nullptr) {
             cuda_mem_free(this->p_grid_);
         }
-        safety_unlock();
+        pop_gpu();
     }
 }
 

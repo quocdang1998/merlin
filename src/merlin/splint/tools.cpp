@@ -32,10 +32,12 @@ void splint::construct_coeff_cpu(std::future<void> * current_job, double * coeff
         splint::intpl::construction_newton
     };
     // finish old job
-    if (current_job->valid()) {
-        current_job->get();
+    if (current_job != nullptr) {
+        if (current_job->valid()) {
+            current_job->get();
+        }
+        delete current_job;
     }
-    delete current_job;
     // initialization
     const intvec & shape = p_grid->shape();
     std::uint64_t num_subsystem = 1, element_size = prod_elements(shape);
@@ -89,38 +91,45 @@ void splint::construct_coeff_gpu(double * coeff, const splint::CartesianGrid * p
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Evaluate interpolation with CPU parallelism
-void splint::eval_intpl_cpu(const double * coeff, const splint::CartesianGrid & grid,
-                            const Vector<splint::Method> & method, const double * points, std::uint64_t n_points,
+void splint::eval_intpl_cpu(std::future<void> * current_job, const double * coeff, const splint::CartesianGrid * p_grid,
+                            const Vector<splint::Method> * p_method, const double * points, std::uint64_t n_points,
                             double * result, std::uint64_t n_threads) noexcept {
+    // finish old job
+    if (current_job != nullptr) {
+        if (current_job->valid()) {
+            current_job->get();
+        }
+        delete current_job;
+    }
     // initialize index vector and cache memory for each thread
-    intvec total_index(grid.ndim() * n_threads, 0);
-    floatvec cache_memory(grid.ndim() * n_threads);
+    intvec total_index(p_grid->ndim() * n_threads, 0);
+    floatvec cache_memory(p_grid->ndim() * n_threads);
     // parallel calculation
     #pragma omp parallel num_threads(n_threads)
     {
         // get corresponding index vector and cache memory
         int thread_idx = ::omp_get_thread_num();
         intvec loop_index;
-        loop_index.assign(total_index.data() + grid.ndim() * thread_idx, grid.ndim());
+        loop_index.assign(total_index.data() + p_grid->ndim() * thread_idx, p_grid->ndim());
         floatvec cache;
-        cache.assign(cache_memory.data() + grid.ndim() * thread_idx, grid.ndim());
+        cache.assign(cache_memory.data() + p_grid->ndim() * thread_idx, p_grid->ndim());
         // parallel calculation for each point
         for (std::uint64_t i_point = thread_idx; i_point < n_points; i_point += n_threads) {
-            const double * point_data = points + i_point * grid.ndim();
-            std::int64_t last_updated_dim = grid.ndim()-1;
+            const double * point_data = points + i_point * p_grid->ndim();
+            std::int64_t last_updated_dim = p_grid->ndim()-1;
             std::uint64_t contiguous_index = 0;
             // loop on each index and save evaluation by each coefficient to the cache array
             do {
-                splint::recursive_interpolate(coeff, grid.size(), contiguous_index, loop_index.data(), cache.data(),
-                                              point_data, last_updated_dim, grid.shape().data(),
-                                              grid.grid_vectors().data(), method, grid.ndim());
-                last_updated_dim = increment_index(loop_index, grid.shape());
+                splint::recursive_interpolate(coeff, p_grid->size(), contiguous_index, loop_index.data(), cache.data(),
+                                              point_data, last_updated_dim, p_grid->shape().data(),
+                                              p_grid->grid_vectors().data(), *(p_method), p_grid->ndim());
+                last_updated_dim = increment_index(loop_index, p_grid->shape());
                 contiguous_index++;
             } while (last_updated_dim != -1);
             // perform one last iteration on the last coefficient
-            splint::recursive_interpolate(coeff, grid.size(), contiguous_index, loop_index.data(), cache.data(),
-                                          point_data, 0, grid.shape().data(), grid.grid_vectors().data(), method,
-                                          grid.ndim());
+            splint::recursive_interpolate(coeff, p_grid->size(), contiguous_index, loop_index.data(), cache.data(),
+                                          point_data, 0, p_grid->shape().data(), p_grid->grid_vectors().data(),
+                                          *(p_method), p_grid->ndim());
             // save result and reset the cache
             result[i_point] = cache[0];
             cache[0] = 0.0;
