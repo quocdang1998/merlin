@@ -1,0 +1,31 @@
+// Copyright 2022 quocdang1998
+#include "spgrid/utils.hpp"
+
+namespace spgrid {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Utils
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Get shape of the sub-grid from the level vector
+__cuhostdev__ merlin::intvec ndlevel_to_shape(const merlin::intvec & ndlevel,
+                                              std::uint64_t * subgrid_shape_data) noexcept {
+    merlin::intvec subgrid_shape;
+    if (subgrid_shape_data != nullptr) {
+        subgrid_shape.assign(subgrid_shape_data, ndlevel.size());
+    } else {
+        subgrid_shape = merlin::intvec(ndlevel.size());
+    }
+    for (std::uint64_t i = 0; i < ndlevel.size(); i++) {
+        if (ndlevel[i] == 0) {
+            subgrid_shape[i] = 1;
+        } else if (ndlevel[i] == 1) {
+            subgrid_shape[i] = 2;
+        } else {
+            subgrid_shape[i] = 1 << (ndlevel[i] - 1);
+        }
+    }
+    return subgrid_shape;
+}
+
+}  // namespace spgrid

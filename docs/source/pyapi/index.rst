@@ -93,6 +93,5 @@ Polynomial interpolation
    :nosignatures:
    :template: pyclass.rst
 
-   merlin.splint.Interpolator
    merlin.splint.Method
 

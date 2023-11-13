@@ -1,8 +1,8 @@
 # Copyright 2022 quocdang1998
 
-# =====================================================================================================================
+# ======================================================================================================================
 # project
-# =====================================================================================================================
+# ======================================================================================================================
 
 # cmake minimum version
 cmake_minimum_required(VERSION 3.25)
@@ -11,10 +11,12 @@ cmake_minimum_required(VERSION 3.25)
 set(MERLIN_CUDA ON CACHE BOOL "Build library using CUDA")  # -DMERLIN_CUDA=OFF
 set(MERLIN_DETECT_CUDA_ARCH ON CACHE BOOL
     "Automatically detect CUDA architectures of all GPUs \
-    (use CMAKE_CUDA_ARCHITECTURES otherwise)")  # -MERLIN_DETECT_CUDA_ARCH=OFF
-set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND="STATIC" or "SHARED"
+    (use CMAKE_CUDA_ARCHITECTURES otherwise)")  # -DMERLIN_DETECT_CUDA_ARCH=OFF
+set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND=STATIC or -DMERLIN_LIBKIND=SHARED
     CACHE STRING "Type of the created library (static or shared)")
 set(MERLIN_TEST OFF CACHE BOOL "Build test executables")  # -DMERLIN_TEST=ON
+set(MERLIN_EXT ""
+    CACHE STRING "Space-separated list of extensions to be built")  # -DMERLIN_EXT="ap3_mpo spgrid"
 
 # source list
 list(APPEND MERLIN_SRC_CPP
@@ -156,9 +158,9 @@ else()
     set(MERLIN_DEBUG OFF)
 endif()
 
-# =====================================================================================================================
+# ======================================================================================================================
 # external packages
-# =====================================================================================================================
+# ======================================================================================================================
 
 # git
 find_package(Git QUIET)
@@ -214,9 +216,9 @@ if(MSVC)  # patch the MSVC OpenMP default 2.0 version
                  INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CXX>:-openmp:experimental>)
 endif(MSVC)
 
-# =====================================================================================================================
+# ======================================================================================================================
 # library
-# =====================================================================================================================
+# ======================================================================================================================
 
 # set compilation options
 function(MerlinSetTargetProperties target_library)
@@ -317,16 +319,30 @@ if(MERLIN_CUDA)
 endif(MERLIN_CUDA)
 MerlinSetTargetProperties(libmerlin)
 
-# =====================================================================================================================
+# ======================================================================================================================
 # extensions
-# =====================================================================================================================
+# ======================================================================================================================
+
+# convert to list
+separate_arguments(MERLIN_EXT)
 
 # Apollo3 MPO reader
-add_subdirectory(ext/ap3_mpo)
+list(FIND MERLIN_EXT "ap3_mpo" NOT_BUILD_AP3_MPO_EXT)
+if (NOT NOT_BUILD_AP3_MPO_EXT)
+    message(STATUS "Build ap3_mpo extension for conversion of MPO files to merlin::array::Stock")
+    add_subdirectory(ext/ap3_mpo)
+endif(NOT NOT_BUILD_AP3_MPO_EXT)
 
-# =====================================================================================================================
+# Sparse grid
+list(FIND MERLIN_EXT "spgrid" NOT_BUILD_SPGRID_EXT)
+if (NOT NOT_BUILD_SPGRID_EXT)
+    message(STATUS "Build spgrid extension for interpolation on hierarchical grids.")
+    add_subdirectory(ext/spgrid)
+endif(NOT NOT_BUILD_SPGRID_EXT)
+
+# ======================================================================================================================
 # install
-# =====================================================================================================================
+# ======================================================================================================================
 
 # install header and template files
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/
@@ -350,9 +366,9 @@ install(EXPORT limerlin-cmake
         DESTINATION "lib/cmake"
         FILE libmerlinConfig.cmake)
 
-# =====================================================================================================================
+# ======================================================================================================================
 # tests
-# =====================================================================================================================
+# ======================================================================================================================
 
 # build execuatble for each tests/{LANGUAGE}/test_* files
 function(CONFIGURE_TESTFILES LANGUAGE)
@@ -381,9 +397,9 @@ if(MERLIN_TEST)
     endif(MERLIN_CUDA)
 endif(MERLIN_TEST)
 
-# =====================================================================================================================
+# ======================================================================================================================
 # write config variable to file
-# =====================================================================================================================
+# ======================================================================================================================
 
 # initialize Python script embedding CMake config variables
 set(MERLIN_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/setup_cfg/config.py)

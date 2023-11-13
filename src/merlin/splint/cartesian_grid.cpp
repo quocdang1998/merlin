@@ -82,30 +82,6 @@ grid_shape_(grid_vectors.size()), grid_vectors_(grid_vectors.size()) {
     this->size_ = prod_elements(this->grid_shape_);
 }
 
-// Constructor from list of nodes and shape
-splint::CartesianGrid::CartesianGrid(floatvec && grid_nodes, intvec && shape) :
-grid_nodes_(grid_nodes), grid_shape_(shape), grid_vectors_(shape.size()) {
-    // calculate pointers per dimension
-    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->grid_vectors_.data());
-    // check for duplicate element
-    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
-        std::vector<double> grid_vector(this->grid_vectors_[i_dim],
-                                        this->grid_vectors_[i_dim] + this->grid_shape_[i_dim]);
-        if (has_duplicated_element(std::vector<double>(grid_vector))) {
-            FAILURE(std::invalid_argument, "Found duplicated elements.\n");
-        }
-    }
-    // sort elements
-    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
-        if (!std::is_sorted(this->grid_vectors_[i_dim], this->grid_vectors_[i_dim] + this->grid_shape_[i_dim])) {
-            WARNING("Input nodes are not sorted in increasing order, sorting the nodes...\n");
-            std::stable_sort(this->grid_vectors_[i_dim], this->grid_vectors_[i_dim] + this->grid_shape_[i_dim]);
-        }
-    }
-    // calculate size
-    this->size_ = prod_elements(this->grid_shape_);
-}
-
 // Constructor as a sub-grid from a larger grid
 splint::CartesianGrid::CartesianGrid(const splint::CartesianGrid & whole, const slicevec & slices) :
 grid_shape_(whole.ndim()), grid_vectors_(whole.ndim()) {

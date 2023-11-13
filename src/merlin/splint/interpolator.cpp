@@ -78,7 +78,6 @@ void splint::Interpolator::build_coefficients(std::uint64_t n_threads) {
     } else {
         cuda::Stream & stream = std::get<cuda::Stream>(this->synchronizer_.synchronizer);
         push_gpu(stream.get_gpu());
-        stream.get_gpu().set_as_current();
         splint::construct_coeff_gpu(this->p_coeff_->data(), this->p_grid_, this->p_method_, n_threads,
                                     this->shared_mem_size_, &stream);
         pop_gpu();
