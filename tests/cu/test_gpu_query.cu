@@ -27,7 +27,7 @@ void graph_callback(void * data) {
 }
 
 int main(void) {
-    merlin::cuda::print_all_gpu_specification();
+    merlin::cuda::print_gpus_spec();
     std::uint64_t stack_size = merlin::cuda::Device::limit(merlin::cuda::DeviceLimit::StackSize);
     MESSAGE("Stack size: %" PRIu64 ".\n", stack_size);
     merlin::cuda::test_all_gpu();

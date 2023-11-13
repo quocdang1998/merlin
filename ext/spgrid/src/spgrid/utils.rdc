@@ -7,6 +7,19 @@ namespace spgrid {
 // Utils
 // ---------------------------------------------------------------------------------------------------------------------
 
+// Get shape from level
+static inline __cuhostdev__ std::uint64_t shape_from_level(std::uint64_t level) {
+    std::uint64_t shape;
+    if (level == 0) {
+        shape = 1;
+    } else if (level == 1) {
+        shape = 2;
+    } else {
+        shape = 1 << (level - 1);
+    }
+    return shape;
+}
+
 // Get shape of the sub-grid from the level vector
 __cuhostdev__ merlin::intvec ndlevel_to_shape(const merlin::intvec & ndlevel,
                                               std::uint64_t * subgrid_shape_data) noexcept {
@@ -17,15 +30,32 @@ __cuhostdev__ merlin::intvec ndlevel_to_shape(const merlin::intvec & ndlevel,
         subgrid_shape = merlin::intvec(ndlevel.size());
     }
     for (std::uint64_t i = 0; i < ndlevel.size(); i++) {
-        if (ndlevel[i] == 0) {
-            subgrid_shape[i] = 1;
-        } else if (ndlevel[i] == 1) {
-            subgrid_shape[i] = 2;
-        } else {
-            subgrid_shape[i] = 1 << (ndlevel[i] - 1);
-        }
+        subgrid_shape[i] = shape_from_level(ndlevel[i]);
     }
     return subgrid_shape;
+}
+
+// Get index in full grid from sub-grid index
+__cuhostdev__ merlin::intvec fullgrid_idx_from_subgrid(std::uint64_t subgrid_idx, const merlin::intvec & ndlevel,
+                                                       const merlin::intvec & fullgrid_shape,
+                                                       std::uint64_t * index_data) noexcept {
+    // assign result
+    merlin::intvec fullgrid_idx;
+    if (index_data != nullptr) {
+        fullgrid_idx.assign(index_data, ndlevel.size());
+    } else {
+        fullgrid_idx = merlin::intvec(ndlevel.size());
+    }
+    // calculate shape of subgrid and ndim index in subgrid
+    std::uint64_t cum_prod = 1;
+    std::uint64_t shape_previous_dim = shape_from_level(ndlevel[ndlevel.size() - 1]);
+    fullgrid_idx[ndlevel.size() - 1] = subgrid_idx % shape_previous_dim;
+    for (std::int64_t i = ndlevel.size() - 2; i >= 0; i--) {
+        cum_prod *= shape_previous_dim;
+        shape_previous_dim = shape_from_level(ndlevel[i]);
+        fullgrid_idx[i] = (subgrid_idx / cum_prod) % shape_previous_dim;
+    }
+    return fullgrid_idx;
 }
 
 }  // namespace spgrid
