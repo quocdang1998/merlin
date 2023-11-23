@@ -4,16 +4,15 @@
 
 #include <type_traits>  // std::add_pointer
 #include <functional>   // std::function
+#include <string>       // std::string
 
+#include "merlin/cuda_interface.hpp"         // __cuhostdev__
 #include "merlin/splint/cartesian_grid.hpp"  // merlin::CartesianGrid
 #include "merlin/vector.hpp"                 // merlin::Vector, merlin::floatvec, merlin::intvec
 
 #include "spgrid/declaration.hpp"  // spgrid::SparseGrid
 
 namespace spgrid {
-
-/** @brief Condition for the level vector to be added in sparse grid.*/
-using SparseGridPredicate = std::add_pointer<bool(const merlin::intvec &)>::type;
 
 /** @brief Sparse grid.
  *  @details A set of point in multi-dimensional space based on hierarchical basis. Here, the sparse grid is composed
@@ -33,26 +32,52 @@ class SparseGrid {
     SparseGrid(const merlin::Vector<merlin::floatvec> & full_grid_vectors, const merlin::intvec & level_vectors);
     /// @}
 
+    /// @name Copy and move
+    /// @{
+    /** @brief Copy constructor.*/
+    SparseGrid(const SparseGrid & src) = default;
+    /** @brief Copy assignment.*/
+    SparseGrid & operator=(const SparseGrid & src) = default;
+    /** @brief Move constructor.*/
+    SparseGrid(SparseGrid && src) = default;
+    /** @brief Move assignment.*/
+    SparseGrid & operator=(SparseGrid && src) = default;
+    /// @}
+
     /// @name Members and attributes
     /// @{
     /** @brief Number of dimension of the grid.*/
     constexpr std::uint64_t ndim(void) const noexcept { return this->full_grid_.ndim(); }
     /** @brief Number of level of the hierarchical grid.*/
     constexpr std::uint64_t nlevel(void) const noexcept { return this->nd_level_.size() / this->full_grid_.ndim(); }
-    /** @brief List of index of first point of each Cartesian sub-grid.*/
-    merlin::intvec get_ndlevel_at_index(std::uint64_t index) noexcept {
-        merlin::intvec ndlevel;
-        ndlevel.assign(&(this->nd_level_[index * this->ndim()]), this->ndim());
-        return ndlevel;
-    }
-    /** @brief Get constant level vector at a given index.
+    /** @brief Shape of full Cartesian grid.*/
+    constexpr const merlin::intvec & shape(void) const noexcept { return this->full_grid_.shape(); }
+    /** @brief Get reference to the full Cartesian grid.*/
+    constexpr const merlin::splint::CartesianGrid & fullgrid(void) const noexcept { return this->full_grid_; }
+    /// @}
+
+    /// @name Hierarchical levels
+    /// @{
+    /** @brief Get a view to the level vector at a given index.
      *  @param index Index of level.
      */
-    const merlin::intvec get_ndlevel_at_index(std::uint64_t index) const noexcept {
+    __cuhostdev__ merlin::intvec get_ndlevel_at_index(std::uint64_t index) const noexcept {
         merlin::intvec ndlevel;
         ndlevel.assign(const_cast<std::uint64_t *>(&(this->nd_level_[index * this->ndim()])), this->ndim());
         return ndlevel;
     }
+    /** @brief Get Cartesian grid at a given level index.
+     *  @param index Index of level.
+     *  @param grid_buffer Buffer memory for the result Cartesian grid (size of ``full_grid_.cumalloc_size()``).
+     */
+    __cuhostdev__ merlin::splint::CartesianGrid get_grid_at_level(std::uint64_t index,
+                                                                  char * grid_buffer) const noexcept;
+    /// @}
+
+    /// @name Representation
+    /// @{
+    /** @brief String representation.*/
+    std::string str(void) const;
     /// @}
 
     /// @name Destructor

@@ -1,0 +1,39 @@
+// Copyright 2022 quocdang1998
+#include "spgrid/sparse_grid.hpp"
+
+#include <utility>  // std::move
+
+#include "spgrid/utils.hpp"  // spgrid::get_hiearchical_index, spgrid::ndlevel_to_shape
+
+namespace spgrid {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// SparseGrid
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Get Cartesian grid at a given level index
+__cuhostdev__ merlin::splint::CartesianGrid SparseGrid::get_grid_at_level(std::uint64_t index,
+                                                                          char * grid_buffer) const noexcept {
+    merlin::intvec level = this->get_ndlevel_at_index(index);
+    // calculate the shape
+    merlin::intvec shape;
+    shape.assign(reinterpret_cast<std::uint64_t *>(grid_buffer), this->ndim());
+    ndlevel_to_shape(level, shape.data());
+    // get grid nodes
+    std::uint64_t num_nodes = 0;
+    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+        num_nodes += shape[i_dim];
+    }
+    merlin::floatvec grid_nodes;
+    grid_nodes.assign(reinterpret_cast<double *>(shape.end()), num_nodes);
+    for (std::uint64_t i_dim = 0, i_node = 0; i_dim < this->ndim(); i_dim++) {
+        for (std::uint64_t i = 0; i < shape[i_dim]; i++) {
+            std::uint64_t index = get_hiearchical_index(i, level[i_dim], this->shape()[i_dim]);
+            grid_nodes[i_node++] = this->full_grid_.grid_vectors()[i_dim][index];
+        }
+    }
+    return merlin::splint::CartesianGrid(std::move(grid_nodes), std::move(shape),
+                                         reinterpret_cast<double **>(grid_nodes.end()));
+}
+
+}  // namespace spgrid

@@ -1,8 +1,10 @@
 list(APPEND SPARSE_GRID_SRC_CPP
+     interpolator.cpp
      sparse_grid.cpp
-     utils.hpp
+     utils.cpp
 )
 list(APPEND SPARSE_GRID_SRC_RDC
+     sparse_grid.rdc
      utils.rdc
 )
 list(TRANSFORM SPARSE_GRID_SRC_CPP PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/spgrid/)
@@ -22,6 +24,10 @@ target_link_libraries(libspgrid PUBLIC libmerlin)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/
         DESTINATION "include" FILES_MATCHING PATTERN "*.[ht]pp")
+
+add_executable(test_spgrid "test.cpp")
+target_include_directories(test_spgrid PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(test_spgrid PUBLIC libspgrid)
 
 # add_executable(ap3_mpo ${AP3_MPO_SRC_CPP})
 # set_property(TARGET ap3_mpo PROPERTY OUTPUT_NAME ap3_mpo)

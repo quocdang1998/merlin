@@ -1,7 +1,9 @@
 // Copyright 2022 quocdang1998
 #include "spgrid/utils.hpp"
 
-#include "merlin/utils.hpp"  // merlin::prod_elements
+#include <vector>  // std::vector
+
+#include "spgrid/sparse_grid.hpp"  // spgrid::SparseGrid
 
 namespace spgrid {
 
@@ -23,15 +25,18 @@ merlin::intvec get_max_levels(const merlin::intvec & spgrid_shape) noexcept {
 }
 
 // Copy elements from a full Cartesian data into a vector
-merlin::floatvec copy_sparsegrid_data_from_cartesian(const merlin::array::NdData full_data, const SparseGrid & grid) {
-    // loop on each level vector
+merlin::floatvec copy_sparsegrid_data_from_cartesian(const merlin::array::NdData & full_data, const SparseGrid & grid) {
+    std::vector<double> sparsegrid_data_buffer;
     std::uint64_t nlevel = grid.nlevel();
-    std::uint64_t index_in_copied_value = 0;
     for (std::uint64_t i_level = 0; i_level < nlevel; i_level++) {
         merlin::intvec level_vector = grid.get_ndlevel_at_index(i_level);
-
+        std::uint64_t num_points_in_level = get_npoint_in_level(level_vector);
+        for (std::uint64_t i_point = 0; i_point < num_points_in_level; i_point++) {
+            merlin::intvec index_fullgrid = fullgrid_idx_from_subgrid(i_point, level_vector, grid.shape());
+            sparsegrid_data_buffer.push_back(full_data.get(index_fullgrid));
+        }
     }
-    return merlin::floatvec();
+    return merlin::floatvec(sparsegrid_data_buffer.data(), sparsegrid_data_buffer.size());
 }
 
 }  // namespace spgrid
