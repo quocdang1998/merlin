@@ -36,7 +36,7 @@ cuda::Stream::Stream(cuda::StreamSetting setting, int priority) {
 }
 
 // Get flag
-cuda::StreamSetting cuda::Stream::setting(void) const {
+cuda::StreamSetting cuda::Stream::get_setting(void) const {
     unsigned int flag;
     ::cudaError_t err_ = ::cudaStreamGetFlags(reinterpret_cast<::cudaStream_t>(this->stream_), &flag);
     if (err_ != 0) {
@@ -46,7 +46,7 @@ cuda::StreamSetting cuda::Stream::setting(void) const {
 }
 
 // Get priority
-int cuda::Stream::priority(void) const {
+int cuda::Stream::get_priority(void) const {
     int priority;
     ::cudaError_t err_ = ::cudaStreamGetPriority(reinterpret_cast<::cudaStream_t>(this->stream_), &priority);
     if (err_ != 0) {

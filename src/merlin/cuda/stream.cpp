@@ -30,13 +30,13 @@ cuda::Stream::Stream(cuda::StreamSetting setting, int priority) {
 }
 
 // Get flag
-cuda::StreamSetting cuda::Stream::setting(void) const {
+cuda::StreamSetting cuda::Stream::get_setting(void) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for stream management.\n");
     return static_cast<cuda::StreamSetting>(0);
 }
 
 // Get priority
-int cuda::Stream::priority(void) const {
+int cuda::Stream::get_priority(void) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for stream management.\n");
     return 0;
 }

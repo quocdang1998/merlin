@@ -30,18 +30,26 @@ static void wrap_enums(py::module & cuda_module) {
         "EventCategory",
         "Wrapper of :cpp:class:`merlin::cuda::EventCategory`"
     );
-    event_category_pyenum.value("DefaultEvent", cuda::EventCategory::DefaultEvent);
-    event_category_pyenum.value("BlockingSyncEvent", cuda::EventCategory::BlockingSyncEvent);
-    event_category_pyenum.value("DisableTimingEvent", cuda::EventCategory::DisableTimingEvent);
-    event_category_pyenum.value("InterprocessEvent", cuda::EventCategory::InterprocessEvent);
+    event_category_pyenum.value("Default", cuda::EventCategory::Default);
+    event_category_pyenum.value("BlockingSync", cuda::EventCategory::BlockingSync);
+    event_category_pyenum.value("DisableTiming", cuda::EventCategory::DisableTiming);
+    event_category_pyenum.value("Interprocess", cuda::EventCategory::Interprocess);
     // wrap cuda::EventWaitFlag
     auto event_wait_pyenum = py::enum_<cuda::EventWaitFlag>(
         cuda_module,
         "EventWaitFlag",
         "Wrapper of :cpp:class:`merlin::cuda::EventWaitFlag`"
     );
-    event_wait_pyenum.value("DefaultEvent", cuda::EventWaitFlag::Default);
-    event_wait_pyenum.value("BlockingSyncEvent", cuda::EventWaitFlag::External);
+    event_wait_pyenum.value("Default", cuda::EventWaitFlag::Default);
+    event_wait_pyenum.value("External", cuda::EventWaitFlag::External);
+    // wrap cuda::StreamSetting
+    auto stream_setting_pyenum = py::enum_<cuda::StreamSetting>(
+        cuda_module,
+        "StreamSetting",
+        "Wrapper of :cpp:class:`merlin::cuda::StreamSetting`"
+    );
+    stream_setting_pyenum.value("Default", cuda::StreamSetting::Default);
+    stream_setting_pyenum.value("NonBlocking", cuda::StreamSetting::NonBlocking);
 }
 
 // Wrap merlin::cuda::Device
@@ -67,18 +75,18 @@ static void wrap_device(py::module & cuda_module) {
     // members
     device_pyclass.def_property(
         "id",
-        [](cuda::Device & device) { return device.id(); },
-        [](cuda::Device & device, int new_id) { device.id() = new_id; }
+        [](cuda::Device & self) { return self.id(); },
+        [](cuda::Device & self, int new_id) { self.id() = new_id; }
     );
     // query
     device_pyclass.def(
         "print_specification",
-        [](cuda::Device & device) { device.print_specification(); },
+        [](cuda::Device & self) { self.print_specification(); },
         "Print GPU specifications."
     );
     device_pyclass.def(
         "test_gpu",
-        [](cuda::Device & device) { return device.test_gpu(); },
+        [](cuda::Device & self) { return self.test_gpu(); },
         "Test functionality of GPU."
     );
     device_pyclass.def_static(
@@ -94,7 +102,7 @@ static void wrap_device(py::module & cuda_module) {
     // action
     device_pyclass.def(
         "set_as_current",
-        [](cuda::Device & device) { device.set_as_current(); },
+        [](cuda::Device & self) { self.set_as_current(); },
         "Set the GPU as current device."
     );
     device_pyclass.def_static(
@@ -117,7 +125,7 @@ static void wrap_device(py::module & cuda_module) {
     // representation
     device_pyclass.def(
         "__repr__",
-        [](cuda::Device & device) { return device.str(); }
+        [](cuda::Device & self) { return self.str(); }
     );
 }
 
@@ -135,39 +143,39 @@ static void wrap_event(py::module & cuda_module) {
     event_pyclass.def(
         py::init([](unsigned int category) { return new cuda::Event(category); }),
         "Construct CUDA event from flag.",
-        py::arg("category") = cuda::EventCategory::DefaultEvent
+        py::arg("category") = cuda::EventCategory::Default
     );
     // attributes
     event_pyclass.def(
         "get_event_ptr",
-        [](cuda::Event & event) { return event.get_event_ptr(); },
+        [](cuda::Event & self) { return self.get_event_ptr(); },
         "Get pointer to CUDA event."
     );
     event_pyclass.def(
         "get_category",
-        [](cuda::Event & event) { return event.get_category(); },
+        [](cuda::Event & self) { return self.get_category(); },
         "Get setting flag of the event."
     );
     event_pyclass.def(
         "get_gpu",
-        [](cuda::Event & event) { return event.get_gpu(); },
+        [](cuda::Event & self) { return new cuda::Device(self.get_gpu()); },
         "Get GPU associated to the event."
     );
     // query
     event_pyclass.def(
         "is_complete",
-        [](cuda::Event & event) { return event.is_complete(); },
+        [](cuda::Event & self) { return self.is_complete(); },
         "Query the status of all work currently captured by event."
     );
     event_pyclass.def(
         "check_cuda_context",
-        [](cuda::Event & event) { event.check_cuda_context(); },
+        [](cuda::Event & self) { self.check_cuda_context(); },
         "Check validity of GPU and context."
     );
     // operation
     event_pyclass.def(
         "synchronize",
-        [](cuda::Event & event) { event.synchronize(); },
+        [](cuda::Event & self) { self.synchronize(); },
         "Block the CPU process until the event occurs."
     );
     event_pyclass.def(
@@ -178,7 +186,89 @@ static void wrap_event(py::module & cuda_module) {
     // representation
     event_pyclass.def(
         "__repr__",
-        [](cuda::Event & event) { return event.str(); }
+        [](cuda::Event & self) { return self.str(); }
+    );
+}
+
+// Wrap merlin::cuda::Event
+static void wrap_stream(py::module & cuda_module) {
+    auto stream_pyclass = py::class_<cuda::Stream>(
+        cuda_module,
+        "Stream",
+        R"(
+        CUDA stream.
+
+        Wrapper of :cpp:class:`merlin::cuda::Stream`.)"
+    );
+    // constructor
+    stream_pyclass.def(
+        py::init([]() { return new cuda::Stream(); }),
+        "Construct the default null stream."
+    );
+    stream_pyclass.def(
+        py::init([](cuda::StreamSetting setting, int priority) { return new cuda::Stream(setting, priority); }),
+        "Construct CUDA stream from its setting and priority.",
+        py::arg("setting"), py::arg("priority") = 0
+    );
+    // attributes
+    stream_pyclass.def(
+        "get_stream_ptr",
+        [](cuda::Stream & self) { return self.get_stream_ptr(); },
+        "Get stream pointer."
+    );
+    stream_pyclass.def(
+        "get_setting",
+        [](cuda::Stream & self) { return self.get_setting(); },
+        "Get setting flag of the stream."
+    );
+    stream_pyclass.def(
+        "get_priority",
+        [](cuda::Stream & self) { return self.get_priority(); },
+        "Get priority of the stream."
+    );
+    stream_pyclass.def(
+        "get_gpu",
+        [](cuda::Stream & self) { return new cuda::Device(self.get_gpu()); },
+        "Get GPU on which the stream resides."
+    );
+    // query
+    stream_pyclass.def(
+        "is_complete",
+        [](cuda::Stream & self) { return self.is_complete(); },
+        "Query for completion status."
+    );
+    stream_pyclass.def(
+        "is_capturing",
+        [](cuda::Stream & self) { return self.is_capturing(); },
+        "Check if the stream is being captured."
+    );
+    stream_pyclass.def(
+        "check_cuda_context",
+        [](cuda::Stream & self) { self.check_cuda_context(); },
+        "Check validity of GPU and context."
+    );
+    // operation
+    stream_pyclass.def(
+        "record_event",
+        [](cuda::Stream & self, cuda::Event & event) { self.record_event(event); },
+        "Register an event on the stream.",
+        py::arg("event")
+    );
+    stream_pyclass.def(
+        "wait_event",
+        [](cuda::Stream & self, cuda::Event & event, cuda::EventWaitFlag flag) { self.wait_event(event, flag); },
+        "Make the stream wait on an event.",
+        py::arg("event"), py::arg("flag") = cuda::EventWaitFlag::Default
+    );
+    stream_pyclass.def(
+        "synchronize",
+        [](cuda::Stream & self) { self.synchronize(); },
+        "Synchronize the stream."
+    );
+    // representation
+    stream_pyclass.def(
+        "__repr__",
+        [](cuda::Stream & stream) { return stream.str(); }
     );
 }
 
@@ -190,6 +280,7 @@ void wrap_cuda(py::module & merlin_package) {
     wrap_enums(cuda_module);
     wrap_device(cuda_module);
     wrap_event(cuda_module);
+    wrap_stream(cuda_module);
 }
 
 }  // namespace merlin

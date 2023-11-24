@@ -22,7 +22,7 @@ class cuda::Event {
      *  @details Construct a CUDA event with a specific flag.
      *  @param category Event flag.
      */
-    MERLIN_EXPORTS Event(unsigned int category = cuda::EventCategory::DefaultEvent);
+    MERLIN_EXPORTS Event(unsigned int category = cuda::EventCategory::Default);
     /// @}
 
     /// @name Copy and Move
