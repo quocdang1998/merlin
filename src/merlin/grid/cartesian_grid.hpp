@@ -6,11 +6,12 @@
 #include <initializer_list>  // std::initializer_list
 #include <string>            // std::string
 
-#include "merlin/cuda_interface.hpp"    // __cuhostdev__
-#include "merlin/exports.hpp"           // MERLIN_EXPORTS
-#include "merlin/slice.hpp"             // merlin::slicevec
-#include "merlin/grid/declaration.hpp"  // merlin::grid::CartesianGrid
-#include "merlin/vector.hpp"            // merlin::floatvec, merlin::intvec, merlin::Vector
+#include "merlin/array/declaration.hpp"  // merlin::array::Array
+#include "merlin/cuda_interface.hpp"     // __cuhostdev__
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/slice.hpp"              // merlin::slicevec
+#include "merlin/grid/declaration.hpp"   // merlin::grid::CartesianGrid
+#include "merlin/vector.hpp"             // merlin::floatvec, merlin::intvec, merlin::Vector
 
 namespace merlin {
 
@@ -76,6 +77,12 @@ class grid::CartesianGrid {
      *  @param index Vector of index on each dimension.
      */
     MERLIN_EXPORTS floatvec operator[](const intvec & index) const noexcept;
+    /// @}
+
+    /// @name Get points
+    /// @{
+    /** @brief Get all points in the grid.*/
+    MERLIN_EXPORTS array::Array get_points(void) const;
     /// @}
 
     /// @name GPU related features

@@ -9,8 +9,9 @@
 #include <sstream>    // std::ostringstream
 #include <vector>     // std::vector
 
-#include "merlin/logger.hpp"  // FAILURE
-#include "merlin/utils.hpp"   // merlin::ptr_to_subsequence, merlin::prod_elements
+#include "merlin/array/array.hpp"  // merlin::array::Array
+#include "merlin/logger.hpp"       // FAILURE
+#include "merlin/utils.hpp"        // merlin::ptr_to_subsequence, merlin::prod_elements
 
 namespace merlin {
 
@@ -156,6 +157,23 @@ floatvec grid::CartesianGrid::operator[](const intvec & index) const noexcept {
         point[i] = this->grid_vectors_[i][index[i]];
     }
     return point;
+}
+
+// Get all points in the grid
+array::Array grid::CartesianGrid::get_points(void) const {
+    // initialize result
+    std::uint64_t shape_data[2] = {this->size_, this->ndim()};
+    intvec points_shape;
+    points_shape.assign(shape_data, 2);
+    array::Array points(points_shape);
+    for (std::uint64_t i_point = 0; i_point < this->size_; i_point++) {
+        double * point_data = points.data() + i_point * this->ndim();
+        intvec point_idx = contiguous_to_ndim_idx(i_point, this->grid_shape_);
+        for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+            point_data[i_dim] = this->grid_vectors_[i_dim][point_idx[i_dim]];
+        }
+    }
+    return points;
 }
 
 // String representation

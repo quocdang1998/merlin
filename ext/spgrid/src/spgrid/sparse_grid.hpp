@@ -6,9 +6,9 @@
 #include <functional>   // std::function
 #include <string>       // std::string
 
-#include "merlin/cuda_interface.hpp"         // __cuhostdev__
-#include "merlin/splint/cartesian_grid.hpp"  // merlin::CartesianGrid
-#include "merlin/vector.hpp"                 // merlin::Vector, merlin::floatvec, merlin::intvec
+#include "merlin/cuda_interface.hpp"       // __cuhostdev__
+#include "merlin/grid/cartesian_grid.hpp"  // merlin::grid::CartesianGrid
+#include "merlin/vector.hpp"               // merlin::Vector, merlin::floatvec, merlin::intvec
 
 #include "spgrid/declaration.hpp"  // spgrid::SparseGrid
 
@@ -53,7 +53,7 @@ class SparseGrid {
     /** @brief Shape of full Cartesian grid.*/
     constexpr const merlin::intvec & shape(void) const noexcept { return this->full_grid_.shape(); }
     /** @brief Get reference to the full Cartesian grid.*/
-    constexpr const merlin::splint::CartesianGrid & fullgrid(void) const noexcept { return this->full_grid_; }
+    constexpr const merlin::grid::CartesianGrid & fullgrid(void) const noexcept { return this->full_grid_; }
     /// @}
 
     /// @name Hierarchical levels
@@ -70,8 +70,7 @@ class SparseGrid {
      *  @param index Index of level.
      *  @param grid_buffer Buffer memory for the result Cartesian grid (size of ``full_grid_.cumalloc_size()``).
      */
-    __cuhostdev__ merlin::splint::CartesianGrid get_grid_at_level(std::uint64_t index,
-                                                                  char * grid_buffer) const noexcept;
+    __cuhostdev__ merlin::grid::CartesianGrid get_grid_at_level(std::uint64_t index, char * grid_buffer) const noexcept;
     /// @}
 
     /// @name Representation
@@ -88,7 +87,7 @@ class SparseGrid {
 
   private:
     /** @brief Full Cartesian grid.*/
-    merlin::splint::CartesianGrid full_grid_;
+    merlin::grid::CartesianGrid full_grid_;
     /** @brief Vector of multi-dimensional level.*/
     merlin::intvec nd_level_;
 };

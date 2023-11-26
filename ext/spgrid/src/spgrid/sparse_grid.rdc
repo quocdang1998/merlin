@@ -12,8 +12,8 @@ namespace spgrid {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Get Cartesian grid at a given level index
-__cuhostdev__ merlin::splint::CartesianGrid SparseGrid::get_grid_at_level(std::uint64_t index,
-                                                                          char * grid_buffer) const noexcept {
+__cuhostdev__ merlin::grid::CartesianGrid SparseGrid::get_grid_at_level(std::uint64_t index,
+                                                                        char * grid_buffer) const noexcept {
     merlin::intvec level = this->get_ndlevel_at_index(index);
     // calculate the shape
     merlin::intvec shape;
@@ -32,8 +32,8 @@ __cuhostdev__ merlin::splint::CartesianGrid SparseGrid::get_grid_at_level(std::u
             grid_nodes[i_node++] = this->full_grid_.grid_vectors()[i_dim][index];
         }
     }
-    return merlin::splint::CartesianGrid(std::move(grid_nodes), std::move(shape),
-                                         reinterpret_cast<double **>(grid_nodes.end()));
+    return merlin::grid::CartesianGrid(std::move(grid_nodes), std::move(shape),
+                                       reinterpret_cast<double **>(grid_nodes.end()));
 }
 
 }  // namespace spgrid
