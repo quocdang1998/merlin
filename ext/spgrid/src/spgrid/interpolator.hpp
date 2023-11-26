@@ -23,6 +23,18 @@ class Interpolator {
                  const merlin::Vector<merlin::splint::Method> & method, std::uint64_t n_threads = 4);
     /// @}
 
+    /// @name Attributes
+    /// @{
+    /** @brief Get constant reference to coefficients.*/
+    const merlin::floatvec & get_coeff(void) const noexcept { return this->coeff_; }
+    /// @}
+
+    /// @name Evaluation
+    /// @{
+    /** @brief Evaluate interpolation by CPU parallelism.*/
+    merlin::floatvec evaluate(const merlin::array::Array & points, std::uint64_t n_threads = 1);
+    /// @}
+
   protected:
     /** @brief Sparse grid to interpolate over.*/
     SparseGrid grid_;

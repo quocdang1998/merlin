@@ -4,6 +4,8 @@
 
 #include "merlin/logger.hpp"
 #include "merlin/array/array.hpp"  // merlin::Array
+#include "merlin/utils.hpp"
+#include "merlin/array/operation.hpp"
 
 int main(void) {
     // initialize array

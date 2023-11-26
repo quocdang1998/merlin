@@ -17,17 +17,23 @@ struct ThreadDivider {
     /** @brief Constructor from number of tasks, index of the current thread and the total number of threads.*/
     __cuhostdev__ ThreadDivider(const std::uint64_t & num_task, const std::uint64_t & thread_idx,
                                 const std::uint64_t & num_threads) {
-        // calculate number of thread per task (= 1) if num_task >= num_threads
-        this->numthreads_pertask = num_threads / num_task;
-        if (this->numthreads_pertask == 0) {
+        if (num_task >= num_threads) {
+            // when number of task is bigger than number of thread
             this->num_groups = num_threads;
             this->numthreads_pertask = 1;
-        } else {
+            this->group_idx = thread_idx;
+            this->thread_idx_in_group = 0;
+        } else{
+            // when number of thread is bigger than number of task
             this->num_groups = num_task;
+            std::uint64_t extra_thread = num_threads % num_task;
+            std::uint64_t equi_partition = num_threads / num_task;
+            bool is_inextra = (thread_idx < extra_thread * (equi_partition + 1));
+            this->numthreads_pertask = (is_inextra) ? (equi_partition + 1) : equi_partition;
+            std::uint64_t effective_thread_idx = (is_inextra) ? thread_idx : (thread_idx - extra_thread);
+            this->group_idx = effective_thread_idx / this->numthreads_pertask;
+            this->thread_idx_in_group = effective_thread_idx % this->numthreads_pertask;
         }
-        // calculate group index and thread index in the group
-        this->group_idx = thread_idx / this->numthreads_pertask;
-        this->thread_idx_in_group = thread_idx % this->numthreads_pertask;
     }
     /// @}
 

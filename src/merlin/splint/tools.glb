@@ -5,7 +5,6 @@
 
 #include "merlin/cuda/memory.hpp"            // merlin::cuda::copy_class_to_shared_mem
 #include "merlin/cuda/stream.hpp"            // merlin::cuda::Stream
-#include "merlin/splint/cartesian_grid.hpp"  // merlin::splint::CartesianGrid
 #include "merlin/splint/intpl/linear.hpp"    // merlin::splint::intpl::construct_linear
 #include "merlin/splint/intpl/lagrange.hpp"  // merlin::splint::intpl::construct_lagrange
 #include "merlin/splint/intpl/newton.hpp"    // merlin::splint::intpl::construction_newton
@@ -20,7 +19,7 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Kernel calculating coefficients
-__global__ static void construct_coeff_kernel(double * coeff, const splint::CartesianGrid * p_grid,
+__global__ static void construct_coeff_kernel(double * coeff, const grid::CartesianGrid * p_grid,
                                               const Vector<splint::Method> * p_method) {
     // functor to coefficient construction methods
     static const std::array<splint::ConstructionMethod, 3> construction_funcs {
@@ -75,7 +74,7 @@ __global__ static void construct_coeff_kernel(double * coeff, const splint::Cart
 }
 
 // Construct interpolation coefficients with GPU parallelism
-void splint::construct_coeff_gpu(double * coeff, const splint::CartesianGrid * p_grid,
+void splint::construct_coeff_gpu(double * coeff, const grid::CartesianGrid * p_grid,
                                  const Vector<splint::Method> * p_method, std::uint64_t n_threads,
                                  std::uint64_t shared_mem_size, const cuda::Stream * stream_ptr) noexcept {
     // create an asynchrnous CUDA stream
@@ -89,7 +88,7 @@ void splint::construct_coeff_gpu(double * coeff, const splint::CartesianGrid * p
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Kernel evaluating interpolation
-__global__ static void eval_intpl_kernel(double * coeff, const splint::CartesianGrid * p_grid,
+__global__ static void eval_intpl_kernel(double * coeff, const grid::CartesianGrid * p_grid,
                                          const Vector<splint::Method> * p_method, double * points,
                                          std::uint64_t n_points, double * result) {
     // get thread index and num threads
@@ -162,7 +161,7 @@ __global__ static void eval_intpl_kernel(double * coeff, const splint::Cartesian
 }
 
 // Evaluate interpolation with GPU parallelism
-void splint::eval_intpl_gpu(double * coeff, const splint::CartesianGrid * p_grid,
+void splint::eval_intpl_gpu(double * coeff, const grid::CartesianGrid * p_grid,
                             const Vector<splint::Method> * p_method, double * points, std::uint64_t n_points,
                             double * result, std::uint64_t n_threads, std::uint64_t ndim, std::uint64_t shared_mem_size,
                             const cuda::Stream * stream_ptr) noexcept {

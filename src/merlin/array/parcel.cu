@@ -4,7 +4,8 @@
 #include <functional>  // std::bind, std::placeholders
 
 #include "merlin/array/array.hpp"      // merlin::array::Array
-#include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::copy, merlin::array::fill
+#include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::get_leap,
+                                       // merlin::array::copy, merlin::array::fill
 #include "merlin/env.hpp"              // merlin::Environment
 #include "merlin/logger.hpp"           // FAILURE
 #include "merlin/utils.hpp"            // merlin::contiguous_to_ndim_idx, merlin::inner_prod
@@ -134,7 +135,15 @@ double array::Parcel::get(const intvec & index) const {
 }
 
 // Get value of element at a C-contiguous index
-double array::Parcel::get(std::uint64_t index) const { return this->get(contiguous_to_ndim_idx(index, this->shape())); }
+double array::Parcel::get(std::uint64_t index) const {
+    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    double result;
+    push_gpu(this->device());
+    ::cudaMemcpy(&result, reinterpret_cast<double *>(data_ptr), sizeof(double), ::cudaMemcpyDeviceToHost);
+    pop_gpu();
+    return result;
+}
 
 // Set value of element at a n-dim index
 void array::Parcel::set(const intvec index, double value) {
@@ -147,7 +156,11 @@ void array::Parcel::set(const intvec index, double value) {
 
 // Set value of element at a C-contiguous index
 void array::Parcel::set(std::uint64_t index, double value) {
-    this->set(contiguous_to_ndim_idx(index, this->shape()), value);
+    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    push_gpu(this->device());
+    ::cudaMemcpy(reinterpret_cast<double *>(data_ptr), &value, sizeof(double), ::cudaMemcpyHostToDevice);
+    pop_gpu();
 }
 
 // Set value of all elements

@@ -4,20 +4,20 @@
 
 #include <tuple>  // std::tuple
 
-#include "merlin/array/nddata.hpp"        // merlin::array::NdData
-#include "merlin/exports.hpp"             // MERLIN_EXPORTS
-#include "merlin/splint/declaration.hpp"  // merlin::splint::CartesianGrid
-#include "merlin/splint/tools.hpp"        // merlin::splint::Method
-#include "merlin/synchronizer.hpp"        // merlin::ProcessorType, merlin::Synchronizer
-#include "merlin/vector.hpp"              // merlin::Vector, merlin::floatvec
+#include "merlin/array/nddata.hpp"         // merlin::array::NdData
+#include "merlin/exports.hpp"              // MERLIN_EXPORTS
+#include "merlin/grid/cartesian_grid.hpp"  // merlin::grid::CartesianGrid
+#include "merlin/splint/tools.hpp"         // merlin::splint::Method
+#include "merlin/synchronizer.hpp"         // merlin::ProcessorType, merlin::Synchronizer
+#include "merlin/vector.hpp"               // merlin::Vector, merlin::floatvec
 
 namespace merlin {
 
 namespace splint {
 
 /** @brief Create pointer to copied members for merlin::splint::Interpolator on GPU.*/
-void create_intpl_gpuptr(const splint::CartesianGrid & cpu_grid, const Vector<splint::Method> & cpu_methods,
-                         splint::CartesianGrid *& gpu_pgrid, Vector<splint::Method> *& gpu_pmethods,
+void create_intpl_gpuptr(const grid::CartesianGrid & cpu_grid, const Vector<splint::Method> & cpu_methods,
+                         grid::CartesianGrid *& gpu_pgrid, Vector<splint::Method> *& gpu_pmethods,
                          std::uintptr_t stream_ptr);
 
 }  // namespace splint
@@ -43,16 +43,16 @@ class splint::Interpolator {
      *  @param method Interpolation method to use for each dimension.
      *  @param processor Flag indicate the processor performing the interpolation (CPU or GPU).
     */
-    MERLIN_EXPORTS Interpolator(const splint::CartesianGrid & grid, const array::Array & values,
+    MERLIN_EXPORTS Interpolator(const grid::CartesianGrid & grid, const array::Array & values,
                                 const Vector<splint::Method> & method, ProcessorType processor = ProcessorType::Cpu);
     /// @}
 
     /// @name Get elements and attributes
     /// @{
     /** @brief Get reference to the grid.*/
-    constexpr splint::CartesianGrid & get_grid(void) noexcept { return *(this->p_grid_); }
+    constexpr grid::CartesianGrid & get_grid(void) noexcept { return *(this->p_grid_); }
     /** @brief Get constant reference to the grid.*/
-    constexpr const splint::CartesianGrid & get_grid(void) const noexcept { return *(this->p_grid_); }
+    constexpr const grid::CartesianGrid & get_grid(void) const noexcept { return *(this->p_grid_); }
     /** @brief Get reference to the coefficient array.*/
     constexpr array::NdData & get_coeff(void) noexcept { return *(this->p_coeff_); }
     /** @brief Get const reference to the coefficient array.*/
@@ -112,7 +112,7 @@ class splint::Interpolator {
 
   private:
     /** @brief Cartesian grid to interpolate.*/
-    splint::CartesianGrid * p_grid_ = nullptr;
+    grid::CartesianGrid * p_grid_ = nullptr;
     /** @brief Pointer to coefficient array.*/
     array::NdData * p_coeff_ = nullptr;
     /** @brief Interpolation method to applied on each dimension.*/

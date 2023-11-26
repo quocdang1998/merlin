@@ -9,7 +9,6 @@
 #include "merlin/cuda_interface.hpp"         // merlin::cuda_mem_free
 #include "merlin/env.hpp"                    // merlin::Environment
 #include "merlin/logger.hpp"                 // FAILURE, merlin::cuda_compile_error
-#include "merlin/splint/cartesian_grid.hpp"  // merlin::splint::CartesianGrid
 #include "merlin/splint/tools.hpp"           // merlin::splint::construct_coeff_cpu
 
 #define push_gpu(gpu)                                                                                                  \
@@ -28,8 +27,8 @@ namespace merlin {
 #ifndef __MERLIN_CUDA__
 
 // Create pointer to copied members of merlin::splint::Interpolator on GPU
-void splint::create_intpl_gpuptr(const splint::CartesianGrid & cpu_grid, const Vector<splint::Method> & cpu_methods,
-                                 splint::CartesianGrid *& gpu_pgrid, Vector<splint::Method> *& gpu_pmethods,
+void splint::create_intpl_gpuptr(const grid::CartesianGrid & cpu_grid, const Vector<splint::Method> & cpu_methods,
+                                 grid::CartesianGrid *& gpu_pgrid, Vector<splint::Method> *& gpu_pmethods,
                                  std::uintptr_t stream_ptr) {
     FAILURE(cuda_compile_error, "Cannot invoke GPU function since merlin is not compiled with CUDA option.\n");
 }
@@ -41,7 +40,7 @@ void splint::create_intpl_gpuptr(const splint::CartesianGrid & cpu_grid, const V
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Construct from a CPU array
-splint::Interpolator::Interpolator(const splint::CartesianGrid & grid, const array::Array & values,
+splint::Interpolator::Interpolator(const grid::CartesianGrid & grid, const array::Array & values,
                                    const Vector<splint::Method> & method, ProcessorType processor) :
 ndim_(grid.ndim()), shared_mem_size_(grid.sharedmem_size() + method.sharedmem_size()) {
     // check shape
@@ -55,7 +54,7 @@ ndim_(grid.ndim()), shared_mem_size_(grid.sharedmem_size() + method.sharedmem_si
     if (processor == ProcessorType::Cpu) {
         // CPU
         this->synchronizer_ = Synchronizer(new std::future<void>());
-        this->p_grid_ = new splint::CartesianGrid(grid);
+        this->p_grid_ = new grid::CartesianGrid(grid);
         this->p_method_ = new Vector<splint::Method>(method);
         this->p_coeff_ = new array::Array(values);
     } else if (processor == ProcessorType::Gpu) {

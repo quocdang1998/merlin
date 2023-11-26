@@ -4,7 +4,7 @@
 #include "merlin/cuda/memory.hpp"
 #include "merlin/cuda_interface.hpp"
 #include "merlin/env.hpp"
-#include "merlin/splint/cartesian_grid.hpp"
+#include "merlin/grid/cartesian_grid.hpp"
 #include "merlin/splint/interpolator.hpp"
 #include "merlin/splint/tools.hpp"
 #include "merlin/logger.hpp"
@@ -16,7 +16,7 @@ double foo(const merlin::floatvec & v) {
 
 int main(void) {
     // initialize data and grid
-    merlin::splint::CartesianGrid cart_gr({{0.1, 0.2, 0.3}, {1.0, 2.0, 3.0, 4.0}, {0.0, 0.25, 0.5}});
+    merlin::grid::CartesianGrid cart_gr({{0.1, 0.2, 0.3}, {1.0, 2.0, 3.0, 4.0}, {0.0, 0.25, 0.5}});
     merlin::array::Array value(cart_gr.shape());
     for (std::uint64_t i = 0; i < cart_gr.size(); i++) {
         merlin::intvec index(merlin::contiguous_to_ndim_idx(i, cart_gr.shape()));

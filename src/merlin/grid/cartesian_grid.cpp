@@ -1,5 +1,5 @@
 // Copyright 2022 quocdang1998
-#include "merlin/splint/cartesian_grid.hpp"
+#include "merlin/grid/cartesian_grid.hpp"
 
 #include <algorithm>  // std::stable_sort
 #include <cinttypes>  // PRIu64
@@ -9,8 +9,9 @@
 #include <sstream>    // std::ostringstream
 #include <vector>     // std::vector
 
-#include "merlin/logger.hpp"  // FAILURE
-#include "merlin/utils.hpp"   // merlin::ptr_to_subsequence, merlin::prod_elements
+#include "merlin/array/array.hpp"  // merlin::array::Array
+#include "merlin/logger.hpp"       // FAILURE
+#include "merlin/utils.hpp"        // merlin::ptr_to_subsequence, merlin::prod_elements
 
 namespace merlin {
 
@@ -43,7 +44,7 @@ static bool has_duplicated_element(const std::vector<double> & grid_vector) {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Construct from initializer list
-splint::CartesianGrid::CartesianGrid(const Vector<floatvec> & grid_vectors) :
+grid::CartesianGrid::CartesianGrid(const Vector<floatvec> & grid_vectors) :
 grid_shape_(grid_vectors.size()), grid_vectors_(grid_vectors.size()) {
     std::uint64_t num_nodes = 0;
     for (std::uint64_t i_dim = 0; i_dim < grid_vectors.size(); i_dim++) {
@@ -83,7 +84,7 @@ grid_shape_(grid_vectors.size()), grid_vectors_(grid_vectors.size()) {
 }
 
 // Constructor as a sub-grid from a larger grid
-splint::CartesianGrid::CartesianGrid(const splint::CartesianGrid & whole, const slicevec & slices) :
+grid::CartesianGrid::CartesianGrid(const grid::CartesianGrid & whole, const slicevec & slices) :
 grid_shape_(whole.ndim()), grid_vectors_(whole.ndim()) {
     // check size
     if (slices.size() != whole.ndim()) {
@@ -114,13 +115,13 @@ grid_shape_(whole.ndim()), grid_vectors_(whole.ndim()) {
 }
 
 // Copy constructor
-splint::CartesianGrid::CartesianGrid(const splint::CartesianGrid & src) :
+grid::CartesianGrid::CartesianGrid(const grid::CartesianGrid & src) :
 grid_nodes_(src.grid_nodes_), grid_shape_(src.grid_shape_), grid_vectors_(src.ndim()) {
     ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->grid_vectors_.data());
 }
 
 // Copy assignment
-splint::CartesianGrid & splint::CartesianGrid::operator=(const splint::CartesianGrid & src) {
+grid::CartesianGrid & grid::CartesianGrid::operator=(const grid::CartesianGrid & src) {
     this->grid_nodes_ = src.grid_nodes_;
     this->grid_shape_ = src.grid_shape_;
     this->grid_vectors_ = Vector<double *>(this->ndim());
@@ -131,7 +132,7 @@ splint::CartesianGrid & splint::CartesianGrid::operator=(const splint::Cartesian
 #ifndef __MERLIN_CUDA__
 
 // Copy data to a pre-allocated memory
-void * splint::CartesianGrid::copy_to_gpu(splint::CartesianGrid * gpu_ptr, void * grid_vector_data_ptr,
+void * grid::CartesianGrid::copy_to_gpu(grid::CartesianGrid * gpu_ptr, void * grid_vector_data_ptr,
                                           std::uintptr_t stream_ptr) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
     return nullptr;
@@ -140,7 +141,7 @@ void * splint::CartesianGrid::copy_to_gpu(splint::CartesianGrid * gpu_ptr, void 
 #endif  // __MERLIN_CUDA__
 
 // Get element at a C-contiguous index
-floatvec splint::CartesianGrid::operator[](std::uint64_t index) const noexcept {
+floatvec grid::CartesianGrid::operator[](std::uint64_t index) const noexcept {
     intvec nd_index = contiguous_to_ndim_idx(index, this->grid_shape_);
     floatvec point(this->ndim(), 0);
     for (std::uint64_t i = 0; i < point.size(); i++) {
@@ -150,7 +151,7 @@ floatvec splint::CartesianGrid::operator[](std::uint64_t index) const noexcept {
 }
 
 // Get element at a multi-dimensional index
-floatvec splint::CartesianGrid::operator[](const intvec & index) const noexcept {
+floatvec grid::CartesianGrid::operator[](const intvec & index) const noexcept {
     floatvec point(this->ndim());
     for (std::uint64_t i = 0; i < point.size(); i++) {
         point[i] = this->grid_vectors_[i][index[i]];
@@ -158,8 +159,25 @@ floatvec splint::CartesianGrid::operator[](const intvec & index) const noexcept 
     return point;
 }
 
+// Get all points in the grid
+array::Array grid::CartesianGrid::get_points(void) const {
+    // initialize result
+    std::uint64_t shape_data[2] = {this->size_, this->ndim()};
+    intvec points_shape;
+    points_shape.assign(shape_data, 2);
+    array::Array points(points_shape);
+    for (std::uint64_t i_point = 0; i_point < this->size_; i_point++) {
+        double * point_data = points.data() + i_point * this->ndim();
+        intvec point_idx = contiguous_to_ndim_idx(i_point, this->grid_shape_);
+        for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+            point_data[i_dim] = this->grid_vectors_[i_dim][point_idx[i_dim]];
+        }
+    }
+    return points;
+}
+
 // String representation
-std::string splint::CartesianGrid::str(void) const {
+std::string grid::CartesianGrid::str(void) const {
     std::ostringstream os;
     os << "<CartesianGrid(";
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
@@ -174,6 +192,6 @@ std::string splint::CartesianGrid::str(void) const {
 }
 
 // Destructor
-splint::CartesianGrid::~CartesianGrid(void) {}
+grid::CartesianGrid::~CartesianGrid(void) {}
 
 }  // namespace merlin

@@ -3,7 +3,6 @@
 #define MERLIN_SPLINT_DECLARATION_HPP_
 
 namespace merlin::splint {
-class CartesianGrid;
 class Interpolator;
 }  // namespace merlin::splint
 

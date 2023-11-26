@@ -80,20 +80,16 @@ class array::Array : public array::NdData {
     MERLIN_EXPORTS Array & operator=(array::Array && src);
     /// @}
 
-    /// @name Sciling operator
+    /// @name Slicing operator
     /// @{
-    /** @brief Sciling operator.
-     *  @details Get an element at a given index.
-     *  @param index Vector of indices along each dimension.
-     *  @return Reference to the element at the provided index.
-     */
+    /** @brief Get reference to element at a given ndim index.*/
     MERLIN_EXPORTS double & operator[](const intvec & index);
-    /** @brief Sciling operator.
-     *  @details Get an element at a given index.
-     *  @param index Vector of indices along each dimension.
-     *  @return Reference to the element at the provided index.
-     */
+    /** @brief Get reference to element at a given C-contiguous index.*/
+    MERLIN_EXPORTS double & operator[](std::uint64_t index);
+    /** @brief Get constant reference to element at a given ndim index.*/
     MERLIN_EXPORTS const double & operator[](const intvec & index) const;
+    /** @brief Get const reference to element at a given C-contiguous index.*/
+    MERLIN_EXPORTS const double & operator[](std::uint64_t index) const;
     /// @}
 
     /// @name Get and set element
