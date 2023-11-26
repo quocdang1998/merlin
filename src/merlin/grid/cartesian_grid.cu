@@ -1,5 +1,5 @@
 // Copyright 2022 quocdang1998
-#include "merlin/splint/cartesian_grid.hpp"
+#include "merlin/grid/cartesian_grid.hpp"
 
 #include "merlin/utils.hpp"  // merlin::ptr_to_subsequence
 
@@ -9,10 +9,10 @@ namespace merlin {
 // CartesianGrid
 // ---------------------------------------------------------------------------------------------------------------------
 
-void * splint::CartesianGrid::copy_to_gpu(splint::CartesianGrid * gpu_ptr, void * grid_data_ptr,
+void * grid::CartesianGrid::copy_to_gpu(grid::CartesianGrid * gpu_ptr, void * grid_data_ptr,
                                           std::uintptr_t stream_ptr) const {
     // initialize buffer to store data of the copy before cloning it to GPU
-    splint::CartesianGrid copy_on_gpu;
+    grid::CartesianGrid copy_on_gpu;
     // shallow copy of grid nodes, grid shape and grid vectors
     double * grid_nodes_ptr = reinterpret_cast<double *>(grid_data_ptr);
     copy_on_gpu.grid_nodes_.data() = grid_nodes_ptr;
@@ -34,7 +34,7 @@ void * splint::CartesianGrid::copy_to_gpu(splint::CartesianGrid * gpu_ptr, void 
     ::cudaMemcpyAsync(grid_vectors_ptr, gpu_grid_vector.data(), this->ndim() * sizeof(double *),
                       ::cudaMemcpyHostToDevice, stream);
     // copy temporary object to GPU
-    ::cudaMemcpyAsync(gpu_ptr, &copy_on_gpu, sizeof(splint::CartesianGrid), ::cudaMemcpyHostToDevice, stream);
+    ::cudaMemcpyAsync(gpu_ptr, &copy_on_gpu, sizeof(grid::CartesianGrid), ::cudaMemcpyHostToDevice, stream);
     // nullify pointer of temporary object to avoid de-allocate GPU pointer
     copy_on_gpu.grid_nodes_.data() = nullptr;
     copy_on_gpu.grid_shape_.data() = nullptr;

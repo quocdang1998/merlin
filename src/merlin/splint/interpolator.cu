@@ -9,7 +9,6 @@
 #include "merlin/cuda/memory.hpp"            // merlin::cuda::Memory
 #include "merlin/env.hpp"                    // merlin::Environment
 #include "merlin/logger.hpp"                 // FAILURE
-#include "merlin/splint/cartesian_grid.hpp"  // merlin::splint::CartesianGrid
 #include "merlin/splint/tools.hpp"           // merlin::splint::construct_coeff_gpu
 
 #define push_gpu(gpu)                                                                                                  \
@@ -26,8 +25,8 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Create pointer to copied members of merlin::splint::Interpolator on GPU
-void splint::create_intpl_gpuptr(const splint::CartesianGrid & cpu_grid, const Vector<splint::Method> & cpu_methods,
-                                 splint::CartesianGrid *& gpu_pgrid, Vector<splint::Method> *& gpu_pmethods,
+void splint::create_intpl_gpuptr(const grid::CartesianGrid & cpu_grid, const Vector<splint::Method> & cpu_methods,
+                                 grid::CartesianGrid *& gpu_pgrid, Vector<splint::Method> *& gpu_pmethods,
                                  std::uintptr_t stream_ptr) {
     cuda::Memory gpu_mem(stream_ptr, cpu_grid, cpu_methods);
     gpu_pgrid = gpu_mem.get<0>();

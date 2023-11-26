@@ -1,5 +1,5 @@
 // Copyright 2022 quocdang1998
-#include "merlin/splint/cartesian_grid.hpp"
+#include "merlin/grid/cartesian_grid.hpp"
 
 #include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::ptr_to_subsequence
 
@@ -10,7 +10,7 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Constructor from list of nodes and shape
-__cuhostdev__ splint::CartesianGrid::CartesianGrid(floatvec && grid_nodes, intvec && shape,
+__cuhostdev__ grid::CartesianGrid::CartesianGrid(floatvec && grid_nodes, intvec && shape,
                                                    double ** grid_vectors_memory) :
 grid_nodes_(grid_nodes), grid_shape_(shape) {
     // calculate pointers per dimension
@@ -23,7 +23,7 @@ grid_nodes_(grid_nodes), grid_shape_(shape) {
 #ifdef __NVCC__
 
 // Copy to shared memory
-__cudevice__ void * splint::CartesianGrid::copy_by_block(splint::CartesianGrid * dest_ptr, void * grid_data_ptr,
+__cudevice__ void * grid::CartesianGrid::copy_by_block(grid::CartesianGrid * dest_ptr, void * grid_data_ptr,
                                                          std::uint64_t thread_idx, std::uint64_t block_size) const {
     // shallow copy of grid node, grid shape and grid vectors
     double * grid_nodes_ptr = reinterpret_cast<double *>(grid_data_ptr);
@@ -58,7 +58,7 @@ __cudevice__ void * splint::CartesianGrid::copy_by_block(splint::CartesianGrid *
 }
 
 // Copy to shared memory
-__cudevice__ void * splint::CartesianGrid::copy_by_thread(splint::CartesianGrid * dest_ptr,
+__cudevice__ void * grid::CartesianGrid::copy_by_thread(grid::CartesianGrid * dest_ptr,
                                                           void * grid_data_ptr) const {
     // shallow copy of grid node, grid shape and grid vectors
     double * grid_nodes_ptr = reinterpret_cast<double *>(grid_data_ptr);

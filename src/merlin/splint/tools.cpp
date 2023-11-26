@@ -7,7 +7,6 @@
 
 #include "merlin/array/operation.hpp"        // merlin::array::contiguous_strides
 #include "merlin/cuda/stream.hpp"            // merlin::cuda::Stream
-#include "merlin/splint/cartesian_grid.hpp"  // merlin::splint::CartesianGrid
 #include "merlin/splint/intpl/linear.hpp"    // merlin::splint::intpl::construct_linear
 #include "merlin/splint/intpl/lagrange.hpp"  // merlin::splint::intpl::construct_lagrange
 #include "merlin/splint/intpl/newton.hpp"    // merlin::splint::intpl::construction_newton
@@ -22,7 +21,7 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Construct interpolation coefficients with CPU parallelism
-void splint::construct_coeff_cpu(std::future<void> * current_job, double * coeff, const splint::CartesianGrid * p_grid,
+void splint::construct_coeff_cpu(std::future<void> * current_job, double * coeff, const grid::CartesianGrid * p_grid,
                                  const Vector<splint::Method> * p_method, std::uint64_t n_threads) noexcept {
 
     // functor to coefficient construction methods
@@ -78,7 +77,7 @@ void splint::construct_coeff_cpu(std::future<void> * current_job, double * coeff
 #ifndef __MERLIN_CUDA__
 
 // Construct interpolation coefficients with GPU parallelism
-void splint::construct_coeff_gpu(double * coeff, const splint::CartesianGrid * p_grid,
+void splint::construct_coeff_gpu(double * coeff, const grid::CartesianGrid * p_grid,
                                  const Vector<splint::Method> * p_method, std::uint64_t n_threads,
                                  std::uint64_t shared_mem_size, const cuda::Stream * stream_ptr) noexcept {
     FAILURE(cuda_compile_error, "The library is not compiled with CUDA.\n");
@@ -91,7 +90,7 @@ void splint::construct_coeff_gpu(double * coeff, const splint::CartesianGrid * p
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Evaluate interpolation with CPU parallelism
-void splint::eval_intpl_cpu(std::future<void> * current_job, const double * coeff, const splint::CartesianGrid * p_grid,
+void splint::eval_intpl_cpu(std::future<void> * current_job, const double * coeff, const grid::CartesianGrid * p_grid,
                             const Vector<splint::Method> * p_method, const double * points, std::uint64_t n_points,
                             double * result, std::uint64_t n_threads) noexcept {
     // finish old job
@@ -140,7 +139,7 @@ void splint::eval_intpl_cpu(std::future<void> * current_job, const double * coef
 #ifndef __MERLIN_CUDA__
 
 // Evaluate interpolation with GPU parallelism
-void splint::eval_intpl_gpu(double * coeff, const splint::CartesianGrid * p_grid,
+void splint::eval_intpl_gpu(double * coeff, const grid::CartesianGrid * p_grid,
                             const Vector<splint::Method> * p_method, double * points, std::uint64_t n_points,
                             double * result, std::uint64_t n_threads, std::uint64_t ndim, std::uint64_t shared_mem_size,
                             const cuda::Stream * stream_ptr) noexcept {

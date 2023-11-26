@@ -50,7 +50,7 @@ list(APPEND MERLIN_SRC_CPP
      linalg/matrix.cpp
      slice.cpp
      shuffle.cpp
-     splint/cartesian_grid.cpp
+     grid/cartesian_grid.cpp
      splint/interpolator.cpp
      splint/tools.cpp
      statistics/moment.cpp
@@ -67,7 +67,7 @@ list(APPEND MERLIN_SRC_CU
      intpl/cartesian_grid.cu
      intpl/lagrange.cu
      intpl/newton.cu
-     splint/cartesian_grid.cu
+     grid/cartesian_grid.cu
      splint/interpolator.cu
      statistics/moment.cu
 )
@@ -100,7 +100,7 @@ list(APPEND MERLIN_SRC_RDC
      linalg/qr_solve.rdc
      linalg/matrix.rdc
      slice.rdc
-     splint/cartesian_grid.rdc
+     grid/cartesian_grid.rdc
      splint/intpl/lagrange.rdc
      splint/intpl/linear.rdc
      splint/intpl/newton.rdc

@@ -6,11 +6,11 @@
 #include <initializer_list>  // std::initializer_list
 #include <string>            // std::string
 
-#include "merlin/cuda_interface.hpp"      // __cuhostdev__
-#include "merlin/exports.hpp"             // MERLIN_EXPORTS
-#include "merlin/slice.hpp"               // merlin::slicevec
-#include "merlin/splint/declaration.hpp"  // merlin::splint::CartesianGrid
-#include "merlin/vector.hpp"              // merlin::floatvec, merlin::intvec, merlin::Vector
+#include "merlin/cuda_interface.hpp"    // __cuhostdev__
+#include "merlin/exports.hpp"           // MERLIN_EXPORTS
+#include "merlin/slice.hpp"             // merlin::slicevec
+#include "merlin/grid/declaration.hpp"  // merlin::grid::CartesianGrid
+#include "merlin/vector.hpp"            // merlin::floatvec, merlin::intvec, merlin::Vector
 
 namespace merlin {
 
@@ -20,7 +20,7 @@ namespace merlin {
  *  product over a set of vectors of nodes, representing the set of all possible distinct points that can constructed
  *  from the set of vectors.
  */
-class splint::CartesianGrid {
+class grid::CartesianGrid {
   public:
     /// @name Constructor
     /// @{
@@ -31,19 +31,19 @@ class splint::CartesianGrid {
     /** @brief Direct initialization.*/
     __cuhostdev__ CartesianGrid(floatvec && grid_nodes, intvec && shape, double ** grid_vectors_memory);
     /** @brief Constructor as a sub-grid from a larger grid.*/
-    MERLIN_EXPORTS CartesianGrid(const splint::CartesianGrid & whole, const slicevec & slices);
+    MERLIN_EXPORTS CartesianGrid(const grid::CartesianGrid & whole, const slicevec & slices);
     /// @}
 
     /// @name Copy and Move
     /// @{
     /** @brief Copy constructor.*/
-    MERLIN_EXPORTS CartesianGrid(const splint::CartesianGrid & src);
+    MERLIN_EXPORTS CartesianGrid(const grid::CartesianGrid & src);
     /** @brief Copy assignment.*/
-    MERLIN_EXPORTS splint::CartesianGrid & operator=(const splint::CartesianGrid & src);
+    MERLIN_EXPORTS grid::CartesianGrid & operator=(const grid::CartesianGrid & src);
     /** @brief Move constructor.*/
-    CartesianGrid(splint::CartesianGrid && src) = default;
+    CartesianGrid(grid::CartesianGrid && src) = default;
     /** @brief Move assignment.*/
-    splint::CartesianGrid & operator=(splint::CartesianGrid && src) = default;
+    grid::CartesianGrid & operator=(grid::CartesianGrid && src) = default;
     /// @}
 
     /// @name Get members and attributes
@@ -82,7 +82,7 @@ class splint::CartesianGrid {
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the grid and its data.*/
     std::uint64_t cumalloc_size(void) const noexcept {
-        std::uint64_t size = sizeof(splint::CartesianGrid);
+        std::uint64_t size = sizeof(grid::CartesianGrid);
         size += this->num_nodes() * sizeof(double) + this->ndim() * (sizeof(std::uint64_t) + sizeof(double *));
         return size;
     }
@@ -92,7 +92,7 @@ class splint::CartesianGrid {
      *  @param grid_data_ptr Pointer to a pre-allocated GPU memory storing data of grid vectors.
      *  @param stream_ptr Pointer to CUDA stream for asynchronous copy.
      */
-    MERLIN_EXPORTS void * copy_to_gpu(splint::CartesianGrid * gpu_ptr, void * grid_data_ptr,
+    MERLIN_EXPORTS void * copy_to_gpu(grid::CartesianGrid * gpu_ptr, void * grid_data_ptr,
                                       std::uintptr_t stream_ptr = 0) const;
     /** @brief Calculate the minimum number of bytes to allocate in CUDA shared memory to store the grid.*/
     std::uint64_t sharedmem_size(void) const noexcept { return this->cumalloc_size(); }
@@ -105,14 +105,14 @@ class splint::CartesianGrid {
      *  @param thread_idx Flatten ID of the current CUDA thread in the block.
      *  @param block_size Number of threads in the current CUDA block.
      */
-    __cudevice__ void * copy_by_block(splint::CartesianGrid * dest_ptr, void * grid_data_ptr, std::uint64_t thread_idx,
+    __cudevice__ void * copy_by_block(grid::CartesianGrid * dest_ptr, void * grid_data_ptr, std::uint64_t thread_idx,
                                       std::uint64_t block_size) const;
     /** @brief Copy grid to a pre-allocated memory region by a single GPU threads.
      *  @param dest_ptr Memory region where the grid is copied to.
      *  @param grid_data_ptr Pointer to a pre-allocated GPU memory storing data of grid vectors, size of
      *  ``floatvec[this->ndim()] + double[this->size()]``.
      */
-    __cudevice__ void * copy_by_thread(splint::CartesianGrid * dest_ptr, void * grid_data_ptr) const;
+    __cudevice__ void * copy_by_thread(grid::CartesianGrid * dest_ptr, void * grid_data_ptr) const;
 #endif  // __NVCC__
     /// @}
 
