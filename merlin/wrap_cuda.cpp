@@ -127,6 +127,22 @@ static void wrap_device(py::module & cuda_module) {
         "__repr__",
         [](cuda::Device & self) { return self.str(); }
     );
+    // action on all GPUs
+    cuda_module.def(
+        "print_gpus_spec",
+        &cuda::print_gpus_spec,
+        R"(
+        Print specification of all detected GPUs.
+
+        Wrapper of :cpp:func:`merlin::cuda::print_gpus_spec`)"
+    );
+    cuda_module.def(
+        "test_all_gpu",
+        &cuda::test_all_gpu,
+        R"(Perform a simple test on all detected GPU.
+
+        Wrapper of :cpp:func:`merlin::cuda::test_all_gpu`)"
+    );
 }
 
 // Wrap merlin::cuda::Event
