@@ -1,12 +1,12 @@
 #include "merlin/array/array.hpp"
-#include "merlin/splint/cartesian_grid.hpp"
+#include "merlin/grid/cartesian_grid.hpp"
 #include "merlin/splint/interpolator.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
 #include "merlin/vector.hpp"
 
-#include "merlin/intpl/cartesian_grid.hpp"
-#include "merlin/intpl/interpolant.hpp"
+// #include "merlin/intpl/cartesian_grid.hpp"
+// #include "merlin/intpl/interpolant.hpp"
 
 #include <cinttypes>
 
@@ -16,7 +16,7 @@ double foo(const merlin::floatvec & v) {
 
 int main(void) {
     // initialize data and grid
-    merlin::splint::CartesianGrid cart_gr({{0.1, 0.2, 0.3}, {1.0, 2.0, 3.0, 4.0}, {0.0, 0.25, 0.5}});
+    merlin::grid::CartesianGrid cart_gr({{0.1, 0.2, 0.3}, {1.0, 2.0, 3.0, 4.0}, {0.0, 0.25, 0.5}});
     merlin::array::Array value(cart_gr.shape());
     for (std::uint64_t i = 0; i < cart_gr.size(); i++) {
         merlin::intvec index(merlin::contiguous_to_ndim_idx(i, cart_gr.shape()));
@@ -38,7 +38,7 @@ int main(void) {
     // interpolation
     double point_data[9] = {0.0, 2.0, 1.0, 1.0, 1.0, 1.2, 0.5, 0.25, 2.4};
     merlin::array::Array points(point_data, {3, 3}, {3*sizeof(double), sizeof(double)}, false);
-    merlin::floatvec eval_values = interp.interpolate(points, 3);
+    merlin::floatvec eval_values = interp.evaluate(points, 3);
     interp.synchronize();
     MESSAGE("Evaluated values: %s.\n", eval_values.str().c_str());
 
