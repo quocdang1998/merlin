@@ -1,7 +1,7 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/parcel.hpp"
 
-#include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides
+#include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::get_leap
 #include "merlin/logger.hpp"           // CUDAERR
 #include "merlin/utils.hpp"            // merlin::inner_prod, merlin::contiguous_to_ndim_idx
 
@@ -15,32 +15,30 @@ namespace merlin {
 
 // Get reference to an element at a given n-dim index
 __cudevice__ double & array::Parcel::operator[](const intvec & index) {
-    // calculate strides
-    std::uint64_t strides = inner_prod(index, this->strides_);
-    double * element_ptr = reinterpret_cast<double *>(reinterpret_cast<std::uintptr_t>(this->data_) + strides);
-    return *element_ptr;
+    std::uint64_t leap = inner_prod(index, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    return *(reinterpret_cast<double *>(data_ptr));
 }
 
 // Get reference to an element at a given C-contiguous index
 __cudevice__ double & array::Parcel::operator[](std::uint64_t index) {
-    // calculate index vector
-    intvec index_ = contiguous_to_ndim_idx(index, this->shape_);
-    return this->operator[](index_);
+    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    return *(reinterpret_cast<double *>(data_ptr));
 }
 
 // Get const reference to an element at a given n-dim index
 __cudevice__ const double & array::Parcel::operator[](const intvec & index) const {
-    // calculate strides
-    std::uint64_t strides = inner_prod(index, this->strides_);
-    double * element_ptr = reinterpret_cast<double *>(reinterpret_cast<std::uintptr_t>(this->data_) + strides);
-    return *element_ptr;
+    std::uint64_t leap = inner_prod(index, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    return *(reinterpret_cast<double *>(data_ptr));
 }
 
 // Get constant reference to an element at a given C-contiguous index
 __cudevice__ const double & array::Parcel::operator[](std::uint64_t index) const {
-    // calculate index vector
-    intvec index_ = contiguous_to_ndim_idx(index, this->shape_);
-    return this->operator[](index_);
+    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    return *(reinterpret_cast<double *>(data_ptr));
 }
 
 // Copy to shared memory

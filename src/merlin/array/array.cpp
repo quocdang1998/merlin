@@ -7,8 +7,8 @@
 #include <ios>         // std::ios_base::failure
 #include <mutex>       // std::mutex
 
-#include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::copy, merlin::array::fill,
-                                       // merlin::array::print
+#include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::get_leap,
+                                       // merlin::array::copy, merlin::array::fill, merlin::array::print
 #include "merlin/array/parcel.hpp"     // merlin::array::Parcel
 #include "merlin/array/stock.hpp"      // merlin::array::Stock
 #include "merlin/logger.hpp"           // FAILURE
@@ -153,16 +153,30 @@ array::Array & array::Array::operator=(array::Array && src) {
     return *this;
 }
 
-// Get value operator
+// Get reference to element at a given ndim index
 double & array::Array::operator[](const intvec & index) {
     std::uint64_t leap = inner_prod(index, this->strides_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<double *>(data_ptr));
 }
 
-// Get value operator
+// Get reference to element at a given C-contiguous index
+double & array::Array::operator[](std::uint64_t index) {
+    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    return *(reinterpret_cast<double *>(data_ptr));
+}
+
+// Get constant reference to element at a given ndim index
 const double & array::Array::operator[](const intvec & index) const {
     std::uint64_t leap = inner_prod(index, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    return *(reinterpret_cast<const double *>(data_ptr));
+}
+
+// Get const reference to element at a given C-contiguous index
+const double & array::Array::operator[](std::uint64_t index) const {
+    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<const double *>(data_ptr));
 }
@@ -175,7 +189,11 @@ double array::Array::get(const intvec & index) const {
 }
 
 // Get value of element at a C-contiguous index
-double array::Array::get(std::uint64_t index) const { return this->get(contiguous_to_ndim_idx(index, this->shape())); }
+double array::Array::get(std::uint64_t index) const { 
+    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    return *(reinterpret_cast<double *>(data_ptr));
+}
 
 // Set value of element at a n-dim index
 void array::Array::set(const intvec index, double value) {
@@ -186,7 +204,9 @@ void array::Array::set(const intvec index, double value) {
 
 // Set value of element at a C-contiguous index
 void array::Array::set(std::uint64_t index, double value) {
-    this->set(contiguous_to_ndim_idx(index, this->shape()), value);
+    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    *(reinterpret_cast<double *>(data_ptr)) = value;
 }
 
 // Set value of all elements

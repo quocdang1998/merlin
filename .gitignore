@@ -2,8 +2,8 @@
 build
 
 # Pybind11 compiled library
-merlin.*.so
-merlin.*.pyd
+merlin/*.so
+merlin/*.pyd
 
 # CMake generated cmake_config.py
 setup_cfg/config.py

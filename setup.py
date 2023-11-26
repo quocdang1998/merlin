@@ -13,7 +13,7 @@ from setup_cfg import build_ext, ext_options, copy_dll_libs
 #import pybind11
 from pybind11.setup_helpers import Pybind11Extension
 merlin_extensions = [
-    Pybind11Extension("merlin", glob.glob(os.path.join("merlin", "*.cpp")), **ext_options)
+    Pybind11Extension("merlin.__init__", glob.glob(os.path.join("merlin", "*.cpp")), **ext_options)
 ]
 
 

@@ -21,6 +21,15 @@ namespace merlin::array {
  */
 __cuhostdev__ intvec contiguous_strides(const merlin::intvec & shape, std::uint64_t element_size);
 
+/** @brief Calculate the number of bytes to jump to get element at a given C-contiguous index.
+ *  @details This function is equivalent to the successive calls of `merlin::contiguous_to_ndim_idx` and
+ *  `merlin::inner_prod`, but it does not require any memory allocation.
+ *  @param index C-contiguous index.
+ *  @param shape Shape vector.
+ *  @param strides Strides vector
+ */
+__cuhostdev__ std::uint64_t get_leap(std::uint64_t index, const intvec & shape, const intvec & strides) noexcept;
+
 /** @brief Calculate the longest contiguous segment and break index of an tensor.
  *  @details Longest contiguous segment is the length (in bytes) of the longest sub-tensor that is C-contiguous in the
  *  memory.

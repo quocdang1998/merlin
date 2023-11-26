@@ -7,8 +7,8 @@
 #include <ios>         // std::ios_base::failure
 
 #include "merlin/array/array.hpp"      // merlin::array::Array
-#include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::copy, merlin::array::fill,
-                                       // merlin::array::print
+#include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::get_leap,
+                                       // merlin::array::copy, merlin::array::fill, merlin::array::print
 #include "merlin/logger.hpp"           // WARNING, FAILURE
 #include "merlin/platform.hpp"         // __MERLIN_LINUX__, __MERLIN_WINDOWS__
 #include "merlin/utils.hpp"            // merlin::get_current_process_id, merlin::get_time
@@ -178,7 +178,15 @@ double array::Stock::get(const intvec & index) const {
 }
 
 // Get value of element at a C-contiguous index
-double array::Stock::get(std::uint64_t index) const { return this->get(contiguous_to_ndim_idx(index, this->shape())); }
+double array::Stock::get(std::uint64_t index) const {
+    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    double result;
+    SHARED_LOCK_THREADSAFE();
+    read_from_file(&result, this->file_ptr_, reinterpret_cast<double *>(data_ptr), sizeof(double));
+    UNLOCK_THREADSAFE();
+    return result;
+}
 
 // Set value of element at a n-dim index
 void array::Stock::set(const intvec index, double value) {
@@ -191,7 +199,11 @@ void array::Stock::set(const intvec index, double value) {
 
 // Set value of element at a C-contiguous index
 void array::Stock::set(std::uint64_t index, double value) {
-    this->set(contiguous_to_ndim_idx(index, this->shape()), value);
+    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_);
+    std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
+    EXCLUSIVE_LOCK_THREADSAFE();
+    write_to_file(this->file_ptr_, reinterpret_cast<double *>(data_ptr), &value, sizeof(double));
+    UNLOCK_THREADSAFE();
 }
 
 // Set value of all elements
