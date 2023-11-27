@@ -2,6 +2,7 @@
 #ifndef MERLIN_ARRAY_ARRAY_HPP_
 #define MERLIN_ARRAY_ARRAY_HPP_
 
+#include <array>    // std::array
 #include <cstdint>  // std::uint64_t, std::uintptr_t
 #include <string>   // std::string
 
@@ -27,7 +28,7 @@ namespace array {
 double * allocate_memory(std::uint64_t size);
 
 /** @brief Pin memory to RAM.*/
-void cuda_pin_memory(double * ptr, std::uint64_t n_elem);
+void cuda_pin_memory(double * ptr, std::uint64_t mem_size);
 
 /** @brief Free array allocated in non pageable memory.*/
 void free_memory(double * ptr);

@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "merlin/array/array.hpp"
+#include "merlin/array/parcel.hpp"
 #include "merlin/grid/cartesian_grid.hpp"
 #include "merlin/utils.hpp"
 
@@ -83,11 +84,18 @@ int main(void) {
         merlin::splint::Method::Newton
     };
     spgrid::Interpolator interp(grid, value, methods, 10);
-    // std::cout << "Coefficients: " << interp.get_coeff().str() << "\n";
-    // double points_data[] = {150, 510, 350, 0.5, 1000, 1000, 550, 0.8};
-    // merlin::array::Array points(points_data, {2, 4}, {4*sizeof(double), sizeof(double)}, false);
+    std::cout << "Coefficients: " << interp.get_coeff().str() << "\n";
     merlin::array::Array points(point_generator(100, grid.fullgrid()));
-    std::cout << "Points: " << points.str() << "\n";
-    std::cout << "Evaluated: " << interp.evaluate(points, 5).str() << "\n";
+    // std::cout << "Points: " << points.str() << "\n";
+    std::cout << "Evaluated by CPU: " << interp.evaluate(points, 5).str() << "\n";
     // std::cout << "Reference: " << foo({150, 510, 350, 0.5}) << " " << foo({1000, 1000, 550, 0.8}) << "\n";
+
+    // test Sparse grid interpolation by GPU
+    merlin::cuda::Stream stream;
+    merlin::array::Parcel points_gpu(points.shape(), stream);
+    points_gpu.transfer_data_to_gpu(points, stream);
+    merlin::floatvec result_gpu(interp.evaluate(points_gpu, 32, stream));
+    stream.synchronize();
+    // std::cout << "Evaluated by GPU: " << result_gpu.str() << "\n";
+
 }

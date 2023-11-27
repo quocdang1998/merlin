@@ -99,6 +99,7 @@ void array::NdData::reshape(const intvec & new_shape) {
 // Collapse dimension from felt (or right)
 void array::NdData::remove_dim(std::uint64_t i_dim) {
     if (this->shape_[i_dim] != 1) {
+        WARNING("Cannot remove dimension with size differ than 1.\n");
         return;
     }
     intvec new_shape(this->ndim() - 1), new_strides(this->ndim() - 1);
@@ -112,6 +113,20 @@ void array::NdData::remove_dim(std::uint64_t i_dim) {
     }
     this->shape_ = std::move(new_shape);
     this->strides_ = std::move(new_strides);
+}
+
+// Collapse all dimensions with size 1
+void array::NdData::squeeze(void) {
+    std::uint64_t new_ndim = 0;
+    for (std::uint64_t i = 0; i < this->ndim(); i++) {
+        if (this->shape_[i] != 1) {
+            this->shape_[new_ndim] = this->shape_[i];
+            this->strides_[new_ndim] = this->strides_[i];
+            new_ndim++;
+        }
+    }
+    this->shape_ = intvec(this->shape_.data(), new_ndim);
+    this->strides_ = intvec(this->strides_.data(), new_ndim);
 }
 
 // String representation

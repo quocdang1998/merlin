@@ -7,12 +7,6 @@ namespace spgrid {
 // Utils
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Get shape from level
-static inline __cuhostdev__ std::uint64_t shape_from_level(std::uint64_t level) {
-    std::uint64_t shape = (level == 0) ? 2 : (1 << (level-1));
-    return shape;
-}
-
 // Get index of element in full grid of an hiearchical grid
 __cuhostdev__ std::uint64_t get_hiearchical_index(std::uint64_t subgrid_idx, std::uint64_t level,
                                                   std::uint64_t fullgrid_shape) noexcept {

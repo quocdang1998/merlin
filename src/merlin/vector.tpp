@@ -2,6 +2,7 @@
 #ifndef MERLIN_VECTOR_TPP_
 #define MERLIN_VECTOR_TPP_
 
+#include <concepts>     // std::same_as
 #include <sstream>      // std::ostringstream
 #include <type_traits>  // std::is_arithmetic_v, std::is_constructible_v, std::is_copy_assignable_v
 
@@ -132,16 +133,10 @@ void * Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr, std::uintptr
 
 // Copy data from GPU to CPU
 template <typename T>
-void * Vector<T>::copy_from_gpu(Vector<T> * gpu_ptr, std::uintptr_t stream_ptr) {
-    // create a temporary object to get pointer to data
-    Vector<T> gpu_object;
-    cuda_mem_cpy_device_to_host(&gpu_object, gpu_ptr, sizeof(Vector<T>), 0);
-    T * gpu_data_ptr = gpu_object.data();
+void * Vector<T>::copy_from_gpu(T * gpu_ptr, std::uintptr_t stream_ptr) {
     // copy data from GPU
-    cuda_mem_cpy_device_to_host(this->data_, gpu_data_ptr, this->size_ * sizeof(T), stream_ptr);
-    // avoid de-allocate gpu_object pointer
-    gpu_object.data_ = nullptr;
-    return reinterpret_cast<void *>(gpu_data_ptr + this->size_);
+    cuda_mem_cpy_device_to_host(this->data_, gpu_ptr, this->size_ * sizeof(T), stream_ptr);
+    return reinterpret_cast<void *>(gpu_ptr + this->size_);
 }
 
 #ifdef __NVCC__
@@ -181,15 +176,26 @@ __cudevice__ void * Vector<T>::copy_by_thread(Vector<T> * dest_ptr, void * data_
 
 #endif  // __NVCC__
 
+template <typename T>
+concept Streamable = requires (std::ostream & os, const T & obj) {
+    {os << obj} -> std::same_as<std::ostream &>;
+};
+
+template <typename T>
+concept Representable = requires (const T & obj) {
+    {obj.str()} -> std::convertible_to<std::string>;
+};
+
 // String representation for types printdable to std::ostream
 template <typename T>
+requires Streamable<T> || Representable<T>
 std::string Vector<T>::str(const char * sep) const {
     std::ostringstream os;
     os << "<";
     for (std::uint64_t i = 0; i < this->size_; i++) {
-        if constexpr (std::is_arithmetic_v<T>) {
+        if constexpr (Streamable<T>) {
             os << this->data_[i];
-        } else {
+        } else if constexpr (Representable<T>) {
             os << this->data_[i].str();
         }
         if (i != this->size_ - 1) {

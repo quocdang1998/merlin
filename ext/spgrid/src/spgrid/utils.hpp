@@ -2,13 +2,20 @@
 #ifndef SPGRID_UTILS_HPP_
 #define SPGRID_UTILS_HPP_
 
-#include "merlin/array/nddata.hpp"    // merlin::array::NdData
-#include "merlin/cuda_interface.hpp"  // __cuhostdev__
-#include "merlin/vector.hpp"          // merlin::intvec
+#include "merlin/array/nddata.hpp"      // merlin::array::NdData
+#include "merlin/cuda_interface.hpp"    // __cuhostdev__
+#include "merlin/grid/declaration.hpp"  // merlin::grid::CartesianGrid
+#include "merlin/vector.hpp"            // merlin::intvec
 
 #include "spgrid/declaration.hpp"  // spgrid::SparseGrid
 
 namespace spgrid {
+
+// Get shape from level
+inline __cuhostdev__ std::uint64_t shape_from_level(std::uint64_t level) {
+    std::uint64_t shape = (level == 0) ? 2 : (1 << (level-1));
+    return shape;
+}
 
 /** @brief Get max level from a given sparse grid shape.*/
 merlin::intvec get_max_levels(const merlin::intvec & spgrid_shape) noexcept;
@@ -36,6 +43,9 @@ __cuhostdev__ merlin::intvec fullgrid_idx_from_subgrid(std::uint64_t subgrid_idx
 
 /** @brief Copy elements from a full Cartesian data into a vector.*/
 merlin::floatvec copy_sparsegrid_data_from_cartesian(const merlin::array::NdData & full_data, const SparseGrid & grid);
+
+/** @brief Merge 2 Cartesian grid.*/
+void merge_grid(merlin::grid::CartesianGrid & total_grid, const merlin::grid::CartesianGrid & added_grid) noexcept;
 
 }  // namespace spgrid
 

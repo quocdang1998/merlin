@@ -3,6 +3,7 @@
 #define SPGRID_INTERPOLATOR_HPP_
 
 #include "merlin/array/nddata.hpp"  // merlin::array::NdData
+#include "merlin/cuda/stream.hpp"   // merlin::cuda::Stream
 #include "merlin/vector.hpp"        // merlin::Vector, merlin::floatvec
 #include "merlin/splint/tools.hpp"  // merlin::splint::Method
 

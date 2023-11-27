@@ -100,7 +100,7 @@ Grid
 .. doxysummary::
    :toctree: generated
 
-   merlin::splint::CartesianGrid
+   merlin::grid::CartesianGrid
 
 Polynomial interpolation
 ^^^^^^^^^^^^^^^^^^^^^^^^

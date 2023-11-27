@@ -24,28 +24,29 @@ list(APPEND MERLIN_SRC_CPP
      array/array.cpp
      array/parcel.cpp
      array/stock.cpp
-     candy/optmz/adam.cpp
-     candy/optmz/adagrad.cpp
-     candy/optmz/grad_descent.cpp
-     candy/launcher.cpp
-     candy/loss.cpp
+     # candy/optmz/adam.cpp
+     # candy/optmz/adagrad.cpp
+     # candy/optmz/grad_descent.cpp
+     # candy/launcher.cpp
+     # candy/loss.cpp
+     candy/gradient.cpp
      candy/model.cpp
-     candy/optimizer.cpp
-     candy/partition.cpp
+     # candy/optimizer.cpp
+     # candy/partition.cpp
      cuda/device.cpp
      cuda/event.cpp
      cuda/graph.cpp
      cuda/stream.cpp
      filelock.cpp
      iterator.cpp
-     intpl/cartesian_grid.cpp
-     intpl/grid.cpp
-     intpl/interpolant.cpp
-     intpl/lagrange.cpp
-     intpl/newton.cpp
-     intpl/nodes.cpp
-     intpl/regular_grid.cpp
-     intpl/sparse_grid.cpp
+     # intpl/cartesian_grid.cpp
+     # intpl/grid.cpp
+     # intpl/interpolant.cpp
+     # intpl/lagrange.cpp
+     # intpl/newton.cpp
+     # intpl/nodes.cpp
+     # intpl/regular_grid.cpp
+     # intpl/sparse_grid.cpp
      linalg/qr_solve.cpp
      linalg/matrix.cpp
      slice.cpp
@@ -53,50 +54,51 @@ list(APPEND MERLIN_SRC_CPP
      grid/cartesian_grid.cpp
      splint/interpolator.cpp
      splint/tools.cpp
-     statistics/moment.cpp
+     stat/moment.cpp
 )
 list(APPEND MERLIN_SRC_CU
      array/array.cu
      array/parcel.cu
-     candy/launcher.cu
+     # candy/launcher.cu
      candy/model.cu
      cuda/device.cu
      cuda/event.cu
      cuda/graph.cu
      cuda/stream.cu
-     intpl/cartesian_grid.cu
-     intpl/lagrange.cu
-     intpl/newton.cu
+     # intpl/cartesian_grid.cu
+     # intpl/lagrange.cu
+     # intpl/newton.cu
      grid/cartesian_grid.cu
      splint/interpolator.cu
-     statistics/moment.cu
 )
 list(APPEND MERLIN_SRC_GLB
-     candy/optimizer.glb
-     candy/optmz/adam.glb
-     candy/optmz/adagrad.glb
-     candy/optmz/grad_descent.glb
-     candy/launcher.glb
-     candy/loss.glb
+     # candy/optimizer.glb
+     # candy/optmz/adam.glb
+     # candy/optmz/adagrad.glb
+     # candy/optmz/grad_descent.glb
+     # candy/launcher.glb
+     # candy/loss.glb
      cuda/device.glb
-     intpl/lagrange.glb
-     intpl/newton.glb
+     # intpl/lagrange.glb
+     # intpl/newton.glb
      splint/tools.glb
+     stat/moment.glb
 )
 list(APPEND MERLIN_SRC_RDC
      array/operation.rdc
      array/parcel.rdc
-     candy/launcher.rdc
-     candy/loss.rdc
+     # candy/launcher.rdc
+     # candy/loss.rdc
+     candy/gradient.rdc
      candy/model.rdc
-     candy/optimizer.rdc
-     candy/optmz/adam.rdc
-     candy/optmz/adagrad.rdc
-     candy/optmz/grad_descent.rdc
+     # candy/optimizer.rdc
+     # candy/optmz/adam.rdc
+     # candy/optmz/adagrad.rdc
+     # candy/optmz/grad_descent.rdc
      cuda/device.rdc
-     intpl/cartesian_grid.rdc
-     intpl/lagrange.rdc
-     intpl/newton.rdc
+     # intpl/cartesian_grid.rdc
+     # intpl/lagrange.rdc
+     # intpl/newton.rdc
      linalg/qr_solve.rdc
      linalg/matrix.rdc
      slice.rdc
@@ -224,7 +226,7 @@ endif(MSVC)
 function(MerlinSetTargetProperties target_library)
     set_property(TARGET ${target_library} PROPERTY POSITION_INDEPENDENT_CODE ON)
     set_property(TARGET ${target_library} PROPERTY INTERFACE_POSITION_INDEPENDENT_CODE ON)
-    target_compile_features(${target_library} PUBLIC cxx_std_17 cuda_std_17)
+    target_compile_features(${target_library} PUBLIC cxx_std_20 cuda_std_20)
     target_include_directories(
         ${target_library} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>

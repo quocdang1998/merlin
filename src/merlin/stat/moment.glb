@@ -1,0 +1,81 @@
+// Copyright 2023 quocdang1998
+#include "merlin/stat/moment.hpp"
+
+#if defined(__MERLIN_LINUX__)
+#include <cmath>  // std::isfinite, std::isnormal
+#elif defined(__MERLIN_WINDOWS__)
+#include <math.h>  // isfinite, isnormal
+#endif  // __MERLIN_LINUX__
+
+#include "merlin/array/parcel.hpp"    // merlin::array::Parcel
+#include "merlin/cuda_interface.hpp"  // merlin::cuda_mem_alloc, merlin::cuda_mem_free,
+                                      // merlin::cuda_mem_cpy_device_to_host
+#include "merlin/cuda/memory.hpp"     // merlin::cuda::Memory, merlin::cuda::copy_class_to_shared_mem
+#include "merlin/utils.hpp"           // merlin::flatten_thread_index, merlin::size_of_block
+
+namespace merlin {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Powered Mean
+// ---------------------------------------------------------------------------------------------------------------------
+
+__global__ static void calc_powered_mean(std::uint64_t order, const array::Parcel * p_data, double * result) {
+    // copy data to shared mem
+    extern __shared__ char shared_mem[];
+    __shared__ unsigned long long num_normals;
+    auto [avail_shrmem, p_data_shared] = cuda::copy_class_to_shared_mem(shared_mem, *p_data);
+    std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
+    double * order_mem = reinterpret_cast<double *>(avail_shrmem);
+    // set zero result
+    if (thread_idx == 0) {
+        num_normals = 0;
+        for (std::uint64_t j = 0; j < order; j++) {
+            result[j] = 0.0;
+        }
+    }
+    __syncthreads();
+    // assigning order vector and number of normal elements
+    floatvec cache_thread;
+    cache_thread.assign(order_mem + thread_idx * order, order);
+    std::uint64_t * normal_elem_mem = reinterpret_cast<std::uint64_t *>(order_mem + block_size * order);
+    std::uint64_t & num_normal_elem = *(normal_elem_mem + thread_idx);
+    // parallel calculate mean
+    std::uint64_t thread_order = order;
+    for (std::uint64_t i = thread_idx; i < p_data_shared->size(); i += block_size) {
+        double value = (*p_data_shared)[i];
+#if defined(__MERLIN_LINUX__)
+        if (!std::isnormal(value)) { continue; }
+#elif defined(__MERLIN_WINDOWS__)
+        if (!isfinite(value) || (value == 0.0)) { continue; }
+#endif  // __MERLIN_LINUX__
+        for (std::uint64_t j = 0; j < thread_order; j++) {
+            cache_thread[j] += value;
+            value *= value;
+        }
+        num_normal_elem++;
+    }
+    // add number of normal elements
+    ::atomicAdd(&num_normals, num_normal_elem);
+    // add to the first cache
+    for (std::uint64_t j = 0; j < thread_order; j++) {
+        ::atomicAdd(result + j, cache_thread[j] / num_normals);
+    }
+}
+
+// Calculate powered mean on a GPU array
+floatvec stat::powered_mean(std::uint64_t order, const array::Parcel & data, std::uint64_t n_threads,
+                            const cuda::Stream & stream) {
+    double * result_gpu = reinterpret_cast<double*>(cuda_mem_alloc(order * sizeof(double), stream.get_stream_ptr()));
+    cuda::Memory mem(stream.get_stream_ptr(), data);
+    std::uint64_t shared_mem_size = data.sharedmem_size();
+    shared_mem_size += order * n_threads * sizeof(double);
+    shared_mem_size += n_threads * sizeof(std::uint64_t);
+    ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr());
+    calc_powered_mean<<<1, n_threads, shared_mem_size, cuda_stream>>>(order, mem.get<0>(), result_gpu);
+    floatvec result_cpu(order);
+    cuda_mem_cpy_device_to_host(result_cpu.data(), result_gpu, order * sizeof(double), stream.get_stream_ptr());
+    cuda_mem_free(result_gpu, stream.get_stream_ptr());
+    return result_cpu;
+}
+
+}  // namespace merlin

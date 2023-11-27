@@ -12,13 +12,15 @@
 #include "merlin/splint/tools.hpp"  // merlin::splint::construct_coeff_cpu, merlin::splint::eval_intpl_cpu
 #include "merlin/utils.hpp"         // merlin::ptr_to_subsequence
 
-#include "spgrid/utils.hpp"        // spgrid::get_npoint_in_level, spgrid::fullgrid_idx_from_subgrid
+#include "spgrid/utils.hpp"        // spgrid::merge_grid
 
 namespace spgrid {
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Parallel evaluation on GPU
+// Calculate coefficients
 // ---------------------------------------------------------------------------------------------------------------------
+
+
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -36,6 +38,21 @@ grid_(grid), method_(method), coeff_by_level_(grid.nlevel()) {
     if (grid.ndim() != method.size()) {
         FAILURE(std::invalid_argument, "Invalid ndim of method vector.\n");
     }
+    // loop for each level and calculate coefficients
+    std::vector<double> sparsegrid_data_buffer;
+    merlin::grid::CartesianGrid total_grid;
+    std::uint64_t nlevel = grid.nlevel();
+    for (std::uint64_t i_level = 0; i_level < nlevel; i_level++) {
+        // isolate cartesian grid
+        merlin::grid::CartesianGrid level_grid(grid.get_grid_at_level(i_level));
+        // merge cartesian grid
+        merge_grid(total_grid, level_grid);
+    }
+
+
+
+
+/*
     // isolate sparse grid data
     std::vector<double> sparsegrid_data_buffer;
     std::uint64_t nlevel = grid.nlevel();
@@ -51,6 +68,7 @@ grid_(grid), method_(method), coeff_by_level_(grid.nlevel()) {
     }
     this->coeff_ = merlin::floatvec(sparsegrid_data_buffer.data(), sparsegrid_data_buffer.size());
     merlin::ptr_to_subsequence(this->coeff_.data(), shape_of_levels, this->coeff_by_level_.data());
+    std::printf("Shape_of_level: %s\n", shape_of_levels.str().c_str());
     // multi-variate interpolation on each level
     std::vector<char> level_i_buffer(grid.fullgrid().cumalloc_size()), level_j_buffer(grid.fullgrid().cumalloc_size());
     for (std::uint64_t i_level = 0; i_level < grid.nlevel(); i_level++) {
@@ -69,6 +87,7 @@ grid_(grid), method_(method), coeff_by_level_(grid.nlevel()) {
             }
         }
     }
+*/
 }
 
 // Evaluate interpolation by CPU parallelism
@@ -85,6 +104,7 @@ merlin::floatvec Interpolator::evaluate(const merlin::array::Array & points, std
     }
     // evaluate interpolation
     merlin::floatvec evaluated_values(points.shape()[0]);
+    /*
     #pragma omp parallel for num_threads(n_threads)
     for (std::uint64_t i_point = 0; i_point < evaluated_values.size(); i_point++) {
         // get pointer to point data
@@ -97,6 +117,7 @@ merlin::floatvec Interpolator::evaluate(const merlin::array::Array & points, std
                                            point_data, 1, &(evaluated_values[i_point]), 1);
         }
     }
+    */
     return evaluated_values;
 }
 

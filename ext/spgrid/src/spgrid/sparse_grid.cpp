@@ -11,7 +11,7 @@
 #include "merlin/logger.hpp"  // FAILURE
 #include "merlin/utils.hpp"   // merlin::prod_elements, merlin::contiguous_to_ndim_idx
 
-#include "spgrid/utils.hpp"  // spgrid::get_max_levels
+#include "spgrid/utils.hpp"  // spgrid::get_max_levels, spgrid::get_hiearchical_index, spgrid::shape_from_level
 
 namespace spgrid {
 
@@ -91,6 +91,23 @@ full_grid_(full_grid_vectors), nd_level_(level_vectors) {
         }
         unique_vectors.insert(str_view);
     }
+}
+
+// Get Cartesian grid at a given level index
+merlin::grid::CartesianGrid SparseGrid::get_grid_at_level(std::uint64_t index) const noexcept {
+    merlin::intvec level = this->get_ndlevel_at_index(index);
+    // initialize vector of grid nodes
+    merlin::Vector<merlin::floatvec> grid_vectors(this->ndim());
+    // create grid vector for each dimension
+    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+        std::uint64_t subgrid_shape = shape_from_level(level[i_dim]);
+        grid_vectors[i_dim] = merlin::floatvec(subgrid_shape);
+        for (std::uint64_t i_node = 0; i_node < subgrid_shape; i_node++) {
+            std::uint64_t index = get_hiearchical_index(i_node, level[i_dim], this->shape()[i_dim]);
+            grid_vectors[i_dim][i_node] = this->full_grid_.grid_vectors()[i_dim][index];
+        }
+    }
+    return merlin::grid::CartesianGrid(grid_vectors);
 }
 
 // String representation

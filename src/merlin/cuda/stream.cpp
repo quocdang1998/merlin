@@ -15,7 +15,11 @@ namespace merlin {
 // String representation
 std::string cuda::Stream::str(void) const {
     std::ostringstream os;
-    os << "<Stream at " << std::hex << this->stream_ << " associated to GPU " << this->device_.id() << ">";
+    if (this->stream_ == 0) {
+        os << "<Default stream>";
+    } else {
+        os << "<Stream at " << std::hex << this->stream_ << " associated to GPU " << this->device_.id() << ">";
+    }
     return os.str();
 }
 

@@ -4,8 +4,9 @@
 
 #include <algorithm>    // std::reverse
 #include <cstddef>      // std::size_t
-#include <type_traits>  // std::remove_pointer_t
+#include <type_traits>  // std::remove_pointer_t, std::is_trivially_copyable
 #include <utility>      // std::make_pair
+#include <concepts>     // std::convertible_to, std::same_as
 
 #include <cuda.h>  // ::cuCtxGetDevice
 
@@ -18,11 +19,27 @@ namespace merlin {
 // Utils
 // ---------------------------------------------------------------------------------------------------------------------
 
+template <typename T>
+concept HasCuMallocSize = requires (const T & obj) {
+    {obj.cumalloc_size()} -> std::convertible_to<std::uint64_t>;
+};
+
+template <typename T>
+concept HasCopyToGpu = requires (const T & obj, T * gpu_data, void * pointed_data, std::uintptr_t stream_ptr) {
+    {obj.copy_to_gpu(gpu_data, pointed_data, stream_ptr)} -> std::same_as<void *>;
+};
+
 // Total malloc size
 template <typename T, typename... Args>
+requires HasCuMallocSize<T> || std::is_trivially_copyable<T>::value
 std::uint64_t total_malloc_size(std::uintptr_t * arr, std::uint64_t write_index, const T & first,
                                 const Args &... args) {
-    std::uint64_t result = first.cumalloc_size();
+    std::uint64_t result = 0;
+    if constexpr (HasCuMallocSize<T>) {
+        result = first.cumalloc_size();
+    } else if constexpr (std::is_trivially_copyable<T>::value) {
+        result = sizeof(T);
+    }
     if constexpr (sizeof...(args) > 0) {
         arr[write_index] = result;
         result += total_malloc_size(arr, write_index + 1, args...);
@@ -32,9 +49,17 @@ std::uint64_t total_malloc_size(std::uintptr_t * arr, std::uint64_t write_index,
 
 // Copy metadata to GPU
 template <typename T, typename... Args>
+requires HasCopyToGpu<T> || std::is_trivially_copyable<T>::value
 void * copy_metadata_to_gpu(std::uintptr_t stream_ptr, void * data, const T & first, const Args &... args) {
     T * ptr_data = reinterpret_cast<T *>(data);
-    void * result = first.copy_to_gpu(ptr_data, ptr_data + 1, stream_ptr);
+    void * result;
+    if constexpr (HasCopyToGpu<T>) {
+        result = first.copy_to_gpu(ptr_data, ptr_data + 1, stream_ptr);
+    } else if constexpr (std::is_trivially_copyable<T>::value) {
+        ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
+        ::cudaMemcpyAsync(ptr_data, &first, sizeof(T), ::cudaMemcpyHostToDevice, stream);
+        result = reinterpret_cast<void *>(ptr_data + 1);
+    }
     if constexpr (sizeof...(args) > 0) {
         result = copy_metadata_to_gpu(stream_ptr, result, args...);
     }

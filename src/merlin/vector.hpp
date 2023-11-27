@@ -128,10 +128,10 @@ class Vector {
      */
     void * copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr, std::uintptr_t stream_ptr = 0) const;
     /** @brief Copy data from GPU back to CPU.
-     *  @param gpu_ptr Pointer to object on GPU.
+     *  @param gpu_ptr Pointer to data on GPU.
      *  @param stream_ptr Pointer to the CUDA stream in case of asynchronous copy.
      */
-    void * copy_from_gpu(Vector<T> * gpu_ptr, std::uintptr_t stream_ptr = 0);
+    void * copy_from_gpu(T * gpu_ptr, std::uintptr_t stream_ptr = 0);
     /** @brief Calculate the minimum memory (in bytes) to store the object in CUDA block's shared memory.*/
     constexpr std::uint64_t sharedmem_size(void) const { return this->cumalloc_size(); }
 #ifdef __NVCC__
