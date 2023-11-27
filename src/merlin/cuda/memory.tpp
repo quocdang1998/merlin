@@ -4,8 +4,9 @@
 
 #include <algorithm>    // std::reverse
 #include <cstddef>      // std::size_t
-#include <type_traits>  // std::remove_pointer_t
+#include <type_traits>  // std::remove_pointer_t, std::is_trivially_copyable
 #include <utility>      // std::make_pair
+#include <concepts>     // std::convertible_to
 
 #include <cuda.h>  // ::cuCtxGetDevice
 
@@ -18,11 +19,22 @@ namespace merlin {
 // Utils
 // ---------------------------------------------------------------------------------------------------------------------
 
+template <typename T>
+concept HasCuMallocSize = requires (const T & obj) {
+    {obj.cumalloc_size()} -> std::convertible_to<std::uint64_t>;
+};
+
 // Total malloc size
 template <typename T, typename... Args>
+requires HasCuMallocSize<T> || std::is_trivially_copyable<T>::value
 std::uint64_t total_malloc_size(std::uintptr_t * arr, std::uint64_t write_index, const T & first,
                                 const Args &... args) {
-    std::uint64_t result = first.cumalloc_size();
+    std::uint64_t result = 0;
+    if constexpr (HasCuMallocSize<T>) {
+        result = first.cumalloc_size();
+    } else if constexpr (std::is_trivially_copyable<T>::value) {
+        result = sizeof(T);
+    }
     if constexpr (sizeof...(args) > 0) {
         arr[write_index] = result;
         result += total_malloc_size(arr, write_index + 1, args...);

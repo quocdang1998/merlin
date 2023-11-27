@@ -224,7 +224,7 @@ endif(MSVC)
 function(MerlinSetTargetProperties target_library)
     set_property(TARGET ${target_library} PROPERTY POSITION_INDEPENDENT_CODE ON)
     set_property(TARGET ${target_library} PROPERTY INTERFACE_POSITION_INDEPENDENT_CODE ON)
-    target_compile_features(${target_library} PUBLIC cxx_std_17 cuda_std_17)
+    target_compile_features(${target_library} PUBLIC cxx_std_20 cuda_std_20)
     target_include_directories(
         ${target_library} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>

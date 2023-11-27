@@ -31,7 +31,7 @@ void splint::create_intpl_gpuptr(const grid::CartesianGrid & cpu_grid, const Vec
     cuda::Memory gpu_mem(stream_ptr, cpu_grid, cpu_methods);
     gpu_pgrid = gpu_mem.get<0>();
     gpu_pmethods = gpu_mem.get<1>();
-    gpu_mem.force_release();
+    gpu_mem.disown();
 }
 
 // Interpolate by GPU
