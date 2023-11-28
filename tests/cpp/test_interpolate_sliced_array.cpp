@@ -26,7 +26,7 @@ int main(void) {
     // calculate Lagrange coefficients
     merlin::array::Array coeff(value);
     merlin::Vector<merlin::splint::Method> methods = {
-        merlin::splint::Method::Newton,
+        merlin::splint::Method::Lagrange,
         merlin::splint::Method::Newton,
         merlin::splint::Method::Newton
     };
@@ -36,11 +36,17 @@ int main(void) {
     MESSAGE("Interpolation coefficients: %s\n", interp.get_coeff().str().c_str());
 
     // interpolation
-    double point_data[9] = {0.0, 2.0, 1.0, 1.0, 1.0, 1.2, 0.5, 0.25, 2.4};
+    double point_data[9] = {0.16, 2.4, 0.3, 0.15, 3.41, 0.25, 0.11, 2.0, 0.5};
     merlin::array::Array points(point_data, {3, 3}, {3*sizeof(double), sizeof(double)}, false);
     merlin::floatvec eval_values = interp.evaluate(points, 3);
     interp.synchronize();
     MESSAGE("Evaluated values: %s.\n", eval_values.str().c_str());
+    MESSAGE(
+        "Function values: %f %f %f.\n",
+        foo(merlin::floatvec(point_data, point_data+3)),
+        foo(merlin::floatvec(point_data+3, point_data+6)),
+        foo(merlin::floatvec(point_data+6, point_data+9))
+    );
 
 
 /*

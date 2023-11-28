@@ -38,14 +38,14 @@ list(APPEND MERLIN_SRC_CPP
      cuda/stream.cpp
      filelock.cpp
      iterator.cpp
-     intpl/cartesian_grid.cpp
-     intpl/grid.cpp
-     intpl/interpolant.cpp
-     intpl/lagrange.cpp
-     intpl/newton.cpp
-     intpl/nodes.cpp
-     intpl/regular_grid.cpp
-     intpl/sparse_grid.cpp
+     # intpl/cartesian_grid.cpp
+     # intpl/grid.cpp
+     # intpl/interpolant.cpp
+     # intpl/lagrange.cpp
+     # intpl/newton.cpp
+     # intpl/nodes.cpp
+     # intpl/regular_grid.cpp
+     # intpl/sparse_grid.cpp
      linalg/qr_solve.cpp
      linalg/matrix.cpp
      slice.cpp
@@ -59,14 +59,14 @@ list(APPEND MERLIN_SRC_CU
      array/array.cu
      array/parcel.cu
      candy/launcher.cu
-     candy/model.cu
+     # candy/model.cu
      cuda/device.cu
      cuda/event.cu
      cuda/graph.cu
      cuda/stream.cu
-     intpl/cartesian_grid.cu
-     intpl/lagrange.cu
-     intpl/newton.cu
+     # intpl/cartesian_grid.cu
+     # intpl/lagrange.cu
+     # intpl/newton.cu
      grid/cartesian_grid.cu
      splint/interpolator.cu
      statistics/moment.cu
@@ -79,8 +79,8 @@ list(APPEND MERLIN_SRC_GLB
      candy/launcher.glb
      candy/loss.glb
      cuda/device.glb
-     intpl/lagrange.glb
-     intpl/newton.glb
+     # intpl/lagrange.glb
+     # intpl/newton.glb
      splint/tools.glb
 )
 list(APPEND MERLIN_SRC_RDC
@@ -94,9 +94,9 @@ list(APPEND MERLIN_SRC_RDC
      candy/optmz/adagrad.rdc
      candy/optmz/grad_descent.rdc
      cuda/device.rdc
-     intpl/cartesian_grid.rdc
-     intpl/lagrange.rdc
-     intpl/newton.rdc
+     # intpl/cartesian_grid.rdc
+     # intpl/lagrange.rdc
+     # intpl/newton.rdc
      linalg/qr_solve.rdc
      linalg/matrix.rdc
      slice.rdc

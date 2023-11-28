@@ -17,8 +17,10 @@
 namespace spgrid {
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Parallel evaluation on GPU
+// Calculate coefficients
 // ---------------------------------------------------------------------------------------------------------------------
+
+
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -51,6 +53,7 @@ grid_(grid), method_(method), coeff_by_level_(grid.nlevel()) {
     }
     this->coeff_ = merlin::floatvec(sparsegrid_data_buffer.data(), sparsegrid_data_buffer.size());
     merlin::ptr_to_subsequence(this->coeff_.data(), shape_of_levels, this->coeff_by_level_.data());
+    std::printf("Shape_of_level: %s\n", shape_of_levels.str().c_str());
     // multi-variate interpolation on each level
     std::vector<char> level_i_buffer(grid.fullgrid().cumalloc_size()), level_j_buffer(grid.fullgrid().cumalloc_size());
     for (std::uint64_t i_level = 0; i_level < grid.nlevel(); i_level++) {
@@ -99,5 +102,16 @@ merlin::floatvec Interpolator::evaluate(const merlin::array::Array & points, std
     }
     return evaluated_values;
 }
+
+#ifndef __MERLIN_CUDA__
+
+// Evaluate interpolation by GPU parallelism
+merlin::floatvec Interpolator::evaluate(const merlin::array::Parcel & points, std::uint64_t n_threads,
+                                        const merlin::cuda::Stream & stream) {
+    FAILURE(merlin::cuda_compile_error, "Compile merlin with CUDA option to use this function.\n");
+    return merlin::floatvec();
+}
+
+#endif  // __MERLIN_CUDA__
 
 }  // namespace spgrid

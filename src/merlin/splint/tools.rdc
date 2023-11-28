@@ -23,7 +23,7 @@ __cuhostdev__ void splint::recursive_interpolate(const double * coeff, const std
                                                  const std::uint64_t & ndim) noexcept {
     // functor map to evaluation methods
     static const std::array<splint::EvaluationMethod, 3> evaluation_funcs {
-        splint::intpl::evaluate_lagrange,
+        splint::intpl::evaluate_linear,
         splint::intpl::evaluate_lagrange,
         splint::intpl::evaluate_newton
     };

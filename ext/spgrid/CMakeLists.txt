@@ -3,19 +3,27 @@ list(APPEND SPARSE_GRID_SRC_CPP
      sparse_grid.cpp
      utils.cpp
 )
+list(APPEND SPARSE_GRID_SRC_CU
+     interpolator.cu
+)
 list(APPEND SPARSE_GRID_SRC_RDC
      sparse_grid.rdc
      utils.rdc
 )
 list(TRANSFORM SPARSE_GRID_SRC_CPP PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/spgrid/)
+list(TRANSFORM SPARSE_GRID_SRC_CU  PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/spgrid/)
 list(TRANSFORM SPARSE_GRID_SRC_RDC PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/spgrid/)
 if (MERLIN_CUDA)
     set_source_files_properties(${SPARSE_GRID_SRC_RDC} PROPERTIES LANGUAGE CUDA)
+    list(APPEND SPARSE_GRID_SRC_CPP ${SPARSE_GRID_SRC_CU})
 else()
     set_source_files_properties(${SPARSE_GRID_SRC_RDC} PROPERTIES LANGUAGE CXX)
 endif(MERLIN_CUDA)
 
 add_library(libspgrid STATIC ${SPARSE_GRID_SRC_CPP} ${SPARSE_GRID_SRC_RDC})
+if (MERLIN_CUDA)
+    set_property(TARGET libspgrid PROPERTY CUDA_ARCHITECTURES "${CUDA_ARCH_LIST}")
+endif(MERLIN_CUDA)
 set_property(TARGET libspgrid PROPERTY OUTPUT_NAME spgrid)
 set_property(TARGET libspgrid PROPERTY INTERPROCEDURAL_OPTIMIZATION ON)
 set_property(TARGET libspgrid PROPERTY CUDA_SEPARABLE_COMPILATION ON)
