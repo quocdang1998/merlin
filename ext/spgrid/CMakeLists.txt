@@ -3,19 +3,13 @@ list(APPEND SPARSE_GRID_SRC_CPP
      sparse_grid.cpp
      utils.cpp
 )
-list(APPEND SPARSE_GRID_SRC_CU
-     interpolator.cu
-)
 list(APPEND SPARSE_GRID_SRC_RDC
-     sparse_grid.rdc
      utils.rdc
 )
 list(TRANSFORM SPARSE_GRID_SRC_CPP PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/spgrid/)
-list(TRANSFORM SPARSE_GRID_SRC_CU  PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/spgrid/)
 list(TRANSFORM SPARSE_GRID_SRC_RDC PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/spgrid/)
 if (MERLIN_CUDA)
     set_source_files_properties(${SPARSE_GRID_SRC_RDC} PROPERTIES LANGUAGE CUDA)
-    list(APPEND SPARSE_GRID_SRC_CPP ${SPARSE_GRID_SRC_CU})
 else()
     set_source_files_properties(${SPARSE_GRID_SRC_RDC} PROPERTIES LANGUAGE CXX)
 endif(MERLIN_CUDA)

@@ -34,9 +34,6 @@ class Interpolator {
     /// @{
     /** @brief Evaluate interpolation by CPU parallelism.*/
     merlin::floatvec evaluate(const merlin::array::Array & points, std::uint64_t n_threads = 1);
-    /** @brief Evaluate interpolation by GPU parallelism.*/
-    merlin::floatvec evaluate(const merlin::array::Parcel & points, std::uint64_t n_threads = 32,
-                              const merlin::cuda::Stream & stream = merlin::cuda::Stream());
     /// @}
 
   protected:

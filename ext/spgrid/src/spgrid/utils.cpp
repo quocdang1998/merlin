@@ -1,7 +1,11 @@
 // Copyright 2022 quocdang1998
 #include "spgrid/utils.hpp"
 
-#include <vector>  // std::vector
+#include <algorithm>  // std::set_union
+#include <iterator>   // std::back_inserter
+#include <vector>     // std::vector
+
+#include "merlin/grid/cartesian_grid.hpp"  // merlin::grid::CartesianGrid
 
 #include "spgrid/sparse_grid.hpp"  // spgrid::SparseGrid
 
@@ -37,6 +41,21 @@ merlin::floatvec copy_sparsegrid_data_from_cartesian(const merlin::array::NdData
         }
     }
     return merlin::floatvec(sparsegrid_data_buffer.data(), sparsegrid_data_buffer.size());
+}
+
+// Merge 2 Cartesian grid
+void merge_grid(merlin::grid::CartesianGrid & total_grid, const merlin::grid::CartesianGrid & added_grid) noexcept {
+    // merge grid vector on each dimension
+    merlin::Vector<merlin::floatvec> merged_grid_vectors(total_grid.ndim());
+    for (std::uint64_t i_dim = 0; i_dim < total_grid.ndim(); i_dim++) {
+        const merlin::floatvec total_grid_vector(total_grid.grid_vector(i_dim));
+        const merlin::floatvec added_grid_vector(added_grid.grid_vector(i_dim));
+        std::vector<double> merged_grid_vector;
+        std::set_union(total_grid_vector.begin(), total_grid_vector.end(), added_grid_vector.begin(),
+                       added_grid_vector.end(), std::back_inserter(merged_grid_vector));
+        merged_grid_vectors[i_dim] = merlin::floatvec(merged_grid_vector.data(), merged_grid_vector.size());
+    }
+    total_grid = merlin::grid::CartesianGrid(merged_grid_vectors);
 }
 
 }  // namespace spgrid

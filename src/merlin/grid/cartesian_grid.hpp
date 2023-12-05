@@ -29,8 +29,6 @@ class grid::CartesianGrid {
     CartesianGrid(void) = default;
     /** @brief Constructor from list of initializer lists.*/
     MERLIN_EXPORTS CartesianGrid(const Vector<floatvec> & grid_vectors);
-    /** @brief Direct initialization.*/
-    __cuhostdev__ CartesianGrid(floatvec && grid_nodes, intvec && shape, double ** grid_vectors_memory);
     /** @brief Constructor as a sub-grid from a larger grid.*/
     MERLIN_EXPORTS CartesianGrid(const grid::CartesianGrid & whole, const slicevec & slices);
     /// @}

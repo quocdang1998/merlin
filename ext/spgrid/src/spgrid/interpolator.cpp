@@ -12,7 +12,7 @@
 #include "merlin/splint/tools.hpp"  // merlin::splint::construct_coeff_cpu, merlin::splint::eval_intpl_cpu
 #include "merlin/utils.hpp"         // merlin::ptr_to_subsequence
 
-#include "spgrid/utils.hpp"        // spgrid::get_npoint_in_level, spgrid::fullgrid_idx_from_subgrid
+#include "spgrid/utils.hpp"        // spgrid::merge_grid
 
 namespace spgrid {
 
@@ -38,6 +38,21 @@ grid_(grid), method_(method), coeff_by_level_(grid.nlevel()) {
     if (grid.ndim() != method.size()) {
         FAILURE(std::invalid_argument, "Invalid ndim of method vector.\n");
     }
+    // loop for each level and calculate coefficients
+    std::vector<double> sparsegrid_data_buffer;
+    merlin::grid::CartesianGrid total_grid;
+    std::uint64_t nlevel = grid.nlevel();
+    for (std::uint64_t i_level = 0; i_level < nlevel; i_level++) {
+        // isolate cartesian grid
+        merlin::grid::CartesianGrid level_grid(grid.get_grid_at_level(i_level));
+        // merge cartesian grid
+        merge_grid(total_grid, level_grid);
+    }
+
+
+
+
+/*
     // isolate sparse grid data
     std::vector<double> sparsegrid_data_buffer;
     std::uint64_t nlevel = grid.nlevel();
@@ -72,6 +87,7 @@ grid_(grid), method_(method), coeff_by_level_(grid.nlevel()) {
             }
         }
     }
+*/
 }
 
 // Evaluate interpolation by CPU parallelism
@@ -88,6 +104,7 @@ merlin::floatvec Interpolator::evaluate(const merlin::array::Array & points, std
     }
     // evaluate interpolation
     merlin::floatvec evaluated_values(points.shape()[0]);
+    /*
     #pragma omp parallel for num_threads(n_threads)
     for (std::uint64_t i_point = 0; i_point < evaluated_values.size(); i_point++) {
         // get pointer to point data
@@ -100,18 +117,8 @@ merlin::floatvec Interpolator::evaluate(const merlin::array::Array & points, std
                                            point_data, 1, &(evaluated_values[i_point]), 1);
         }
     }
+    */
     return evaluated_values;
 }
-
-#ifndef __MERLIN_CUDA__
-
-// Evaluate interpolation by GPU parallelism
-merlin::floatvec Interpolator::evaluate(const merlin::array::Parcel & points, std::uint64_t n_threads,
-                                        const merlin::cuda::Stream & stream) {
-    FAILURE(merlin::cuda_compile_error, "Compile merlin with CUDA option to use this function.\n");
-    return merlin::floatvec();
-}
-
-#endif  // __MERLIN_CUDA__
 
 }  // namespace spgrid

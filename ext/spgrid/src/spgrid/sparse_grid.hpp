@@ -6,7 +6,6 @@
 #include <functional>   // std::function
 #include <string>       // std::string
 
-#include "merlin/cuda_interface.hpp"       // __cuhostdev__
 #include "merlin/grid/cartesian_grid.hpp"  // merlin::grid::CartesianGrid
 #include "merlin/vector.hpp"               // merlin::Vector, merlin::floatvec, merlin::intvec
 
@@ -61,16 +60,15 @@ class SparseGrid {
     /** @brief Get a view to the level vector at a given index.
      *  @param index Index of level.
      */
-    __cuhostdev__ merlin::intvec get_ndlevel_at_index(std::uint64_t index) const noexcept {
+    merlin::intvec get_ndlevel_at_index(std::uint64_t index) const noexcept {
         merlin::intvec ndlevel;
         ndlevel.assign(const_cast<std::uint64_t *>(&(this->nd_level_[index * this->ndim()])), this->ndim());
         return ndlevel;
     }
     /** @brief Get Cartesian grid at a given level index.
      *  @param index Index of level.
-     *  @param grid_buffer Buffer memory for the result Cartesian grid (size of ``full_grid_.cumalloc_size()``).
      */
-    __cuhostdev__ merlin::grid::CartesianGrid get_grid_at_level(std::uint64_t index, char * grid_buffer) const noexcept;
+    merlin::grid::CartesianGrid get_grid_at_level(std::uint64_t index) const noexcept;
     /// @}
 
     /// @name Representation

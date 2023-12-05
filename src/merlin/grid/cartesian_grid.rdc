@@ -9,17 +9,6 @@ namespace merlin {
 // CartesianGrid
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Constructor from list of nodes and shape
-__cuhostdev__ grid::CartesianGrid::CartesianGrid(floatvec && grid_nodes, intvec && shape,
-                                                   double ** grid_vectors_memory) :
-grid_nodes_(grid_nodes), grid_shape_(shape) {
-    // calculate pointers per dimension
-    this->grid_vectors_.assign(grid_vectors_memory, this->grid_shape_.size());
-    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->grid_vectors_.data());
-    // calculate size
-    this->size_ = prod_elements(this->grid_shape_);
-}
-
 #ifdef __NVCC__
 
 // Copy to shared memory
