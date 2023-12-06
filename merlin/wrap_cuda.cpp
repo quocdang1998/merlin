@@ -17,7 +17,7 @@ static void wrap_enums(py::module & cuda_module) {
     auto device_limit_pyenum = py::enum_<cuda::DeviceLimit>(
         cuda_module,
         "DeviceLimit",
-        "Wrapper of :cpp:class:`merlin::cuda::DeviceLimit`"
+        "Wrapper of :cpp:enum:`merlin::cuda::DeviceLimit`"
     );
     device_limit_pyenum.value("StackSize", cuda::DeviceLimit::StackSize);
     device_limit_pyenum.value("PrintfSize", cuda::DeviceLimit::PrintfSize);
@@ -28,7 +28,7 @@ static void wrap_enums(py::module & cuda_module) {
     auto event_category_pyenum = py::enum_<cuda::EventCategory>(
         cuda_module,
         "EventCategory",
-        "Wrapper of :cpp:class:`merlin::cuda::EventCategory`"
+        "Wrapper of :cpp:enum:`merlin::cuda::EventCategory`"
     );
     event_category_pyenum.value("Default", cuda::EventCategory::Default);
     event_category_pyenum.value("BlockingSync", cuda::EventCategory::BlockingSync);
@@ -38,7 +38,7 @@ static void wrap_enums(py::module & cuda_module) {
     auto event_wait_pyenum = py::enum_<cuda::EventWaitFlag>(
         cuda_module,
         "EventWaitFlag",
-        "Wrapper of :cpp:class:`merlin::cuda::EventWaitFlag`"
+        "Wrapper of :cpp:enum:`merlin::cuda::EventWaitFlag`"
     );
     event_wait_pyenum.value("Default", cuda::EventWaitFlag::Default);
     event_wait_pyenum.value("External", cuda::EventWaitFlag::External);
@@ -46,7 +46,7 @@ static void wrap_enums(py::module & cuda_module) {
     auto stream_setting_pyenum = py::enum_<cuda::StreamSetting>(
         cuda_module,
         "StreamSetting",
-        "Wrapper of :cpp:class:`merlin::cuda::StreamSetting`"
+        "Wrapper of :cpp:enum:`merlin::cuda::StreamSetting`"
     );
     stream_setting_pyenum.value("Default", cuda::StreamSetting::Default);
     stream_setting_pyenum.value("NonBlocking", cuda::StreamSetting::NonBlocking);

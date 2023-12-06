@@ -14,7 +14,7 @@ Environment
    :nosignatures:
    :template: pyclass.rst
 
-   merlin.env.Environment
+   merlin.Environment
 
 
 GPU with CUDA
@@ -71,27 +71,4 @@ Multi-dimensional array
    merlin.array.Array
    merlin.array.Parcel
    merlin.array.Stock
-
-Interpolator API
-----------------
-
-Grid
-^^^^
-
-.. autosummary::
-   :toctree: generated
-   :nosignatures:
-   :template: pyclass.rst
-
-   merlin.splint.CartesianGrid
-
-Polynomial interpolation
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. autosummary::
-   :toctree: generated
-   :nosignatures:
-   :template: pyclass.rst
-
-   merlin.splint.Method
 

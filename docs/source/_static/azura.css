@@ -408,6 +408,19 @@ html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(
     color: var(--type);
 }
 
+/* pybind11 overloaded function */
+.py .method > dd > .arabic.simple > li > p {
+    width: fit-content;
+    background: var(--subitem-background);
+    padding: 6px;
+    border-left: solid 3px #ccc;
+    line-height: normal;
+    font-style: normal !important;
+    font-family: 'Fira Code', monospace;
+    font-weight: 600;
+    font-size: 12px;
+}
+
 /* attribute type */
 .attributetype p {
     color: var(--type);

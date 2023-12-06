@@ -24,7 +24,7 @@ void wrap_env(py::module & merlin_package) {
     );
     // constructors
     env_pyclass.def(
-        py::init([](){ return new Environment(); }),
+        py::init([]() { return new Environment(); }),
         "Default constructor."
     );
     // number of instances

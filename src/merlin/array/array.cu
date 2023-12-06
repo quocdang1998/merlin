@@ -35,8 +35,8 @@ double * array::allocate_memory(std::uint64_t size) {
 }
 
 // Pin memory to RAM
-void array::cuda_pin_memory(double * ptr, std::uint64_t n_elem) {
-    ::cudaError_t err_ = ::cudaHostRegister(ptr, sizeof(double) * n_elem, cudaHostRegisterDefault);
+void array::cuda_pin_memory(double * ptr, std::uint64_t mem_size) {
+    ::cudaError_t err_ = ::cudaHostRegister(ptr, mem_size, cudaHostRegisterDefault);
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Pin pageable memory failed with message \"%s\".\n", ::cudaGetErrorString(err_));
     }

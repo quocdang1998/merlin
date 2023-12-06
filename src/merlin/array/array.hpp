@@ -27,7 +27,7 @@ namespace array {
 double * allocate_memory(std::uint64_t size);
 
 /** @brief Pin memory to RAM.*/
-void cuda_pin_memory(double * ptr, std::uint64_t n_elem);
+void cuda_pin_memory(double * ptr, std::uint64_t mem_size);
 
 /** @brief Free array allocated in non pageable memory.*/
 void free_memory(double * ptr);

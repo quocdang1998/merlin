@@ -32,7 +32,7 @@ double * array::allocate_memory(std::uint64_t size) {
 }
 
 // Pin memory to RAM
-void array::cuda_pin_memory(double * ptr, std::uint64_t n_elem) {}
+void array::cuda_pin_memory(double * ptr, std::uint64_t mem_size) {}
 
 // Free non pageable memory
 void array::free_memory(double * ptr) { delete[] ptr; }
@@ -92,9 +92,12 @@ array::Array::Array(double * data, const intvec & shape, const intvec & strides,
         array::NdData src(data, shape, strides);
         array::copy(dynamic_cast<array::NdData *>(this), &src, std::memcpy);
     } else {
+        // assign strides and data pointer
         this->strides_ = strides;
         this->data_ = data;
-        array::cuda_pin_memory(this->data_, this->size());
+        // pin memory
+        std::uint64_t last_elem = array::get_leap(this->size_ - 1, shape, strides);
+        array::cuda_pin_memory(this->data_, last_elem + sizeof(double));
     }
 }
 

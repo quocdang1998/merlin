@@ -63,7 +63,7 @@ class array::NdData {
 
     /// @name Atributes
     /// @{
-    /** @brief Number of element.*/
+    /** @brief Get number of element.*/
     __cuhostdev__ constexpr const std::uint64_t & size(void) const noexcept { return this->size_; }
     /** @brief Check if the array is C-contiguous.*/
     bool is_c_contiguous(void) const;
@@ -87,10 +87,12 @@ class array::NdData {
      *  @param new_shape New shape.
      */
     MERLIN_EXPORTS void reshape(const intvec & new_shape);
-    /** @brief Collapse dimensions with size 1.
-     *  @param i_dim Index of dimension to collapse.
+    /** @brief Remove dimension with size 1.
+     *  @param i_dim Index of dimension to remove.
      */
-    MERLIN_EXPORTS void remove_dim(std::uint64_t i_dim = 0);
+    MERLIN_EXPORTS void remove_dim(std::uint64_t i_dim);
+    /** @brief Collapse all dimensions with size 1.*/
+    MERLIN_EXPORTS void squeeze(void);
     /** @brief Set value of all elements.*/
     virtual void fill(double value) {}
     /// @}
