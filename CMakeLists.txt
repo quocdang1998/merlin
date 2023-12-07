@@ -29,7 +29,7 @@ list(APPEND MERLIN_SRC_CPP
      candy/optmz/grad_descent.cpp
      candy/launcher.cpp
      candy/loss.cpp
-     candy/model.cpp
+     # candy/model.cpp
      candy/optimizer.cpp
      candy/partition.cpp
      cuda/device.cpp
@@ -53,7 +53,7 @@ list(APPEND MERLIN_SRC_CPP
      grid/cartesian_grid.cpp
      splint/interpolator.cpp
      splint/tools.cpp
-     statistics/moment.cpp
+     stat/moment.cpp
 )
 list(APPEND MERLIN_SRC_CU
      array/array.cu
@@ -69,7 +69,6 @@ list(APPEND MERLIN_SRC_CU
      # intpl/newton.cu
      grid/cartesian_grid.cu
      splint/interpolator.cu
-     statistics/moment.cu
 )
 list(APPEND MERLIN_SRC_GLB
      candy/optimizer.glb
@@ -82,6 +81,7 @@ list(APPEND MERLIN_SRC_GLB
      # intpl/lagrange.glb
      # intpl/newton.glb
      splint/tools.glb
+     stat/moment.glb
 )
 list(APPEND MERLIN_SRC_RDC
      array/operation.rdc

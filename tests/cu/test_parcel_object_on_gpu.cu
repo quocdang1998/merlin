@@ -16,6 +16,16 @@ __global__ void print_element_from_shared_memory(merlin::array::Parcel * parcel_
     extern __shared__ merlin::array::Parcel share_ptr[];
     auto [_, __] = merlin::cuda::copy_class_to_shared_mem(share_ptr, *parcel_ptr);
     CUDAOUT("Value from shared memory: %.1f\n", share_ptr[0][blockIdx.x*blockDim.x+threadIdx.x]);
+    __shared__ double sum;
+    if (blockIdx.x*blockDim.x+threadIdx.x == 0) {
+        sum = 0;
+    }
+    __syncthreads();
+    ::atomicAdd(&sum, share_ptr[0][blockIdx.x*blockDim.x+threadIdx.x]);
+    if (blockIdx.x*blockDim.x+threadIdx.x == 0) {
+        CUDAOUT("Summed value: %.1f\n", sum);
+    }
+    __syncthreads();
 }
 
 int main(void) {

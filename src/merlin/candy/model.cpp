@@ -10,13 +10,13 @@
 
 #include <omp.h>  // pragma omp, ::omp_get_threa
 
-#include "merlin/array/array.hpp"        // merlin::array::Array
-#include "merlin/env.hpp"                // merlin::Environment
-#include "merlin/logger.hpp"             // FAILURE
-#include "merlin/slice.hpp"              // merlin::Slice, merlin::slicevec
-#include "merlin/statistics/moment.hpp"  // merlin::statistics::powered_mean, merlin::statistics::moment_cpu
-                                         // merlin::statistics::max_cpu
-#include "merlin/utils.hpp"              // merlin::prod_elements
+#include "merlin/array/array.hpp"  // merlin::array::Array
+#include "merlin/env.hpp"          // merlin::Environment
+#include "merlin/logger.hpp"       // FAILURE
+#include "merlin/slice.hpp"        // merlin::Slice, merlin::slicevec
+#include "merlin/stat/moment.hpp"  // merlin::statistics::powered_mean, merlin::statistics::moment_cpu
+                                   // merlin::statistics::max_cpu
+#include "merlin/utils.hpp"        // merlin::prod_elements
 
 namespace merlin {
 

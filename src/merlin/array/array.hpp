@@ -2,6 +2,7 @@
 #ifndef MERLIN_ARRAY_ARRAY_HPP_
 #define MERLIN_ARRAY_ARRAY_HPP_
 
+#include <array>    // std::array
 #include <cstdint>  // std::uint64_t, std::uintptr_t
 #include <string>   // std::string
 
