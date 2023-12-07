@@ -13,7 +13,7 @@ namespace py = pybind11;
 
 namespace merlin {
 
-// Wrap merlin::NdData class
+// Wrap merlin::array::NdData class
 void wrap_nddata(py::module & array_module) {
     auto nddata_pyclass = py::class_<array::NdData>(
         array_module,
@@ -128,7 +128,7 @@ void wrap_nddata(py::module & array_module) {
     );
 }
 
-// Wrap merlin::Array class
+// Wrap merlin::array::Array class
 void wrap_array_(py::module & array_module) {
     auto array_pyclass = py::class_<array::Array, array::NdData>(
         array_module,
@@ -199,7 +199,7 @@ void wrap_array_(py::module & array_module) {
     );
 }
 
-// Wrap merlin::Parcel class
+// Wrap merlin::array::Parcel class
 void wrap_parcel(py::module & array_module) {
     auto parcel_pyclass = py::class_<array::Parcel, array::NdData>(
         array_module,
@@ -240,7 +240,7 @@ void wrap_parcel(py::module & array_module) {
     );
 }
 
-// Wrap merlin::Stock class
+// Wrap merlin::array::Stock class
 void wrap_stock(py::module & array_module) {
     auto stock_pyclass = py::class_<array::Stock, array::NdData>(
         array_module,

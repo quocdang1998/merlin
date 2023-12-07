@@ -17,6 +17,9 @@ void wrap_array(py::module & merlin_package);
 /** @brief Wrap ``merlin::stat`` library.*/
 void wrap_stat(py::module & merlin_package);
 
+/** @brief Wrap ``merlin::candy`` library.*/
+void wrap_candy(py::module & merlin_package);
+
 }  // namespace merlin
 
 // Wrap main module
@@ -30,4 +33,6 @@ PYBIND11_MODULE(merlin, merlin_package) {
     merlin::wrap_array(merlin_package);
     // add stat submodule
     merlin::wrap_stat(merlin_package);
+    // add candy submodule
+    merlin::wrap_candy(merlin_package);
 }

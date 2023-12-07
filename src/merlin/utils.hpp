@@ -135,37 +135,6 @@ __cuhostdev__ Vector<double *> ptr_to_subsequence(double * original, const intve
 __cuhostdev__ std::array<std::uint64_t, 2> index_in_subsequence(std::uint64_t index_full_array,
                                                                 const intvec & divider_length) noexcept;
 
-// Sparse Grid
-// -----------
-
-/** @brief Get size of a sub-grid given its level vector.*/
-__cuhostdev__ std::uint64_t calc_subgrid_size(const intvec & level_vector) noexcept;
-
-/** @brief Get shape of Cartesian subgrid corresponding to a level vector.*/
-__cuhostdev__ intvec get_level_shape(const intvec & level_vector);
-
-// Canonical Decomposition
-// -----------------------
-
-/** @brief Get flattened index from model index.
- *  @param i_dim Dimension of the parameter.
- *  @param i_point Index of the parameter.
- *  @param i_rank Rank of the parameter.
- *  @param rank Rank of the candecomp model.
- *  @param shape Shape of the candecomp model.
- */
-__cuhostdev__ std::uint64_t model_to_contiguous_idx(std::uint64_t i_dim, std::uint64_t i_point, std::uint64_t i_rank,
-                                                    std::uint64_t rank, const intvec & shape);
-
-/** @brief Get model index from flattened index.
- *  @param index Contiguous index.
- *  @param rank Rank of the candecomp model
- *  @param shape Shape of the candecomp model.
- *  @returns Dimension, index and rank of the corresponding parameter element in order.
- */
-__cuhostdev__ std::array<std::uint64_t, 3> contiguous_to_model_idx(std::uint64_t index, std::uint64_t rank,
-                                                                   const intvec & shape);
-
 }  // namespace merlin
 
 #endif  // MERLIN_UTILS_HPP_

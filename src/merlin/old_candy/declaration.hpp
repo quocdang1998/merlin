@@ -3,7 +3,6 @@
 #define MERLIN_CANDY_DECLARATION_HPP_
 
 namespace merlin::candy {
-class Gradient;
 class Launcher;
 class Model;
 class Optimizer;

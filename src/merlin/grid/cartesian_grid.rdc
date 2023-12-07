@@ -1,7 +1,7 @@
 // Copyright 2022 quocdang1998
 #include "merlin/grid/cartesian_grid.hpp"
 
-#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::ptr_to_subsequence
+#include "merlin/utils.hpp"  // merlin::ptr_to_subsequence
 
 namespace merlin {
 
@@ -30,11 +30,11 @@ __cudevice__ void * grid::CartesianGrid::copy_by_block(grid::CartesianGrid * des
     __syncthreads();
     // copy data of grid nodes and grid shape
     std::uint64_t num_nodes = this->num_nodes(), ndim = this->ndim();
-    for (std::uint64_t i_node = thread_idx; i_node < num_nodes; i_node++) {
+    for (std::uint64_t i_node = thread_idx; i_node < num_nodes; i_node += block_size) {
         dest_ptr->grid_nodes_[i_node] = this->grid_nodes_[i_node];
     }
     __syncthreads();
-    for (std::uint64_t i_dim = thread_idx; i_dim < ndim; i_dim++) {
+    for (std::uint64_t i_dim = thread_idx; i_dim < ndim; i_dim += block_size) {
         dest_ptr->grid_shape_[i_dim] = this->grid_shape_[i_dim];
     }
     __syncthreads();

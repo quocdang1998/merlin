@@ -11,6 +11,9 @@ def get_extension_options():
     module_dir = os.path.abspath(os.path.join(__file__, "../.."))
     ext_options = dict()
 
+    # language
+    ext_options["language"] = "c++"
+
     # include directory
     ext_options["include_dirs"] = [os.path.join(module_dir, "src")]
     ext_options["include_dirs"] += [np.get_include()]
@@ -63,7 +66,7 @@ def get_extension_options():
 
     # runtime library
     if (sys.platform == "linux"):
-        rt_dir = os.path.join(module_dir, "build")
+        rt_dir = "${ORIGIN}"
         ext_options["runtime_library_dirs"] = [rt_dir]
         if MERLIN_CUDA:
             ext_options["runtime_library_dirs"] += [CUDALIB]

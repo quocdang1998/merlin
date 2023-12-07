@@ -6,8 +6,11 @@ import glob
 if (sys.platform != "linux") and (sys.platform != "win32"):
     raise EnvironmentError(f"Platform {sys.platform} not supported.")
 
+# add current directory to path
+sys.path.append(os.path.curdir)
+
 # import setuptools
-from setuptools import Extension, setup
+from setuptools import setup
 from setup_cfg import build_ext, ext_options, copy_dll_libs
 
 #import pybind11

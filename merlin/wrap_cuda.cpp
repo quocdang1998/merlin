@@ -288,7 +288,6 @@ static void wrap_stream(py::module & cuda_module) {
     );
 }
 
-// Wrap merlin::cuda library
 void wrap_cuda(py::module & merlin_package) {
     // add cuda submodule
     py::module cuda_module = merlin_package.def_submodule("cuda", "CUDA runtime API wrapper.");

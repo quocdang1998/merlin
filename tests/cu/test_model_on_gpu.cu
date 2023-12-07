@@ -11,8 +11,8 @@ __global__ void print_model_shared_mem(merlin::candy::Model * model_ptr) {
     CUDAOUT("Candecomp Model on GPU (rank = %" PRIu64 "):\n", share_ptr->rank());
     for (int i = 0; i < share_ptr->ndim(); i++) {
         std::printf("Vector %d:", i);
-        for (int j = 0; j < share_ptr->parameters()[i].size(); j++) {
-            std::printf(" %.2f", share_ptr->parameters()[i][j]);
+        for (int j = 0; j < share_ptr->rshape()[i]; j++) {
+            std::printf(" %.2f", share_ptr->param_vectors()[i][j]);
         }
         std::printf("\n");
     }
@@ -24,14 +24,14 @@ __global__ void print_model(merlin::candy::Model * model_ptr) {
     CUDAOUT("Candecomp Model on GPU (rank = %" PRIu64 "):\n", model_ptr->rank());
     for (int i = 0; i < model_ptr->ndim(); i++) {
         std::printf("Vector %d:", i);
-        for (int j = 0; j < model_ptr->parameters()[i].size(); j++) {
-            std::printf(" %.2f", model_ptr->parameters()[i][j]);
+        for (int j = 0; j < model_ptr->rshape()[i]; j++) {
+            std::printf(" %.2f", model_ptr->param_vectors()[i][j]);
         }
         std::printf("\n");
     }
     merlin::intvec index = {0, 0};
     CUDAOUT("Model eval: %f.\n", model_ptr->eval(index));
-    model_ptr->set(1, 2, 1, 1.70);
+    model_ptr->get(1, 2, 1) = 1.70;
 }
 
 int main(void) {
@@ -48,6 +48,6 @@ int main(void) {
 
     // Copy model from GPU
     merlin::candy::Model model_cpu({{0.1, 0.1, 0.1, 0.1}, {0.2, 0.2, 0.2, 0.2, 0.2, 0.2}}, 2);
-    model_cpu.copy_from_gpu(gpu_model);
+    model_cpu.copy_from_gpu(reinterpret_cast<double *>(gpu_model+1));
     MESSAGE("Model copied from GPU: %s\n", model_cpu.str().c_str());
 }

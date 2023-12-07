@@ -1,0 +1,120 @@
+// Copyright 2023 quocdang1998
+#include "merlin/candy/gradient.hpp"
+
+#include <array>  // std::array
+
+#include <omp.h>  // #pragma omp
+
+#if defined(__MERLIN_LINUX__)
+#include <cmath>  // std::isfinite, std::isnormal
+#elif defined(__MERLIN_WINDOWS__)
+#include <math.h>  // isfinite, isnormal
+#endif  // __MERLIN_LINUX__
+
+#include "merlin/array/nddata.hpp"     // merlin::array::NdData
+#include "merlin/thread_divider.hpp"   // merlin::ThreadDivider
+#include "merlin/utils.hpp"            // merlin::index_in_subsequence
+
+#include <cstdio>
+
+namespace merlin {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Utils
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Get ndim index with skipped dimension
+__cuhostdev__ static void ndim_idx_wkd(std::uint64_t index, std::uint64_t skip_dim, const intvec & shape,
+                                       intvec & ndim_idx) noexcept {
+    std::uint64_t cum_prod = 1;
+    for (std::int64_t i = shape.size() - 1; i >= 0; i--) {
+        ndim_idx[i] = (i == skip_dim) ? (ndim_idx[i]) : ((index / cum_prod) % shape[i]);
+        cum_prod *= (i == skip_dim) ? 1.0 : shape[i];
+    }
+}
+
+// Synchronize threads
+__cuhostdev__ static void synch_threads(void) noexcept {
+#ifdef __CUDA_ARCH__
+    __syncthreads();
+#else
+    #pragma omp barrier
+#endif
+}
+
+// Check if a value is normal
+__cuhostdev__ static bool check_normal(double value) noexcept {
+#if defined(__MERLIN_LINUX__)
+    return std::isnormal(value);
+#elif defined(__MERLIN_WINDOWS__)
+    return isfinite(value) && (value != 0.0);
+#endif  // __MERLIN_LINUX__
+}
+
+// Calculate gradient of a model based on relative square metric
+__cuhostdev__ void candy::relquare_grad(const candy::Model & model, const array::NdData & train_data,
+                                        floatvec & gradient, std::uint64_t thread_idx, std::uint64_t n_threads,
+                                        intvec & index_mem, floatvec & parallel_mem) noexcept {
+    // reset gradient vector
+    for (std::uint64_t i = thread_idx; i < gradient.size(); i += n_threads) {
+        gradient[i] = 0.0;
+    }
+    synch_threads();
+    // loop over each dimension
+    double * dim_gradient = gradient.data();
+    for (std::uint64_t i_dim = 0; i_dim < model.ndim(); i_dim++) {
+        ThreadDivider thgr(model.rshape()[i_dim], thread_idx, n_threads);
+        for (std::uint64_t i_param = thgr.group_idx; i_param < model.rshape()[i_dim]; i_param += thgr.num_groups) {
+            // initialize gradient
+            double param_gradient = 0.0;
+            std::uint64_t param_index = i_param / model.rank(), param_rank = i_param % model.rank();
+            index_mem[i_dim] = param_index;
+            // loop over each point in the sub-array to calculate the gradient
+            std::uint64_t subarray_size = train_data.size() / train_data.shape()[i_dim];
+            for (std::uint64_t i_point = thgr.thread_idx_in_group; i_point < subarray_size; i_point += thgr.numthreads_pertask) {
+                // calculate ndim index
+                ndim_idx_wkd(i_point, i_dim, train_data.shape(), index_mem);
+                // get point value
+                std::uintptr_t point_ptr = reinterpret_cast<std::uintptr_t>(train_data.data());
+                for (std::uint64_t i = 0; i < train_data.ndim(); i++) {
+                    point_ptr += index_mem[i] * train_data.strides()[i];
+                }
+                double point_value = *(reinterpret_cast<double *>(point_ptr));
+                // check for normal data
+                if (!check_normal(point_value)) {
+                    continue;
+                }
+                double point_gradient = 1.0;
+                // divide by 1/point_value^2
+                point_gradient /= point_value * point_value;
+                // multiply by coefficient of the same rank from other dimension
+                for (std::uint64_t i = 0; i < model.ndim(); i++) {
+                    point_gradient *= (i == i_dim) ? 1.0 : model.get(i, index_mem[i], param_rank);
+                }
+                // multiply by value evaluation
+                double point_eval = model.eval(index_mem);
+                point_gradient *= point_eval - point_value;
+                // add gradient on a point to gradient of parameter
+                param_gradient += point_gradient;
+            }
+            // save gradient to a result
+            parallel_mem[thread_idx] = param_gradient;
+            synch_threads();
+            std::printf("Parallel mem: %s\n", parallel_mem.str().c_str());
+#ifdef __CUDA_ARCH__
+            ::atomicAdd(dim_gradient + i_param, param_gradient);
+#else
+            if (thgr.thread_idx_in_group == 0) {
+                for (std::uint64_t t = 0; t < thgr.numthreads_pertask; t++) {
+                    dim_gradient[i_param] += parallel_mem[thread_idx+t];
+                }
+            }
+            #pragma omp barrier
+#endif
+        }
+        dim_gradient += model.rshape()[i_dim];
+        synch_threads();
+    }
+}
+
+}  // namespace merlin
