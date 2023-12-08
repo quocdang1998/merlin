@@ -89,6 +89,13 @@ struct candy::Optimizer {
     /// @}
 };
 
+namespace candy {
+
+/** @brief Create an optimizer with gradient descent algorithm.*/
+MERLIN_EXPORTS candy::Optimizer create_grad_descent(double learning_rate);
+
+}  // namespace candy
+
 }  // namespace merlin
 
 #endif  // MERLIN_CANDY_OPTIMIZER_HPP_
