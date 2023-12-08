@@ -65,4 +65,17 @@ candy::Optimizer::~Optimizer(void) {
     }
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Create
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Create an optimizer with gradient descent algorithm
+candy::Optimizer candy::create_grad_descent(double learning_rate) {
+    candy::Optimizer opt;
+    opt.algorithm = candy::OptAlgorithm::GdAlgo;
+    candy::optmz::GradDescent optimizer(learning_rate);
+    opt.static_data = candy::OptmzStatic(std::in_place_type<candy::optmz::GradDescent>, optimizer);
+    return opt;
+}
+
 }  // namespace merlin
