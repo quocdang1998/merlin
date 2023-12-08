@@ -33,7 +33,7 @@ __cuhostdev__ double rmse_averager(const double * thread_result_data, const std:
  * in which @f$ N @f$ is the number of non-zero elements in the data, @f$ x_{\text{model}} @f$ is the value predicted
  * by the model, and @f$ x_{\text{data}} @f$ is the value from the train data.
  */
-MERLIN_EXPORTS double rmse_cpu(const candy::Model & model, const array::Array & train_data,
+MERLIN_EXPORTS double rmse_cpu(const candy::Model * p_model, const array::Array * p_train_data,
                                std::uint64_t n_threads = 1) noexcept;
 
 /** @brief Calculate relative mean square error with GPU parallelism.
@@ -58,8 +58,18 @@ __cuhostdev__ double rmae_averager(const double * thread_result_data, const std:
                                    std::uint64_t n_threads);
 
 /** @brief Calculate relative max error with CPU parallelism.*/
-MERLIN_EXPORTS double rmae_cpu(const candy::Model & model, const array::Array & train_data,
+MERLIN_EXPORTS double rmae_cpu(const candy::Model * p_model, const array::Array * p_train_data,
                                std::uint64_t n_threads = 1) noexcept;
+
+/** @brief Calculate relative max absolute error with GPU parallelism.
+ *  @param p_model Pointer to Candecomp model on GPU.
+ *  @param p_train_data Pointer to train data on GPU.
+ *  @param ndim Number of dimension of model and train data.
+ *  @param n_threads Number of parallel threads.
+ *  @param share_mem Share memory, should be at least ``model.share_mem_size() + data.share_mem_size()``.
+ */
+double rmae_gpu(const candy::Model * p_model, const array::Parcel * p_train_data, std::uint64_t ndim,
+                std::uint64_t share_mem, std::uint64_t n_threads = 1) noexcept;
 
 }  // namespace merlin::candy
 

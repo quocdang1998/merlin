@@ -1,0 +1,42 @@
+// Copyright 2023 quocdang1998
+#include "merlin/candy/optmz/grad_descent.hpp"
+
+#include "merlin/candy/model.hpp"     // merlin::candy::Model
+#include "merlin/candy/gradient.hpp"  // merlin::candy::Gradient
+
+namespace merlin {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// GradDescent
+// ---------------------------------------------------------------------------------------------------------------------
+
+#ifdef __NVCC__
+
+// Update model inside a GPU parallel region
+__cudevice__ void candy::optmz::GradDescent::update_gpu(candy::Model & model, const candy::Gradient & grad,
+                                                        std::uint64_t thread_idx, std::uint64_t n_threads) noexcept {
+    for (std::uint64_t i_param = thread_idx; i_param < model.num_params(); i_param += n_threads) {
+        model[i_param] -= this->learning_rate * grad.value()[i_param];
+    }
+    __syncthreads();
+}
+
+// Copy model to pre-allocated memory region by current CUDA block of threads
+__cudevice__ void * candy::optmz::GradDescent::copy_by_block(candy::optmz::GradDescent * dest_ptr,
+                                                             void * dynamic_data_ptr, std::uint64_t thread_idx,
+                                                             std::uint64_t block_size) const {
+    if (thread_idx == 0) {
+        dest_ptr->learning_rate = this->learning_rate;
+    }
+    __syncthreads();
+}
+
+// Copy object to a pre-allocated memory region by a single GPU threads
+__cudevice__ void * candy::optmz::GradDescent::copy_by_thread(candy::optmz::GradDescent * dest_ptr,
+                                                              void * dynamic_data_ptr) const {
+    dest_ptr->learning_rate = this->learning_rate;
+}
+
+#endif  // __NVCC__
+
+}  // namespace merlin

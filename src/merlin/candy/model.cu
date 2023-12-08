@@ -27,8 +27,8 @@ void * candy::Model::copy_to_gpu(candy::Model * gpu_ptr, void * parameters_data_
     ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
     ::cudaMemcpyAsync(parameters_ptr, this->parameters_.data(), this->num_params() * sizeof(double),
                       ::cudaMemcpyHostToDevice, stream);
-    ::cudaMemcpyAsync(rshape_ptr, this->rshape_.data(), this->ndim() * sizeof(std::uint64_t),
-                      ::cudaMemcpyHostToDevice, stream);
+    ::cudaMemcpyAsync(rshape_ptr, this->rshape_.data(), this->ndim() * sizeof(std::uint64_t), ::cudaMemcpyHostToDevice,
+                      stream);
     ::cudaMemcpyAsync(param_vectors_ptr, gpu_param_vector.data(), this->ndim() * sizeof(double *),
                       ::cudaMemcpyHostToDevice, stream);
     // copy temporary object to GPU

@@ -97,10 +97,18 @@ class candy::Model {
     __cuhostdev__ double eval(const intvec & index) const noexcept;
     /// @}
 
+    /// @name Check negative value
+    /// @{
+    /** @brief Check if these is a negative parameter in the model.
+     *  @return Return ``false`` if these is a negative parameter in the model.
+     */
+    MERLIN_EXPORTS bool check_negative(void) const noexcept;
+    /// @}
+
     /// @name GPU related features
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the model and its data.*/
-    MERLIN_EXPORTS std::uint64_t cumalloc_size(void) const noexcept {
+    std::uint64_t cumalloc_size(void) const noexcept {
         std::uint64_t size = sizeof(candy::Model);
         size += this->num_params() * sizeof(double) + this->ndim() * (sizeof(std::uint64_t) + sizeof(double *));
         return size;

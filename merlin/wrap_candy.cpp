@@ -125,6 +125,12 @@ void wrap_model(py::module & candy_module) {
         "Evaluate result of the model at a given ndim index in the resulted array.",
         py::arg("index")
     );
+    // check negative
+    model_pyclass.def(
+        "check_negative",
+        [](candy::Model & self) { return self.check_negative(); },
+        "Check if these is a negative parameter in the model."
+    );
     // initialization
     model_pyclass.def(
         "initialize",

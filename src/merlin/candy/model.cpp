@@ -1,10 +1,11 @@
 // Copyright 2023 quocdang1998
 #include "merlin/candy/model.hpp"
 
-#include <cmath>    // std::pow, std::sqrt
-#include <random>   // std::mt19937_64
-#include <sstream>  // std::ostringstream
-#include <vector>   // std::vector
+#include <algorithm>  // std::all_of
+#include <cmath>      // std::pow, std::sqrt
+#include <random>     // std::mt19937_64
+#include <sstream>    // std::ostringstream
+#include <vector>     // std::vector
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/env.hpp"          // merlin::Environment
@@ -97,7 +98,7 @@ void candy::Model::initialize(const array::Array & train_data, std::uint64_t n_t
         slicevec slice_division(train_data.ndim());
         for (std::uint64_t i_division = 0; i_division < num_division; i_division++) {
             // calculate mean value for each hyper-slice
-            slice_division[i_dim] = Slice(i_division, i_division+1, 1);
+            slice_division[i_dim] = Slice(i_division, i_division + 1, 1);
             array::Array subset_data(train_data, slice_division);
             auto [mean, variance] = stat::mean_variance(subset_data, n_thread);
             double stdeviation = std::sqrt(variance);
@@ -132,6 +133,12 @@ void * candy::Model::copy_from_gpu(double * data_from_gpu, std::uintptr_t stream
 }
 
 #endif  // __MERLIN_CUDA__
+
+// Check if these is a negative parameter in the model
+bool candy::Model::check_negative(void) const noexcept {
+    return std::all_of(this->parameters_.cbegin(), this->parameters_.cend(),
+                       [](const double & value) { return value >= 0; });
+}
 
 // String representation
 std::string candy::Model::str(void) const {

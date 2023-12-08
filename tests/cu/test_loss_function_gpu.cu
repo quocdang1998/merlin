@@ -29,6 +29,6 @@ int main(void) {
 
     // calculate loss function
     std::uint64_t share_mem = model.sharedmem_size() + train_data_gpu.sharedmem_size();
-    MESSAGE("Value of loss function (GPU): %f\n", merlin::candy::rms_error_gpu(p_model, p_train_data, 2, share_mem, 32));
-    MESSAGE("Value of loss function (CPU): %f\n", merlin::candy::rms_error_cpu(model, train_data, 8));
+    MESSAGE("Value of loss function (GPU): %f\n", merlin::candy::rmse_gpu(p_model, p_train_data, 2, share_mem, 32));
+    MESSAGE("Value of loss function (CPU): %f\n", merlin::candy::rmse_cpu(&model, &train_data, 8));
 }
