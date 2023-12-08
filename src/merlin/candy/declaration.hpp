@@ -6,7 +6,7 @@ namespace merlin::candy {
 class Gradient;
 class Launcher;
 class Model;
-class Optimizer;
+struct Optimizer;
 }  // namespace merlin::candy
 
 #endif  // MERLIN_CANDY_DECLARATION_HPP_

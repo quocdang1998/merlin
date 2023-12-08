@@ -5,6 +5,7 @@
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/candy/model.hpp"  // merlin::candy::Model
+#include "merlin/logger.hpp"       // FAILURE
 #include "merlin/utils.hpp"        // merlin::contiguous_to_ndim_idx
 
 namespace merlin {
@@ -45,9 +46,9 @@ static double calc_error_cpu(const candy::Model & model, const array::Array & tr
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Calculate mean error with CPU parallelism
-double candy::rmse_cpu(const candy::Model & model, const array::Array & train_data,
-                            std::uint64_t n_threads) noexcept {
-    return calc_error_cpu(model, train_data, n_threads, candy::rmse_updater, candy::rmse_averager);
+double candy::rmse_cpu(const candy::Model * p_model, const array::Array * p_train_data,
+                       std::uint64_t n_threads) noexcept {
+    return calc_error_cpu(*p_model, *p_train_data, n_threads, candy::rmse_updater, candy::rmse_averager);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -55,9 +56,9 @@ double candy::rmse_cpu(const candy::Model & model, const array::Array & train_da
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Calculate relative max error with CPU parallelism
-double candy::rmae_cpu(const candy::Model & model, const array::Array & train_data,
-                            std::uint64_t n_threads) noexcept {
-    return calc_error_cpu(model, train_data, n_threads, candy::rmae_updater, candy::rmae_averager);
+double candy::rmae_cpu(const candy::Model * p_model, const array::Array * p_train_data,
+                       std::uint64_t n_threads) noexcept {
+    return calc_error_cpu(*p_model, *p_train_data, n_threads, candy::rmae_updater, candy::rmae_averager);
 }
 
 }  // namespace merlin

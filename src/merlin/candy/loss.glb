@@ -113,4 +113,16 @@ double candy::rmse_gpu(const candy::Model * p_model, const array::Parcel * p_tra
     return calc_error_gpu_rmse(p_model, p_train_data, ndim, share_mem, n_threads);
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// RMAE
+// ---------------------------------------------------------------------------------------------------------------------
+
+GENERATE_ERROR_GPU(rmae, candy::rmae_updater, candy::rmae_averager)
+
+// Calculate mean error with CPU parallelism
+double candy::rmae_gpu(const candy::Model * p_model, const array::Parcel * p_train_data, std::uint64_t ndim,
+                       std::uint64_t share_mem, std::uint64_t n_threads) noexcept {
+    return calc_error_gpu_rmae(p_model, p_train_data, ndim, share_mem, n_threads);
+}
+
 }  // namespace merlin
