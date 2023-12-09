@@ -17,6 +17,8 @@ namespace candy {
 enum class OptAlgorithm : unsigned int {
     /** @brief Naive gradient descent algorithm.*/
     GdAlgo = 0x00,
+    /** @brief Adaptative grdient method.*/
+    AdgAlgo = 0x01
 };
 
 /** @brief Type for static data of optimizer.*/
@@ -69,7 +71,22 @@ struct candy::Optimizer {
                                       std::uintptr_t stream_ptr = 0) const;
     /** @brief Calculate additional number of bytes to allocate in CUDA shared memory for dynamic data.*/
     MERLIN_EXPORTS std::uint64_t sharedmem_size(void) const noexcept;
-    // copy by block and copy by thread are wait for implementation
+#ifdef __NVCC__
+    /** @brief Copy object to pre-allocated memory region by current CUDA block of threads.
+     *  @details The copy action is performed by the whole CUDA thread block.
+     *  @param dest_ptr Memory region where the object is copied to.
+     *  @param dynamic_data_ptr Pointer to a pre-allocated GPU memory storing dynamic data.
+     *  @param thread_idx Flatten ID of the current CUDA thread in the block.
+     *  @param block_size Number of threads in the current CUDA block.
+     */
+    __cudevice__ void * copy_by_block(candy::Optimizer * dest_ptr, void * dynamic_data_ptr, std::uint64_t thread_idx,
+                                      std::uint64_t block_size) const;
+    /** @brief Copy object to a pre-allocated memory region by a single GPU threads.
+     *  @param dest_ptr Memory region where the object is copied to.
+     *  @param dynamic_data_ptr Pointer to a pre-allocated GPU memory storing dynamic data.
+     */
+    __cudevice__ void * copy_by_thread(candy::Optimizer * dest_ptr, void * dynamic_data_ptr) const;
+#endif  // __NVCC__
     /// @}
 
     /// @name Destructor

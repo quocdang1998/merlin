@@ -93,7 +93,7 @@ list(APPEND MERLIN_SRC_RDC
      candy/gradient.rdc
      candy/loss.rdc
      candy/model.rdc
-     # candy/optimizer.rdc
+     candy/optimizer.rdc
      # candy/optmz/adam.rdc
      # candy/optmz/adagrad.rdc
      candy/optmz/grad_descent.rdc

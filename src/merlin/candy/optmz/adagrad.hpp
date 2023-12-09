@@ -1,41 +1,48 @@
 // Copyright 2023 quocdang1998
-#ifndef MERLIN_CANDY_OPTMZ_GRAD_DESCENT_HPP_
-#define MERLIN_CANDY_OPTMZ_GRAD_DESCENT_HPP_
+#ifndef MERLIN_CANDY_OPTMZ_ADAGRAD_HPP_
+#define MERLIN_CANDY_OPTMZ_ADAGRAD_HPP_
 
 #include "merlin/candy/declaration.hpp"        // merlin::candy::Gradient, merlin::candy::Model
-#include "merlin/candy/optmz/declaration.hpp"  // merlin::candy::optmz::GradDescent
+#include "merlin/candy/optmz/declaration.hpp"  // merlin::candy::optmz::AdaGrad
 #include "merlin/cuda_interface.hpp"           // __cudevice__
 #include "merlin/exports.hpp"                  // MERLIN_EXPORTS
+#include "merlin/vector.hpp"                   // merlin::floatvec
 
 namespace merlin {
 
-/** @brief %Optimizer by stochastic gradient descent method.
+/** @brief %Optimizer by adaptive gradient method.
  *  @details Each parameter will be updated by the formula:
- *  @f[ p_{t+1} = p_t - \eta \left( \frac{\partial L}{\partial p} \right)_t @f]
+ *  @f[ g_t = g_{t-1} + {\left(\frac{\partial L}{\partial p}\right)_{t}}^2 @f]
+ *  @f[ p_{t+1} = p_t - \frac{\eta}{\sqrt{\varepsilon + g_t}} \left( \frac{\partial L}{\partial p} \right)_t @f]
  *
- *  , in which @f$ t @f$ is update instance,  @f$ p @f$ is value of parameter, @f$ \eta @f$ is the learning rate, and
- *  @f$ L @f$ is the loss function.
+ *  , in which @f$ t @f$ is update instance,  @f$ p @f$ is value of parameter, @f$ \eta @f$ is the learning rate,
+ *  @f$ \varepsilon @f$ is the correction factor (bias), and @f$ L @f$ is the loss function.
  */
-struct candy::optmz::GradDescent {
+struct candy::optmz::AdaGrad {
 
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
-    GradDescent(void) = default;
-    /** @brief Constructor from learning rate.*/
-    GradDescent(double lr) : learning_rate(lr) {}
+    AdaGrad(void) = default;
+    /** @brief Constructor from learning rate.
+     *  @param lr Initial learning rate.
+     *  @param num_params Number of parameter in the model to train.
+     *  @param b Bias.
+     */
+    AdaGrad(double lr, std::uint64_t num_params, double b = 1.0e-8) :
+    learning_rate(lr), bias(b), grad_history(num_params) {}
     /// @}
 
     /// @name Copy and move
     /// @{
     /** @brief Copy constructor.*/
-    GradDescent(const candy::optmz::GradDescent & src) = default;
+    AdaGrad(const candy::optmz::AdaGrad & src) = default;
     /** @brief Copy assignment.*/
-    candy::optmz::GradDescent & operator=(const candy::optmz::GradDescent & src) = default;
+    candy::optmz::AdaGrad & operator=(const candy::optmz::AdaGrad & src) = default;
     /** @brief Move constructor.*/
-    GradDescent(candy::optmz::GradDescent && src) = default;
+    AdaGrad(candy::optmz::AdaGrad && src) = default;
     /** @brief Move assignment.*/
-    candy::optmz::GradDescent & operator=(candy::optmz::GradDescent && src) = default;
+    candy::optmz::AdaGrad & operator=(candy::optmz::AdaGrad && src) = default;
     /// @}
 
     /// @name Update model by gradient
@@ -83,8 +90,12 @@ struct candy::optmz::GradDescent {
 
     /// @name Attributes
     /// @{
-    /** @brief Learning rate.*/
+    /** @brief Initial learning rate.*/
     double learning_rate;
+    /** @brief Bias to prevent division error.*/
+    double bias;
+    /** @brief Sum of squares of gradients in history.*/
+    floatvec grad_history;
     /// @}
 };
 

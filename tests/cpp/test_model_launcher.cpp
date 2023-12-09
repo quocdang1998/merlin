@@ -40,13 +40,13 @@ int main(void) {
     MESSAGE("Model before trained: %s\n", model.str().c_str());
 
     merlin::Vector<double> gradient_data(model.num_params());
-    merlin::candy::Gradient grad(gradient_data.data(), &model, merlin::candy::TrainMetric::RelativeSquare);
+    merlin::candy::Gradient grad(gradient_data.data(), model.num_params(), merlin::candy::TrainMetric::RelativeSquare);
 
     std::uint64_t n_thread = 20;
     merlin::intvec cache(n_thread * model.ndim());
     #pragma omp parallel num_threads(n_thread)
     {
-        grad.calc_by_cpu(train_data, ::omp_get_thread_num(), n_thread, cache.data());
+        grad.calc_by_cpu(model, train_data, ::omp_get_thread_num(), n_thread, cache.data());
     }
     MESSAGE("Model gradient: %s\n", grad.str().c_str());
 }
