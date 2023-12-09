@@ -2,7 +2,8 @@
 #ifndef MERLIN_SPLINT_INTERPOLATOR_HPP_
 #define MERLIN_SPLINT_INTERPOLATOR_HPP_
 
-#include <tuple>  // std::tuple
+#include <tuple>    // std::tuple
+#include <utility>  // std::exchange, std::move
 
 #include "merlin/array/nddata.hpp"         // merlin::array::NdData
 #include "merlin/exports.hpp"              // MERLIN_EXPORTS
@@ -39,12 +40,37 @@ class splint::Interpolator {
     Interpolator(void) = default;
     /** @brief Construct from an array of values.
      *  @param grid Cartesian grid to interpolate.
-     *  @param values C-contiguous array containing the data.
+     *  @param values Multi-dimensional array containing the data.
      *  @param method Interpolation method to use for each dimension.
      *  @param processor Flag indicate the processor performing the interpolation (CPU or GPU).
     */
     MERLIN_EXPORTS Interpolator(const grid::CartesianGrid & grid, const array::Array & values,
                                 const Vector<splint::Method> & method, ProcessorType processor = ProcessorType::Cpu);
+    /// @}
+
+    /// @name Copy and move
+    /// @{
+    /** @brief Copy constructor.*/
+    Interpolator(const splint::Interpolator & src) = delete;
+    /** @brief Copy assignment.*/
+    splint::Interpolator & operator=(const splint::Interpolator & src) = delete;
+    /** @brief Move constructor.*/
+    Interpolator(splint::Interpolator && src) :
+    ndim_(src.ndim_), shared_mem_size_(src.shared_mem_size_), synchronizer_(std::move(src.synchronizer_)) {
+        this->p_grid_ = std::exchange(src.p_grid_, nullptr);
+        this->p_coeff_ = std::exchange(src.p_coeff_, nullptr);
+        this->p_method_ = std::exchange(src.p_method_, nullptr);
+    }
+    /** @brief Move assignment.*/
+    splint::Interpolator & operator=(splint::Interpolator && src) {
+        this->p_grid_ = std::exchange(src.p_grid_, nullptr);
+        this->p_coeff_ = std::exchange(src.p_coeff_, nullptr);
+        this->p_method_ = std::exchange(src.p_method_, nullptr);
+        this->ndim_ = src.ndim_;
+        this->shared_mem_size_ = src.shared_mem_size_;
+        this->synchronizer_ = std::move(src.synchronizer_);
+        return *this;
+    }
     /// @}
 
     /// @name Get elements and attributes
@@ -69,7 +95,7 @@ class splint::Interpolator {
         return static_cast<unsigned int>(-1);
     }
     /** @brief Check if the interpolator is executed on GPU.*/
-    constexpr bool on_gpu(void) const noexcept { return (this->synchronizer_.proc_type == ProcessorType::Gpu); }
+    constexpr bool on_gpu(void) const noexcept { return (this->synchronizer_.synchronizer.index() == 1); }
     /// @}
 
     /// @name Construct coefficients

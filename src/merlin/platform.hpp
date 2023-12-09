@@ -2,7 +2,7 @@
 #ifndef MERLIN_PLATFORM_HPP_
 #define MERLIN_PLATFORM_HPP_
 
-#if (defined(_WIN32) || defined(_WIN64))  // On Windows, detect MSVC
+#if defined(_WIN32) || defined(_WIN64)  // On Windows, detect MSVC
     #if defined(_MSC_VER)
         #define __MERLIN_WINDOWS__
     #elif defined(__MINGW32__) || defined(__MINGW64__)

@@ -2,9 +2,8 @@
 #ifndef MERLIN_CANDY_OPTIMIZER_HPP_
 #define MERLIN_CANDY_OPTIMIZER_HPP_
 
-#include <variant>  // std::variant
-
 #include "merlin/candy/declaration.hpp"  // merlin::candy::Model
+#include "merlin/candy/optmz/adagrad.hpp"       // merlin::candy::optmz::AdaGrad
 #include "merlin/candy/optmz/grad_descent.hpp"  // merlin::candy::optmz::GradDescent
 #include "merlin/cuda_interface.hpp"     // __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
@@ -17,10 +16,12 @@ namespace candy {
 enum class OptAlgorithm : unsigned int {
     /** @brief Naive gradient descent algorithm.*/
     GdAlgo = 0x00,
+    /** @brief Adaptative grdient method.*/
+    AdgAlgo = 0x01
 };
 
 /** @brief Type for static data of optimizer.*/
-using OptmzStatic = std::variant<candy::optmz::GradDescent>;
+using OptmzStatic = std::variant<candy::optmz::GradDescent, candy::optmz::AdaGrad>;
 
 }  // namespace candy
 
@@ -69,7 +70,22 @@ struct candy::Optimizer {
                                       std::uintptr_t stream_ptr = 0) const;
     /** @brief Calculate additional number of bytes to allocate in CUDA shared memory for dynamic data.*/
     MERLIN_EXPORTS std::uint64_t sharedmem_size(void) const noexcept;
-    // copy by block and copy by thread are wait for implementation
+#ifdef __NVCC__
+    /** @brief Copy object to pre-allocated memory region by current CUDA block of threads.
+     *  @details The copy action is performed by the whole CUDA thread block.
+     *  @param dest_ptr Memory region where the object is copied to.
+     *  @param dynamic_data_ptr Pointer to a pre-allocated GPU memory storing dynamic data.
+     *  @param thread_idx Flatten ID of the current CUDA thread in the block.
+     *  @param block_size Number of threads in the current CUDA block.
+     */
+    __cudevice__ void * copy_by_block(candy::Optimizer * dest_ptr, void * dynamic_data_ptr, std::uint64_t thread_idx,
+                                      std::uint64_t block_size) const;
+    /** @brief Copy object to a pre-allocated memory region by a single GPU threads.
+     *  @param dest_ptr Memory region where the object is copied to.
+     *  @param dynamic_data_ptr Pointer to a pre-allocated GPU memory storing dynamic data.
+     */
+    __cudevice__ void * copy_by_thread(candy::Optimizer * dest_ptr, void * dynamic_data_ptr) const;
+#endif  // __NVCC__
     /// @}
 
     /// @name Destructor
@@ -84,8 +100,6 @@ struct candy::Optimizer {
     candy::OptmzStatic static_data;
     /** @brief Dynamic data for the algorithm (data resides on the heap memory and must be deallocated in destructor).*/
     char * dynamic_data = nullptr;
-    /** @brief Optimization algorithm.*/
-    candy::OptAlgorithm algorithm;
     /// @}
 };
 
@@ -93,6 +107,9 @@ namespace candy {
 
 /** @brief Create an optimizer with gradient descent algorithm.*/
 MERLIN_EXPORTS candy::Optimizer create_grad_descent(double learning_rate);
+
+/** @brief Create an optimizer with adagrad algorithm.*/
+MERLIN_EXPORTS candy::Optimizer create_adagrad(double learning_rate, std::uint64_t num_params, double bias = 1.0e-8);
 
 }  // namespace candy
 

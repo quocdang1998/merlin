@@ -1,0 +1,66 @@
+// Copyright 2023 quocdang1998
+#include "merlin/candy/optimizer.hpp"
+
+#include <array>    // std::array
+#include <cstddef>  // offsetof
+
+namespace merlin {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Optimizer
+// ---------------------------------------------------------------------------------------------------------------------
+
+#ifdef __NVCC__
+
+// Update model inside a CPU parallel region
+__cudevice__ void candy::Optimizer::update_gpu(candy::Model & model, const candy::Gradient & grad,
+                                               std::uint64_t thread_idx, std::uint64_t n_threads) noexcept {
+    // static array of function
+    using UpdateGpuFunc = std::add_pointer<void(void *, candy::Model &, const candy::Gradient &,
+                                                std::uint64_t, std::uint64_t) noexcept>::type;
+    static std::array<UpdateGpuFunc, 2> update_gpu_func = {
+        candy::optmz::update_grad_descent_gpu,
+        candy::optmz::update_adagrad_gpu
+    };
+    // update model by each thread
+    void * static_optimizer = reinterpret_cast<void *>(&(this->static_data));
+    update_gpu_func[this->static_data.index()](static_optimizer, model, grad, thread_idx, n_threads);
+}
+
+// Copy object to pre-allocated memory region by current CUDA block of threads
+__cudevice__ void * candy::Optimizer::copy_by_block(candy::Optimizer * dest_ptr, void * dynamic_data_ptr,
+                                                    std::uint64_t thread_idx, std::uint64_t block_size) const {
+    // static array of function
+    using CpyByBlockFunc = std::add_pointer<void *(void *, const void *, void *, std::uint64_t, std::uint64_t)>::type;
+    static std::array<CpyByBlockFunc, 2> cpy_by_block_func = {
+        candy::optmz::copy_grad_descent_by_block,
+        candy::optmz::copy_adagrad_by_block
+    };
+    // copying data by a single thread
+    std::uintptr_t static_optimizer = reinterpret_cast<std::uintptr_t>(dest_ptr);
+    static_optimizer += offsetof(candy::Optimizer, static_data);
+    candy::OptmzStatic * dest_static = reinterpret_cast<candy::OptmzStatic *>(static_optimizer);
+    void * returned_ptr = cpy_by_block_func[this->static_data.index()](dest_static, &(this->static_data),
+                                                                       dynamic_data_ptr, thread_idx, block_size);
+    return returned_ptr;
+}
+
+// Copy object to a pre-allocated memory region by a single GPU threads
+__cudevice__ void * candy::Optimizer::copy_by_thread(candy::Optimizer * dest_ptr, void * dynamic_data_ptr) const {
+    // static array of function
+    using CpyByThreadFunc = std::add_pointer<void *(void *, const void *, void *)>::type;
+    static std::array<CpyByThreadFunc, 2> cpy_by_thread_func = {
+        candy::optmz::copy_grad_descent_by_thread,
+        candy::optmz::copy_adagrad_by_thread
+    };
+    // copying data by a single thread
+    std::uintptr_t static_optimizer = reinterpret_cast<std::uintptr_t>(dest_ptr);
+    static_optimizer += offsetof(candy::Optimizer, static_data);
+    void * returned_ptr = cpy_by_thread_func[this->static_data.index()](reinterpret_cast<void *>(static_optimizer),
+                                                                        &(this->static_data), dynamic_data_ptr);
+    return returned_ptr;
+}
+
+#endif  // __NVCC__
+
+}  // namespace merlin

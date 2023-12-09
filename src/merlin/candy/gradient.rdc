@@ -32,21 +32,21 @@ __cuhostdev__ static void ndim_idx_wkd(std::uint64_t index, std::uint64_t skip_d
 }
 
 // Check if a value is normal
-__cuhostdev__ static bool check_normal(double value) noexcept {
-#if defined(__MERLIN_LINUX__)
+__cuhostdev__ static inline bool check_normal(double value) noexcept {
+#if defined(__MERLIN_LINUX__) && !defined(__CUDA_ARCH__)
     return std::isnormal(value);
-#elif defined(__MERLIN_WINDOWS__)
+#else
     return isfinite(value) && (value != 0.0);
-#endif  // __MERLIN_LINUX__
+#endif  // __MERLIN_LINUX__ && !__CUDA_ARCH__
 }
 
 // Check if a value is finite
-__cuhostdev__ static bool check_finite(double value) noexcept {
-#if defined(__MERLIN_LINUX__)
+__cuhostdev__ static inline bool check_finite(double value) noexcept {
+#if defined(__MERLIN_LINUX__) && !defined(__CUDA_ARCH__)
     return std::isfinite(value);
-#elif defined(__MERLIN_WINDOWS__)
+#else
     return isfinite(value);
-#endif  // __MERLIN_LINUX__
+#endif  // __MERLIN_LINUX__ && !__CUDA_ARCH__
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -159,12 +159,20 @@ __cuhostdev__ void candy::absquare_grad(const candy::Model & model, const array:
 // Gradient
 // ---------------------------------------------------------------------------------------------------------------------
 
+#ifdef __NVCC__
+
 // Calculate gradient from data in GPU parallel section
-__cudevice__ void candy::Gradient::calc_by_gpu(const array::Parcel & train_data, std::uint64_t thread_idx,
-                                               std::uint64_t n_threads, std::uint64_t * cache_mem) noexcept {
+__cudevice__ void candy::Gradient::calc_by_gpu(candy::Model & model, const array::Parcel & train_data,
+                                               std::uint64_t thread_idx, std::uint64_t n_threads,
+                                               std::uint64_t * cache_mem) noexcept {
     static std::array<candy::GradientCalc, 2> grad_methods = {candy::rlsquare_grad, candy::absquare_grad};
     unsigned int metric = static_cast<unsigned int>(this->train_metric_);
-    grad_methods[metric](*(this->model_ptr_), train_data, this->value_, thread_idx, n_threads, cache_mem);
+    grad_methods[metric](model, train_data, this->value_, thread_idx, n_threads, cache_mem);
 }
+
+#endif  // __NVCC__
+
+// Destructor
+__cuhostdev__ candy::Gradient::~Gradient(void) {}
 
 }  // namespace merlin

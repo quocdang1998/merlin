@@ -10,12 +10,17 @@ namespace merlin {
 // Update model inside a CPU parallel region
 void candy::Optimizer::update_cpu(candy::Model & model, const candy::Gradient & grad, std::uint64_t thread_idx,
                                   std::uint64_t n_threads) noexcept {
-    switch (this->algorithm) {
-        case candy::OptAlgorithm::GdAlgo : {  // gradient descent
+    switch (this->static_data.index()) {
+        case 0 : {  // gradient descent
             candy::optmz::GradDescent & optimizer = std::get<candy::optmz::GradDescent>(this->static_data);
             optimizer.update_cpu(model, grad, thread_idx, n_threads);
             break;
         }
+        /*case candy::OptAlgorithm::AdgAlgo : {  // adagrad
+            candy::optmz::AdaGrad & optimizer = std::get<candy::optmz::AdaGrad>(this->static_data);
+            optimizer.update_cpu(model, grad, thread_idx, n_threads);
+            break;
+        }*/
     }
 }
 
@@ -23,8 +28,8 @@ void candy::Optimizer::update_cpu(candy::Model & model, const candy::Gradient & 
 std::uint64_t candy::Optimizer::cumalloc_size(void) const noexcept {
     std::uint64_t static_size = sizeof(candy::Optimizer);
     std::uint64_t dynamic_size = 0;
-    switch (this->algorithm) {
-        case candy::OptAlgorithm::GdAlgo : {  // gradient descent
+    switch (this->static_data.index()) {
+        case 0 : {  // gradient descent
             const candy::optmz::GradDescent & optimizer = std::get<candy::optmz::GradDescent>(this->static_data);
             dynamic_size = optimizer.additional_cumalloc();
             break;
@@ -48,8 +53,8 @@ void * candy::Optimizer::copy_to_gpu(candy::Optimizer * gpu_ptr, void * dynamic_
 std::uint64_t candy::Optimizer::sharedmem_size(void) const noexcept {
     std::uint64_t static_size = sizeof(candy::Optimizer);
     std::uint64_t dynamic_size = 0;
-    switch (this->algorithm) {
-        case candy::OptAlgorithm::GdAlgo : {  // gradient descent
+    switch (this->static_data.index()) {
+        case 0 : {  // gradient descent
             const candy::optmz::GradDescent & optimizer = std::get<candy::optmz::GradDescent>(this->static_data);
             dynamic_size = optimizer.additional_sharedmem();
             break;
@@ -72,9 +77,16 @@ candy::Optimizer::~Optimizer(void) {
 // Create an optimizer with gradient descent algorithm
 candy::Optimizer candy::create_grad_descent(double learning_rate) {
     candy::Optimizer opt;
-    opt.algorithm = candy::OptAlgorithm::GdAlgo;
     candy::optmz::GradDescent optimizer(learning_rate);
     opt.static_data = candy::OptmzStatic(std::in_place_type<candy::optmz::GradDescent>, optimizer);
+    return opt;
+}
+
+// Create an optimizer with adagrad algorithm
+candy::Optimizer candy::create_adagrad(double learning_rate, std::uint64_t num_params, double bias) {
+    candy::Optimizer opt;
+    candy::optmz::AdaGrad optimizer(learning_rate, num_params, bias);
+    opt.static_data = candy::OptmzStatic(std::in_place_type<candy::optmz::AdaGrad>, optimizer);
     return opt;
 }
 

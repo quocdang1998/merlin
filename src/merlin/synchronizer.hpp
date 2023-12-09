@@ -25,11 +25,9 @@ struct Synchronizer {
     /** @brief Default constructor.*/
     Synchronizer(void) = default;
     /** @brief Constructor from CPU synchronizer.*/
-    Synchronizer(std::future<void> * cpu_sync) :
-    proc_type(ProcessorType::Cpu), synchronizer(std::in_place_type<std::future<void> *>, cpu_sync) {}
+    Synchronizer(std::future<void> * cpu_sync) : synchronizer(std::in_place_type<std::future<void> *>, cpu_sync) {}
     /** @brief Constructor from GPU synchronizer.*/
     Synchronizer(cuda::Stream && gpu_sync) :
-    proc_type(ProcessorType::Gpu),
     synchronizer(std::in_place_type<cuda::Stream>, std::forward<cuda::Stream>(gpu_sync)) {}
     /// @}
 
@@ -39,16 +37,14 @@ struct Synchronizer {
     Synchronizer(const Synchronizer & src) = delete;
     Synchronizer & operator=(const Synchronizer & src) = delete;
     Synchronizer(Synchronizer && src) :
-    proc_type(src.proc_type),
     synchronizer(std::forward<std::variant<std::future<void> *, cuda::Stream>>(src.synchronizer)) {
-        if (src.proc_type == ProcessorType::Cpu) {
+        if (src.synchronizer.index() == 0) {
             std::get<std::future<void> *>(src.synchronizer) = nullptr;
         }
     }
     Synchronizer & operator=(Synchronizer && src) {
-        this->proc_type = src.proc_type;
         this->synchronizer = std::move(src.synchronizer);
-        if (src.proc_type == ProcessorType::Cpu) {
+        if (src.synchronizer.index() == 0) {
             std::get<std::future<void> *>(src.synchronizer) = nullptr;
         }
         return *this;
@@ -58,8 +54,8 @@ struct Synchronizer {
     /// @name Action
     /// @{
     void synchronize(void) {
-        switch (this->proc_type) {
-            case ProcessorType::Cpu : {
+        switch (this->synchronizer.index()) {
+            case 0 : {
                 std::future<void> * synch = std::get<std::future<void> *>(this->synchronizer);
                 if (synch != nullptr) {
                     if (synch->valid()) {
@@ -68,7 +64,7 @@ struct Synchronizer {
                 }
                 break;
             }
-            case ProcessorType::Gpu : {
+            case 1 : {
                 std::get<cuda::Stream>(this->synchronizer).synchronize();
                 break;
             }
@@ -78,8 +74,6 @@ struct Synchronizer {
 
     /// @name Attributes
     /// @{
-    /** @brief Processor type on which the synchronizer acts.*/
-    ProcessorType proc_type;
     /** @brief Synchronizer.*/
     std::variant<std::future<void> *, cuda::Stream> synchronizer;
     /// @}
@@ -87,7 +81,7 @@ struct Synchronizer {
     /// @name Destructor
     /// @{
     ~Synchronizer(void) {
-        if (this->proc_type == ProcessorType::Cpu) {
+        if (this->synchronizer.index() == 0) {
             std::future<void> * cpu_synchronizer = std::get<std::future<void> *>(this->synchronizer);
             if (cpu_synchronizer != nullptr) {
                 delete cpu_synchronizer;
