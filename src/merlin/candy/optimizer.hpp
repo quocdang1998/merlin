@@ -5,6 +5,7 @@
 #include <variant>  // std::variant
 
 #include "merlin/candy/declaration.hpp"  // merlin::candy::Model
+#include "merlin/candy/optmz/adagrad.hpp"       // merlin::candy::optmz::AdaGrad
 #include "merlin/candy/optmz/grad_descent.hpp"  // merlin::candy::optmz::GradDescent
 #include "merlin/cuda_interface.hpp"     // __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
@@ -22,7 +23,7 @@ enum class OptAlgorithm : unsigned int {
 };
 
 /** @brief Type for static data of optimizer.*/
-using OptmzStatic = std::variant<candy::optmz::GradDescent>;
+using OptmzStatic = std::variant<candy::optmz::GradDescent, candy::optmz::AdaGrad>;
 
 }  // namespace candy
 
@@ -110,6 +111,9 @@ namespace candy {
 
 /** @brief Create an optimizer with gradient descent algorithm.*/
 MERLIN_EXPORTS candy::Optimizer create_grad_descent(double learning_rate);
+
+/** @brief Create an optimizer with adagrad algorithm.*/
+MERLIN_EXPORTS candy::Optimizer create_adagrad(double learning_rate);
 
 }  // namespace candy
 

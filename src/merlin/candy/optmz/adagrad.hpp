@@ -60,16 +60,16 @@ struct candy::optmz::AdaGrad {
     /// @name GPU related features
     /// @{
     /** @brief Calculate additional number of bytes to allocate for dynamic data.*/
-    std::uint64_t additional_cumalloc(void) const noexcept { return 0; }
+    std::uint64_t additional_cumalloc(void) const noexcept { return sizeof(double) * this->grad_history.size(); }
     /** @brief Copy the optimizer from CPU to a pre-allocated memory on GPU.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
      *  @param dynamic_data_ptr Pointer to a pre-allocated GPU memory storing dynamic data.
      *  @param stream_ptr Pointer to CUDA stream for asynchronous copy.
      */
-    MERLIN_EXPORTS void * copy_to_gpu(candy::optmz::GradDescent * gpu_ptr, void * dynamic_data_ptr,
+    MERLIN_EXPORTS void * copy_to_gpu(candy::optmz::AdaGrad * gpu_ptr, void * dynamic_data_ptr,
                                       std::uintptr_t stream_ptr = 0) const;
     /** @brief Calculate additional number of bytes to allocate in CUDA shared memory for dynamic data.*/
-    std::uint64_t additional_sharedmem(void) const noexcept { return 0; }
+    std::uint64_t additional_sharedmem(void) const noexcept { return sizeof(double) * this->grad_history.size(); }
 #ifdef __NVCC__
     /** @brief Copy object to pre-allocated memory region by current CUDA block of threads.
      *  @details The copy action is performed by the whole CUDA thread block.
@@ -78,13 +78,8 @@ struct candy::optmz::AdaGrad {
      *  @param thread_idx Flatten ID of the current CUDA thread in the block.
      *  @param block_size Number of threads in the current CUDA block.
      */
-    __cudevice__ void * copy_by_block(candy::optmz::GradDescent * dest_ptr, void * dynamic_data_ptr,
+    __cudevice__ void * copy_by_block(candy::optmz::AdaGrad * dest_ptr, void * dynamic_data_ptr,
                                       std::uint64_t thread_idx, std::uint64_t block_size) const;
-    /** @brief Copy object to a pre-allocated memory region by a single GPU threads.
-     *  @param dest_ptr Memory region where the object is copied to.
-     *  @param dynamic_data_ptr Pointer to a pre-allocated GPU memory storing dynamic data.
-     */
-    __cudevice__ void * copy_by_thread(candy::optmz::GradDescent * dest_ptr, void * dynamic_data_ptr) const;
 #endif  // __NVCC__
     /// @}
 
@@ -98,6 +93,21 @@ struct candy::optmz::AdaGrad {
     floatvec grad_history;
     /// @}
 };
+
+#ifdef __NVCC__
+
+namespace candy::optmz {
+
+/** @brief Copy AdaGrad object to a pre-allocated memory region by a single GPU threads.
+ *  @param src_ptr Memory region where the object resides.
+ *  @param dest_ptr Memory region where the object is copied to.
+ *  @param dynamic_data_ptr Pointer to a pre-allocated GPU memory storing dynamic data.
+ */
+__cudevice__ void * copy_adagrad_by_thread(void * dest_ptr, const void * src_ptr, void * dynamic_data_ptr);
+
+}  // namespace candy::optmz
+
+#endif
 
 }  // namespace merlin
 

@@ -32,9 +32,11 @@ __cudevice__ void * candy::optmz::GradDescent::copy_by_block(candy::optmz::GradD
 }
 
 // Copy object to a pre-allocated memory region by a single GPU threads
-__cudevice__ void * candy::optmz::GradDescent::copy_by_thread(candy::optmz::GradDescent * dest_ptr,
-                                                              void * dynamic_data_ptr) const {
-    dest_ptr->learning_rate = this->learning_rate;
+__cudevice__ void * candy::optmz::copy_grad_descent_by_thread(void * dest_ptr, const void * src_ptr,
+                                                              void * dynamic_data_ptr) {
+    candy::optmz::GradDescent * dptr = reinterpret_cast<candy::optmz::GradDescent *>(dest_ptr);
+    const candy::optmz::GradDescent * sptr = reinterpret_cast<const candy::optmz::GradDescent *>(src_ptr);
+    dptr->learning_rate = sptr->learning_rate;
 }
 
 #endif  // __NVCC__

@@ -73,11 +73,6 @@ struct candy::optmz::GradDescent {
      */
     __cudevice__ void * copy_by_block(candy::optmz::GradDescent * dest_ptr, void * dynamic_data_ptr,
                                       std::uint64_t thread_idx, std::uint64_t block_size) const;
-    /** @brief Copy object to a pre-allocated memory region by a single GPU threads.
-     *  @param dest_ptr Memory region where the object is copied to.
-     *  @param dynamic_data_ptr Pointer to a pre-allocated GPU memory storing dynamic data.
-     */
-    __cudevice__ void * copy_by_thread(candy::optmz::GradDescent * dest_ptr, void * dynamic_data_ptr) const;
 #endif  // __NVCC__
     /// @}
 
@@ -87,6 +82,21 @@ struct candy::optmz::GradDescent {
     double learning_rate;
     /// @}
 };
+
+#ifdef __NVCC__
+
+namespace candy::optmz {
+
+/** @brief Copy GradDescent object to a pre-allocated memory region by a single GPU threads.
+ *  @param src_ptr Memory region where the object resides.
+ *  @param dest_ptr Memory region where the object is copied to.
+ *  @param dynamic_data_ptr Pointer to a pre-allocated GPU memory storing dynamic data.
+ */
+__cudevice__ void * copy_grad_descent_by_thread(void * dest_ptr, const void * src_ptr, void * dynamic_data_ptr);
+
+}  // namespace candy::optmz
+
+#endif
 
 }  // namespace merlin
 
