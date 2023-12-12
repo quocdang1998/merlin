@@ -19,7 +19,7 @@ namespace merlin {
 
 /** @brief CUDA memory allocator.
  *  @details This template serves as a helper for allocating and freeing CUDA memory with a simple syntax. Template
- *  parameters class must be either trivially copyable (i.e. object can be copied to a new address using directly
+ *  parameters class ``T`` must be either trivially copyable (i.e. object can be copied to a new address using directly
  *  ``std::memcpy``), or support the following methods:
  *     - ``cumalloc_size(void) -> std::uint64_t``: return the memory size (in bytes) needed for the object itself and
  *       data pointed by its members.
@@ -54,7 +54,8 @@ class cuda::Memory {
     typename std::tuple_element<index, std::tuple<Args *...>>::type get(void);
 
     /** @brief Disown the memory.
-     *  @details Release the pointer to GPU data, and the internal pointer is set to ``nullptr``.
+     *  @details Release the pointer to GPU data, and the internal pointer is set to ``nullptr``. After calling this
+     *  method, GPU pointers contained by the object zill no longer be valid anymore.
      */
     void * disown(void) noexcept { return std::exchange(this->gpu_ptr_, nullptr); }
 

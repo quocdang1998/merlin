@@ -1,8 +1,9 @@
 // Copyright 2023 quocdang1998
 #include "merlin/candy/optmz/adagrad.hpp"
 
-#include "merlin/candy/model.hpp"     // merlin::candy::Model
-#include "merlin/candy/gradient.hpp"  // merlin::candy::Gradient
+#include "merlin/candy/gradient.hpp"   // merlin::candy::Gradient
+#include "merlin/candy/model.hpp"      // merlin::candy::Model
+#include "merlin/candy/optimizer.hpp"  // merlin::candy::OptmzStatic
 
 namespace merlin {
 
@@ -13,32 +14,41 @@ namespace merlin {
 #ifdef __NVCC__
 
 // Update model inside a GPU parallel region
-__cudevice__ void candy::optmz::AdaGrad::update_gpu(candy::Model & model, const candy::Gradient & grad,
-                                                    std::uint64_t thread_idx, std::uint64_t n_threads) noexcept {
-    for (std::uint64_t i_param = thread_idx; i_param < this->grad_history.size(); i_param += n_threads) {
+__cudevice__ void candy::optmz::update_adagrad_gpu(void * p_optimizer, candy::Model & model,
+                                                   const candy::Gradient & grad, std::uint64_t thread_idx,
+                                                   std::uint64_t n_threads) noexcept {
+    candy::OptmzStatic * optmz_ptr = reinterpret_cast<candy::OptmzStatic *>(p_optimizer);
+    candy::optmz::AdaGrad & optimizer = std::get<candy::optmz::AdaGrad>(*optmz_ptr);
+    for (std::uint64_t i_param = thread_idx; i_param < optimizer.grad_history.size(); i_param += n_threads) {
         double & param = model[i_param];
-        this->grad_history[i_param] += grad.value()[i_param] * grad.value()[i_param];
-        double correction = this->learning_rate * grad.value()[i_param];
-        correction /= std::sqrt(this->grad_history[i_param] + this->bias);
-        param -= correction;
+        // optimizer.grad_history[i_param] += grad.value()[i_param] * grad.value()[i_param];
+        /*double correction = optimizer.learning_rate;
+        correction *= grad.value()[i_param];
+        correction /= std::sqrt(optimizer.grad_history[i_param] + optimizer.bias);
+        param -= correction;*/
     }
     __syncthreads();
 }
 
-// Copy model to pre-allocated memory region by current CUDA block of threads
-__cudevice__ void * candy::optmz::AdaGrad::copy_by_block(candy::optmz::AdaGrad * dest_ptr, void * dynamic_data_ptr,
-                                                         std::uint64_t thread_idx, std::uint64_t block_size) const {
+// Copy AdaGrad object to pre-allocated memory region by current CUDA block of threads
+__cudevice__ void * candy::optmz::copy_adagrad_by_block(void * dest_ptr, const void * src_ptr, void * dynamic_data_ptr,
+                                                        std::uint64_t thread_idx, std::uint64_t block_size) {
+    candy::OptmzStatic * d_ptr = reinterpret_cast<candy::OptmzStatic *>(dest_ptr);
+    const candy::OptmzStatic * s_ptr = reinterpret_cast<const candy::OptmzStatic *>(src_ptr);
+    candy::optmz::AdaGrad & dest = std::get<candy::optmz::AdaGrad>(*d_ptr);
+    const candy::optmz::AdaGrad & src = std::get<candy::optmz::AdaGrad>(*s_ptr);
     if (thread_idx == 0) {
-        dest_ptr->learning_rate = this->learning_rate;
-        dest_ptr->bias = this->bias;
-        dest_ptr->grad_history.data() = reinterpret_cast<double *>(dynamic_data_ptr);
-        dest_ptr->grad_history.size() = this->grad_history.size();
+        dest.learning_rate = src.learning_rate;
+        dest.bias = src.bias;
+        dest.grad_history.data() = reinterpret_cast<double *>(dynamic_data_ptr);
+        dest.grad_history.size() = src.grad_history.size();
     }
     __syncthreads();
-    for(std::uint64_t i = thread_idx; i < dest_ptr->grad_history.size(); i += block_size) {
-        dest_ptr->grad_history[i] = this->grad_history[i];
+    for(std::uint64_t i = thread_idx; i < dest.grad_history.size(); i += block_size) {
+        dest.grad_history[i] = src.grad_history[i];
     }
     __syncthreads();
+    return reinterpret_cast<double *>(dynamic_data_ptr) + dest.grad_history.size();
 }
 
 // Copy object to a pre-allocated memory region by a single GPU threads
@@ -53,6 +63,7 @@ __cudevice__ void * candy::optmz::copy_adagrad_by_thread(void * dest_ptr, const 
     for(std::uint64_t i = 0; i < dptr->grad_history.size(); i++) {
         dptr->grad_history[i] = sptr->grad_history[i];
     }
+    return reinterpret_cast<double *>(dynamic_data_ptr) + dptr->grad_history.size();
 }
 
 #endif  // __NVCC__

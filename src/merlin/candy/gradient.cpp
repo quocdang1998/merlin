@@ -29,7 +29,4 @@ std::string candy::Gradient::str(void) const {
     return out_stream.str();
 }
 
-// Destructor
-candy::Gradient::~Gradient(void) {}
-
 }  // namespace merlin

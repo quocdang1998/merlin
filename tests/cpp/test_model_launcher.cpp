@@ -2,11 +2,13 @@
 #include <cinttypes>
 #include <cmath>
 #include <omp.h>
+#include <iostream>
 
 #include "merlin/array/array.hpp"
 #include "merlin/array/operation.hpp"
 #include "merlin/candy/gradient.hpp"
 #include "merlin/candy/model.hpp"
+#include "merlin/candy/optimizer.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
 #include "merlin/vector.hpp"

@@ -111,7 +111,7 @@ class candy::Gradient {
     /// @name Destructor
     /// @{
     /** @brief Destructor.*/
-    MERLIN_EXPORTS ~Gradient(void);
+    __cuhostdev__ ~Gradient(void);
     /// @}
 
   protected:

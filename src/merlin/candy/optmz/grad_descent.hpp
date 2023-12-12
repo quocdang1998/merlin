@@ -43,11 +43,6 @@ struct candy::optmz::GradDescent {
     /** @brief Update model inside a CPU parallel region.*/
     MERLIN_EXPORTS void update_cpu(candy::Model & model, const candy::Gradient & grad, std::uint64_t thread_idx,
                                    std::uint64_t n_threads) noexcept;
-#ifdef __NVCC__
-    /** @brief Update model inside a CPU parallel region.*/
-    __cudevice__ void update_gpu(candy::Model & model, const candy::Gradient & grad, std::uint64_t thread_idx,
-                                 std::uint64_t n_threads) noexcept;
-#endif  // __NVCC__
     /// @}
 
     /// @name GPU related features
@@ -63,17 +58,6 @@ struct candy::optmz::GradDescent {
                                       std::uintptr_t stream_ptr = 0) const;
     /** @brief Calculate additional number of bytes to allocate in CUDA shared memory for dynamic data.*/
     std::uint64_t additional_sharedmem(void) const noexcept { return 0; }
-#ifdef __NVCC__
-    /** @brief Copy object to pre-allocated memory region by current CUDA block of threads.
-     *  @details The copy action is performed by the whole CUDA thread block.
-     *  @param dest_ptr Memory region where the object is copied to.
-     *  @param dynamic_data_ptr Pointer to a pre-allocated GPU memory storing dynamic data.
-     *  @param thread_idx Flatten ID of the current CUDA thread in the block.
-     *  @param block_size Number of threads in the current CUDA block.
-     */
-    __cudevice__ void * copy_by_block(candy::optmz::GradDescent * dest_ptr, void * dynamic_data_ptr,
-                                      std::uint64_t thread_idx, std::uint64_t block_size) const;
-#endif  // __NVCC__
     /// @}
 
     /// @name Attributes
@@ -86,6 +70,21 @@ struct candy::optmz::GradDescent {
 #ifdef __NVCC__
 
 namespace candy::optmz {
+
+/** @brief Update model inside a GPU parallel region.*/
+__cudevice__ void update_grad_descent_gpu(void * p_optimizer, candy::Model & model, const candy::Gradient & grad,
+                                          std::uint64_t thread_idx, std::uint64_t n_threads) noexcept;
+
+/** @brief Copy GradDescent object to pre-allocated memory region by current CUDA block of threads.
+     *  @details The copy action is performed by the whole CUDA thread block.
+     *  @param dest_ptr Memory region where the object is copied to.
+     *  @param src_ptr Memory region where the object resides.
+     *  @param dynamic_data_ptr Pointer to a pre-allocated GPU memory storing dynamic data.
+     *  @param thread_idx Flatten ID of the current CUDA thread in the block.
+     *  @param block_size Number of threads in the current CUDA block.
+     */
+__cudevice__ void * copy_grad_descent_by_block(void * dest_ptr, const void * src_ptr, void * dynamic_data_ptr,
+                                               std::uint64_t thread_idx, std::uint64_t block_size);
 
 /** @brief Copy GradDescent object to a pre-allocated memory region by a single GPU threads.
  *  @param src_ptr Memory region where the object resides.

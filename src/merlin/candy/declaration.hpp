@@ -2,11 +2,14 @@
 #ifndef MERLIN_CANDY_DECLARATION_HPP_
 #define MERLIN_CANDY_DECLARATION_HPP_
 
+#include <variant>  // std::variant
+
 namespace merlin::candy {
 class Gradient;
 class Launcher;
 class Model;
 struct Optimizer;
+
 }  // namespace merlin::candy
 
 #endif  // MERLIN_CANDY_DECLARATION_HPP_

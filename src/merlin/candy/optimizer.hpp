@@ -2,8 +2,6 @@
 #ifndef MERLIN_CANDY_OPTIMIZER_HPP_
 #define MERLIN_CANDY_OPTIMIZER_HPP_
 
-#include <variant>  // std::variant
-
 #include "merlin/candy/declaration.hpp"  // merlin::candy::Model
 #include "merlin/candy/optmz/adagrad.hpp"       // merlin::candy::optmz::AdaGrad
 #include "merlin/candy/optmz/grad_descent.hpp"  // merlin::candy::optmz::GradDescent
@@ -102,8 +100,6 @@ struct candy::Optimizer {
     candy::OptmzStatic static_data;
     /** @brief Dynamic data for the algorithm (data resides on the heap memory and must be deallocated in destructor).*/
     char * dynamic_data = nullptr;
-    /** @brief Optimization algorithm.*/
-    candy::OptAlgorithm algorithm;
     /// @}
 };
 
@@ -113,7 +109,7 @@ namespace candy {
 MERLIN_EXPORTS candy::Optimizer create_grad_descent(double learning_rate);
 
 /** @brief Create an optimizer with adagrad algorithm.*/
-MERLIN_EXPORTS candy::Optimizer create_adagrad(double learning_rate);
+MERLIN_EXPORTS candy::Optimizer create_adagrad(double learning_rate, std::uint64_t num_params, double bias = 1.0e-8);
 
 }  // namespace candy
 
