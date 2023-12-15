@@ -82,6 +82,8 @@ class cuda::Device {
      *  @details Destroy all allocations and reset the state of the current GPU.
      */
     MERLIN_EXPORTS static void reset_all(void);
+    /** @brief Synchronize the current GPU.*/
+    MERLIN_EXPORTS static void synchronize(void);
     /// @}
 
     /// @name Comparison

@@ -2,7 +2,7 @@
 #ifndef MERLIN_SPLINT_TOOLS_HPP_
 #define MERLIN_SPLINT_TOOLS_HPP_
 
-#include <future>       // std::future
+#include <future>       // std::shared_future
 #include <type_traits>  // std::add_pointer
 
 #include "merlin/cuda_interface.hpp"       // __cuhostdev__
@@ -43,7 +43,7 @@ using ConstructionMethod = std::add_pointer<void(double *, const double *, const
  *  @param p_method Pointer to interpolation method to use on each dimension.
  *  @param n_threads Number of threads to calculate.
  */
-void construct_coeff_cpu(std::future<void> * current_job, double * coeff, const grid::CartesianGrid * p_grid,
+void construct_coeff_cpu(std::shared_future<void> current_job, double * coeff, const grid::CartesianGrid * p_grid,
                          const Vector<splint::Method> * p_method, std::uint64_t n_threads) noexcept;
 
 /** @brief Construct interpolation coefficients with GPU parallelism.
@@ -95,7 +95,7 @@ __cuhostdev__ void recursive_interpolate(const double * coeff, const std::uint64
  *  @param result Pointer to the array storing the result.
  *  @param n_threads Number of threads to perform the interpolation.
  */
-void eval_intpl_cpu(std::future<void> * current_job, const double * coeff, const grid::CartesianGrid * p_grid,
+void eval_intpl_cpu(std::shared_future<void> current_job, const double * coeff, const grid::CartesianGrid * p_grid,
                     const Vector<splint::Method> * p_method, const double * points, std::uint64_t n_points,
                     double * result, std::uint64_t n_threads) noexcept;
 

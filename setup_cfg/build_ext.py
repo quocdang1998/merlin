@@ -43,6 +43,7 @@ class build_ext(_sut_build_ext):
 
 # overwrite build_ext from distutils
 class custom_du_build_ext(_du_build_ext):
+
     def build_extension(self, ext):
         # code copied from distutils/command/build_ext.py
         sources = ext.sources
@@ -138,6 +139,12 @@ class custom_du_build_ext(_du_build_ext):
             objects.extend(ext.extra_objects)
         extra_args = ext.extra_link_args or []
         language = ext.language or self.compiler.detect_language(sources)
+        name = ext.name.split('.')
+        if (name[-1] == "__init__"):
+            if len(name) < 2:
+                raise ValueError("Extension with name __init__ must be acquired"
+                                 " by parent package name.")
+            ext.name = ".".join(name[:-1])
         self.compiler.link_shared_object(
             objects,
             ext_path,
@@ -150,3 +157,4 @@ class custom_du_build_ext(_du_build_ext):
             build_temp=self.build_temp,
             target_lang=language,
         )
+        ext.name = ".".join(name)

@@ -1,6 +1,6 @@
 // Copyright 2023 quocdang1998
-#ifndef MERLIN_STATISTICS_MOMENT_HPP_
-#define MERLIN_STATISTICS_MOMENT_HPP_
+#ifndef MERLIN_STAT_MOMENT_HPP_
+#define MERLIN_STAT_MOMENT_HPP_
 
 #include <array>    // std::array
 #include <cstdint>  // std::uint64_t
@@ -69,4 +69,4 @@ inline std::array<double, 2> mean_variance(const array::Parcel & data, std::uint
 
 }  // namespace merlin
 
-#endif  // MERLIN_STATISTICS_MOMENT_HPP_
+#endif  // MERLIN_STAT_MOMENT_HPP_

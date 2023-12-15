@@ -1,8 +1,6 @@
 // Copyright 2023 quocdang1998
 #include "merlin/candy/optimizer.hpp"
 
-#include <cstddef>  // offsetof
-
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -13,26 +11,28 @@ namespace merlin {
 void * candy::Optimizer::copy_to_gpu(candy::Optimizer * gpu_ptr, void * dynamic_data_ptr,
                                      std::uintptr_t stream_ptr) const {
     ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr);
-    ::cudaMemcpyAsync(gpu_ptr, this, sizeof(candy::Optimizer), ::cudaMemcpyHostToDevice, stream);
-    std::uintptr_t static_offset = offsetof(candy::Optimizer, static_data);
-    void * return_ptr;
+    // create an instant similar to the copy on GPU
+    candy::Optimizer copy_on_gpu;
+    copy_on_gpu.static_data = this->static_data;
+    copy_on_gpu.dynamic_data = reinterpret_cast<char *>(dynamic_data_ptr);
+    copy_on_gpu.dynamic_size = this->dynamic_size;
     switch (this->static_data.index()) {
         case 0 : {  // gradient descent
-            const candy::optmz::GradDescent & optimizer = std::get<candy::optmz::GradDescent>(this->static_data);
-            std::uintptr_t gpu_optimizer_ptr = reinterpret_cast<std::uintptr_t>(gpu_ptr) + static_offset;
-            return_ptr = optimizer.copy_to_gpu(reinterpret_cast<candy::optmz::GradDescent *>(gpu_optimizer_ptr),
-                                               dynamic_data_ptr, stream_ptr);
             break;
         }
-        /*case candy::OptAlgorithm::AdgAlgo : {  // adagrad
-            const candy::optmz::AdaGrad & optimizer = std::get<candy::optmz::AdaGrad>(this->static_data);
-            std::uintptr_t gpu_optimizer_ptr = reinterpret_cast<std::uintptr_t>(gpu_ptr) + static_offset;
-            return_ptr = optimizer.copy_to_gpu(reinterpret_cast<candy::optmz::AdaGrad *>(gpu_optimizer_ptr),
-                                               dynamic_data_ptr, stream_ptr);
+        case 1 : {  // adagrad
+            candy::optmz::AdaGrad & opt_algor = std::get<candy::optmz::AdaGrad>(copy_on_gpu.static_data);
+            opt_algor.grad_history = reinterpret_cast<double *>(dynamic_data_ptr);
             break;
-        }*/
+        }
     }
-    return return_ptr;
+    // copy the clone and dynamic data to GPU
+    ::cudaMemcpyAsync(gpu_ptr, &copy_on_gpu, sizeof(candy::Optimizer), ::cudaMemcpyHostToDevice, stream);
+    ::cudaMemcpyAsync(dynamic_data_ptr, this->dynamic_data, this->dynamic_size, ::cudaMemcpyHostToDevice, stream);
+    // nullify pointer on the clone
+    char * returned_ptr = copy_on_gpu.dynamic_data;
+    copy_on_gpu.dynamic_data = nullptr;
+    return returned_ptr + this->dynamic_size;
 }
 
 }  // namespace merlin

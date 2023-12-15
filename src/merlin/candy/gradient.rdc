@@ -70,6 +70,7 @@ __cuhostdev__ void candy::rlsquare_grad(const candy::Model & model, const array:
         param_index /= model.rank();
         // loop over each point in the dataset to calculate the gradient
         std::uint64_t n_subset = train_data.size() / train_data.shape()[param_dim];
+        index_mem[param_dim] = param_index;
         for (std::uint64_t i_point = 0; i_point < n_subset; i_point++) {
             // calculate ndim index
             ndim_idx_wkd(i_point, param_dim, train_data.shape(), index_mem);
@@ -122,6 +123,7 @@ __cuhostdev__ void candy::absquare_grad(const candy::Model & model, const array:
         param_index /= model.rank();
         // loop over each point in the dataset to calculate the gradient
         std::uint64_t n_subset = train_data.size() / train_data.shape()[param_dim];
+        index_mem[param_dim] = param_index;
         for (std::uint64_t i_point = 0; i_point < n_subset; i_point++) {
             // calculate ndim index
             ndim_idx_wkd(i_point, param_dim, train_data.shape(), index_mem);

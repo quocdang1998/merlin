@@ -59,6 +59,7 @@ floatvec stat::powered_mean(std::uint64_t order, const array::Array & data, std:
 floatvec stat::powered_mean(std::uint64_t order, const array::Parcel & data, std::uint64_t n_threads,
                             const cuda::Stream & stream) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA option to enable this feature.\n");
+    return floatvec();
 }
 
 #endif  // __MERLIN_CUDA__

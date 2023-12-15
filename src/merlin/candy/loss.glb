@@ -3,8 +3,6 @@
 
 #include <algorithm>  // std::max
 
-#include <nvfunctional>  // nvstd::function
-
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/candy/model.hpp"   // merlin::candy::Model
 #include "merlin/cuda/memory.hpp"   // merlin::cuda::copy_class_to_shared_mem

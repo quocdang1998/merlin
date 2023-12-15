@@ -21,9 +21,9 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Construct interpolation coefficients with CPU parallelism
-void splint::construct_coeff_cpu(std::future<void> * current_job, double * coeff, const grid::CartesianGrid * p_grid,
-                                 const Vector<splint::Method> * p_method, std::uint64_t n_threads) noexcept {
-
+void splint::construct_coeff_cpu(std::shared_future<void> current_job, double * coeff,
+                                 const grid::CartesianGrid * p_grid, const Vector<splint::Method> * p_method,
+                                 std::uint64_t n_threads) noexcept {
     // functor to coefficient construction methods
     static const std::array<splint::ConstructionMethod, 3> construction_funcs {
         splint::intpl::construct_linear,
@@ -31,11 +31,8 @@ void splint::construct_coeff_cpu(std::future<void> * current_job, double * coeff
         splint::intpl::construction_newton
     };
     // finish old job
-    if (current_job != nullptr) {
-        if (current_job->valid()) {
-            current_job->get();
-        }
-        delete current_job;
+    if (current_job.valid()) {
+        current_job.get();
     }
     // initialization
     const intvec & shape = p_grid->shape();
@@ -90,15 +87,13 @@ void splint::construct_coeff_gpu(double * coeff, const grid::CartesianGrid * p_g
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Evaluate interpolation with CPU parallelism
-void splint::eval_intpl_cpu(std::future<void> * current_job, const double * coeff, const grid::CartesianGrid * p_grid,
-                            const Vector<splint::Method> * p_method, const double * points, std::uint64_t n_points,
-                            double * result, std::uint64_t n_threads) noexcept {
+void splint::eval_intpl_cpu(std::shared_future<void> current_job, const double * coeff,
+                            const grid::CartesianGrid * p_grid, const Vector<splint::Method> * p_method,
+                            const double * points, std::uint64_t n_points, double * result,
+                            std::uint64_t n_threads) noexcept {
     // finish old job
-    if (current_job != nullptr) {
-        if (current_job->valid()) {
-            current_job->get();
-        }
-        delete current_job;
+    if (current_job.valid()) {
+        current_job.get();
     }
     // initialize index vector and cache memory for each thread
     intvec total_index(p_grid->ndim() * n_threads, 0);

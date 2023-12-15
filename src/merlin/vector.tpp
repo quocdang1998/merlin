@@ -188,7 +188,7 @@ concept Representable = requires (const T & obj) {
 
 // String representation for types printdable to std::ostream
 template <typename T>
-requires Streamable<T> || Representable<T>
+// requires Streamable<T> || Representable<T>
 std::string Vector<T>::str(const char * sep) const {
     std::ostringstream os;
     os << "<";

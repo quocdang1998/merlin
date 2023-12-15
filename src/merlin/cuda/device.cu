@@ -222,6 +222,14 @@ std::uint64_t cuda::Device::limit(cuda::DeviceLimit limit, std::uint64_t size) {
 // Reset all GPU
 void cuda::Device::reset_all(void) { ::cudaDeviceReset(); }
 
+// Synchronize the current GPU
+void cuda::Device::synchronize(void) {
+    ::cudaError_t err_ = ::cudaDeviceSynchronize();
+    if (err_ != 0) {
+        FAILURE(cuda_runtime_error, "cudaDeviceSynchronize failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+    }
+}
+
 // String representation
 std::string cuda::Device::str(void) const {
     char name[256];

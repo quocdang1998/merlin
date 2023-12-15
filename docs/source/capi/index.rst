@@ -132,8 +132,8 @@ Statistical moments
 .. doxysummary::
    :toctree: generated
 
-   merlin::statistics::powered_mean
-   merlin::statistics::moment_cpu
+   merlin::stat::mean(const array::Array &, std::uint64_t) "mean_cpu"
+   merlin::stat::mean(const array::Parcel &, std::uint64_t n_threads, const cuda::Stream &) "mean_gpu"
 
 Linear algebra API
 ------------------

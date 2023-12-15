@@ -19,7 +19,6 @@ merlin_extensions = [
     Pybind11Extension("merlin.__init__", glob.glob(os.path.join("merlin", "*.cpp")), **ext_options)
 ]
 
-
 # build extensions and install
 if __name__ == "__main__":
     copy_dll_libs()

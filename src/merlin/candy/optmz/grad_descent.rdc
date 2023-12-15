@@ -1,8 +1,8 @@
 // Copyright 2023 quocdang1998
 #include "merlin/candy/optmz/grad_descent.hpp"
 
-#include "merlin/candy/gradient.hpp"  // merlin::candy::Gradient
-#include "merlin/candy/model.hpp"     // merlin::candy::Model
+#include "merlin/candy/gradient.hpp"   // merlin::candy::Gradient
+#include "merlin/candy/model.hpp"      // merlin::candy::Model
 #include "merlin/candy/optimizer.hpp"  // merlin::candy::OptmzStatic
 
 namespace merlin {
@@ -14,39 +14,15 @@ namespace merlin {
 #ifdef __NVCC__
 
 // Update model inside a GPU parallel region
-__cudevice__ void candy::optmz::update_grad_descent_gpu(void * p_optimizer, candy::Model & model,
+__cudevice__ void candy::optmz::GradDescent::update_gpu(void * optimizer_algor, candy::Model & model,
                                                         const candy::Gradient & grad, std::uint64_t thread_idx,
                                                         std::uint64_t n_threads) noexcept {
-    candy::OptmzStatic * optmz_ptr = reinterpret_cast<candy::OptmzStatic *>(p_optimizer);
-    candy::optmz::GradDescent & optimizer = std::get<candy::optmz::GradDescent>(*optmz_ptr);
+    candy::OptmzStatic & union_algor = *(reinterpret_cast<candy::OptmzStatic *>(optimizer_algor));
+    candy::optmz::GradDescent & algor = std::get<candy::optmz::GradDescent>(union_algor);
     for (std::uint64_t i_param = thread_idx; i_param < model.num_params(); i_param += n_threads) {
-        model[i_param] -= optimizer.learning_rate * grad.value()[i_param];
+        model[i_param] -= algor.learning_rate * grad.value()[i_param];
     }
     __syncthreads();
-}
-
-// Copy GradDescent object to pre-allocated memory region by current CUDA block of threads
-__cudevice__ void * candy::optmz::copy_grad_descent_by_block(void * dest_ptr, const void * src_ptr,
-                                                             void * dynamic_data_ptr, std::uint64_t thread_idx,
-                                                             std::uint64_t block_size) {
-    candy::OptmzStatic * d_ptr = reinterpret_cast<candy::OptmzStatic *>(dest_ptr);
-    const candy::OptmzStatic * s_ptr = reinterpret_cast<const candy::OptmzStatic *>(src_ptr);
-    candy::optmz::GradDescent & dest = std::get<candy::optmz::GradDescent>(*d_ptr);
-    const candy::optmz::GradDescent & src = std::get<candy::optmz::GradDescent>(*s_ptr);
-    if (thread_idx == 0) {
-        dest.learning_rate = src.learning_rate;
-    }
-    __syncthreads();
-    return dynamic_data_ptr;
-}
-
-// Copy object to a pre-allocated memory region by a single GPU threads
-__cudevice__ void * candy::optmz::copy_grad_descent_by_thread(void * dest_ptr, const void * src_ptr,
-                                                              void * dynamic_data_ptr) {
-    candy::optmz::GradDescent * dptr = reinterpret_cast<candy::optmz::GradDescent *>(dest_ptr);
-    const candy::optmz::GradDescent * sptr = reinterpret_cast<const candy::optmz::GradDescent *>(src_ptr);
-    dptr->learning_rate = sptr->learning_rate;
-    return dynamic_data_ptr;
 }
 
 #endif  // __NVCC__

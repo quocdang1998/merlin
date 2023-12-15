@@ -1,6 +1,6 @@
 // Copyright 2022 quocdang1998
-#ifndef MERLIN_SPLINT_CARTESIAN_GRID_HPP_
-#define MERLIN_SPLINT_CARTESIAN_GRID_HPP_
+#ifndef MERLIN_GRID_CARTESIAN_GRID_HPP_
+#define MERLIN_GRID_CARTESIAN_GRID_HPP_
 
 #include <cstdint>           // std::uint64_t
 #include <initializer_list>  // std::initializer_list
@@ -148,4 +148,4 @@ class grid::CartesianGrid {
 
 }  // namespace merlin
 
-#endif  // MERLIN_SPLINT_CARTESIAN_GRID_HPP_
+#endif  // MERLIN_GRID_CARTESIAN_GRID_HPP_

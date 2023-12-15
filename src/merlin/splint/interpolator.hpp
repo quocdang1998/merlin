@@ -2,6 +2,7 @@
 #ifndef MERLIN_SPLINT_INTERPOLATOR_HPP_
 #define MERLIN_SPLINT_INTERPOLATOR_HPP_
 
+#include <string>   // std::string
 #include <tuple>    // std::tuple
 #include <utility>  // std::exchange, std::move
 
@@ -128,6 +129,12 @@ class splint::Interpolator {
     void synchronize(void) {
         this->synchronizer_.synchronize();
     }
+    /// @}
+
+    /// @name Representation
+    /// @{
+    /** @brief String representation.*/
+    MERLIN_EXPORTS std::string str(void) const;
     /// @}
 
     /// @name Destructor

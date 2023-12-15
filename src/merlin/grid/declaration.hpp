@@ -4,6 +4,7 @@
 
 namespace merlin::grid {
 class CartesianGrid;
+class RegularGrid;
 }  // namespace merlin::grid
 
 #endif  // MERLIN_GRID_DECLARATION_HPP_
