@@ -1,6 +1,8 @@
 // Copyright 2023 quocdang1998
 #include "merlin/candy/optimizer.hpp"
 
+#include "merlin/logger.hpp"  // FAILURE, cuda_compile_error
+
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------

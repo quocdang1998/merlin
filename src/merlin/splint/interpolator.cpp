@@ -1,6 +1,7 @@
 // Copyright 2022 quocdang1998
 #include "merlin/splint/interpolator.hpp"
 
+#include <future>   // std::shared_future
 #include <utility>  // std::move
 
 #include "merlin/array/array.hpp"            // merlin::array::Array
@@ -53,7 +54,7 @@ ndim_(grid.ndim()), shared_mem_size_(grid.sharedmem_size() + method.sharedmem_si
     // initialize pointers
     if (processor == ProcessorType::Cpu) {
         // CPU
-        this->synchronizer_ = Synchronizer(new std::future<void>());
+        this->synchronizer_ = Synchronizer(std::shared_future<void>());
         this->p_grid_ = new grid::CartesianGrid(grid);
         this->p_method_ = new Vector<splint::Method>(method);
         this->p_coeff_ = new array::Array(values);
@@ -70,10 +71,11 @@ ndim_(grid.ndim()), shared_mem_size_(grid.sharedmem_size() + method.sharedmem_si
 // Calculate interpolation coefficients based on provided method
 void splint::Interpolator::build_coefficients(std::uint64_t n_threads) {
     if (!(this->on_gpu())) {
-        std::future<void> * current_sync = std::get<std::future<void> *>(this->synchronizer_.synchronizer);
-        std::future<void> new_sync = std::async(std::launch::async, splint::construct_coeff_cpu, current_sync,
-                                                this->p_coeff_->data(), this->p_grid_, this->p_method_, n_threads);
-        this->synchronizer_ = Synchronizer(new std::future<void>(std::move(new_sync)));
+        std::shared_future<void> & current_sync = std::get<std::shared_future<void>>(this->synchronizer_.synchronizer);
+        std::shared_future<void> new_sync = std::async(std::launch::async, splint::construct_coeff_cpu, current_sync,
+                                                       this->p_coeff_->data(), this->p_grid_, this->p_method_,
+                                                       n_threads).share();
+        this->synchronizer_ = Synchronizer(std::move(new_sync));
     } else {
         cuda::Stream & stream = std::get<cuda::Stream>(this->synchronizer_.synchronizer);
         push_gpu(stream.get_gpu());
@@ -101,11 +103,11 @@ floatvec splint::Interpolator::evaluate(const array::Array & points, std::uint64
     }
     // evaluate interpolation
     floatvec evaluated_values(points.shape()[0]);
-    std::future<void> * current_sync = std::get<std::future<void> *>(this->synchronizer_.synchronizer);
-    std::future<void> new_sync = std::async(std::launch::async, splint::eval_intpl_cpu, current_sync,
+    std::shared_future<void> & current_sync = std::get<std::shared_future<void>>(this->synchronizer_.synchronizer);
+    std::shared_future<void> new_sync = std::async(std::launch::async, splint::eval_intpl_cpu, current_sync,
                                             this->p_coeff_->data(), this->p_grid_, this->p_method_, points.data(),
-                                            evaluated_values.size(), evaluated_values.data(), n_threads);
-    this->synchronizer_ = Synchronizer(new std::future<void>(std::move(new_sync)));
+                                            evaluated_values.size(), evaluated_values.data(), n_threads).share();
+    this->synchronizer_ = Synchronizer(std::move(new_sync));
     return evaluated_values;
 }
 

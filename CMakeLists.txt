@@ -16,7 +16,7 @@ set(MERLIN_LIBKIND "AUTO"  # -DMERLIN_LIBKIND=STATIC or -DMERLIN_LIBKIND=SHARED
     CACHE STRING "Type of the created library (static or shared)")
 set(MERLIN_TEST OFF CACHE BOOL "Build test executables")  # -DMERLIN_TEST=ON
 set(MERLIN_EXT ""
-    CACHE STRING "Space-separated list of extensions to be built")  # -DMERLIN_EXT="ap3_mpo spgrid"
+    CACHE STRING "Space-separated list of extensions to be built")  # -DMERLIN_EXT="readmpo spgrid"
 
 # source list
 list(APPEND MERLIN_SRC_CPP
@@ -330,13 +330,6 @@ MerlinSetTargetProperties(libmerlin)
 
 # convert to list
 separate_arguments(MERLIN_EXT)
-
-# Apollo3 MPO reader
-list(FIND MERLIN_EXT "ap3_mpo" NOT_BUILD_AP3_MPO_EXT)
-if (NOT NOT_BUILD_AP3_MPO_EXT)
-    message(STATUS "Build ap3_mpo extension for conversion of MPO files to merlin::array::Stock")
-    add_subdirectory(ext/ap3_mpo)
-endif(NOT NOT_BUILD_AP3_MPO_EXT)
 
 # Sparse grid
 list(FIND MERLIN_EXT "spgrid" NOT_BUILD_SPGRID_EXT)

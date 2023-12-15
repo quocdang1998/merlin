@@ -2,7 +2,7 @@
 #ifndef MERLIN_SYNCHRONIZER_HPP_
 #define MERLIN_SYNCHRONIZER_HPP_
 
-#include <future>   // std::future
+#include <future>   // std::shared_future
 #include <utility>  // std::in_place_type, std::forward, std::move
 #include <variant>  // std::variant
 
@@ -25,7 +25,8 @@ struct Synchronizer {
     /** @brief Default constructor.*/
     Synchronizer(void) = default;
     /** @brief Constructor from CPU synchronizer.*/
-    Synchronizer(std::future<void> * cpu_sync) : synchronizer(std::in_place_type<std::future<void> *>, cpu_sync) {}
+    Synchronizer(std::shared_future<void> && cpu_sync) :
+    synchronizer(std::in_place_type<std::shared_future<void>>, std::forward<std::shared_future<void>>(cpu_sync)) {}
     /** @brief Constructor from GPU synchronizer.*/
     Synchronizer(cuda::Stream && gpu_sync) :
     synchronizer(std::in_place_type<cuda::Stream>, std::forward<cuda::Stream>(gpu_sync)) {}
@@ -35,20 +36,12 @@ struct Synchronizer {
     /// @{
     /** @brief Copy constructor (deleted).*/
     Synchronizer(const Synchronizer & src) = delete;
+    /** @brief Copy assignment (deleted).*/
     Synchronizer & operator=(const Synchronizer & src) = delete;
-    Synchronizer(Synchronizer && src) :
-    synchronizer(std::forward<std::variant<std::future<void> *, cuda::Stream>>(src.synchronizer)) {
-        if (src.synchronizer.index() == 0) {
-            std::get<std::future<void> *>(src.synchronizer) = nullptr;
-        }
-    }
-    Synchronizer & operator=(Synchronizer && src) {
-        this->synchronizer = std::move(src.synchronizer);
-        if (src.synchronizer.index() == 0) {
-            std::get<std::future<void> *>(src.synchronizer) = nullptr;
-        }
-        return *this;
-    }
+    /** @brief Move constructor.*/
+    Synchronizer(Synchronizer && src) = default;
+    /** @brief Move assignment.*/
+    Synchronizer & operator=(Synchronizer && src) = default;
     /// @}
 
     /// @name Action
@@ -56,11 +49,9 @@ struct Synchronizer {
     void synchronize(void) {
         switch (this->synchronizer.index()) {
             case 0 : {
-                std::future<void> * synch = std::get<std::future<void> *>(this->synchronizer);
-                if (synch != nullptr) {
-                    if (synch->valid()) {
-                        synch->get();
-                    }
+                std::shared_future<void> & cpu_sync = std::get<std::shared_future<void>>(this->synchronizer);
+                if (cpu_sync.valid()) {
+                    cpu_sync.get();
                 }
                 break;
             }
@@ -75,19 +66,12 @@ struct Synchronizer {
     /// @name Attributes
     /// @{
     /** @brief Synchronizer.*/
-    std::variant<std::future<void> *, cuda::Stream> synchronizer;
+    std::variant<std::shared_future<void>, cuda::Stream> synchronizer;
     /// @}
 
     /// @name Destructor
     /// @{
-    ~Synchronizer(void) {
-        if (this->synchronizer.index() == 0) {
-            std::future<void> * cpu_synchronizer = std::get<std::future<void> *>(this->synchronizer);
-            if (cpu_synchronizer != nullptr) {
-                delete cpu_synchronizer;
-            }
-        }
-    }
+    ~Synchronizer(void) = default;
     /// @}
 };
 

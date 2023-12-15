@@ -14,6 +14,24 @@ double foo(const merlin::floatvec & v) {
     return (2.f*v[0] + v[2])*v[2] + 3.f*v[1];
 }
 
+merlin::array::Array point_generator(std::uint64_t num_point, const merlin::grid::CartesianGrid & grid) {
+    std::mt19937 gen;
+    std::vector<std::uniform_real_distribution<double>> dists;
+    dists.reserve(grid.ndim());
+    for (std::uint64_t i_dim = 0; i_dim < grid.ndim(); i_dim++) {
+        const merlin::floatvec grid_vector = grid.grid_vector(i_dim);
+        const auto [it_min, it_max] = std::minmax_element(grid_vector.cbegin(), grid_vector.cend());
+        dists.push_back(std::uniform_real_distribution<double>(*it_min, *it_max));
+    }
+    merlin::array::Array points({num_point, grid.ndim()});
+    for (std::uint64_t i_point = 0; i_point < num_point; i_point++) {
+        for (std::uint64_t i_dim = 0; i_dim < grid.ndim(); i_dim++) {
+            points[{i_point, i_dim}] = dists[i_dim](gen);
+        }
+    }
+    return points;
+}
+
 int main(void) {
     // initialize data and grid
     merlin::grid::CartesianGrid cart_gr({{0.1, 0.2, 0.3}, {1.0, 2.0, 3.0, 4.0}, {0.0, 0.25, 0.5}});
@@ -32,20 +50,20 @@ int main(void) {
     };
     merlin::splint::Interpolator interp(cart_gr, coeff, methods, merlin::ProcessorType::Cpu);
     interp.build_coefficients(14);
-    interp.synchronize();
+    // interp.synchronize();
     MESSAGE("Interpolation coefficients: %s\n", interp.get_coeff().str().c_str());
 
     // interpolation
-    double point_data[9] = {0.16, 2.4, 0.3, 0.15, 3.41, 0.25, 0.11, 2.0, 0.5};
-    merlin::array::Array points(point_data, {3, 3}, {3*sizeof(double), sizeof(double)}, false);
-    merlin::floatvec eval_values = interp.evaluate(points, 3);
+    merlin::array::Array points = point_generator(1200, cart_gr);
+    merlin::floatvec eval_values = interp.evaluate(points, 24);
+    // interp.synchronize();
     interp.synchronize();
     MESSAGE("Evaluated values: %s.\n", eval_values.str().c_str());
     MESSAGE(
         "Function values: %f %f %f.\n",
-        foo(merlin::floatvec(point_data, point_data+3)),
-        foo(merlin::floatvec(point_data+3, point_data+6)),
-        foo(merlin::floatvec(point_data+6, point_data+9))
+        foo(merlin::floatvec(&points[0], &points[3])),
+        foo(merlin::floatvec(&points[3], &points[6])),
+        foo(merlin::floatvec(&points[6], &points[9]))
     );
 
 
