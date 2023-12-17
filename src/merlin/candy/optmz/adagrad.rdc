@@ -21,11 +21,11 @@ __cudevice__ void candy::optmz::update_adagrad_gpu(void * p_optimizer, candy::Mo
     candy::optmz::AdaGrad & optimizer = std::get<candy::optmz::AdaGrad>(*optmz_ptr);
     for (std::uint64_t i_param = thread_idx; i_param < optimizer.grad_history.size(); i_param += n_threads) {
         double & param = model[i_param];
-        // optimizer.grad_history[i_param] += grad.value()[i_param] * grad.value()[i_param];
-        /*double correction = optimizer.learning_rate;
+        optimizer.grad_history[i_param] += grad.value()[i_param] * grad.value()[i_param];
+        double correction = optimizer.learning_rate;
         correction *= grad.value()[i_param];
         correction /= std::sqrt(optimizer.grad_history[i_param] + optimizer.bias);
-        param -= correction;*/
+        param -= correction;
     }
     __syncthreads();
 }
