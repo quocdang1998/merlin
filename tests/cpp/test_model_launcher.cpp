@@ -44,11 +44,17 @@ int main(void) {
     merlin::Vector<double> gradient_data(model.num_params());
     merlin::candy::Gradient grad(gradient_data.data(), model.num_params(), merlin::candy::TrainMetric::RelativeSquare);
 
-    std::uint64_t n_thread = 20;
+    merlin::candy::Optimizer opt = merlin::candy::create_grad_descent(0.1);
+
+    std::uint64_t n_thread = 4;
     merlin::intvec cache(n_thread * model.ndim());
-    #pragma omp parallel num_threads(n_thread)
-    {
-        grad.calc_by_cpu(model, train_data, ::omp_get_thread_num(), n_thread, cache.data());
+    for (std::uint64_t i = 0; i < 1000; i++) {
+        #pragma omp parallel num_threads(n_thread)
+        {
+            grad.calc_by_cpu(model, train_data, ::omp_get_thread_num(), n_thread, cache.data());
+            opt.update_cpu(model, grad, ::omp_get_thread_num(), n_thread);
+        }
     }
     MESSAGE("Model gradient: %s\n", grad.str().c_str());
+    MESSAGE("Model eval: %f\n", model.eval({1,1}));
 }

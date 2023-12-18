@@ -24,7 +24,6 @@ namespace merlin {
 void splint::construct_coeff_cpu(std::shared_future<void> current_job, double * coeff,
                                  const grid::CartesianGrid * p_grid, const Vector<splint::Method> * p_method,
                                  std::uint64_t n_threads) noexcept {
-
     // functor to coefficient construction methods
     static const std::array<splint::ConstructionMethod, 3> construction_funcs {
         splint::intpl::construct_linear,

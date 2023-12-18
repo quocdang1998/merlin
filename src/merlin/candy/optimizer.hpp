@@ -2,23 +2,15 @@
 #ifndef MERLIN_CANDY_OPTIMIZER_HPP_
 #define MERLIN_CANDY_OPTIMIZER_HPP_
 
-#include "merlin/candy/declaration.hpp"  // merlin::candy::Model
+#include "merlin/candy/declaration.hpp"         // merlin::candy::Model
 #include "merlin/candy/optmz/adagrad.hpp"       // merlin::candy::optmz::AdaGrad
 #include "merlin/candy/optmz/grad_descent.hpp"  // merlin::candy::optmz::GradDescent
-#include "merlin/cuda_interface.hpp"     // __cuhostdev__
-#include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/cuda_interface.hpp"            // __cuhostdev__
+#include "merlin/exports.hpp"                   // MERLIN_EXPORTS
 
 namespace merlin {
 
 namespace candy {
-
-/** @brief Enum for optimization algorithms.*/
-enum class OptAlgorithm : unsigned int {
-    /** @brief Naive gradient descent algorithm.*/
-    GdAlgo = 0x00,
-    /** @brief Adaptative grdient method.*/
-    AdgAlgo = 0x01
-};
 
 /** @brief Type for static data of optimizer.*/
 using OptmzStatic = std::variant<candy::optmz::GradDescent, candy::optmz::AdaGrad>;

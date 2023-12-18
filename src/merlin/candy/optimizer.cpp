@@ -18,11 +18,11 @@ void candy::Optimizer::update_cpu(candy::Model & model, const candy::Gradient & 
             optimizer.update_cpu(model, grad, thread_idx, n_threads);
             break;
         }
-        /*case candy::OptAlgorithm::AdgAlgo : {  // adagrad
-            candy::optmz::AdaGrad & optimizer = std::get<candy::optmz::AdaGrad>(this->static_data);
-            optimizer.update_cpu(model, grad, thread_idx, n_threads);
-            break;
-        }*/
+        // case candy::OptAlgorithm::AdgAlgo : {  // adagrad
+        //     candy::optmz::AdaGrad & optimizer = std::get<candy::optmz::AdaGrad>(this->static_data);
+        //     optimizer.update_cpu(model, grad, thread_idx, n_threads);
+        //     break;
+        // }
     }
 }
 
