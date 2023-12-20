@@ -57,7 +57,6 @@ int main(void) {
     merlin::array::Array points = point_generator(1200, cart_gr);
     merlin::floatvec eval_values = interp.evaluate(points, 24);
     // interp.synchronize();
-    interp.synchronize();
     MESSAGE("Evaluated values: %s.\n", eval_values.str().c_str());
     MESSAGE(
         "Function values: %f %f %f.\n",
