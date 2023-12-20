@@ -2,6 +2,7 @@
 #include "merlin/splint/interpolator.hpp"
 
 #include <future>   // std::shared_future
+#include <sstream>  // std::ostringstream
 #include <utility>  // std::move
 
 #include "merlin/array/array.hpp"            // merlin::array::Array
@@ -109,6 +110,17 @@ floatvec splint::Interpolator::evaluate(const array::Array & points, std::uint64
                                             evaluated_values.size(), evaluated_values.data(), n_threads).share();
     this->synchronizer_ = Synchronizer(std::move(new_sync));
     return evaluated_values;
+}
+
+// String representation
+std::string splint::Interpolator::str(void) const {
+    std::ostringstream os;
+    os << "<Interpolator of grid at " << this->p_grid_
+       << ", coefficients at " << this->p_coeff_
+       << ", method vector at " << this->p_method_
+       << " and executed on " << ((this->gpu_id() == static_cast<unsigned int>(-1)) ? "CPU" : "GPU")
+       << ">";
+    return os.str();
 }
 
 // Destructor

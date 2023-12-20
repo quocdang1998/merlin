@@ -25,7 +25,7 @@ struct candy::optmz::AdaGrad {
     AdaGrad(void) = default;
     /** @brief Constructor from members.
      *  @param lr Initial learning rate.
-     *  @param grad_mean_mem Pre-allocated data for storing mean of gradient values.
+     *  @param grad_history_mem Pre-allocated data for storing mean of gradient values.
      *  @param b Bias.
      */
     AdaGrad(double lr, char * grad_history_mem, double b = 1.0e-8) :
