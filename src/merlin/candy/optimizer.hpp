@@ -4,6 +4,7 @@
 
 #include "merlin/candy/declaration.hpp"         // merlin::candy::Model
 #include "merlin/candy/optmz/adagrad.hpp"       // merlin::candy::optmz::AdaGrad
+#include "merlin/candy/optmz/adam.hpp"          // merlin::candy::optmz::Adam
 #include "merlin/candy/optmz/grad_descent.hpp"  // merlin::candy::optmz::GradDescent
 #include "merlin/cuda_interface.hpp"            // __cudevice__
 #include "merlin/exports.hpp"                   // MERLIN_EXPORTS
@@ -13,7 +14,7 @@ namespace merlin {
 namespace candy {
 
 /** @brief Type for static data of optimizer.*/
-using OptmzStatic = std::variant<candy::optmz::GradDescent, candy::optmz::AdaGrad>;
+using OptmzStatic = std::variant<candy::optmz::GradDescent, candy::optmz::AdaGrad, candy::optmz::Adam>;
 
 }  // namespace candy
 
@@ -106,6 +107,10 @@ MERLIN_EXPORTS candy::Optimizer create_grad_descent(double learning_rate);
 
 /** @brief Create an optimizer with adagrad algorithm.*/
 MERLIN_EXPORTS candy::Optimizer create_adagrad(double learning_rate, const candy::Model & model, double bias = 1.0e-8);
+
+/** @brief Create an optimizer with adam algorithm.*/
+MERLIN_EXPORTS candy::Optimizer create_adam(double learning_rate, double beta_m, double beta_v,
+                                            const candy::Model & model, double bias = 1.0e-8);
 
 }  // namespace candy
 
