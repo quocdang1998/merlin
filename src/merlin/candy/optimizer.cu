@@ -25,6 +25,11 @@ void * candy::Optimizer::copy_to_gpu(candy::Optimizer * gpu_ptr, void * dynamic_
             opt_algor.grad_history = reinterpret_cast<double *>(dynamic_data_ptr);
             break;
         }
+        case 2 : {  // adam
+            candy::optmz::Adam & opt_algor = std::get<candy::optmz::Adam>(copy_on_gpu.static_data);
+            opt_algor.moments = reinterpret_cast<double *>(dynamic_data_ptr);
+            break;
+        }
     }
     // copy the clone and dynamic data to GPU
     ::cudaMemcpyAsync(gpu_ptr, &copy_on_gpu, sizeof(candy::Optimizer), ::cudaMemcpyHostToDevice, stream);

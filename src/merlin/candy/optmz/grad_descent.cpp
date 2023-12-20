@@ -6,7 +6,6 @@
 #include "merlin/candy/gradient.hpp"   // merlin::candy::Gradient
 #include "merlin/candy/model.hpp"      // merlin::candy::Model
 #include "merlin/candy/optimizer.hpp"  // merlin::candy::OptmzStatic
-#include "merlin/logger.hpp"           // FAILURE, cuda_compile_error
 
 namespace merlin {
 

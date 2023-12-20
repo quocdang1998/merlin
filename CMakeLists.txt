@@ -24,7 +24,7 @@ list(APPEND MERLIN_SRC_CPP
      array/array.cpp
      array/parcel.cpp
      array/stock.cpp
-     # candy/optmz/adam.cpp
+     candy/optmz/adam.cpp
      candy/optmz/adagrad.cpp
      candy/optmz/grad_descent.cpp
      # candy/launcher.cpp
@@ -32,7 +32,6 @@ list(APPEND MERLIN_SRC_CPP
      candy/loss.cpp
      candy/model.cpp
      candy/optimizer.cpp
-     # candy/partition.cpp
      cuda/device.cpp
      cuda/event.cpp
      cuda/graph.cpp
@@ -72,10 +71,6 @@ list(APPEND MERLIN_SRC_CU
      splint/interpolator.cu
 )
 list(APPEND MERLIN_SRC_GLB
-     # candy/optimizer.glb
-     # candy/optmz/adam.glb
-     # candy/optmz/adagrad.glb
-     # candy/optmz/grad_descent.glb
      # candy/launcher.glb
      candy/loss.glb
      candy/optimizer.cu
@@ -93,7 +88,7 @@ list(APPEND MERLIN_SRC_RDC
      candy/loss.rdc
      candy/model.rdc
      candy/optimizer.rdc
-     # candy/optmz/adam.rdc
+     candy/optmz/adam.rdc
      candy/optmz/adagrad.rdc
      candy/optmz/grad_descent.rdc
      cuda/device.rdc

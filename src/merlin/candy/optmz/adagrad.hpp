@@ -6,7 +6,6 @@
 #include "merlin/candy/optmz/declaration.hpp"  // merlin::candy::optmz::AdaGrad
 #include "merlin/cuda_interface.hpp"           // __cudevice__
 #include "merlin/exports.hpp"                  // MERLIN_EXPORTS
-#include "merlin/vector.hpp"                   // merlin::floatvec
 
 namespace merlin {
 

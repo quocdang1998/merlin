@@ -17,8 +17,11 @@ __cudevice__ void candy::Optimizer::update_gpu(candy::Model & model, const candy
                                                std::uint64_t thread_idx, std::uint64_t n_threads) noexcept {
     using UpdaterByGpu = std::add_pointer<void(void *, candy::Model &, const candy::Gradient &, std::uint64_t,
                                                std::uint64_t) noexcept>::type;
-    static std::array<UpdaterByGpu, 2> gpu_updater_func = {candy::optmz::GradDescent::update_gpu,
-                                                           candy::optmz::AdaGrad::update_gpu};
+    static std::array<UpdaterByGpu, 3> gpu_updater_func = {
+        candy::optmz::GradDescent::update_gpu,
+        candy::optmz::AdaGrad::update_gpu,
+        candy::optmz::Adam::update_gpu
+    };
     void * optimizer_algor = reinterpret_cast<void *>(&this->static_data);
     gpu_updater_func[this->static_data.index()](optimizer_algor, model, grad, thread_idx, n_threads);
 }
