@@ -19,94 +19,41 @@ namespace merlin {
  *  @f$ \varepsilon @f$ is the correction factor (bias), and @f$ L @f$ is the loss function.
  */
 struct candy::optmz::AdaGrad {
-
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
     AdaGrad(void) = default;
-    /** @brief Constructor from learning rate.
+    /** @brief Constructor from members.
      *  @param lr Initial learning rate.
-     *  @param num_params Number of parameter in the model to train.
+     *  @param grad_mean_mem Pre-allocated data for storing mean of gradient values.
      *  @param b Bias.
      */
-    AdaGrad(double lr, std::uint64_t num_params, double b = 1.0e-8) :
-    learning_rate(lr), bias(b), grad_history(num_params) {}
-    /// @}
-
-    /// @name Copy and move
-    /// @{
-    /** @brief Copy constructor.*/
-    AdaGrad(const candy::optmz::AdaGrad & src) = default;
-    /** @brief Copy assignment.*/
-    candy::optmz::AdaGrad & operator=(const candy::optmz::AdaGrad & src) = default;
-    /** @brief Move constructor.*/
-    AdaGrad(candy::optmz::AdaGrad && src) = default;
-    /** @brief Move assignment.*/
-    candy::optmz::AdaGrad & operator=(candy::optmz::AdaGrad && src) = default;
+    AdaGrad(double lr, char * grad_history_mem, double b = 1.0e-8) :
+    learning_rate(lr), grad_history(reinterpret_cast<double *>(grad_history_mem)), bias(b) {}
     /// @}
 
     /// @name Update model by gradient
     /// @{
     /** @brief Update model inside a CPU parallel region.*/
-    MERLIN_EXPORTS void update_cpu(candy::Model & model, const candy::Gradient & grad, std::uint64_t thread_idx,
-                                   std::uint64_t n_threads) noexcept;
-    /// @}
-
-    /// @name GPU related features
-    /// @{
-    /** @brief Calculate additional number of bytes to allocate for dynamic data.*/
-    std::uint64_t additional_cumalloc(void) const noexcept { return sizeof(double) * this->grad_history.size(); }
-    /** @brief Copy the optimizer from CPU to a pre-allocated memory on GPU.
-     *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
-     *  @param dynamic_data_ptr Pointer to a pre-allocated GPU memory storing dynamic data.
-     *  @param stream_ptr Pointer to CUDA stream for asynchronous copy.
-     */
-    MERLIN_EXPORTS void * copy_to_gpu(candy::optmz::AdaGrad * gpu_ptr, void * dynamic_data_ptr,
-                                      std::uintptr_t stream_ptr = 0) const;
-    /** @brief Calculate additional number of bytes to allocate in CUDA shared memory for dynamic data.*/
-    std::uint64_t additional_sharedmem(void) const noexcept { return sizeof(double) * this->grad_history.size(); }
+    MERLIN_EXPORTS static void update_cpu(void * optimizer_algor, candy::Model & model, const candy::Gradient & grad,
+                                          std::uint64_t thread_idx, std::uint64_t n_threads) noexcept;
+#ifdef __NVCC__
+    /** @brief Update model inside a GPU parallel region.*/
+    __cudevice__ static void update_gpu(void * optimizer_algor, candy::Model & model, const candy::Gradient & grad,
+                                        std::uint64_t thread_idx, std::uint64_t n_threads) noexcept;
+#endif  // __NVCC__
     /// @}
 
     /// @name Attributes
     /// @{
     /** @brief Initial learning rate.*/
     double learning_rate;
+    /** @brief Pointer to array containing sum of squares of gradients in history.*/
+    double * grad_history;
     /** @brief Bias to prevent division error.*/
     double bias;
-    /** @brief Sum of squares of gradients in history.*/
-    floatvec grad_history;
     /// @}
 };
-
-#ifdef __NVCC__
-
-namespace candy::optmz {
-
-/** @brief Update model inside a GPU parallel region.*/
-__cudevice__ void update_adagrad_gpu(void * p_optimizer, candy::Model & model, const candy::Gradient & grad,
-                                     std::uint64_t thread_idx, std::uint64_t n_threads) noexcept;
-
-/** @brief Copy AdaGrad object to pre-allocated memory region by current CUDA block of threads.
-     *  @details The copy action is performed by the whole CUDA thread block.
-     *  @param dest_ptr Memory region where the object is copied to.
-     *  @param src_ptr Memory region where the object resides.
-     *  @param dynamic_data_ptr Pointer to a pre-allocated GPU memory storing dynamic data.
-     *  @param thread_idx Flatten ID of the current CUDA thread in the block.
-     *  @param block_size Number of threads in the current CUDA block.
-     */
-__cudevice__ void * copy_adagrad_by_block(void * dest_ptr, const void * src_ptr, void * dynamic_data_ptr,
-                                          std::uint64_t thread_idx, std::uint64_t block_size);
-
-/** @brief Copy AdaGrad object to a pre-allocated memory region by a single GPU threads.
- *  @param src_ptr Memory region where the object resides.
- *  @param dest_ptr Memory region where the object is copied to.
- *  @param dynamic_data_ptr Pointer to a pre-allocated GPU memory storing dynamic data.
- */
-__cudevice__ void * copy_adagrad_by_thread(void * dest_ptr, const void * src_ptr, void * dynamic_data_ptr);
-
-}  // namespace candy::optmz
-
-#endif
 
 }  // namespace merlin
 

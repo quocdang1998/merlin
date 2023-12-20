@@ -5,7 +5,7 @@
 #include "merlin/candy/declaration.hpp"         // merlin::candy::Model
 #include "merlin/candy/optmz/adagrad.hpp"       // merlin::candy::optmz::AdaGrad
 #include "merlin/candy/optmz/grad_descent.hpp"  // merlin::candy::optmz::GradDescent
-#include "merlin/cuda_interface.hpp"            // __cuhostdev__
+#include "merlin/cuda_interface.hpp"            // __cudevice__
 #include "merlin/exports.hpp"                   // MERLIN_EXPORTS
 
 namespace merlin {
@@ -28,13 +28,13 @@ struct candy::Optimizer {
     /// @name Copy and move
     /// @{
     /** @brief Copy constructor.*/
-    Optimizer(const candy::Optimizer & src) = default;
+    Optimizer(const candy::Optimizer & src);
     /** @brief Copy assignment.*/
-    candy::Optimizer & operator=(const candy::Optimizer & src) = default;
+    candy::Optimizer & operator=(const candy::Optimizer & src);
     /** @brief Move constructor.*/
-    Optimizer(candy::Optimizer && src) = default;
+    Optimizer(candy::Optimizer && src);
     /** @brief Move assignment.*/
-    candy::Optimizer & operator=(candy::Optimizer && src) = default;
+    candy::Optimizer & operator=(candy::Optimizer && src);
     /// @}
 
     /// @name Update model by gradient
@@ -43,7 +43,7 @@ struct candy::Optimizer {
     MERLIN_EXPORTS void update_cpu(candy::Model & model, const candy::Gradient & grad, std::uint64_t thread_idx,
                                    std::uint64_t n_threads) noexcept;
 #ifdef __NVCC__
-    /** @brief Update model inside a CPU parallel region.*/
+    /** @brief Update model inside a GPU parallel region.*/
     __cudevice__ void update_gpu(candy::Model & model, const candy::Gradient & grad, std::uint64_t thread_idx,
                                  std::uint64_t n_threads) noexcept;
 #endif  // __NVCC__
@@ -51,8 +51,10 @@ struct candy::Optimizer {
 
     /// @name GPU related features
     /// @{
-    /** @brief Calculate additional number of bytes to allocate for dynamic data.*/
-    MERLIN_EXPORTS std::uint64_t cumalloc_size(void) const noexcept;
+    /** @brief Calculate number of bytes to allocate on GPU.*/
+    std::uint64_t cumalloc_size(void) const noexcept {
+        return sizeof(candy::Optimizer) + sizeof(char) * this->dynamic_size;
+    }
     /** @brief Copy the optimizer from CPU to a pre-allocated memory on GPU.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
      *  @param dynamic_data_ptr Pointer to a pre-allocated GPU memory storing dynamic data.
@@ -61,7 +63,7 @@ struct candy::Optimizer {
     MERLIN_EXPORTS void * copy_to_gpu(candy::Optimizer * gpu_ptr, void * dynamic_data_ptr,
                                       std::uintptr_t stream_ptr = 0) const;
     /** @brief Calculate additional number of bytes to allocate in CUDA shared memory for dynamic data.*/
-    MERLIN_EXPORTS std::uint64_t sharedmem_size(void) const noexcept;
+    std::uint64_t sharedmem_size(void) const noexcept { return sizeof(candy::Optimizer); }
 #ifdef __NVCC__
     /** @brief Copy object to pre-allocated memory region by current CUDA block of threads.
      *  @details The copy action is performed by the whole CUDA thread block.
@@ -92,6 +94,8 @@ struct candy::Optimizer {
     candy::OptmzStatic static_data;
     /** @brief Dynamic data for the algorithm (data resides on the heap memory and must be deallocated in destructor).*/
     char * dynamic_data = nullptr;
+    /** @brief Size of dynamic memory.*/
+    std::uint64_t dynamic_size = 0;
     /// @}
 };
 
@@ -101,7 +105,7 @@ namespace candy {
 MERLIN_EXPORTS candy::Optimizer create_grad_descent(double learning_rate);
 
 /** @brief Create an optimizer with adagrad algorithm.*/
-MERLIN_EXPORTS candy::Optimizer create_adagrad(double learning_rate, std::uint64_t num_params, double bias = 1.0e-8);
+MERLIN_EXPORTS candy::Optimizer create_adagrad(double learning_rate, const candy::Model & model, double bias = 1.0e-8);
 
 }  // namespace candy
 

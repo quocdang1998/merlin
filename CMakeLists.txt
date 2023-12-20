@@ -60,8 +60,6 @@ list(APPEND MERLIN_SRC_CU
      array/array.cu
      array/parcel.cu
      # candy/launcher.cu
-     candy/optmz/adagrad.cu
-     candy/optmz/grad_descent.cu
      candy/model.cu
      cuda/device.cu
      cuda/event.cu
