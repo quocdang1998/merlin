@@ -2,7 +2,7 @@
 #include "merlin/candy/optimizer.hpp"
 
 #include <array>        // std::array
-#include <cstring>      // std::memcpy
+#include <cstring>      // std::memcpy, std::memset
 #include <type_traits>  // std::add_pointer
 #include <utility>      // std::exchange
 
@@ -88,6 +88,28 @@ candy::Optimizer & candy::Optimizer::operator=(candy::Optimizer && src) {
     return *this;
 }
 
+// Check compatibility with a model
+bool candy::Optimizer::is_compatible(const candy::Model & model) const {
+    switch (this->static_data.index()) {
+        case 0 : {  // gradient descent
+            break;
+        }
+        case 1 : {  // adagrad
+            if (this->dynamic_size != sizeof(double) * model.num_params()) {
+                return false;
+            }
+            break;
+        }
+        case 2 : {  // adam
+            if (this->dynamic_size != 2 * sizeof(double) * model.num_params()) {
+                return false;
+            }
+            break;
+        }
+    }
+    return true;
+}
+
 // Update model inside a CPU parallel region
 void candy::Optimizer::update_cpu(candy::Model & model, const candy::Gradient & grad, std::uint64_t thread_idx,
                                   std::uint64_t n_threads) noexcept {
@@ -138,6 +160,7 @@ candy::Optimizer candy::create_adagrad(double learning_rate, const candy::Model 
     std::uint64_t num_params = model.num_params();
     opt.dynamic_size = sizeof(double) * num_params;
     opt.dynamic_data = new char[opt.dynamic_size];
+    std::memset(opt.dynamic_data, 0, opt.dynamic_size);
     opt.static_data = candy::OptmzStatic(std::in_place_type<candy::optmz::AdaGrad>,
                                          candy::optmz::AdaGrad(learning_rate, opt.dynamic_data, bias));
     return opt;
@@ -150,6 +173,7 @@ candy::Optimizer candy::create_adam(double learning_rate, double beta_m, double 
     std::uint64_t num_params = model.num_params();
     opt.dynamic_size = 2 * sizeof(double) * num_params;
     opt.dynamic_data = new char[opt.dynamic_size];
+    std::memset(opt.dynamic_data, 0, opt.dynamic_size);
     opt.static_data = candy::OptmzStatic(std::in_place_type<candy::optmz::Adam>,
                                          candy::optmz::Adam(learning_rate, beta_m, beta_v, opt.dynamic_data, bias, 0));
     return opt;

@@ -4,9 +4,33 @@
 #include <array>    // std::array
 #include <sstream>  // std::ostringstream
 
+#include <omp.h>  // #pragma omp
+
 #include "merlin/array/array.hpp"  // merlin::array::Array
 
 namespace merlin {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// TrainMetric
+// ---------------------------------------------------------------------------------------------------------------------
+
+std::ostream & operator<<(std::ostream & out, const candy::TrainMetric & metric) {
+    switch (metric) {
+        case candy::TrainMetric::RelativeSquare : {
+            out << "RelativeSquare";
+            break;
+        }
+        case candy::TrainMetric::AbsoluteSquare : {
+            out << "AbsoluteSquare";
+            break;
+        }
+        default : {
+            out << "Undefined";
+            break;
+        }
+    }
+    return out;
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Gradient
@@ -18,14 +42,17 @@ void candy::Gradient::calc_by_cpu(candy::Model & model, const array::Array & tra
     static std::array<candy::GradientCalc, 2> grad_methods = {candy::rlsquare_grad, candy::absquare_grad};
     unsigned int metric = static_cast<unsigned int>(this->train_metric_);
     grad_methods[metric](model, train_data, this->value_, thread_idx, n_threads, cache_mem);
+    #pragma omp barrier
 }
 
 // String representation
 std::string candy::Gradient::str(void) const {
     std::ostringstream out_stream;
-    out_stream << "<Gradient(";
+    out_stream << "<Gradient(value=<";
     out_stream << this->value_.str();
-    out_stream << ")>";
+    out_stream << ">, metric=<";
+    out_stream << this->train_metric_;
+    out_stream << ">)>";
     return out_stream.str();
 }
 

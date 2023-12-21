@@ -66,7 +66,7 @@ array::Array::Array(double value) {
     this->size_ = 1;
     this->strides_ = intvec({sizeof(double)});
     this->shape_ = intvec({1});
-    this->release_ = true;
+    this->release = true;
 }
 
 // Construct empty Array from shape vector
@@ -74,14 +74,14 @@ array::Array::Array(const intvec & shape) : array::NdData(shape) {
     // initialize data
     this->data_ = array::allocate_memory(this->size());
     // other meta data
-    this->release_ = true;
+    this->release = true;
 }
 
 // Construct Array from Numpy array
 array::Array::Array(double * data, const intvec & shape, const intvec & strides, bool copy) {
     this->shape_ = shape;
     this->calc_array_size();
-    this->release_ = copy;
+    this->release = copy;
     // copy / assign data
     if (copy) {  // copy data
         // allocate a new tensor
@@ -103,14 +103,14 @@ array::Array::Array(double * data, const intvec & shape, const intvec & strides,
 
 // Constructor from a slice
 array::Array::Array(const array::Array & whole, const slicevec & slices) : array::NdData(whole, slices) {
-    this->release_ = false;
+    this->release = false;
 }
 
 // Copy constructor
 array::Array::Array(const array::Array & src) : array::NdData(src) {
     // copy / initialize meta data
     this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
-    this->release_ = true;
+    this->release = true;
     // copy data
     this->data_ = array::allocate_memory(this->size());
     array::copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), std::memcpy);
@@ -122,10 +122,10 @@ array::Array & array::Array::operator=(const array::Array & src) {
     this->array::NdData::operator=(src);
     this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
     // free current data
-    if (this->release_) {
+    if (this->release) {
         delete[] this->data_;
     }
-    this->release_ = true;
+    this->release = true;
     // copy data
     this->data_ = array::allocate_memory(this->size());
     array::copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), std::memcpy);
@@ -134,23 +134,23 @@ array::Array & array::Array::operator=(const array::Array & src) {
 
 // Move constructor
 array::Array::Array(array::Array && src) : array::NdData(src) {
-    // disable release_ of the source
-    this->release_ = src.release_;
-    src.release_ = false;
+    // disable release of the source
+    this->release = src.release;
+    src.release = false;
     // nullify source data
     src.data_ = nullptr;
 }
 
 // Move assignment
 array::Array & array::Array::operator=(array::Array && src) {
-    // disable release_ of the source and free current data
-    if (this->release_) {
+    // disable release of the source and free current data
+    if (this->release) {
         array::free_memory(this->data_);
     }
     // copy meta data
     this->array::NdData::operator=(src);
-    this->release_ = src.release_;
-    src.release_ = false;
+    this->release = src.release;
+    src.release = false;
     // move data
     src.data_ = nullptr;
     return *this;
@@ -244,7 +244,7 @@ std::string array::Array::str(bool first_call) const {
 
 // Destructor
 array::Array::~Array(void) {
-    if (this->release_ && (this->data_ != nullptr)) {
+    if (this->release && (this->data_ != nullptr)) {
         array::free_memory(this->data_);
     }
 }
