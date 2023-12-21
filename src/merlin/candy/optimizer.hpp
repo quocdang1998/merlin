@@ -38,6 +38,12 @@ struct candy::Optimizer {
     candy::Optimizer & operator=(candy::Optimizer && src);
     /// @}
 
+    /// @name Check compatibility with a model
+    /// @{
+    /** @brief Check compatibility with a model. Return ``false`` when incompatibility detected.*/
+    MERLIN_EXPORTS bool is_compatible(const candy::Model & model) const;
+    /// @}
+
     /// @name Update model by gradient
     /// @{
     /** @brief Update model inside a CPU parallel region.*/

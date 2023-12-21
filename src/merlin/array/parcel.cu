@@ -28,7 +28,7 @@ void array::Parcel::free_current_data(const cuda::Stream & stream) {
     // lock mutex
     push_gpu(this->device());
     // free data
-    if ((this->data_ != nullptr) && this->release_) {
+    if ((this->data_ != nullptr) && this->release) {
         ::cudaFreeAsync(this->data_, reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr()));
         this->data_ = nullptr;
     }
@@ -38,7 +38,7 @@ void array::Parcel::free_current_data(const cuda::Stream & stream) {
 // Constructor from shape vector
 array::Parcel::Parcel(const intvec & shape, const cuda::Stream & stream) : array::NdData(shape) {
     // allocate data
-    this->release_ = true;
+    this->release = true;
     ::cudaError_t err_ = ::cudaMallocAsync(&(this->data_), sizeof(double) * this->size(),
                                            reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr()));
     if (err_ != 0) {
@@ -55,7 +55,7 @@ array::Parcel::Parcel(const array::Parcel & src) : array::NdData(src) {
     // reform strides vector
     this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
     // allocate data
-    this->release_ = true;
+    this->release = true;
     ::cudaError_t err_ = ::cudaMalloc(&(this->data_), sizeof(double) * this->size());
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", ::cudaGetErrorName(err_));
@@ -82,7 +82,7 @@ array::Parcel & array::Parcel::operator=(const array::Parcel & src) {
     // get device and context
     this->device_ = cuda::Device::get_current_gpu();
     // allocate data
-    this->release_ = true;
+    this->release = true;
     cudaError_t err_ = ::cudaMalloc(&(this->data_), sizeof(double) * this->size());
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", cudaGetErrorString(err_));
@@ -105,7 +105,7 @@ array::Parcel::Parcel(array::Parcel && src) : array::NdData(src) {
     // move device id and context
     this->device_ = src.device_;
     // take over pointer to source
-    this->release_ = src.release_;
+    this->release = src.release;
     src.data_ = nullptr;
 }
 
@@ -119,7 +119,7 @@ array::Parcel & array::Parcel::operator=(array::Parcel && src) {
     this->array::NdData::operator=(src);
     // take over pointer to source
     src.data_ = nullptr;
-    this->release_ = src.release_;
+    this->release = src.release;
     return *this;
 }
 

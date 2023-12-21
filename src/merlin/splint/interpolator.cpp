@@ -106,8 +106,9 @@ floatvec splint::Interpolator::evaluate(const array::Array & points, std::uint64
     floatvec evaluated_values(points.shape()[0]);
     std::shared_future<void> & current_sync = std::get<std::shared_future<void>>(this->synchronizer_.synchronizer);
     std::shared_future<void> new_sync = std::async(std::launch::async, splint::eval_intpl_cpu, current_sync,
-                                            this->p_coeff_->data(), this->p_grid_, this->p_method_, points.data(),
-                                            evaluated_values.size(), evaluated_values.data(), n_threads).share();
+                                                   this->p_coeff_->data(), this->p_grid_, this->p_method_,
+                                                   points.data(), evaluated_values.size(), evaluated_values.data(),
+                                                   n_threads).share();
     this->synchronizer_ = Synchronizer(std::move(new_sync));
     return evaluated_values;
 }
@@ -142,7 +143,7 @@ splint::Interpolator::~Interpolator(void) {
         // delete joint memory of both on GPU
         push_gpu(cuda::Device(this->gpu_id()));
         if (this->p_grid_ != nullptr) {
-            cuda_mem_free(this->p_grid_);
+            cuda_mem_free(this->p_grid_, std::get<cuda::Stream>(this->synchronizer_.synchronizer).get_stream_ptr());
         }
         pop_gpu();
     }

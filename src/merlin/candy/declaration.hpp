@@ -9,7 +9,7 @@ class Gradient;
 class Launcher;
 class Model;
 struct Optimizer;
-
+class Trainer;
 }  // namespace merlin::candy
 
 #endif  // MERLIN_CANDY_DECLARATION_HPP_

@@ -67,6 +67,8 @@ class array::NdData {
     __cuhostdev__ constexpr const std::uint64_t & size(void) const noexcept { return this->size_; }
     /** @brief Check if the array is C-contiguous.*/
     bool is_c_contiguous(void) const;
+    /** @brief Release memory in destructor.*/
+    bool release = false;
     /// @}
 
     /// @name Get and set element
@@ -122,8 +124,6 @@ class array::NdData {
      *  @details Number of incresing bytes in memory when an intvec of a dimension jumps by 1.
      */
     intvec strides_;
-    /** @brief Release memory in destructor.*/
-    bool release_ = false;
 
     /** @brief Calculate size of array.*/
     MERLIN_EXPORTS void calc_array_size(void) noexcept;

@@ -63,7 +63,7 @@ array::NdData::NdData(const array::NdData & whole, const slicevec & slices) {
     }
     this->calc_array_size();
     this->data_ = reinterpret_cast<double *>(data_ptr);
-    this->release_ = false;
+    this->release = false;
 }
 
 // Check if the array is C-contiguous

@@ -137,7 +137,7 @@ array::NdData(shape), filename_(filename), offset_(0), thread_safe_(thread_safe)
     this->flock_ = FileLock(this->file_ptr_);
     // write metatdata
     this->write_metadata();
-    this->release_ = true;
+    this->release = true;
 }
 
 // Constructor from filename
@@ -153,7 +153,7 @@ filename_(filename), offset_(offset), thread_safe_(thread_safe) {
     this->file_ptr_ = std::fopen(filename.c_str(), "rb+");
     this->flock_ = FileLock(this->file_ptr_);
     this->read_metadata();
-    this->release_ = true;
+    this->release = true;
 }
 
 // Constructor from a slice
@@ -163,7 +163,7 @@ array::Stock::Stock(const array::Stock & whole, const slicevec & slices) : array
     this->offset_ = whole.offset_;
     this->thread_safe_ = whole.thread_safe_;
     this->filename_ = whole.filename_;
-    this->release_ = false;
+    this->release = false;
 }
 
 // Get value of element at a n-dim index
@@ -229,7 +229,7 @@ std::string array::Stock::str(bool first_call) const {
 
 // Destructor
 array::Stock::~Stock(void) {
-    if (this->release_ && (this->file_ptr_ != nullptr)) {
+    if (this->release && (this->file_ptr_ != nullptr)) {
         int err_ = std::fclose(this->file_ptr_);
         if (err_ != 0) {
             FAILURE(std::ios_base::failure, "Cannot close file \"%s\".\n", this->filename_.c_str());
