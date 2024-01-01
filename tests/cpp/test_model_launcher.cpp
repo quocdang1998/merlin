@@ -9,9 +9,15 @@
 #include "merlin/candy/gradient.hpp"
 #include "merlin/candy/model.hpp"
 #include "merlin/candy/optimizer.hpp"
+#include "merlin/candy/trainer.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
 #include "merlin/vector.hpp"
+
+bool stop_criterion(double before_err, double after_err) {
+    double rel_err = std::abs(before_err - after_err) / before_err;
+    return (rel_err > 1e-1);
+}
 
 /*
 double get_max(const merlin::candy::Model & model, const merlin::array::Array & train_data) {
@@ -45,10 +51,10 @@ int main(void) {
     merlin::candy::Gradient grad(gradient_data.data(), model.num_params(), merlin::candy::TrainMetric::RelativeSquare);
 
     merlin::candy::Optimizer opt = merlin::candy::create_grad_descent(0.1);
-
-    std::uint64_t n_thread = 4;
+/*
+    std::uint64_t n_thread = 5;
     merlin::intvec cache(n_thread * model.ndim());
-    for (std::uint64_t i = 0; i < 1000; i++) {
+    for (std::uint64_t i = 0; i < 100; i++) {
         #pragma omp parallel num_threads(n_thread)
         {
             grad.calc_by_cpu(model, train_data, ::omp_get_thread_num(), n_thread, cache.data());
@@ -57,4 +63,9 @@ int main(void) {
     }
     MESSAGE("Model gradient: %s\n", grad.str().c_str());
     MESSAGE("Model eval: %f\n", model.eval({1,1}));
+*/
+    merlin::candy::Trainer train(model, std::move(train_data), opt);
+    train.update(10, ::stop_criterion, 5, merlin::candy::TrainMetric::RelativeSquare);
+    train.synchronize();
+    MESSAGE("Model eval: %f\n", train.get_model().eval({1,1}));
 }

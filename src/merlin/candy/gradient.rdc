@@ -3,8 +3,6 @@
 
 #include <array>  // std::array
 
-#include <omp.h>  // #pragma omp
-
 #if defined(__MERLIN_LINUX__)
     #include <cmath>  // std::isfinite, std::isnormal
 #elif defined(__MERLIN_WINDOWS__)
@@ -99,11 +97,6 @@ __cuhostdev__ void candy::rlsquare_grad(const candy::Model & model, const array:
         }
         gradient[i_param] = param_gradient;
     }
-#ifdef __CUDA_ARCH__
-    __syncthreads();
-#else
-    #pragma omp barrier
-#endif
 }
 
 // Calculate gradient of a model based on relative square metric
@@ -150,11 +143,6 @@ __cuhostdev__ void candy::absquare_grad(const candy::Model & model, const array:
         }
         gradient[i_param] = param_gradient;
     }
-#ifdef __CUDA_ARCH__
-    __syncthreads();
-#else
-    #pragma omp barrier
-#endif
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -170,6 +158,7 @@ __cudevice__ void candy::Gradient::calc_by_gpu(candy::Model & model, const array
     static std::array<candy::GradientCalc, 2> grad_methods = {candy::rlsquare_grad, candy::absquare_grad};
     unsigned int metric = static_cast<unsigned int>(this->train_metric_);
     grad_methods[metric](model, train_data, this->value_, thread_idx, n_threads, cache_mem);
+    __syncthreads();
 }
 
 #endif  // __NVCC__

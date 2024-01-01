@@ -1,7 +1,7 @@
 // Copyright 2022 quocdang1998
 #include "merlin/splint/interpolator.hpp"
 
-#include <future>   // std::shared_future
+#include <future>   // std::async, std::shared_future
 #include <sstream>  // std::ostringstream
 #include <utility>  // std::move
 

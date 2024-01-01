@@ -74,8 +74,8 @@ list(APPEND MERLIN_SRC_CU
      splint/interpolator.cu
 )
 list(APPEND MERLIN_SRC_GLB
-     # candy/launcher.glb
      candy/loss.glb
+     candy/trainer.glb
      cuda/device.glb
      # intpl/lagrange.glb
      # intpl/newton.glb

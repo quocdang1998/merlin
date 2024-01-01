@@ -16,14 +16,6 @@ namespace merlin {
 
 namespace candy {
 
-/** @brief Loss function used for training canonical model.*/
-enum class TrainMetric : unsigned int {
-    /** @brief Relative square error, skipping all data points that are not normal (``0``, ``inf`` or ``nan``).*/
-    RelativeSquare = 0x00,
-    /** @brief Absolute square error, skipping all data points that are not finite (``inf`` or ``nan``).*/
-    AbsoluteSquare = 0x01
-};
-
 /** @brief Function type calculating gradient.*/
 using GradientCalc = std::add_pointer<void(const candy::Model &, const array::NdData &, floatvec &, std::uint64_t,
                                            std::uint64_t, std::uint64_t *)>::type;
