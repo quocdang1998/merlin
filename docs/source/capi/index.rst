@@ -159,18 +159,14 @@ Solving linear system by QR decomposition
 .. doxysummary::
    :toctree: generated
 
-   merlin::linalg::qr_solve_cpu
    merlin::linalg::qr_decomposition_cpu
-   merlin::linalg::upright_solver_cpu
-   merlin::linalg::householder_cpu
+   merlin::linalg::qr_solve_cpu
 
 .. doxysummary::
    :toctree: generated
 
-   merlin::linalg::qr_solve_gpu
    merlin::linalg::qr_decomposition_gpu
-   merlin::linalg::upright_solver_gpu
-   merlin::linalg::householder_gpu
+   merlin::linalg::qr_solve_gpu
 
 Canonical decomposition API
 ---------------------------
@@ -182,7 +178,7 @@ CP decomposition model
    :toctree: generated
 
    merlin::candy::Model
-   merlin::candy::RandomInitializer
+   merlin::candy::Gradient
 
 Metric error
 ^^^^^^^^^^^^
@@ -190,13 +186,11 @@ Metric error
 .. doxysummary::
    :toctree: generated
 
+   merlin::candy::TrainMetric
    merlin::candy::rmse_cpu
    merlin::candy::rmae_cpu
-
-.. doxysummary::
-   :toctree: generated
-
    merlin::candy::rmse_gpu
+   merlin::candy::rmae_gpu
 
 Model training algorithm
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -205,9 +199,33 @@ Model training algorithm
    :toctree: generated
 
    merlin::candy::Optimizer
+
+Gradient descent
+''''''''''''''''
+
+.. doxysummary::
+   :toctree: generated
+
    merlin::candy::optmz::GradDescent
+   merlin::candy::create_grad_descent
+
+Adaptative gradient
+'''''''''''''''''''
+
+.. doxysummary::
+   :toctree: generated
+
    merlin::candy::optmz::AdaGrad
+   merlin::candy::create_adagrad
+
+Adaptive estimates of lower-order moments
+'''''''''''''''''''''''''''''''''''''''''
+
+.. doxysummary::
+   :toctree: generated
+
    merlin::candy::optmz::Adam
+   merlin::candy::create_adam
 
 Launch calculation
 ^^^^^^^^^^^^^^^^^^
@@ -215,7 +233,7 @@ Launch calculation
 .. doxysummary::
    :toctree: generated
 
-   merlin::candy::Launcher
+   merlin::candy::Trainer
 
 Low level API
 -------------

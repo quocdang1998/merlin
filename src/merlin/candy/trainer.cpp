@@ -32,7 +32,7 @@ namespace merlin {
 
 #ifndef __MERLIN_CUDA__
 
-/** @brief Allocate memory on GPU for the trainer.*/
+// Allocate memory on GPU for the trainer
 void candy::create_trainer_gpu_ptr(const candy::Model & cpu_model, const array::Array & cpu_data,
                                    const candy::Optimizer & cpu_optimizer, candy::Model *& gpu_model,
                                    array::NdData *& gpu_data, candy::Optimizer *& gpu_optimizer,
@@ -45,8 +45,7 @@ void candy::create_trainer_gpu_ptr(const candy::Model & cpu_model, const array::
 // Train a model using CPU parallelism
 void candy::train_by_cpu(std::shared_future<void> synch, candy::Model * p_model, array::Array * p_data,
                          candy::Optimizer * p_optimizer, double * cpu_grad_mem, candy::TrainMetric metric,
-                         std::uint64_t rep, const std::function<bool(double, double)> * p_stop_condition,
-                         std::uint64_t n_threads, intvec * p_cache_mem) {
+                         std::uint64_t rep, double threshold, std::uint64_t n_threads, intvec * p_cache_mem) {
     // finish old job
     if (synch.valid()) {
         synch.get();
@@ -59,7 +58,8 @@ void candy::train_by_cpu(std::shared_future<void> synch, candy::Model * p_model,
     }
     // calculate based on error
     double priori_error = 0.0;
-    double posteriori_error = candy::rmse_cpu(p_model, p_data, n_threads);
+    double posteriori_error = candy::rmse_cpu(p_model, p_data, p_cache_mem->data(), n_threads);
+    bool go_on = true;
     do {
         priori_error = posteriori_error;
         for (std::uint64_t i = 0; i < rep; i++) {
@@ -69,8 +69,13 @@ void candy::train_by_cpu(std::shared_future<void> synch, candy::Model * p_model,
                 p_optimizer->update_cpu(*p_model, gradient, ::omp_get_thread_num(), n_threads);
             }
         }
-        posteriori_error = candy::rmse_cpu(p_model, p_data, n_threads);
-    } while ((*p_stop_condition)(priori_error, posteriori_error));
+        posteriori_error = candy::rmse_cpu(p_model, p_data, p_cache_mem->data(), n_threads);
+        if (std::isnormal(posteriori_error)) {
+            go_on = (std::abs(priori_error - posteriori_error) / posteriori_error > threshold);
+        } else {
+            go_on = false;
+        }
+    } while (go_on);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -104,21 +109,33 @@ candy::Trainer::Trainer(const candy::Model & model, array::Array && data, const 
         cuda::Stream & stream = std::get<cuda::Stream>(this->synch_.synchronizer);
         candy::create_trainer_gpu_ptr(model, std::forward<array::Array>(data), optimizer, this->p_model_, this->p_data_,
                                       this->p_optmz_, this->p_parcel_, stream);
-        this->shared_mem_size_ = model.sharedmem_size() + this->p_parcel_->sharedmem_size() + optimizer.sharedmem_size();
+        this->shared_mem_size_ = model.sharedmem_size() + optimizer.sharedmem_size();
+        this->shared_mem_size_ += this->p_parcel_->sharedmem_size();
         this->shared_mem_size_ += sizeof(double) * model.num_params();
     }
 }
 
+#ifndef __MERLIN_CUDA__
+
+// Get a copy to the current CP model
+candy::Model candy::Trainer::get_model(void) const {
+    if (this->on_gpu()) {
+        FAILURE(cuda_compile_error, "Cannot invoke GPU function since merlin is not compiled with CUDA option.\n");
+    }
+    return candy::Model(*(this->p_model_));
+}
+
+#endif  // __MERLIN_CUDA__
+
 // Update CP model according to gradient
-void candy::Trainer::update(std::uint64_t rep, const std::function<bool(double, double)> & stop_condition,
-                            std::uint64_t n_threads, candy::TrainMetric metric) {
+void candy::Trainer::update(std::uint64_t rep, double threshold, std::uint64_t n_threads, candy::TrainMetric metric) {
     if (!(this->on_gpu())) {
         // launch asynchronously the update on CPU
         array::Array * p_train_data = static_cast<array::Array *>(this->p_data_);
         std::shared_future<void> & current_sync = std::get<std::shared_future<void>>(this->synch_.synchronizer);
         std::shared_future<void> new_sync = std::async(std::launch::async, candy::train_by_cpu, current_sync,
                                                        this->p_model_, p_train_data, this->p_optmz_,
-                                                       this->cpu_grad_mem_, metric, rep, &stop_condition, n_threads,
+                                                       this->cpu_grad_mem_, metric, rep, threshold, n_threads,
                                                        &(this->cpu_cache_mem_)).share();
         this->synch_ = Synchronizer(std::move(new_sync));
     } else {
@@ -126,7 +143,7 @@ void candy::Trainer::update(std::uint64_t rep, const std::function<bool(double, 
         cuda::Stream & stream = std::get<cuda::Stream>(this->synch_.synchronizer);
         push_gpu(stream.get_gpu());
         candy::train_by_gpu(this->p_model_, static_cast<array::Parcel *>(this->p_data_), this->p_optmz_, metric, rep,
-                            n_threads, this->ndim_, stop_condition, this->shared_mem_size_, stream);
+                            n_threads, this->ndim_, threshold, this->shared_mem_size_, stream);
         pop_gpu();
     }
 }

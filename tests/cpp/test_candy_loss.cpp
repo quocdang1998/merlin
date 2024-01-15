@@ -39,6 +39,8 @@ int main(void) {
     merlin::candy::Model model({{1.0, 0.5, 2.1, 0.25}, {2.0, 1.0, 2.4, 1.2, 2.7, 1.6}}, 2);
     MESSAGE("Model: %s\n", model.str().c_str());
 
-    MESSAGE("Value of RMSE: %f\n", merlin::candy::rmse_cpu(model, train_data, 8));
-    MESSAGE("Value of RMAE: %f\n", merlin::candy::rmae_cpu(model, train_data, 8));
+    std::uint64_t n_threads = 10;
+    merlin::intvec buffer(model.ndim() * n_threads);
+    MESSAGE("Value of RMSE: %f\n", merlin::candy::rmse_cpu(&model, &train_data, buffer.data(), n_threads));
+    MESSAGE("Value of RMAE: %f\n", merlin::candy::rmae_cpu(&model, &train_data, buffer.data(), n_threads));
 }

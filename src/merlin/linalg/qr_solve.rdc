@@ -11,126 +11,108 @@ namespace merlin {
 // Matrix inversion by QR decomposition
 // ---------------------------------------------------------------------------------------------------------------------
 
-#ifdef __NVCC__
-
-// Solve linear system by QR decomposition on GPU
-__cudevice__ void linalg::qr_solve_gpu(linalg::Matrix & M, floatvec & x, double * buffer, std::uint64_t thread_idx,
-                                       std::uint64_t block_size) noexcept {
-    linalg::qr_decomposition_gpu(M, x, buffer, thread_idx, block_size);
-    linalg::upright_solver_gpu(M, x, thread_idx, block_size);
-}
-
-// Perform QR decomposition on a matrix and a vector by GPU
-__cudevice__ void linalg::qr_decomposition_gpu(linalg::Matrix & matrix, floatvec & x, double * buffer,
-                                               std::uint64_t thread_idx, std::uint64_t block_size) noexcept {
-    // initialize cache variables
-    const std::uint64_t & size = x.size();
-    floatvec v, buffer_per_thread;
-    v.assign(buffer, size);
-    buffer_per_thread.assign(v.end(), block_size);
-    std::uint64_t dim_max = size - 1;
-    // recursively call for each dimension
-    for (std::uint64_t i_dim = 0; i_dim < dim_max; i_dim++) {
-        // get the norm of the first column vector of the sub matrix and save to buffer_per_thread[0]
-        buffer_per_thread[thread_idx] = 0.0;
-        for (std::uint64_t j_row = thread_idx + i_dim; j_row < size; j_row += block_size) {
-            double element = matrix.get(j_row, i_dim);
-            buffer_per_thread[thread_idx] += element * element;
-        }
-        if (thread_idx == 0) {
-            for (std::uint64_t i_thread = 1; i_thread < block_size; i_thread++) {
-                buffer_per_thread[0] += buffer_per_thread[i_thread];
-            }
-            buffer_per_thread[0] = std::sqrt(buffer_per_thread[0]);
-        }
-        __syncthreads();
-        // calculate v = (matrix[:,i_dim] - alpha * e_idim) / norm(v)
-        for (std::uint64_t j = thread_idx + i_dim; j < size; j += block_size) {
-            v[j] = matrix.get(j, i_dim);
-        }
-        if (thread_idx == 0) {
-            v[i_dim] += std::copysign(buffer_per_thread[0], v[i_dim]);
-        }
-        __syncthreads();
-        // normalize v
-        buffer_per_thread[thread_idx] = 0.0;
-        for (std::uint64_t j = thread_idx + i_dim; j < size; j += block_size) {
-            buffer_per_thread[thread_idx] += v[j] * v[j];
-        }
-        if (thread_idx == 0) {
-            for (std::uint64_t i_thread = 1; i_thread < block_size; i_thread++) {
-                buffer_per_thread[0] += buffer_per_thread[i_thread];
-            }
-            buffer_per_thread[0] = std::sqrt(buffer_per_thread[0]);
-        }
-        __syncthreads();
-        for (std::uint64_t j = i_dim; j < size; j++) {
-            v[j] /= buffer_per_thread[0];
-        }
-        // perform Householder refection
-        linalg::householder_gpu(matrix, x, v, i_dim, buffer_per_thread.data(), thread_idx, block_size);
-    }
-}
-
-// Perform Householder reflection on a matrix and a vector by GPU
-__cudevice__ void linalg::householder_gpu(linalg::Matrix & M, floatvec & x, const floatvec & v,
-                                          std::uint64_t start_dimension, double * buffer, std::uint64_t thread_idx,
-                                          std::uint64_t block_size) noexcept {
-    // perform calculation on the matrix
-    std::uint64_t matrix_size = v.size();
-    for (std::int64_t i_col = thread_idx + start_dimension; i_col < matrix_size; i_col += block_size) {
+// Perform Householder reflection on a matrix
+__cuhostdev__ void linalg::householder_reflect(linalg::Matrix & M, const floatvec & v, std::uint64_t start_dimension,
+                                               std::uint64_t thread_idx, std::uint64_t nthreads) noexcept {
+    // apply Householder transformation to each matrix column
+    // std::printf("start_dimension = %I64u, n_col = %I64u, nthreads = %I64u\n", start_dimension, M.ncol(), nthreads);
+    for (std::uint64_t i_col = thread_idx; i_col < M.ncol(); i_col += nthreads) {
         // calculate inner product with column vector
         double column_inner_prod = 0.0;
-        for (std::uint64_t i_row = start_dimension; i_row < matrix_size; i_row++) {
+        for (std::uint64_t i_row = start_dimension; i_row < M.nrow(); i_row++) {
             column_inner_prod += M.get(i_row, i_col) * v[i_row];
         }
+        // std::printf("column_inner_prod = %f\n", column_inner_prod);
         column_inner_prod *= 2.f;
         // substract by 2*<col*v>*v_i
-        for (std::uint64_t i_row = start_dimension; i_row < matrix_size; i_row++) {
+        for (std::uint64_t i_row = start_dimension; i_row < M.nrow(); i_row++) {
             M.get(i_row, i_col) -= column_inner_prod * v[i_row];
         }
     }
-    __syncthreads();
-    // inner product on x and v and save to buffer_per_thread[0]
-    floatvec buffer_per_thread;
-    buffer_per_thread.assign(buffer, block_size);
-    buffer_per_thread[thread_idx] = 0.0;
-    for (std::uint64_t i_col = thread_idx + start_dimension; i_col < matrix_size; i_col += block_size) {
-        buffer_per_thread[thread_idx] += x[i_col] * v[i_col];
-    }
-    __syncthreads();
-    if (thread_idx == 0) {
-        for (std::uint64_t i_thread = 1; i_thread < block_size; i_thread++) {
-            buffer_per_thread[0] += buffer_per_thread[i_thread];
-        }
-        buffer_per_thread[0] *= 2.f;
-    }
-    __syncthreads();
-    // perform calculation on the vector
-    for (std::uint64_t i = thread_idx + start_dimension; i < matrix_size; i += block_size) {
-        x[i] -= buffer_per_thread[0] * v[i];
-    }
-    __syncthreads();
 }
 
 // Solve upper right linear system
-__cudevice__ void linalg::upright_solver_gpu(linalg::Matrix & R, floatvec & x, std::uint64_t thread_idx,
-                                             std::uint64_t block_size) noexcept {
-    const std::uint64_t & size = x.size();
-    for (std::int64_t i_row = size - 1; i_row >= 0; i_row--) {
-        // solve for the value of i_row
-        if (thread_idx == 0) {
-            double & diagonal_element = R.get(i_row, i_row);
-            x[i_row] /= diagonal_element;
-            diagonal_element = 1.f;
-        }
-        // subtract each previous rows by coeff * x[i_row]
-        for (std::uint64_t i_previous = thread_idx; i_previous < i_row; i_previous += block_size) {
-            double & off_diagonal = R.get(i_previous, i_row);
-            x[i_previous] -= off_diagonal * x[i_row];
-            off_diagonal = 0.f;
+__cuhostdev__ void linalg::upright_solver(const linalg::Matrix & R, linalg::Matrix & B, std::uint64_t thread_idx,
+                                          std::uint64_t nthreads) noexcept {
+    // parallel solve for each column of B
+    for (std::uint64_t i_col = thread_idx; i_col < B.ncol(); i_col++) {
+        for (std::int64_t i_row = B.nrow() - 1; i_row >= 0; i_row--) {
+            // solve for the value of i_row
+            const double & diagonal_element = R.cget(i_row, i_row);
+            B.get(i_row, i_col) /= diagonal_element;
+            // subtract each previous rows by coeff * B[i_row, i_col]
+            for (std::uint64_t i_previous = 0; i_previous < i_row; i_previous++) {
+                const double & off_diagonal = R.cget(i_previous, i_row);
+                B.get(i_previous, i_col) -= off_diagonal * B.get(i_row, i_col);
+            }
         }
     }
+}
+
+#ifdef __NVCC__
+
+// QR decomposition by GPU parallelism
+__cudevice__ void linalg::qr_decomposition_gpu(linalg::Matrix & M, linalg::Matrix & B, double * buffer, double & norm,
+                                               std::uint64_t thread_idx, std::uint64_t nthreads) noexcept {
+    // initialize temporary memory for refectant vector
+    floatvec reflect_vector;
+    reflect_vector.assign(buffer, M.nrow());
+    std::uint64_t dim_max = M.nrow() - 1;
+    // recursively call for each dimension
+    for (std::uint64_t i_dim = 0; i_dim < dim_max; i_dim++) {
+        // get the norm of the first column vector of the sub matrix
+        double thread_norm = 0.0;
+        if (thread_idx == 0) {
+            norm = 0.0;
+        }
+        __syncthreads();
+        for (std::uint64_t i_row = i_dim + thread_idx; i_row < M.nrow(); i_row += nthreads) {
+            double & element = M.get(i_row, i_dim);
+            thread_norm += element * element;
+        }
+        ::atomicAdd_block(&norm, thread_norm);
+        __syncthreads();
+        if (thread_idx == 0) {
+            norm = std::sqrt(norm);
+        }
+        __syncthreads();
+        // calculate v = (matrix[:,i_dim] - norm * e_idim) / norm(v)
+        for (std::uint64_t i_row = i_dim + thread_idx; i_row < M.nrow(); i_row += nthreads) {
+            reflect_vector[i_row] = M.get(i_row, i_dim);
+            reflect_vector[i_row] += (i_row == i_dim) ? std::copysign(norm, reflect_vector[i_dim]) : 0.0;
+        }
+        __syncthreads();
+        // normalize v
+        if (thread_idx == 0) {
+            norm = 0.0;
+        }
+        __syncthreads();
+        thread_norm = 0.0;
+        for (std::uint64_t i_row = i_dim + thread_idx; i_row < M.nrow(); i_row += nthreads) {
+            thread_norm += reflect_vector[i_row] * reflect_vector[i_row];
+        }
+        ::atomicAdd_block(&norm, thread_norm);
+        __syncthreads();
+        if (thread_idx == 0) {
+            norm = std::sqrt(norm);
+        }
+        __syncthreads();
+        for (std::uint64_t i_row = i_dim + thread_idx; i_row < M.nrow(); i_row += nthreads) {
+            reflect_vector[i_row] /= norm;
+        }
+        __syncthreads();
+        // perform Householder refection
+        linalg::householder_reflect(M, reflect_vector, i_dim, thread_idx, nthreads);
+        linalg::householder_reflect(B, reflect_vector, i_dim, thread_idx, nthreads);
+        __syncthreads();
+    }
+}
+
+// Solve linear system by QR decomposition
+__cudevice__ void linalg::qr_solve_gpu(linalg::Matrix & M, linalg::Matrix & B, double * buffer, double & norm,
+                                       std::uint64_t thread_idx, std::uint64_t nthreads) noexcept {
+    linalg::qr_decomposition_gpu(M, B, buffer, norm, thread_idx, nthreads);
+    linalg::upright_solver(M, B, thread_idx, nthreads);
 }
 
 #endif  // __NVCC__

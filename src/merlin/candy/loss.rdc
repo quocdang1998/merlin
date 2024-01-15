@@ -1,34 +1,98 @@
 // Copyright 2023 quocdang1998
 #include "merlin/candy/loss.hpp"
 
+#include <cmath>  // std::abs, std::sqrt
+
+#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
+#include "merlin/candy/model.hpp"   // merlin::candy::Model
+#include "merlin/utils.hpp"         // merlin::contiguous_to_ndim_idx
+
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
 // RMSE
 // ---------------------------------------------------------------------------------------------------------------------
 
-__cuhostdev__ double candy::rmse_averager(const double * thread_result_data,
-                                          const std::uint64_t * non_zero_element_data, std::uint64_t n_threads) {
-    double result = 0.0;
-    std::uint64_t non_zero = 0;
-    for (std::uint64_t i = 0; i < n_threads; i++) {
-        result += thread_result_data[i];
-        non_zero += non_zero_element_data[i];
+#ifdef __NVCC__
+
+// CUDA function calculating relative mean square error with GPU parallelism
+__cudevice__ void candy::rmse_gpu(const candy::Model * p_model, const array::Parcel * p_data, std::uint64_t * buffer,
+                                  double * p_result, std::uint64_t thread_idx, std::uint64_t block_size) noexcept {
+    // initialize result
+    if (thread_idx == 0) {
+        *p_result = 0.0;
     }
-    return result / non_zero;
+    __syncthreads();
+    // initialize thread result
+    std::uint64_t non_zero = 0;
+    double thread_rmse = 0.0;
+    // assign index vector
+    intvec index;
+    index.assign(buffer + thread_idx * p_data->ndim(), p_data->ndim());
+    // summing on all points
+    for (std::uint64_t i_point = thread_idx; i_point < p_data->size(); i_point += block_size) {
+        contiguous_to_ndim_idx(i_point, p_data->shape(), index.data());
+        double x_data = (*p_data)[index];
+        if (x_data == 0.0) {
+            continue;
+        }
+        non_zero += 1;
+        double x_model = p_model->eval(index);
+        double rel_err = (x_model - x_data) / x_data;
+        thread_rmse += rel_err * rel_err;
+    }
+    __syncthreads();
+    // accumulate
+    if (thread_idx == 0) {
+        *buffer = 0;
+    }
+    __syncthreads();
+    ::atomicAdd_block(buffer, non_zero);
+    ::atomicAdd_block(p_result, thread_rmse);
+    if (thread_idx == 0) {
+        *p_result = std::sqrt(*p_result / *buffer);
+    }
+    __syncthreads();
 }
+
+#endif  // __NVCC__
 
 // ---------------------------------------------------------------------------------------------------------------------
 // RMAE
 // ---------------------------------------------------------------------------------------------------------------------
 
-__cuhostdev__ double candy::rmae_averager(const double * thread_result_data,
-                                          const std::uint64_t * non_zero_element_data, std::uint64_t n_threads) {
-    double result = 0.0;
-    for (std::uint64_t i = 0; i < n_threads; i++) {
-        result = (thread_result_data[i] > result) ? thread_result_data[i] : result;
+#ifdef __NVCC__
+
+// CUDA function calculating relative mean square error with GPU parallelism
+__cudevice__ void candy::rmae_gpu(const candy::Model * p_model, const array::Parcel * p_data, std::uint64_t * buffer,
+                                  double * p_result, std::uint64_t thread_idx, std::uint64_t block_size) noexcept {
+    // initialize result
+    if (thread_idx == 0) {
+        *p_result = 0.0;
     }
-    return result;
+    __syncthreads();
+    // initialize thread result
+    double thread_rmse = 0.0;
+    // assign index vector
+    intvec index;
+    index.assign(buffer + thread_idx * p_data->ndim(), p_data->ndim());
+    // summing on all points
+    for (std::uint64_t i_point = thread_idx; i_point < p_data->size(); i_point += block_size) {
+        contiguous_to_ndim_idx(i_point, p_data->shape(), index.data());
+        double x_data = (*p_data)[index];
+        if (x_data == 0.0) {
+            continue;
+        }
+        double x_model = p_model->eval(index);
+        double rel_err = std::abs(x_model - x_data) / x_data;
+        thread_rmse = (thread_rmse < rel_err) ? rel_err : thread_rmse;
+    }
+    __syncthreads();
+    // accumulate
+    std::uint64_t & thread_rmse_as_longint = *(reinterpret_cast<std::uint64_t *>(&thread_rmse));
+    ::atomicMax_block(reinterpret_cast<std::uint64_t *>(p_result), thread_rmse_as_longint);
 }
+
+#endif  // __NVCC__
 
 }  // namespace merlin

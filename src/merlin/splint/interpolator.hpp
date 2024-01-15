@@ -102,7 +102,7 @@ class splint::Interpolator {
     /// @name Construct coefficients
     /// @{
     /** @brief Calculate interpolation coefficients based on provided method.*/
-    void build_coefficients(std::uint64_t n_threads = 1);
+    MERLIN_EXPORTS void build_coefficients(std::uint64_t n_threads = 1);
     /// @}
 
     /// @name Interpolate on a set of points
@@ -113,14 +113,14 @@ class splint::Interpolator {
      *  interpolate and ``ndim`` is the dimension of the point.
      *  @param n_threads Number of CPU threads to evaluate the interpolation.
      */
-    floatvec evaluate(const array::Array & points, std::uint64_t n_threads = 1);
+    MERLIN_EXPORTS floatvec evaluate(const array::Array & points, std::uint64_t n_threads = 1);
     /** @brief Evaluate interpolate by GPU.
      *  @throw std::invalid_argument The input array must be C-contiguous.
      *  @param points 2D C-contiguous array of shape ``[npoint, ndim]``, in which ``npoint`` is the number of points to
      *  interpolate and ``ndim`` is the dimension of the point.
      *  @param n_threads Number of GPU threads to calculate the coefficients.
      */
-    floatvec evaluate(const array::Parcel & points, std::uint64_t n_threads = 32);
+    MERLIN_EXPORTS floatvec evaluate(const array::Parcel & points, std::uint64_t n_threads = 32);
     /// @}
 
     /// @name Synchronization

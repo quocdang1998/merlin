@@ -1,4 +1,5 @@
 #include "merlin/cuda/device.hpp"
+#include "merlin/cuda/enum_wrapper.hpp"
 #include "merlin/cuda/event.hpp"
 #include "merlin/cuda/graph.hpp"
 #include "merlin/cuda/stream.hpp"
@@ -8,11 +9,12 @@
 #include "merlin/utils.hpp"
 
 #include <cinttypes>
-
+#ifdef __comment
 __global__ void loopKernel(cudaGraphConditionalHandle handle)
 {
     static int count = 10;
     cudaGraphSetConditional(handle, --count ? 1 : 0);
+    std::printf("Count: %d\n", count);
 }
 
 void graphSetup() {
@@ -43,6 +45,7 @@ void graphSetup() {
     cudaGraphAddNode(&node, bodyGraph, NULL, 0, &params);
 
     cudaGraphInstantiate(&graphExec, graph, NULL, NULL, 0);
+    std::printf("Start\n");
     cudaGraphLaunch(graphExec, 0);
     cudaDeviceSynchronize();
 
@@ -50,7 +53,11 @@ void graphSetup() {
     cudaGraphDestroy(graph);
 }
 
-#ifdef __comment
+int main(void) {
+    graphSetup();
+}
+#endif
+
 __global__ void foo(void) {
     CUDAOUT("A message.\n");
 }
@@ -74,7 +81,7 @@ int main(void) {
     MESSAGE("Stack size: %" PRIu64 ".\n", stack_size);
     merlin::cuda::test_all_gpu();
 
-    merlin::cuda::Event ev(merlin::cuda::EventCategory::BlockingSyncEvent | merlin::cuda::EventCategory::DisableTimingEvent);
+    merlin::cuda::Event ev(merlin::cuda::EventCategory::BlockingSync | merlin::cuda::EventCategory::DisableTiming);
 
     merlin::cuda::Stream s(merlin::cuda::StreamSetting::NonBlocking);
     MESSAGE("Default stream: %s.\n", s.str().c_str());
@@ -108,4 +115,4 @@ int main(void) {
     s.synchronize();
 
 }
-#endif
+

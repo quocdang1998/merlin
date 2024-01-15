@@ -23,16 +23,10 @@ class linalg::Matrix {
      *  @param data Pointer to data.
      *  @param shape Shape vector.
      *  @param strides Strides vector.
-     *  @param free_in_destructor De-allocate memory when the matrix is destroyed.
      */
     __cuhostdev__ Matrix(double * data, const std::array<std::uint64_t, 2> & shape,
-                         const std::array<std::uint64_t, 2> & strides, bool free_in_destructor = false);
-    /** @brief Create an empty matrix of a given shape.
-     *  @details The created matrix is C-contiguous.
-     *  @param nrow Number of row.
-     *  @param ncol Number of column.
-     */
-    __cuhostdev__ Matrix(std::uint64_t nrow, std::uint64_t ncol);
+                         const std::array<std::uint64_t, 2> & strides) :
+    data_(data), shape_(shape), strides_(strides) {}
     /// @}
 
     /// @name Get attributes
@@ -84,8 +78,6 @@ class linalg::Matrix {
     std::array<std::uint64_t, 2> shape_;
     /** @brief Stride vector.*/
     std::array<std::uint64_t, 2> strides_;
-    /** @brief Free data at the end.*/
-    bool force_free_ = false;
 };
 
 }  // namespace merlin

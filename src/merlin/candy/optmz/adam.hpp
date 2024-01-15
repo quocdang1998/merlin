@@ -31,8 +31,8 @@ struct candy::optmz::Adam {
     Adam(void) = default;
     /** @brief Constructor from members.
      *  @param lr Initial learning rate.
-     *  @param b_m First moment decay constant.
-     *  @param b_v Second moment decay constant.
+     *  @param bm First moment decay constant.
+     *  @param bv Second moment decay constant.
      *  @param moment_mem Pre-allocated data for storing values of first and second moments.
      *  @param b Bias.
      *  @param t Time step.
