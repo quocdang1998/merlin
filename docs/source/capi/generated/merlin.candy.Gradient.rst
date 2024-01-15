@@ -1,7 +1,7 @@
-merlin::candy::Launcher
+merlin::candy::Gradient
 =======================
 
-.. doxygenclass:: merlin::candy::Launcher
+.. doxygenclass:: merlin::candy::Gradient
    :members:
    :protected-members:
    :private-members:

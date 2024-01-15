@@ -29,6 +29,12 @@ concept HasCopyToGpu = requires (const T & obj, T * gpu_data, void * pointed_dat
     {obj.copy_to_gpu(gpu_data, pointed_data, stream_ptr)} -> std::same_as<void *>;
 };
 
+template <typename T>
+concept HasCopyByBlock = requires (const T & obj, T * dest_ptr, void * data_ptr, std::uint64_t thread_idx,
+                                   std::uint64_t block_size) {
+    {obj.copy_by_block(dest_ptr, data_ptr, thread_idx, block_size)} -> std::same_as<void *>;
+};
+
 // Total malloc size
 template <typename T, typename... Args>
 requires HasCuMallocSize<T> || std::is_trivially_copyable<T>::value

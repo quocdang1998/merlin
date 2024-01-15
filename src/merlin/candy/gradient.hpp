@@ -46,7 +46,7 @@ __cuhostdev__ void absquare_grad(const candy::Model & model, const array::NdData
 
 }  // namespace candy
 
-/** @brief Model gradient.*/
+/** @brief %Model gradient.*/
 class candy::Gradient {
   public:
     /// @name Constructor

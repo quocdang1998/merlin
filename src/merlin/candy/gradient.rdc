@@ -7,7 +7,7 @@
     #include <cmath>  // std::isfinite, std::isnormal
 #elif defined(__MERLIN_WINDOWS__)
     #include <math.h>  // isfinite, isnormal
-#endif                 // __MERLIN_LINUX__
+#endif  // __MERLIN_LINUX__
 
 #include "merlin/array/nddata.hpp"  // merlin::array::NdData
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel

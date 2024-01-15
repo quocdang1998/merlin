@@ -65,7 +65,7 @@ int main(void) {
     MESSAGE("Model eval: %f\n", model.eval({1,1}));
 */
     merlin::candy::Trainer train(model, std::move(train_data), opt);
-    train.update(10, ::stop_criterion, 5, merlin::candy::TrainMetric::RelativeSquare);
+    train.update(10, 1e-1, 5, merlin::candy::TrainMetric::RelativeSquare);
     train.synchronize();
     MESSAGE("Model eval: %f\n", train.get_model().eval({1,1}));
 }

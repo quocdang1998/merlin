@@ -222,11 +222,7 @@ void wrap_parcel(py::module & array_module) {
                 return new array::Parcel(intvec(shape_cpp.data(), shape_cpp.size()), stream);
             }
         ),
-        R"(
-        __init__(self: merlin.array.Parcel, shape: list, stream: merlin.cuda.Stream = merlin.cuda.Stream()) -> None
-        
-        Construct a contiguous array from shape on GPU.
-        )",
+        "Construct a contiguous array from shape on GPU.",
         py::arg("shape"), py::arg("stream") = cuda::Stream()
     );
     // transfer data to GPU

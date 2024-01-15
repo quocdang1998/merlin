@@ -66,7 +66,7 @@ class array::NdData {
     /** @brief Get number of element.*/
     __cuhostdev__ constexpr const std::uint64_t & size(void) const noexcept { return this->size_; }
     /** @brief Check if the array is C-contiguous.*/
-    bool is_c_contiguous(void) const;
+    MERLIN_EXPORTS bool is_c_contiguous(void) const;
     /** @brief Release memory in destructor.*/
     bool release = false;
     /// @}

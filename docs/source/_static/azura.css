@@ -409,7 +409,7 @@ html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(
 }
 
 /* pybind11 overloaded function */
-.py .method > dd > .arabic.simple > li > p {
+.py .method > dd > ol.arabic > li > p {
     width: fit-content;
     background: var(--subitem-background);
     padding: 6px;

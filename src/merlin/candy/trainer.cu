@@ -14,7 +14,7 @@ namespace merlin {
 // Utility
 // ---------------------------------------------------------------------------------------------------------------------
 
-/** @brief Allocate memory on GPU for the trainer.*/
+// Allocate memory on GPU for the trainer
 void candy::create_trainer_gpu_ptr(const candy::Model & cpu_model, const array::Array & cpu_data,
                                    const candy::Optimizer & cpu_optimizer, candy::Model *& gpu_model,
                                    array::NdData *& gpu_data, candy::Optimizer *& gpu_optimizer,
@@ -28,6 +28,38 @@ void candy::create_trainer_gpu_ptr(const candy::Model & cpu_model, const array::
     gpu_data = gpu_mem.get<1>();
     gpu_optimizer = gpu_mem.get<2>();
     gpu_mem.disown();
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Trainer
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Get a copy to the current CP model
+candy::Model candy::Trainer::get_model(void) const {
+    // CPU direct dereference
+    if (!(this->on_gpu())) {
+        return candy::Model(*(this->p_model_));
+    }
+    // GPU dereference
+    char * model_buffer = new char[sizeof(candy::Model)];
+    ::cudaMemcpy(model_buffer, this->p_model_, sizeof(candy::Model), ::cudaMemcpyDeviceToHost);
+    candy::Model & model_gpu = *(reinterpret_cast<candy::Model *>(model_buffer));
+    // get ndim and rank
+    std::uint64_t ndim = model_gpu.ndim();
+    std::uint64_t rank = model_gpu.rank();
+    // get rshape
+    intvec model_rshape(ndim);
+    ::cudaMemcpy(model_rshape.data(), model_gpu.rshape().data(), ndim * sizeof(std::uint64_t),
+                 ::cudaMemcpyDeviceToHost);
+    // allocate result model
+    for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
+        model_rshape[i_dim] /= rank;
+    }
+    candy::Model result(model_rshape, rank);
+    // copy data to result model
+    result.copy_from_gpu(reinterpret_cast<double *>(this->p_model_ + 1));
+    delete[] model_buffer;
+    return result;
 }
 
 }  // namespace merlin
