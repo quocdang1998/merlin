@@ -1,12 +1,12 @@
 // Copyright 2023 quocdang1998
 #include "merlin/candy/trainer.hpp"
 
-#include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/candy/model.hpp"  // merlin::candy::Model
+#include "merlin/array/array.hpp"      // merlin::array::Array
+#include "merlin/array/parcel.hpp"     // merlin::array::Parcel
+#include "merlin/candy/model.hpp"      // merlin::candy::Model
 #include "merlin/candy/optimizer.hpp"  // merlin::candy::Optimizer
-#include "merlin/cuda/memory.hpp"  // merlin::cuda::Memory
-#include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
+#include "merlin/cuda/memory.hpp"      // merlin::cuda::Memory
+#include "merlin/cuda/stream.hpp"      // merlin::cuda::Stream
 
 namespace merlin {
 

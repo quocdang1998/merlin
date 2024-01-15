@@ -10,7 +10,7 @@
 #include "merlin/array/parcel.hpp"    // merlin::array::Parcel
 #include "merlin/cuda_interface.hpp"  // merlin::cuda_mem_alloc, merlin::cuda_mem_free,
                                       // merlin::cuda_mem_cpy_device_to_host
-#include "merlin/cuda/memory.hpp"     // merlin::cuda::Memory, merlin::cuda::copy_class_to_shared_mem
+#include "merlin/cuda/memory.hpp"     // merlin::cuda::Memory, merlin::cuda::copy_objects
 #include "merlin/utils.hpp"           // merlin::flatten_thread_index, merlin::size_of_block
 
 namespace merlin {
@@ -23,7 +23,7 @@ __global__ static void calc_powered_mean(std::uint64_t order, const array::Parce
     // copy data to shared mem
     extern __shared__ char shared_mem[];
     __shared__ unsigned long long num_normals;
-    auto [avail_shrmem, p_data_shared] = cuda::copy_class_to_shared_mem(shared_mem, *p_data);
+    auto [avail_shrmem, p_data_shared] = cuda::copy_objects(shared_mem, *p_data);
     std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
     double * order_mem = reinterpret_cast<double *>(avail_shrmem);
     // set zero result

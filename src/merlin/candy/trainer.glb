@@ -7,13 +7,13 @@
     #include <math.h>  // isfinite, isnormal
 #endif  // __MERLIN_LINUX__
 
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/candy/model.hpp"  // merlin::candy::Model
-#include "merlin/candy/gradient.hpp"  // merlin::candy::Gradient
-#include "merlin/candy/loss.hpp"  // merlin::candy::rmse_gpu
+#include "merlin/array/parcel.hpp"     // merlin::array::Parcel
+#include "merlin/candy/gradient.hpp"   // merlin::candy::Gradient
+#include "merlin/candy/loss.hpp"       // merlin::candy::rmse_gpu
+#include "merlin/candy/model.hpp"      // merlin::candy::Model
 #include "merlin/candy/optimizer.hpp"  // merlin::candy::Optimizer
-#include "merlin/cuda/memory.hpp"  // merlin::cuda::copy_class_to_shared_mem
-#include "merlin/utils.hpp"  // merlin::flatten_thread_index, merlin::size_of_block
+#include "merlin/cuda/memory.hpp"      // merlin::cuda::copy_objects
+#include "merlin/utils.hpp"            // merlin::flatten_thread_index, merlin::size_of_block
 
 namespace merlin {
 
@@ -50,8 +50,7 @@ __global__ static void train_kernel(candy::Model * p_model, array::Parcel * p_da
     std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
     // copy objects on shared memory
     extern __shared__ char shared_mem[];
-    auto [grad_mem, p_model_shr, p_data_shr, p_optmz_shr] = cuda::copy_class_to_shared_mem(shared_mem, *p_model,
-                                                                                           *p_data, *p_optmz);
+    auto [grad_mem, p_model_shr, p_data_shr, p_optmz_shr] = cuda::copy_objects(shared_mem, *p_model, *p_data, *p_optmz);
     // assign data to gradient
     candy::Gradient gradient(reinterpret_cast<double *>(grad_mem), p_model_shr->num_params(), metric);
     // get buffer data
@@ -79,7 +78,7 @@ __global__ static void train_kernel(candy::Model * p_model, array::Parcel * p_da
         update_go_on(priori_error, posteriori_error, threshold, go_on, local_go_on, thread_idx);
     } while (local_go_on);
     // copy model data from shared memory back to global memory
-    p_model_shr->copy_by_block(p_model, p_model+1, thread_idx, block_size);
+    p_model_shr->copy_by_block(p_model, p_model + 1, thread_idx, block_size);
 }
 
 // Train a model using GPU parallelism

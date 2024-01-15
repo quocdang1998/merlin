@@ -11,9 +11,9 @@
 __global__ void calc_loss_gpu(merlin::candy::Model * p_model, merlin::array::Parcel * p_data, double * p_result_gpu) {
     extern __shared__ char shared_mem[];
     __shared__ double result;
-    auto [buffer, p_model_shr, p_data_shr] = merlin::cuda::copy_class_to_shared_mem(shared_mem, *p_model, *p_data);
+    auto [buffer, p_model_shr, p_data_shr] = merlin::cuda::copy_objects(shared_mem, *p_model, *p_data);
     std::uint64_t thread_idx = merlin::flatten_thread_index(), block_size = merlin::size_of_block();
-    merlin::candy::rmae_gpu(p_model_shr, p_data_shr, reinterpret_cast<std::uint64_t *>(buffer), &result,
+    merlin::candy::rmse_gpu(p_model_shr, p_data_shr, reinterpret_cast<std::uint64_t *>(buffer), &result,
                             thread_idx, block_size);
     if (thread_idx == 0) {
         std::printf("Result on GPU: %f\n", result);
@@ -55,6 +55,6 @@ int main(void) {
     // calculate loss function (CPU)
     std::uint64_t num_threads_cpu = 2;
     merlin::intvec buffer_cpu(model.ndim() * num_threads_cpu);
-    double result_cpu = merlin::candy::rmae_cpu(&model, &train_data, buffer_cpu.data(), num_threads_cpu);
+    double result_cpu = merlin::candy::rmse_cpu(&model, &train_data, buffer_cpu.data(), num_threads_cpu);
     MESSAGE("Value of loss function (CPU): %f\n", result_cpu);
 }

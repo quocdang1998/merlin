@@ -6,23 +6,23 @@
 
 #include <omp.h>  // #pragma omp
 
-#include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/candy/loss.hpp"  // merlin::candy::rmse_cpu
-#include "merlin/candy/model.hpp"  // merlin::candy::Model
-#include "merlin/candy/gradient.hpp"  // merlin::candy::Gradient
+#include "merlin/array/array.hpp"      // merlin::array::Array
+#include "merlin/array/parcel.hpp"     // merlin::array::Parcel
+#include "merlin/candy/gradient.hpp"   // merlin::candy::Gradient
+#include "merlin/candy/loss.hpp"       // merlin::candy::rmse_cpu
+#include "merlin/candy/model.hpp"      // merlin::candy::Model
 #include "merlin/candy/optimizer.hpp"  // merlin::candy::Optimizer
-#include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
-#include "merlin/cuda_interface.hpp"         // merlin::cuda_mem_free
-#include "merlin/env.hpp"                    // merlin::Environment
-#include "merlin/logger.hpp"  // FAILURE, merlin::cuda_compile_error
+#include "merlin/cuda/stream.hpp"      // merlin::cuda::Stream
+#include "merlin/cuda_interface.hpp"   // merlin::cuda_mem_free
+#include "merlin/env.hpp"              // merlin::Environment
+#include "merlin/logger.hpp"           // FAILURE, merlin::cuda_compile_error
 
 #define push_gpu(gpu)                                                                                                  \
-    bool lock_success = Environment::mutex.try_lock();                                                                 \
+    Environment::mutex.lock();                                                                                         \
     std::uintptr_t current_ctx = gpu.push_context()
 #define pop_gpu()                                                                                                      \
     cuda::Device::pop_context(current_ctx);                                                                            \
-    if (lock_success) Environment::mutex.unlock()
+    Environment::mutex.unlock()
 
 namespace merlin {
 

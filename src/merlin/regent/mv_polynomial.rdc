@@ -1,0 +1,37 @@
+// Copyright 2024 quocdang1998
+#include "merlin/regent/mv_polynomial.hpp"
+
+namespace merlin {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// MvPolynomial
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Get the leaping dimension
+__cuhostdev__ static inline std::int64_t leaping_dimension(const std::uint64_t & i_term, const intvec & shape) {
+    std::int64_t leaping_dim = shape.size() - 1;
+    std::uint64_t cum_prod = 1, nd_index = 0;
+    bool not_detected = true;
+    for (std::int64_t i_dim = shape.size() - 1; i_dim >= 0; i_dim--) {
+        nd_index = (i_term / cum_prod) % shape[i_dim];
+        leaping_dim = ((nd_index == 0) && not_detected) ? leaping_dim-1 : leaping_dim;
+        not_detected &= (nd_index == 0);
+        cum_prod *= shape[i_dim];
+    }
+    return leaping_dim;
+}
+
+// Evaluate polynomial value at a given point
+__cuhostdev__ double regent::MvPolynomial::eval(const double * point, double * buffer) const noexcept {
+    buffer[this->ndim() - 1] = 0.0;
+    for (std::uint64_t i_term = 0; i_term < this->size(); i_term++) {
+        // update last dimension
+        buffer[this->ndim() - 1] *= point[this->ndim() - 1];
+        buffer[this->ndim() - 1] += this->coeff_[i_term];
+        // update previous dimension
+        std::int64_t leaping_dim = leaping_dimension(i_term+1, this->order_);
+
+    }
+}
+
+}  // namespace merlin

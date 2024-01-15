@@ -2,8 +2,6 @@
 #ifndef MERLIN_CANDY_DECLARATION_HPP_
 #define MERLIN_CANDY_DECLARATION_HPP_
 
-#include <variant>  // std::variant
-
 namespace merlin::candy {
 
 /** @brief Loss function used for training canonical model.*/

@@ -81,12 +81,12 @@ namespace cuda {
  *  @details This function provides a simple compile-time API function for call the method ``copy_by_block`` of each
  *  object in the list.
  *  @param share_ptr Pointer to available shared memory.
- *  @param args List of objects to be copied to shred memory.
+ *  @param args List of objects to be copied to shared memory.
  *  @returns A tuple of pointers. The first pointer points to the address of available free data after all objects
  *  have been copied. The rest is the list of pointers to copied objects on shared memory.
  */
 template <typename... Args>
-__cudevice__ std::tuple<void *, Args *...> copy_class_to_shared_mem(void * share_ptr, const Args &... args);
+__cudevice__ std::tuple<void *, Args *...> copy_objects(void * share_ptr, const Args &... args);
 
 }  // namespace cuda
 

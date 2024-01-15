@@ -43,14 +43,15 @@ __cudevice__ void candy::rmse_gpu(const candy::Model * p_model, const array::Par
     }
     __syncthreads();
     // accumulate
+    unsigned long long * non_zero_buffer = reinterpret_cast<unsigned long long *>(buffer);
     if (thread_idx == 0) {
-        *buffer = 0;
+        *non_zero_buffer = 0;
     }
     __syncthreads();
-    ::atomicAdd_block(buffer, non_zero);
+    ::atomicAdd_block(non_zero_buffer, static_cast<unsigned long long>(non_zero));
     ::atomicAdd_block(p_result, thread_rmse);
     if (thread_idx == 0) {
-        *p_result = std::sqrt(*p_result / *buffer);
+        *p_result = std::sqrt(*p_result / *non_zero_buffer);
     }
     __syncthreads();
 }
@@ -89,8 +90,7 @@ __cudevice__ void candy::rmae_gpu(const candy::Model * p_model, const array::Par
     }
     __syncthreads();
     // accumulate
-    std::uint64_t & thread_rmse_as_longint = *(reinterpret_cast<std::uint64_t *>(&thread_rmse));
-    ::atomicMax_block(reinterpret_cast<std::uint64_t *>(p_result), thread_rmse_as_longint);
+    ::atomicMax_block(reinterpret_cast<long long int *>(p_result), __double_as_longlong(thread_rmse));
 }
 
 #endif  // __NVCC__

@@ -3,7 +3,7 @@
 
 #include <array>  // std::array
 
-#include "merlin/cuda/memory.hpp"            // merlin::cuda::copy_class_to_shared_mem
+#include "merlin/cuda/memory.hpp"            // merlin::cuda::copy_objects
 #include "merlin/cuda/stream.hpp"            // merlin::cuda::Stream
 #include "merlin/splint/intpl/linear.hpp"    // merlin::splint::intpl::construct_linear
 #include "merlin/splint/intpl/lagrange.hpp"  // merlin::splint::intpl::construct_lagrange
@@ -31,7 +31,7 @@ __global__ static void construct_coeff_kernel(double * coeff, const grid::Cartes
     std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
     // copy data to dynamic shared memory
     extern __shared__ char dynamic_shmem[];
-    auto [end_shr_ptr, grid_shr, method_shr] = cuda::copy_class_to_shared_mem(dynamic_shmem, *p_grid, *p_method);
+    auto [end_shr_ptr, grid_shr, method_shr] = cuda::copy_objects(dynamic_shmem, *p_grid, *p_method);
     // assign variable to static share memory
     const intvec & shape = grid_shr->shape();
     __shared__ std::uint64_t static_shmem[3];
@@ -95,7 +95,7 @@ __global__ static void eval_intpl_kernel(double * coeff, const grid::CartesianGr
     std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
     // copy to share memory
     extern __shared__ char dynamic_shmem[];
-    auto [end_shr_ptr, grid_shr] = cuda::copy_class_to_shared_mem(dynamic_shmem, *p_grid);
+    auto [end_shr_ptr, grid_shr] = cuda::copy_objects(dynamic_shmem, *p_grid);
     __shared__ std::int64_t last_updated_dim;
     // assign loop index vector
     std::uint64_t ndim = grid_shr->ndim();
@@ -123,7 +123,7 @@ __global__ static void eval_intpl_kernel(double * coeff, const grid::CartesianGr
     // assign value to vector of enum
     std::uintptr_t method_ptr = reinterpret_cast<std::uintptr_t>(loop_index.end());
     method_ptr += block_size * ndim * 2 * sizeof(double);
-    auto [_, method_shr] = cuda::copy_class_to_shared_mem(reinterpret_cast<void *>(method_ptr), *p_method);
+    auto [_, method_shr] = cuda::copy_objects(reinterpret_cast<void *>(method_ptr), *p_method);
     // parallel calculation for each point
     std::uint64_t grid_size = grid_shr->size();
     for (std::uint64_t i_point = thread_idx; i_point < n_points; i_point += block_size) {

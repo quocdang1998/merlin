@@ -20,7 +20,7 @@ __global__ void test_householder_reflection(double * matrix_data, double * refle
     merlin::linalg::Matrix mat(matrix_data, {3, 3}, {3*sizeof(double), sizeof(double)});
     merlin::floatvec reflector;
     reflector.assign(reflector_data, 3);
-    auto [buffer_, p_share_ref] = merlin::cuda::copy_class_to_shared_mem(shared_memory, reflector);
+    auto [buffer_, p_share_ref] = merlin::cuda::copy_objects(shared_memory, reflector);
     // CUDAOUT("Value from shared memory: %d %d %d.\n", p_share_ref[0][0], p_share_ref[0][1], p_share_ref[0][2]);
     merlin::linalg::householder_reflect(mat, *p_share_ref, 0, merlin::flatten_thread_index(), merlin::size_of_block());
 }
