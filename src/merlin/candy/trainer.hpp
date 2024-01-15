@@ -1,14 +1,19 @@
 #ifndef MERLIN_CANDY_TRAINER_HPP_
 #define MERLIN_CANDY_TRAINER_HPP_
 
+#include <utility>  // std::exchange, std::move
+
 #include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::NdData, merlin::array::Parcel
 #include "merlin/candy/declaration.hpp"  // merlin::candy::Model, merlin::candy::Optimizer, merlin::candy::Trainer
-#include "merlin/cuda/declaration.hpp"  // merlin::cuda::Stream
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/synchronizer.hpp"  // merlin::ProcessorType, merlin::Synchronizer
-#include "merlin/vector.hpp"  // merlin::intvec
+#include "merlin/cuda/declaration.hpp"   // merlin::cuda::Stream
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/synchronizer.hpp"       // merlin::ProcessorType, merlin::Synchronizer
+#include "merlin/vector.hpp"             // merlin::intvec
 
 namespace merlin {
+
+// Utility
+// -------
 
 namespace candy {
 
@@ -30,6 +35,9 @@ void train_by_gpu(candy::Model * p_model, array::Parcel * p_data, candy::Optimiz
 
 }  // namespace candy
 
+// Trainer
+// -------
+
 /** @brief Launch a train process on Candecomp model asynchronously.*/
 class candy::Trainer {
   public:
@@ -38,6 +46,7 @@ class candy::Trainer {
     /** @brief Default constructor.*/
     Trainer(void) = default;
     /** @brief Constructor a trainer.
+     *  @warning This function will lock the mutex in GPU mode.
      *  @param model Candecomp model.
      *  @param data Data to be fitted by the model.
      *  @param optimizer Gradient method to train the model.
@@ -45,6 +54,39 @@ class candy::Trainer {
      */
     MERLIN_EXPORTS Trainer(const candy::Model & model, array::Array && data, const candy::Optimizer & optimizer,
                            ProcessorType processor = ProcessorType::Cpu);
+    /// @}
+
+    /// @name Copy and move
+    /// @{
+    /** @brief Copy constructor.*/
+    Trainer(const candy::Trainer & src) = delete;
+    /** @brief Copy assignment.*/
+    candy::Trainer & operator=(const candy::Trainer & src) = delete;
+    /** @brief Move constructor.*/
+    Trainer(candy::Trainer && src) :
+    ndim_(src.ndim_),
+    synch_(std::move(src.synch_)),
+    cpu_cache_mem_(src.cpu_cache_mem_),
+    shared_mem_size_(src.shared_mem_size_) {
+        this->p_model_ = std::exchange(src.p_model_, nullptr);
+        this->p_data_ = std::exchange(src.p_data_, nullptr);
+        this->p_optmz_ = std::exchange(src.p_optmz_, nullptr);
+        this->cpu_grad_mem_ = std::exchange(src.cpu_grad_mem_, nullptr);
+        this->p_parcel_ = std::exchange(src.p_parcel_, nullptr);
+    }
+    /** @brief Move assignment.*/
+    candy::Trainer & operator=(candy::Trainer && src) {
+        this->p_model_ = std::exchange(src.p_model_, nullptr);
+        this->p_data_ = std::exchange(src.p_data_, nullptr);
+        this->p_optmz_ = std::exchange(src.p_optmz_, nullptr);
+        this->ndim_ = src.ndim_;
+        this->synch_ = std::move(src.synch_);
+        this->cpu_grad_mem_ = std::exchange(src.cpu_grad_mem_, nullptr);
+        this->cpu_cache_mem_ = std::move(src.cpu_cache_mem_);
+        this->shared_mem_size_ = src.shared_mem_size_;
+        this->p_parcel_ = std::exchange(src.p_parcel_, nullptr);
+        return *this;
+    }
     /// @}
 
     /// @name Get elements and attributes
@@ -65,6 +107,7 @@ class candy::Trainer {
     /// @name Train CP model based on gradient descent
     /// @{
     /** @brief Update CP model according to gradient.
+     *  @warning This function will lock the mutex in GPU mode.
      *  @param rep Number of times to repeat the gradient descent update in each step.
      *  @param threshold Threshold to stop the training process.
      *  @param n_threads Number of parallel threads for training the model.
@@ -77,14 +120,14 @@ class candy::Trainer {
     /// @name Synchronization
     /// @{
     /** @brief Force the current CPU to wait until all asynchronous tasks have finished.*/
-    void synchronize(void) {
-        this->synch_.synchronize();
-    }
+    void synchronize(void) { this->synch_.synchronize(); }
     /// @}
 
     /// @name Destructor
     /// @{
-    /** @brief Destructor.*/
+    /** @brief Default destructor.
+     *  @warning This function will lock the mutex in GPU mode.
+     */
     MERLIN_EXPORTS ~Trainer(void);
     /// @}
 

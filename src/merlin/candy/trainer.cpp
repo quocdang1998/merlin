@@ -6,23 +6,21 @@
 
 #include <omp.h>  // #pragma omp
 
-#include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/candy/loss.hpp"  // merlin::candy::rmse_cpu
-#include "merlin/candy/model.hpp"  // merlin::candy::Model
-#include "merlin/candy/gradient.hpp"  // merlin::candy::Gradient
+#include "merlin/array/array.hpp"      // merlin::array::Array
+#include "merlin/array/parcel.hpp"     // merlin::array::Parcel
+#include "merlin/candy/gradient.hpp"   // merlin::candy::Gradient
+#include "merlin/candy/loss.hpp"       // merlin::candy::rmse_cpu
+#include "merlin/candy/model.hpp"      // merlin::candy::Model
 #include "merlin/candy/optimizer.hpp"  // merlin::candy::Optimizer
-#include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
-#include "merlin/cuda_interface.hpp"         // merlin::cuda_mem_free
-#include "merlin/env.hpp"                    // merlin::Environment
-#include "merlin/logger.hpp"  // FAILURE, merlin::cuda_compile_error
+#include "merlin/cuda/stream.hpp"      // merlin::cuda::Stream
+#include "merlin/cuda_interface.hpp"   // merlin::cuda_mem_free
+#include "merlin/env.hpp"              // merlin::Environment
+#include "merlin/logger.hpp"           // FAILURE, merlin::cuda_compile_error
 
 #define push_gpu(gpu)                                                                                                  \
-    bool lock_success = Environment::mutex.try_lock();                                                                 \
     std::uintptr_t current_ctx = gpu.push_context()
 #define pop_gpu()                                                                                                      \
-    cuda::Device::pop_context(current_ctx);                                                                            \
-    if (lock_success) Environment::mutex.unlock()
+    cuda::Device::pop_context(current_ctx)
 
 namespace merlin {
 
@@ -78,6 +76,17 @@ void candy::train_by_cpu(std::shared_future<void> synch, candy::Model * p_model,
     } while (go_on);
 }
 
+#ifndef __MERLIN_CUDA__
+
+// Train a model using GPU parallelism
+void candy::train_by_gpu(candy::Model * p_model, array::Parcel * p_data, candy::Optimizer * p_optimizer,
+                         candy::TrainMetric metric, std::uint64_t rep, std::uint64_t n_threads, std::uint64_t ndim,
+                         double threshold, std::uint64_t shared_mem_size, cuda::Stream & stream) {
+    FAILURE(cuda_compile_error, "Cannot invoke GPU function since merlin is not compiled with CUDA option.\n");
+}
+
+#endif  // __MERLIN_CUDA__
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Trainer
 // ---------------------------------------------------------------------------------------------------------------------
@@ -107,8 +116,10 @@ candy::Trainer::Trainer(const candy::Model & model, array::Array && data, const 
     } else {
         this->synch_ = Synchronizer(cuda::Stream(cuda::StreamSetting::NonBlocking));
         cuda::Stream & stream = std::get<cuda::Stream>(this->synch_.synchronizer);
+        push_gpu(stream.get_gpu());
         candy::create_trainer_gpu_ptr(model, std::forward<array::Array>(data), optimizer, this->p_model_, this->p_data_,
                                       this->p_optmz_, this->p_parcel_, stream);
+        pop_gpu();
         this->shared_mem_size_ = model.sharedmem_size() + optimizer.sharedmem_size();
         this->shared_mem_size_ += this->p_parcel_->sharedmem_size();
         this->shared_mem_size_ += sizeof(double) * model.num_params();
@@ -164,11 +175,11 @@ candy::Trainer::~Trainer(void) {
         if (this->p_parcel_ != nullptr) {
             delete this->p_parcel_;
         }
-        push_gpu(cuda::Device(this->gpu_id()));
         if (this->p_model_ != nullptr) {
+            push_gpu(cuda::Device(this->gpu_id()));
             cuda_mem_free(this->p_model_, std::get<cuda::Stream>(this->synch_.synchronizer).get_stream_ptr());
+            pop_gpu();
         }
-        pop_gpu();
     }
 }
 

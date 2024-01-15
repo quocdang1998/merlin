@@ -2,6 +2,8 @@
 #ifndef MERLIN_CANDY_OPTIMIZER_HPP_
 #define MERLIN_CANDY_OPTIMIZER_HPP_
 
+#include <variant>  // std::variant
+
 #include "merlin/candy/declaration.hpp"         // merlin::candy::Model
 #include "merlin/candy/optmz/adagrad.hpp"       // merlin::candy::optmz::AdaGrad
 #include "merlin/candy/optmz/adam.hpp"          // merlin::candy::optmz::Adam

@@ -144,6 +144,7 @@ class cuda::Graph {
     /// @name Operation on CUDA Graph
     /// @{
     /** @brief Execute a graph on a CUDA stream.
+     *  @warning This function will lock the mutex.
      *  @param stream %Stream on which the graph is launched.
      *  @note %Stream capture must be finished.
      */

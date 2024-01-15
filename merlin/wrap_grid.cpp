@@ -3,10 +3,10 @@
 
 #include <vector>  // std::vector
 
-#include "merlin/array/array.hpp"
-
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+
+#include "merlin/array/array.hpp"
 
 namespace py = pybind11;
 
@@ -94,6 +94,14 @@ void wrap_cartgrid(py::module & grid_module) {
         },
         "Get element at a given flatten index.",
         py::arg("index")
+    );
+    // get points
+    cartgrid_pyclass.def(
+        "get_points",
+        [](const grid::CartesianGrid & self) {
+            return new array::Array(self.get_points());
+        },
+        "Get all points in the grid as a 2D array."
     );
     // representation
     cartgrid_pyclass.def(

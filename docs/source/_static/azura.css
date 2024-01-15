@@ -362,6 +362,14 @@ html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(
     color: var(--type);
 }
 
+/** C++ inline expression.*/
+.cpp.cpp-expr.sig-inline {
+    color: var(--literal);
+    font-family: 'Fira Code', monospace;
+    font-weight: 600;
+    font-size: 12px;
+}
+
 /* Inherited childclass */
 .std.std-ref {
     color: var(--literal);

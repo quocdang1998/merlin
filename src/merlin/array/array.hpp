@@ -113,7 +113,9 @@ class array::Array : public array::NdData {
 
     /// @name Transfer data
     /// @{
-    /** @brief Copy data from GPU array.*/
+    /** @brief Copy data from GPU array.
+     *  @warning This function will lock the mutex.
+     */
     MERLIN_EXPORTS void clone_data_from_gpu(const array::Parcel & src, const cuda::Stream & stream = cuda::Stream());
     /** @brief Export data to a file.
      *  @param src Exported array.

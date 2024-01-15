@@ -10,13 +10,6 @@
 #include "merlin/env.hpp"              // merlin::Environment
 #include "merlin/logger.hpp"           // FAILURE
 
-#define push_gpu(gpu)                                                                                                  \
-    bool lock_success = Environment::mutex.try_lock();                                                                 \
-    std::uintptr_t current_ctx = gpu.push_context()
-#define pop_gpu()                                                                                                      \
-    cuda::Device::pop_context(current_ctx);                                                                            \
-    if (lock_success) Environment::mutex.unlock()
-
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -68,9 +61,9 @@ void array::Array::clone_data_from_gpu(const array::Parcel & src, const cuda::St
     auto copy_func = std::bind(::cudaMemcpyAsync, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                                ::cudaMemcpyDeviceToHost, copy_stream);
     // copy data to GPU
-    push_gpu(src.device());
+    std::uintptr_t current_ctx = src.device().push_context();
     array::copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), copy_func);
-    pop_gpu();
+    cuda::Device::pop_context(current_ctx);
 }
 
 }  // namespace merlin

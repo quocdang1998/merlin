@@ -1,0 +1,18 @@
+// Copyright 2023 quocdang1998
+#include "merlin/grid/regular_grid.hpp"
+
+namespace merlin {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// RegularGrid
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Write coordinate of point to a pre-allocated memory given flatten index
+__cuhostdev__ void grid::RegularGrid::get(std::uint64_t index, double * point_data) const noexcept {
+    const double * point_coordinate = this->grid_data_.data() + index * this->n_dim_;
+    for (std::uint64_t i_dim = 0; i_dim < this->n_dim_; i_dim++) {
+        point_data[i_dim] = point_coordinate[i_dim];
+    }
+}
+
+}  // namespace merlin

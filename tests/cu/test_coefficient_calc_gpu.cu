@@ -50,8 +50,10 @@ int main(void) {
     point_gpu.transfer_data_to_gpu(point_cpu);
 
     // calculate evaluation
-    merlin::floatvec cpu_result = interp_cpu.evaluate(point_cpu, 8);
-    merlin::floatvec gpu_result = interp_gpu.evaluate(point_gpu, 32);
+    merlin::floatvec cpu_result(3);
+    interp_cpu.evaluate(point_cpu, cpu_result, 8);
+    merlin::floatvec gpu_result(3);
+    interp_gpu.evaluate(point_gpu, gpu_result, 32);
     interp_cpu.synchronize();
     MESSAGE("Value evaluated by CPU: %s\n", cpu_result.str().c_str());
     interp_gpu.synchronize();

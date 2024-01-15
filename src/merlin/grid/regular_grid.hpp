@@ -6,10 +6,11 @@
 #include <initializer_list>  // std::initializer_list
 #include <string>            // std::string
 
-#include "merlin/cuda_interface.hpp"    // __cuhostdev__
-#include "merlin/exports.hpp"           // MERLIN_EXPORTS
-#include "merlin/grid/declaration.hpp"  // merlin::grid::RegularGrid
-#include "merlin/vector.hpp"            // merlin::floatvec, merlin::Vector
+#include "merlin/array/declaration.hpp"  // merlin::array::Array
+#include "merlin/cuda_interface.hpp"     // __cuhostdev__
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/grid/declaration.hpp"   // merlin::grid::RegularGrid
+#include "merlin/vector.hpp"             // merlin::floatvec, merlin::Vector
 
 namespace merlin {
 
@@ -21,16 +22,53 @@ class grid::RegularGrid {
     /** @brief Default constructor.*/
     RegularGrid(void) = default;
     /** @brief Constructor number of points.*/
-    RegularGrid(std::uint64_t num_points, std::uint64_t n_dim) :
-    n_dim_(n_dim), num_points_(num_points), grid_data_(num_points * n_dim) {}
+    MERLIN_EXPORTS RegularGrid(std::uint64_t num_points, std::uint64_t n_dim);
+    /** @brief Constructor from an array of point coordinates.
+     *  @param point_coordinates 2D array of shape ``[npoint, ndim]``, in which ``npoint`` is the number of points and
+     *  ``ndim`` is the number of dimension of each point.
+     */
+    MERLIN_EXPORTS RegularGrid(const array::Array & point_coordinates);
+    /// @}
+
+    /// @name Get members and attributes
+    /// @{
+    /** @brief Get pointer to grid data.*/
+    __cuhostdev__ constexpr double * grid_data(void) noexcept { return this->grid_data_.data(); }
+    /** @brief Get constant pointer to grid data.*/
+    __cuhostdev__ constexpr const double * grid_data(void) const noexcept { return this->grid_data_.data(); }
+    /** @brief Get dimensions of the grid.*/
+    __cuhostdev__ constexpr std::uint64_t ndim(void) const noexcept { return this->n_dim_; }
+    /** @brief Get total number of points in the grid.*/
+    __cuhostdev__ constexpr std::uint64_t size(void) const noexcept { return this->num_points_; }
+    /** @brief Get available memory for the number of points in the grid.*/
+    __cuhostdev__ constexpr std::uint64_t capacity(void) const noexcept { return this->grid_data_.size(); }
+    /// @}
+
+    /// @name Slicing operator
+    /// @{
+    /** @brief Write coordinate of point to a pre-allocated memory given flatten index.
+     *  @param index Flatten index of point in the grid (in C order).
+     *  @param point_data Pointer to memory recording point coordinate.
+     */
+    __cuhostdev__ void get(std::uint64_t index, double * point_data) const noexcept;
+    /** @brief Get element at a given flatten index.
+     *  @param index Flatten index of point in the grid (in C order).
+     */
+    MERLIN_EXPORTS floatvec operator[](std::uint64_t index) const noexcept;
+    /// @}
+
+    /// @name Get points
+    /// @{
+    /** @brief Get all points in the grid.*/
+    MERLIN_EXPORTS array::Array get_points(void) const;
     /// @}
 
     /// @name Copy and Move
     /// @{
     /** @brief Copy constructor.*/
-    MERLIN_EXPORTS RegularGrid(const grid::RegularGrid & src);
+    RegularGrid(const grid::RegularGrid & src) = default;
     /** @brief Copy assignment.*/
-    MERLIN_EXPORTS grid::RegularGrid & operator=(const grid::RegularGrid & src);
+    grid::RegularGrid & operator=(const grid::RegularGrid & src) = default;
     /** @brief Move constructor.*/
     RegularGrid(grid::RegularGrid && src) = default;
     /** @brief Move assignment.*/

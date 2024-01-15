@@ -67,9 +67,9 @@ void print_stacktrace(int skip) {
     for (unsigned int i = 0; i < frames; i++) {
         ::SymFromAddr(process, reinterpret_cast<std::uint64_t>(buffer[i]), 0, symbol);
         if (std::strlen(symbol->Name)) {
-            std::fprintf(stderr, "%s\n", symbol->Name);
+            std::fprintf(stderr, "    %s\n", symbol->Name);
         } else {
-            std::fprintf(stderr, "%p\n", buffer[i]);
+            std::fprintf(stderr, "    %p\n", buffer[i]);
         }
     }
     std::free(symbol);
@@ -111,13 +111,13 @@ void print_stacktrace(int skip) {
             char * demangled_name = ::abi::__cxa_demangle(dli.dli_sname, NULL, &size, &status);
             // if demangle success
             if (demangled_name != nullptr) {
-                std::fprintf(stderr, "%s\n", demangled_name);
+                std::fprintf(stderr, "    %s\n", demangled_name);
                 free(demangled_name);
             } else {
-                std::fprintf(stderr, "%s\n", dli.dli_sname);
+                std::fprintf(stderr, "    %s\n", dli.dli_sname);
             }
         } else {
-            std::fprintf(stderr, "%p\n", buffer[i]);
+            std::fprintf(stderr, "    %p\n", buffer[i]);
         }
     }
     #endif  // __MERLIN_DEBUG__

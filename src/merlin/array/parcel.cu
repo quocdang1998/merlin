@@ -8,14 +8,7 @@
                                        // merlin::array::copy, merlin::array::fill
 #include "merlin/env.hpp"              // merlin::Environment
 #include "merlin/logger.hpp"           // FAILURE
-#include "merlin/utils.hpp"            // merlin::contiguous_to_ndim_idx, merlin::inner_prod
-
-#define push_gpu(gpu)                                                                                                  \
-    bool lock_success = Environment::mutex.try_lock();                                                                 \
-    std::uintptr_t current_ctx = gpu.push_context()
-#define pop_gpu()                                                                                                      \
-    cuda::Device::pop_context(current_ctx);                                                                            \
-    if (lock_success) Environment::mutex.unlock()
+#include "merlin/utils.hpp"            // merlin::inner_prod
 
 namespace merlin {
 
@@ -25,14 +18,13 @@ namespace merlin {
 
 // Free old data
 void array::Parcel::free_current_data(const cuda::Stream & stream) {
-    // lock mutex
-    push_gpu(this->device());
     // free data
     if ((this->data_ != nullptr) && this->release) {
+        std::uintptr_t current_ctx = this->device().push_context();
         ::cudaFreeAsync(this->data_, reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr()));
         this->data_ = nullptr;
+        cuda::Device::pop_context(current_ctx);
     }
-    pop_gpu();
 }
 
 // Constructor from shape vector
@@ -128,9 +120,9 @@ double array::Parcel::get(const intvec & index) const {
     std::uint64_t leap = inner_prod(index, this->strides_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     double result;
-    push_gpu(this->device());
+    std::uintptr_t current_ctx = this->device().push_context();
     ::cudaMemcpy(&result, reinterpret_cast<double *>(data_ptr), sizeof(double), ::cudaMemcpyDeviceToHost);
-    pop_gpu();
+    cuda::Device::pop_context(current_ctx);
     return result;
 }
 
@@ -139,9 +131,9 @@ double array::Parcel::get(std::uint64_t index) const {
     std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     double result;
-    push_gpu(this->device());
+    std::uintptr_t current_ctx = this->device().push_context();
     ::cudaMemcpy(&result, reinterpret_cast<double *>(data_ptr), sizeof(double), ::cudaMemcpyDeviceToHost);
-    pop_gpu();
+    cuda::Device::pop_context(current_ctx);
     return result;
 }
 
@@ -149,18 +141,18 @@ double array::Parcel::get(std::uint64_t index) const {
 void array::Parcel::set(const intvec index, double value) {
     std::uint64_t leap = inner_prod(index, this->strides_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
-    push_gpu(this->device());
+    std::uintptr_t current_ctx = this->device().push_context();
     ::cudaMemcpy(reinterpret_cast<double *>(data_ptr), &value, sizeof(double), ::cudaMemcpyHostToDevice);
-    pop_gpu();
+    cuda::Device::pop_context(current_ctx);
 }
 
 // Set value of element at a C-contiguous index
 void array::Parcel::set(std::uint64_t index, double value) {
     std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
-    push_gpu(this->device());
+    std::uintptr_t current_ctx = this->device().push_context();
     ::cudaMemcpy(reinterpret_cast<double *>(data_ptr), &value, sizeof(double), ::cudaMemcpyHostToDevice);
-    pop_gpu();
+    cuda::Device::pop_context(current_ctx);
 }
 
 // Set value of all elements

@@ -6,6 +6,7 @@
 #include <string>  // std::string
 
 #include "merlin/cuda_interface.hpp"  // __cudevice__, __cuhostdev__
+#include "merlin/exports.hpp"         // MERLIN_EXPORTS
 #include "merlin/vector.hpp"          // merlin::Vector
 
 namespace merlin {
@@ -14,12 +15,12 @@ namespace merlin {
 // ------
 
 /** @brief Get process ID in form of a string.*/
-std::string get_current_process_id(void);
+MERLIN_EXPORTS std::string get_current_process_id(void);
 
 /** @brief Get current time in form of a string.
  *  @details Return datetime in form of ``{year}-{month}-{day}_{hour}:{minute}:{second}``.
  */
-std::string get_time(void);
+MERLIN_EXPORTS std::string get_time(void);
 
 // CUDA kernel
 // -----------
@@ -91,14 +92,18 @@ __cuhostdev__ std::uint64_t inner_prod(const intvec & v1, const intvec & v2);
  */
 __cuhostdev__ std::uint64_t ndim_to_contiguous_idx(const intvec & index, const intvec & shape);
 
-/** @brief Convert C-contiguous index to n-dimensional index.
+/** @brief Convert C-contiguous index to n-dimensional index with allocating memory for result.
  *  @param index C-contiguous index.
  *  @param shape Shape vector.
- *  @param data_ptr Pointer to result data. If the value is ``nullptr``, new instance is allocated.
- *  @return merlin::intvec of n-dimensional index.
  */
-__cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape,
-                                            std::uint64_t * data_ptr = nullptr);
+__cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape);
+
+/** @brief Convert C-contiguous index to n-dimensional index and save data to a pre-allocated memory.
+ *  @param index C-contiguous index.
+ *  @param shape Shape vector.
+ *  @param data_ptr Pointer to result data.
+ */
+__cuhostdev__ void contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape, std::uint64_t * data_ptr);
 
 /** @brief Increase an n-dimensional index by one unit.
  *  @param index Multi-dimensional index.
@@ -134,6 +139,29 @@ __cuhostdev__ Vector<double *> ptr_to_subsequence(double * original, const intve
  */
 __cuhostdev__ std::array<std::uint64_t, 2> index_in_subsequence(std::uint64_t index_full_array,
                                                                 const intvec & divider_length) noexcept;
+
+// Triangular Index
+// ----------------
+
+/** @brief Get 2-dimensional triangular index from flatten index.
+ *  @details Decompose the index @f$ i @f$ into:
+ *  @f[ i = T_k + r @f]
+ *  in which @f$ T_k @f$ (@f$ k \ge 0 @f$) is the largest triangular number possible, and @f$ r \ge 0 @f$ the remainder.
+ *  @param index Flatten index.
+ *  @returns Row (@f$ k @f$) and column (@f$ r @f$) index of lower triangular matrix.
+ */
+__cuhostdev__ std::array<std::uint64_t, 2> triangular_index(std::uint64_t index) noexcept;
+
+// Random Subset
+// -------------
+
+/** @brief Get a random subset of index in a range.
+ *  @param num_points Number of points to get.
+ *  @param i_max Index of max range.
+ *  @param i_min Index of min range.
+ */
+MERLIN_EXPORTS intvec get_random_subset(std::uint64_t num_points, std::uint64_t i_max,
+                                        std::uint64_t i_min = 0) noexcept;
 
 }  // namespace merlin
 

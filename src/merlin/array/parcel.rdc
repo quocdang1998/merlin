@@ -3,7 +3,7 @@
 
 #include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::get_leap
 #include "merlin/logger.hpp"           // CUDAERR
-#include "merlin/utils.hpp"            // merlin::inner_prod, merlin::contiguous_to_ndim_idx
+#include "merlin/utils.hpp"            // merlin::inner_prod
 
 namespace merlin {
 

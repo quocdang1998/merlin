@@ -22,7 +22,7 @@ __global__ void call_optimizer_updater(merlin::candy::Model * p_model, merlin::c
 
 __global__ void test_on_gpu(merlin::candy::Model * p_model, merlin::array::Parcel * p_train_data, merlin::candy::Optimizer * p_opt) {
     extern __shared__ char share_mem[];
-    auto [end_ptr, p_model_shr, p_data_shr, p_opt_shr] = merlin::cuda::copy_class_to_shared_mem(share_mem, *p_model, *p_train_data, *p_opt);
+    auto [end_ptr, p_model_shr, p_data_shr, p_opt_shr] = merlin::cuda::copy_objects(share_mem, *p_model, *p_train_data, *p_opt);
     merlin::candy::Gradient gradient(reinterpret_cast<double *>(end_ptr), p_model_shr->num_params(),
                                      merlin::candy::TrainMetric::RelativeSquare);
     merlin::intvec cache_mem;
@@ -38,7 +38,7 @@ int main(void) {
     // Initialize object on CPU
     merlin::candy::Model model({{1.0, 0.5, 2.1, 0.25}, {2.0, 1.0, 2.4, 1.2, 2.7, 1.6}}, 2);
     merlin::candy::Optimizer optimizer = merlin::candy::create_grad_descent(0.1);
-    
+
 
     // Calculate gradient vector by CPU
     double data[6] = {1.2, 2.3, 5.7, 4.8, 7.1, 0.0};

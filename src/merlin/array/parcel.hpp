@@ -63,13 +63,21 @@ class array::Parcel : public array::NdData {
 
     /// @name Get and set element
     /// @{
-    /** @brief Get value of element at a n-dim index.*/
+    /** @brief Get value of element at a n-dim index.
+     *  @warning This function will lock the mutex.
+     */
     MERLIN_EXPORTS double get(const intvec & index) const;
-    /** @brief Get value of element at a C-contiguous index.*/
+    /** @brief Get value of element at a C-contiguous index.
+     *  @warning This function will lock the mutex.
+     */
     MERLIN_EXPORTS double get(std::uint64_t index) const;
-    /** @brief Set value of element at a n-dim index.*/
+    /** @brief Set value of element at a n-dim index.
+     *  @warning This function will lock the mutex.
+     */
     MERLIN_EXPORTS void set(const intvec index, double value);
-    /** @brief Set value of element at a C-contiguous index.*/
+    /** @brief Set value of element at a C-contiguous index.
+     *  @warning This function will lock the mutex.
+     */
     MERLIN_EXPORTS void set(std::uint64_t index, double value);
     /// @}
 
@@ -133,7 +141,9 @@ class array::Parcel : public array::NdData {
 
     /// @name Destructor
     /// @{
-    /** @brief Free current data hold by the object.*/
+    /** @brief Free current data hold by the object.
+     *  @warning This function will lock the mutex.
+     */
     MERLIN_EXPORTS void free_current_data(const cuda::Stream & stream = cuda::Stream());
     /** @brief Destructor.*/
     MERLIN_EXPORTS ~Parcel(void);

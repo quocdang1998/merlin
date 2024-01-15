@@ -62,6 +62,20 @@ MERLINSHARED_EXPORTS void print_stacktrace(int skip = 1);
  *  @param fmt Formatted string (same syntax as ``std::printf``).
  */
 #define FAILURE(exception, fmt, ...) ::merlin::__throw_error<exception>(__FUNCNAME__, fmt, ##__VA_ARGS__)
+/** @brief Message that is printed only in debug mode.
+ *  @details Example:
+ *  @code {.cpp}
+ *  DEBUGLG("A message with a value %f.\n", 0.5);
+ *  @endcode
+ *  @param fmt Formatted string (same syntax as ``std::printf``).
+ */
+#if defined(__MERLIN_DEBUG__)
+    #define DEBUGLG(fmt, ...)                                                                                          \
+        std::fprintf(stdout, "\033[1;32m[DEBUGLG]\033[0m [%s] " fmt, __FUNCNAME__, ##__VA_ARGS__);                     \
+        print_stacktrace(2)
+#else
+    #define DEBUGLG(fmt, ...)
+#endif  // __MERLIN_DEBUG__
 /** @brief Perform a check only in debug mode.
  *  @details Example:
  *  @code {.cpp}

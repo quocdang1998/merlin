@@ -14,7 +14,7 @@ __global__ void print_element(merlin::array::Parcel * parcel_ptr) {
 
 __global__ void print_element_from_shared_memory(merlin::array::Parcel * parcel_ptr) {
     extern __shared__ merlin::array::Parcel share_ptr[];
-    auto [_, __] = merlin::cuda::copy_class_to_shared_mem(share_ptr, *parcel_ptr);
+    auto [_, __] = merlin::cuda::copy_objects(share_ptr, *parcel_ptr);
     CUDAOUT("Value from shared memory: %.1f\n", share_ptr[0][blockIdx.x*blockDim.x+threadIdx.x]);
     __shared__ double sum;
     if (blockIdx.x*blockDim.x+threadIdx.x == 0) {
@@ -44,5 +44,6 @@ int main(void) {
     merlin::array::Parcel * B_gpu = mem.get<0>();
     print_element<<<1,B.size()>>>(B_gpu);
     print_element_from_shared_memory<<<1,B.size(),B.sharedmem_size()>>>(B_gpu);
+    A.clone_data_from_gpu(B);
     cudaDeviceSynchronize();
 }

@@ -10,7 +10,7 @@ void * cuda_mem_alloc(std::uint64_t size, std::uint64_t stream_ptr) {
     void * result;
     ::cudaError_t err_ = ::cudaMallocAsync(&result, size, reinterpret_cast<::cudaStream_t>(stream_ptr));
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "CUDA asynchronous memory allocation failed with error \"%s\"",
+        FAILURE(cuda_runtime_error, "CUDA asynchronous memory allocation failed with error \"%s\"\n",
                 ::cudaGetErrorString(err_));
     }
     return result;
@@ -21,7 +21,7 @@ void cuda_mem_cpy_host_to_device(void * destination, void * source, std::uint64_
     ::cudaError_t err_ = ::cudaMemcpyAsync(destination, source, size, ::cudaMemcpyHostToDevice,
                                            reinterpret_cast<::cudaStream_t>(stream_ptr));
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "CUDA asynchronous copy data to GPU failed with error \"%s\"",
+        FAILURE(cuda_runtime_error, "CUDA asynchronous copy data to GPU failed with error \"%s\"\n",
                 ::cudaGetErrorString(err_));
     }
 }
@@ -31,7 +31,7 @@ void cuda_mem_cpy_device_to_host(void * destination, void * source, std::uint64_
     ::cudaError_t err_ = ::cudaMemcpyAsync(destination, source, size, ::cudaMemcpyDeviceToHost,
                                            reinterpret_cast<::cudaStream_t>(stream_ptr));
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "CUDA asynchronous copy data to GPU failed with error \"%s\"",
+        FAILURE(cuda_runtime_error, "CUDA asynchronous copy data to GPU failed with error \"%s\"\n",
                 ::cudaGetErrorString(err_));
     }
 }
@@ -40,7 +40,7 @@ void cuda_mem_cpy_device_to_host(void * destination, void * source, std::uint64_
 void cuda_mem_free(void * ptr, std::uint64_t stream_ptr) {
     ::cudaError_t err_ = ::cudaFreeAsync(ptr, reinterpret_cast<::cudaStream_t>(stream_ptr));
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "CUDA asynchronous memory deallocation failed with error \"%s\"",
+        FAILURE(cuda_runtime_error, "CUDA asynchronous memory deallocation failed with error \"%s\"\n",
                 ::cudaGetErrorString(err_));
     }
 }

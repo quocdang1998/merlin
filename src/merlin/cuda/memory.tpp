@@ -136,7 +136,7 @@ cuda::Memory<Args...>::~Memory(void) {
 
 // Copy class to shared memory
 template <typename... Args>
-__cudevice__ std::tuple<void *, Args *...> cuda::copy_class_to_shared_mem(void * share_ptr, const Args &... args) {
+__cudevice__ std::tuple<void *, Args *...> cuda::copy_objects(void * share_ptr, const Args &... args) {
     void * final = nullptr;
     std::tuple<Args *...> result = copy_metadata_to_shmem(share_ptr, &final, args...);
     std::tuple<void *> final_tpl(final);

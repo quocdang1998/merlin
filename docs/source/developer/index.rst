@@ -32,3 +32,25 @@ For more specific information, consult the sections below:
    compilation
    macro
    style
+
+Cautions
+--------
+
+Some cautions when developing the package:
+
+.. tabularcolumns:: \X{1}{2}\X{1}{2}
+
+.. table::
+   :class: longtable
+   :widths: 30 70
+
+   ============================= ========================================================
+   :doc:`mutex`                  List of functions altering the mutex lock guard.
+   ============================= ========================================================
+
+.. toctree::
+   :maxdepth: -1
+   :hidden:
+
+   mutex
+

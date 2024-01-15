@@ -8,11 +8,7 @@
 #include "cuda.h"  // ::CUcontext, ::cuCtxGetCurrent, ::cuCtxPopCurrent, ::cuCtxPushCurrent, ::cuDeviceGetName
 
 #include "merlin/env.hpp"     // merlin::Environment
-#include "merlin/logger.hpp"  // WARNING, FAILURE, cuda_runtime_error
-
-#define safety_lock() bool lock_success = Environment::mutex.try_lock()
-#define safety_unlock()                                                                                                \
-    if (lock_success) Environment::mutex.unlock()
+#include "merlin/logger.hpp"  // DEBUGLG, WARNING, FAILURE, cuda_runtime_error
 
 namespace merlin {
 
@@ -54,14 +50,12 @@ static int convert_SM_version_to_core(int major, int minor) {
 // Get current CUDA context
 static inline std::uintptr_t get_current_context(void) {
     // check for current context as regular context
-    safety_lock();
     ::CUcontext current_ctx;
     ::cudaError_t err_ = static_cast<::cudaError_t>(::cuCtxGetCurrent(&current_ctx));
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Get current context failed with message \"%s\".\n", ::cudaGetErrorString(err_));
     }
     // a dummy context initialized (return nullptr)
-    safety_unlock();
     return reinterpret_cast<std::uintptr_t>(current_ctx);
 }
 
@@ -168,9 +162,10 @@ void cuda::Device::set_as_current(void) const {
 
 // Push the primary context associated to the GPU to the context stack
 std::uintptr_t cuda::Device::push_context(void) const {
+    DEBUGLG("Environment::mutex is locked.\n");
+    Environment::mutex.lock();
     std::uintptr_t current_context = get_current_context();
     ::cudaError_t err_;
-    safety_lock();
     if (current_context != 0) {
         err_ = static_cast<::cudaError_t>(::cuCtxPushCurrent(reinterpret_cast<::CUcontext>(current_context)));
         if (err_ != 0) {
@@ -181,14 +176,12 @@ std::uintptr_t cuda::Device::push_context(void) const {
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "cudaSetDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
-    safety_unlock();
     return current_context;
 }
 
 // Pop the current context out of the context stack
 void cuda::Device::pop_context(std::uintptr_t previous_context) {
     if (previous_context != 0) {
-        safety_lock();
         ::CUcontext ctx;
         ::cudaError_t err_ = static_cast<::cudaError_t>(::cuCtxPopCurrent(&ctx));
         if (err_ != 0) {
@@ -197,8 +190,9 @@ void cuda::Device::pop_context(std::uintptr_t previous_context) {
         if (previous_context != reinterpret_cast<std::uintptr_t>(ctx)) {
             FAILURE(std::invalid_argument, "Wrong context provided.\n");
         }
-        safety_unlock();
     }
+    Environment::mutex.unlock();
+    DEBUGLG("Environment::mutex is unlocked.\n");
 }
 
 // Get and set GPU limit

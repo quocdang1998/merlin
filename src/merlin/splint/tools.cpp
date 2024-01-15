@@ -102,7 +102,7 @@ void splint::eval_intpl_cpu(std::shared_future<void> current_job, const double *
     #pragma omp parallel num_threads(n_threads)
     {
         // get corresponding index vector and cache memory
-        int thread_idx = ::omp_get_thread_num();
+        std::uint64_t thread_idx = ::omp_get_thread_num();
         intvec loop_index;
         loop_index.assign(total_index.data() + p_grid->ndim() * thread_idx, p_grid->ndim());
         floatvec cache;

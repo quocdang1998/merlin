@@ -23,7 +23,7 @@ __cuhostdev__ intvec array::contiguous_strides(const intvec & shape, std::uint64
 // Calculate the number of bytes to jump to get element at a given C-contiguous index
 __cuhostdev__ std::uint64_t array::get_leap(std::uint64_t index, const intvec & shape, const intvec & strides) noexcept {
     std::uint64_t cum_prod = 1, nd_index = 0, leap = 0;
-    for (std::int64_t i_dim = shape.size()-1; i_dim >= 0; i_dim--) {
+    for (std::int64_t i_dim = shape.size() - 1; i_dim >= 0; i_dim--) {
         nd_index = (index / cum_prod) % shape[i_dim];
         leap += strides[i_dim] * nd_index;
         cum_prod *= shape[i_dim];

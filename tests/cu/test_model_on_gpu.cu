@@ -7,7 +7,7 @@
 
 __global__ void print_model_shared_mem(merlin::candy::Model * model_ptr) {
     extern __shared__ merlin::candy::Model share_ptr[];
-    auto [_, __] = merlin::cuda::copy_class_to_shared_mem(share_ptr, *model_ptr);
+    auto [_, __] = merlin::cuda::copy_objects(share_ptr, *model_ptr);
     CUDAOUT("Candecomp Model on GPU (rank = %" PRIu64 "):\n", share_ptr->rank());
     for (int i = 0; i < share_ptr->ndim(); i++) {
         std::printf("Vector %d:", i);
