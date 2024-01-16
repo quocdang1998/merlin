@@ -49,7 +49,7 @@ list(APPEND MERLIN_SRC_CPP
      # intpl/sparse_grid.cpp
      linalg/qr_solve.cpp
      linalg/matrix.cpp
-     regent/mv_polynomial.cpp
+     regpl/polynomial.cpp
      slice.cpp
      shuffle.cpp
      splint/interpolator.cpp
@@ -70,6 +70,7 @@ list(APPEND MERLIN_SRC_CU
      # intpl/lagrange.cu
      # intpl/newton.cu
      grid/cartesian_grid.cu
+     regpl/polynomial.cu
      splint/interpolator.cu
 )
 list(APPEND MERLIN_SRC_GLB
@@ -94,10 +95,12 @@ list(APPEND MERLIN_SRC_RDC
      # intpl/cartesian_grid.rdc
      # intpl/lagrange.rdc
      # intpl/newton.rdc
+     grid/cartesian_grid.rdc
      linalg/qr_solve.rdc
      linalg/matrix.rdc
+     regpl/core.rdc
+     regpl/polynomial.rdc
      slice.rdc
-     grid/cartesian_grid.rdc
      splint/intpl/lagrange.rdc
      splint/intpl/linear.rdc
      splint/intpl/newton.rdc
