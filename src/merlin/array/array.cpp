@@ -12,7 +12,7 @@
 #include "merlin/array/parcel.hpp"     // merlin::array::Parcel
 #include "merlin/array/stock.hpp"      // merlin::array::Stock
 #include "merlin/logger.hpp"           // FAILURE
-#include "merlin/utils.hpp"            // merlin::contiguous_to_ndim_idx, merlin::inner_prod
+#include "merlin/utils.hpp"            // merlin::inner_prod
 
 namespace merlin {
 
@@ -192,7 +192,7 @@ double array::Array::get(const intvec & index) const {
 }
 
 // Get value of element at a C-contiguous index
-double array::Array::get(std::uint64_t index) const { 
+double array::Array::get(std::uint64_t index) const {
     std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<double *>(data_ptr));

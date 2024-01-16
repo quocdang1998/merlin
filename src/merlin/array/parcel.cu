@@ -8,7 +8,7 @@
                                        // merlin::array::copy, merlin::array::fill
 #include "merlin/env.hpp"              // merlin::Environment
 #include "merlin/logger.hpp"           // FAILURE
-#include "merlin/utils.hpp"            // merlin::contiguous_to_ndim_idx, merlin::inner_prod
+#include "merlin/utils.hpp"            // merlin::inner_prod
 
 #define push_gpu(gpu)                                                                                                  \
     bool lock_success = Environment::mutex.try_lock();                                                                 \

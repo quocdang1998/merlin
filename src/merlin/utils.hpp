@@ -91,14 +91,18 @@ __cuhostdev__ std::uint64_t inner_prod(const intvec & v1, const intvec & v2);
  */
 __cuhostdev__ std::uint64_t ndim_to_contiguous_idx(const intvec & index, const intvec & shape);
 
-/** @brief Convert C-contiguous index to n-dimensional index.
+/** @brief Convert C-contiguous index to n-dimensional index with allocating memory for result.
  *  @param index C-contiguous index.
  *  @param shape Shape vector.
- *  @param data_ptr Pointer to result data. If the value is ``nullptr``, new instance is allocated.
- *  @return merlin::intvec of n-dimensional index.
  */
-__cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape,
-                                            std::uint64_t * data_ptr = nullptr);
+__cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape);
+
+/** @brief Convert C-contiguous index to n-dimensional index and save data to a pre-allocated memory.
+ *  @param index C-contiguous index.
+ *  @param shape Shape vector.
+ *  @param data_ptr Pointer to result data.
+ */
+__cuhostdev__ void contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape, std::uint64_t * data_ptr);
 
 /** @brief Increase an n-dimensional index by one unit.
  *  @param index Multi-dimensional index.
@@ -134,6 +138,18 @@ __cuhostdev__ Vector<double *> ptr_to_subsequence(double * original, const intve
  */
 __cuhostdev__ std::array<std::uint64_t, 2> index_in_subsequence(std::uint64_t index_full_array,
                                                                 const intvec & divider_length) noexcept;
+
+// Triangular Index
+// ----------------
+
+/** @brief Get 2-dimensional triangular index from flatten index.
+ *  @details Decompose the index @f$ i @f$ into:
+ *  @f[ i = T_k + r @f]
+ *  in which @f$ T_k @f$ (@f$ k \ge 0 @f$) is the largest triangular number possible, and @f$ r \ge 0 @f$ the remainder.
+ *  @param index Flatten index.
+ *  @param returns Row (@f$ k @f$) and column (@f$ r @f$) index of lower triangular matrix.
+ */
+__cuhostdev__ std::array<std::uint64_t, 2> triangular_index(std::uint64_t index) noexcept;
 
 }  // namespace merlin
 

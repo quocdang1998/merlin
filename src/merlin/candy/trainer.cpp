@@ -78,6 +78,17 @@ void candy::train_by_cpu(std::shared_future<void> synch, candy::Model * p_model,
     } while (go_on);
 }
 
+#ifndef __MERLIN_CUDA__
+
+// Train a model using GPU parallelism
+void candy::train_by_gpu(candy::Model * p_model, array::Parcel * p_data, candy::Optimizer * p_optimizer,
+                         candy::TrainMetric metric, std::uint64_t rep, std::uint64_t n_threads, std::uint64_t ndim,
+                         double threshold, std::uint64_t shared_mem_size, cuda::Stream & stream) {
+    FAILURE(cuda_compile_error, "Cannot invoke GPU function since merlin is not compiled with CUDA option.\n");
+}
+
+#endif  // __MERLIN_CUDA__
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Trainer
 // ---------------------------------------------------------------------------------------------------------------------

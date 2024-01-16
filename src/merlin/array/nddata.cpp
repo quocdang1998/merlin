@@ -11,7 +11,6 @@
 #include "merlin/array/stock.hpp"      // merlin::array::Stock
 #include "merlin/logger.hpp"           // FAILURE
 #include "merlin/slice.hpp"            // merlin::Slice
-#include "merlin/utils.hpp"            // merlin::contiguous_to_ndim_idx
 
 namespace merlin {
 

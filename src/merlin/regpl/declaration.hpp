@@ -4,6 +4,7 @@
 
 namespace merlin::regpl {
 class Polynomial;
+class Regressor;
 }  // namespace merlin::regpl
 
 #endif  // MERLIN_REGPL_DECLARATION_HPP_

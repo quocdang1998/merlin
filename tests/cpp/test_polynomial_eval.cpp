@@ -17,4 +17,6 @@ int main(void) {
     floatvec point = {1.2, 0.4};
     MESSAGE("Evaluation at point %s is %f\n", point.str().c_str(), p.eval(point.data(), buffer.data()));
     MESSAGE("Reference  of point %s is %f\n", point.str().c_str(), reference(point.data()));
+
+
 }

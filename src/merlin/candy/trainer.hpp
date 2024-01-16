@@ -5,12 +5,15 @@
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::NdData, merlin::array::Parcel
 #include "merlin/candy/declaration.hpp"  // merlin::candy::Model, merlin::candy::Optimizer, merlin::candy::Trainer
-#include "merlin/cuda/declaration.hpp"  // merlin::cuda::Stream
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/synchronizer.hpp"  // merlin::ProcessorType, merlin::Synchronizer
-#include "merlin/vector.hpp"  // merlin::intvec
+#include "merlin/cuda/declaration.hpp"   // merlin::cuda::Stream
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/synchronizer.hpp"       // merlin::ProcessorType, merlin::Synchronizer
+#include "merlin/vector.hpp"             // merlin::intvec
 
 namespace merlin {
+
+// Utility
+// -------
 
 namespace candy {
 
@@ -31,6 +34,9 @@ void train_by_gpu(candy::Model * p_model, array::Parcel * p_data, candy::Optimiz
                   double threshold, std::uint64_t shared_mem_size, cuda::Stream & stream);
 
 }  // namespace candy
+
+// Trainer
+// -------
 
 /** @brief Launch a train process on Candecomp model asynchronously.*/
 class candy::Trainer {
@@ -112,9 +118,7 @@ class candy::Trainer {
     /// @name Synchronization
     /// @{
     /** @brief Force the current CPU to wait until all asynchronous tasks have finished.*/
-    void synchronize(void) {
-        this->synch_.synchronize();
-    }
+    void synchronize(void) { this->synch_.synchronize(); }
     /// @}
 
     /// @name Destructor

@@ -2,6 +2,7 @@
 #include "merlin/utils.hpp"
 
 #include <cinttypes>  // PRIu64
+#include <cmath>      // std::floor, std::sqrt
 #include <ctime>      // std::localtime, std::time, std::time_t, std::tm
 #include <sstream>    // std::ostringstream
 
@@ -81,21 +82,26 @@ __cuhostdev__ std::uint64_t ndim_to_contiguous_idx(const intvec & index, const i
     return c_index;
 }
 
-// Convert C-contiguous index to n-dimensional index
-__cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape, std::uint64_t * data_ptr) {
+// Convert C-contiguous index to n-dimensional index with allocating memory for result
+__cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape) {
     // calculate index vector
-    intvec nd_index;
-    if (data_ptr != nullptr) {
-        nd_index.assign(data_ptr, shape.size());
-    } else {
-        nd_index = intvec(shape.size());
-    }
+    intvec nd_index(shape.size());
     std::uint64_t cum_prod = 1;
     for (std::int64_t i = shape.size() - 1; i >= 0; i--) {
         nd_index[i] = (index / cum_prod) % shape[i];
         cum_prod *= shape[i];
     }
     return nd_index;
+}
+
+// Convert C-contiguous index to n-dimensional index and save data to a pre-allocated memory
+__cuhostdev__ void contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape, std::uint64_t * data_ptr) {
+    // calculate index vector
+    std::uint64_t cum_prod = 1;
+    for (std::int64_t i = shape.size() - 1; i >= 0; i--) {
+        data_ptr[i] = (index / cum_prod) % shape[i];
+        cum_prod *= shape[i];
+    }
 }
 
 // Increment of n-dim index
@@ -166,6 +172,14 @@ __cuhostdev__ std::array<std::uint64_t, 2> index_in_subsequence(std::uint64_t in
     return {i_list, index_full_array};
 }
 
+// Get 2-dimensional triangular index from flatten index
+__cuhostdev__ std::array<std::uint64_t, 2> triangular_index(std::uint64_t index) noexcept {
+    std::array<std::uint64_t, 2> triangular_index;
+    triangular_index[0] = std::floor((-1.f + std::sqrt(1.f + 8.f * index)) / 2.f);
+    triangular_index[1] = index - (triangular_index[0] * (triangular_index[0] + 1)) / 2;
+    return triangular_index;
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Sparse Grid
 // ---------------------------------------------------------------------------------------------------------------------
@@ -196,33 +210,6 @@ __cuhostdev__ intvec get_level_shape(const intvec & level_vector) {
         }
     }
     return grid_shape;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Canonical Decomposition
-// ---------------------------------------------------------------------------------------------------------------------
-
-// Get flattened index from model index
-__cuhostdev__ std::uint64_t model_to_contiguous_index(std::uint64_t i_dim, std::uint64_t i_pt, std::uint64_t i_rank,
-                                                      std::uint64_t rank, const intvec & shape) {
-    std::uint64_t result = 0;
-    for (std::uint64_t i = 0; i < i_dim; i++) {
-        result += shape[i];
-    }
-    return result + rank * i_pt + i_rank;
-}
-
-// Get model index from flattened index
-__cuhostdev__ std::array<std::uint64_t, 3> contiguous_to_model_idx(std::uint64_t index, std::uint64_t rank,
-                                                                   const intvec & shape) {
-    std::uint64_t dimension = 0;
-    std::int64_t index_ = index;
-    for (std::uint64_t i_dim = 0; i_dim < shape.size(); i_dim++) {
-        index_ -= shape[i_dim];
-        dimension += (index_ >= 0) ? 1 : 0;
-        index = (index_ >= 0) ? index_ : index;
-    }
-    return {dimension, index / rank, index % rank};
 }
 
 }  // namespace merlin

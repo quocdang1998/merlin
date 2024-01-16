@@ -19,6 +19,15 @@ class linalg::Matrix {
     /// @{
     /** @brief Default constructor.*/
     __cuhostdev__ Matrix(void) {}
+    /** @brief Create a matrix from pre-allocated pointer and shape.
+     *  @note Data of matrix must be in C-contiguous order, i.e. row major.
+     *  @param data Pointer to data.
+     *  @param shape Shape vector.
+     */
+    __cuhostdev__ Matrix(double * data, const std::array<std::uint64_t, 2> & shape) : data_(data), shape_(shape) {
+        this->strides_[0] = shape[1] * sizeof(double);
+        this->strides_[1] = sizeof(double);
+    }
     /** @brief Create a matrix from pre-allocated pointer, shape and strides.
      *  @param data Pointer to data.
      *  @param shape Shape vector.

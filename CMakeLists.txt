@@ -50,6 +50,7 @@ list(APPEND MERLIN_SRC_CPP
      linalg/qr_solve.cpp
      linalg/matrix.cpp
      regpl/polynomial.cpp
+     regpl/regressor.cpp
      slice.cpp
      shuffle.cpp
      splint/interpolator.cpp
