@@ -45,7 +45,10 @@ num_coeff_(polynom.size()), ndim_(polynom.ndim()) {
         this->cpu_buffer_ = new char[this->cpu_buffer_size_];
         this->synch_ = Synchronizer(std::shared_future<void>());
     } else {
+        this->shared_mem_size_ = polynom.sharedmem_size();
         this->synch_ = Synchronizer(cuda::Stream(cuda::StreamSetting::NonBlocking));
+        cuda::Stream & stream = std::get<cuda::Stream>(this->synch_.synchronizer);
+        regpl::allocate_mem_gpu(polynom, this->p_poly_, this->matrix_data_, stream.get_stream_ptr());
     }
 }
 
@@ -55,10 +58,20 @@ regpl::Regressor::~Regressor(void) {
         if (this->p_poly_ != nullptr) {
             delete this->p_poly_;
         }
+        if (this->matrix_data_ != nullptr) {
+            delete[] this->matrix_data_;
+        }
+        if (this->cpu_buffer_ != nullptr) {
+            delete[] this->cpu_buffer_;
+        }
     } else {
         push_gpu(cuda::Device(this->gpu_id()));
+        cuda::Stream & stream = std::get<cuda::Stream>(this->synch_.synchronizer);
         if (this->p_poly_ != nullptr) {
-            cuda_mem_free(this->p_poly_, std::get<cuda::Stream>(this->synch_.synchronizer).get_stream_ptr());
+            cuda_mem_free(this->p_poly_, stream.get_stream_ptr());
+        }
+        if (this->matrix_data_ != nullptr) {
+            cuda_mem_free(this->matrix_data_, stream.get_stream_ptr());
         }
         pop_gpu();
     }

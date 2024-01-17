@@ -147,7 +147,7 @@ __cuhostdev__ std::array<std::uint64_t, 2> index_in_subsequence(std::uint64_t in
  *  @f[ i = T_k + r @f]
  *  in which @f$ T_k @f$ (@f$ k \ge 0 @f$) is the largest triangular number possible, and @f$ r \ge 0 @f$ the remainder.
  *  @param index Flatten index.
- *  @param returns Row (@f$ k @f$) and column (@f$ r @f$) index of lower triangular matrix.
+ *  @returns Row (@f$ k @f$) and column (@f$ r @f$) index of lower triangular matrix.
  */
 __cuhostdev__ std::array<std::uint64_t, 2> triangular_index(std::uint64_t index) noexcept;
 

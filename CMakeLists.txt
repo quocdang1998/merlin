@@ -72,6 +72,7 @@ list(APPEND MERLIN_SRC_CU
      # intpl/newton.cu
      grid/cartesian_grid.cu
      regpl/polynomial.cu
+     regpl/regressor.cu
      splint/interpolator.cu
 )
 list(APPEND MERLIN_SRC_GLB

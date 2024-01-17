@@ -11,13 +11,6 @@
 #include "merlin/logger.hpp"                 // FAILURE
 #include "merlin/splint/tools.hpp"           // merlin::splint::construct_coeff_gpu
 
-#define push_gpu(gpu)                                                                                                  \
-    bool lock_success = Environment::mutex.try_lock();                                                                 \
-    std::uintptr_t current_ctx = gpu.push_context()
-#define pop_gpu()                                                                                                      \
-    cuda::Device::pop_context(current_ctx);                                                                            \
-    if (lock_success) Environment::mutex.unlock()
-
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -52,7 +45,7 @@ floatvec splint::Interpolator::evaluate(const array::Parcel & points, std::uint6
     }
     // get CUDA Stream
     cuda::Stream & stream = std::get<cuda::Stream>(this->synchronizer_.synchronizer);
-    push_gpu(stream.get_gpu());
+    std::uintptr_t current_ctx = stream.get_gpu().push_context();
     // evaluate interpolation
     floatvec evaluated_values(points.shape()[0]);
     std::uint64_t bytes_size = evaluated_values.size() * sizeof(double);
@@ -62,7 +55,7 @@ floatvec splint::Interpolator::evaluate(const array::Parcel & points, std::uint6
                            this->shared_mem_size_, &stream);
     cuda_mem_cpy_device_to_host(evaluated_values.data(), result_gpu, bytes_size, stream.get_stream_ptr());
     cuda_mem_free(result_gpu, stream.get_stream_ptr());
-    pop_gpu();
+    cuda::Device::pop_context(current_ctx);
     return evaluated_values;
 }
 

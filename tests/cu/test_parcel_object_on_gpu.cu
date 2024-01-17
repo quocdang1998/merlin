@@ -44,5 +44,6 @@ int main(void) {
     merlin::array::Parcel * B_gpu = mem.get<0>();
     print_element<<<1,B.size()>>>(B_gpu);
     print_element_from_shared_memory<<<1,B.size(),B.sharedmem_size()>>>(B_gpu);
+    A.clone_data_from_gpu(B);
     cudaDeviceSynchronize();
 }

@@ -18,11 +18,9 @@
 #include "merlin/logger.hpp"           // FAILURE, merlin::cuda_compile_error
 
 #define push_gpu(gpu)                                                                                                  \
-    Environment::mutex.lock();                                                                                         \
     std::uintptr_t current_ctx = gpu.push_context()
 #define pop_gpu()                                                                                                      \
-    cuda::Device::pop_context(current_ctx);                                                                            \
-    Environment::mutex.unlock()
+    cuda::Device::pop_context(current_ctx)
 
 namespace merlin {
 
@@ -118,8 +116,10 @@ candy::Trainer::Trainer(const candy::Model & model, array::Array && data, const 
     } else {
         this->synch_ = Synchronizer(cuda::Stream(cuda::StreamSetting::NonBlocking));
         cuda::Stream & stream = std::get<cuda::Stream>(this->synch_.synchronizer);
+        push_gpu(stream.get_gpu());
         candy::create_trainer_gpu_ptr(model, std::forward<array::Array>(data), optimizer, this->p_model_, this->p_data_,
                                       this->p_optmz_, this->p_parcel_, stream);
+        pop_gpu();
         this->shared_mem_size_ = model.sharedmem_size() + optimizer.sharedmem_size();
         this->shared_mem_size_ += this->p_parcel_->sharedmem_size();
         this->shared_mem_size_ += sizeof(double) * model.num_params();
@@ -175,11 +175,11 @@ candy::Trainer::~Trainer(void) {
         if (this->p_parcel_ != nullptr) {
             delete this->p_parcel_;
         }
-        push_gpu(cuda::Device(this->gpu_id()));
         if (this->p_model_ != nullptr) {
+            push_gpu(cuda::Device(this->gpu_id()));
             cuda_mem_free(this->p_model_, std::get<cuda::Stream>(this->synch_.synchronizer).get_stream_ptr());
+            pop_gpu();
         }
-        pop_gpu();
     }
 }
 

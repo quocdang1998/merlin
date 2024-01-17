@@ -68,10 +68,16 @@ class cuda::Device {
      */
     MERLIN_EXPORTS void set_as_current(void) const;
     /** @brief Push the primary context associated to the GPU to the context stack.
+     *  @warning This function will also lock the Environment::mutex without releasing it. User is reponsible for
+     *  ensuring that the mutex is not locked by the current thread before calling this function (otherwise the
+     *  situation will result in an infinite loop). Releasing the mutex after usage is automatically called inside the
+     *  method cuda::Device::pop_context.
      *  @return Pointer to old context.
      */
     MERLIN_EXPORTS std::uintptr_t push_context(void) const;
-    /** @brief Pop the current context out of the context stack.*/
+    /** @brief Pop the current context out of the context stack.
+     *  @warning This function will also unlock the mutex.
+     */
     MERLIN_EXPORTS static void pop_context(std::uintptr_t previous_context);
     /** @brief Get and set setting limits of the current GPU.
      *  @return Value of the limit of the current GPU if argument ``size`` is not given, and the value of size

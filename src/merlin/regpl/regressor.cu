@@ -2,6 +2,8 @@
 #include "merlin/regpl/regressor.hpp"
 
 #include "merlin/cuda/memory.hpp"  // merlin::cuda::Memory
+#include "merlin/cuda_interface.hpp"  // merlin::cuda_mem_alloc
+#include "merlin/regpl/polynomial.hpp"  // merlin::regpl::Polynomial
 
 namespace merlin {
 
@@ -13,6 +15,7 @@ void regpl::allocate_mem_gpu(const regpl::Polynomial & polynom, regpl::Polynomia
     p_poly = gpu_mem.get<0>();
     gpu_mem.disown();
     // allocate data on GPU
+    matrix_data = reinterpret_cast<double *>(cuda_mem_alloc(polynom.size() * polynom.size(), stream_ptr));
 }
 
 }  // namespace merlin

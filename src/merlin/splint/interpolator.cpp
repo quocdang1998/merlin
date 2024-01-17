@@ -14,11 +14,9 @@
 #include "merlin/splint/tools.hpp"           // merlin::splint::construct_coeff_cpu
 
 #define push_gpu(gpu)                                                                                                  \
-    bool lock_success = Environment::mutex.try_lock();                                                                 \
     std::uintptr_t current_ctx = gpu.push_context()
 #define pop_gpu()                                                                                                      \
-    cuda::Device::pop_context(current_ctx);                                                                            \
-    if (lock_success) Environment::mutex.unlock()
+    cuda::Device::pop_context(current_ctx)
 
 namespace merlin {
 
@@ -63,9 +61,11 @@ ndim_(grid.ndim()), shared_mem_size_(grid.sharedmem_size() + method.sharedmem_si
         // GPU
         this->synchronizer_ = Synchronizer(cuda::Stream(cuda::StreamSetting::NonBlocking));
         cuda::Stream & stream = std::get<cuda::Stream>(this->synchronizer_.synchronizer);
+        push_gpu(stream.get_gpu());
         splint::create_intpl_gpuptr(grid, method, this->p_grid_, this->p_method_, stream.get_stream_ptr());
         this->p_coeff_ = new array::Parcel(values.shape());
         static_cast<array::Parcel *>(this->p_coeff_)->transfer_data_to_gpu(values, stream);
+        pop_gpu();
     }
 }
 
@@ -141,11 +141,11 @@ splint::Interpolator::~Interpolator(void) {
         }
     } else {
         // delete joint memory of both on GPU
-        push_gpu(cuda::Device(this->gpu_id()));
         if (this->p_grid_ != nullptr) {
+            push_gpu(cuda::Device(this->gpu_id()));
             cuda_mem_free(this->p_grid_, std::get<cuda::Stream>(this->synchronizer_.synchronizer).get_stream_ptr());
+            pop_gpu();
         }
-        pop_gpu();
     }
 }
 

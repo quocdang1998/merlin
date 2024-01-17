@@ -7,12 +7,7 @@
 #include "merlin/cuda/device.hpp"  // merlin::cuda::Device
 #include "merlin/cuda/event.hpp"   // merlin::cuda::Event
 #include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
-#include "merlin/env.hpp"          // merlin::Environment
 #include "merlin/logger.hpp"       // FAILURE
-
-#define safety_lock() bool lock_success = Environment::mutex.try_lock()
-#define safety_unlock()                                                                                                \
-    if (lock_success) Environment::mutex.unlock()
 
 namespace merlin {
 
@@ -67,9 +62,7 @@ cuda::Graph::Graph(int flag) {
 // Copy constructor
 cuda::Graph::Graph(const cuda::Graph & src) {
     ::cudaGraph_t graph_, graph_src = reinterpret_cast<::cudaGraph_t>(src.graph_ptr_);
-    safety_lock();
     ::cudaError_t err_ = ::cudaGraphClone(&graph_, graph_src);
-    safety_unlock();
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "CUDA clone graph failed with message \"%s\".\n", ::cudaGetErrorString(err_));
     }
@@ -82,9 +75,7 @@ cuda::Graph & cuda::Graph::operator=(const cuda::Graph & src) {
     this->destroy_graph();
     // Clone graph
     ::cudaGraph_t graph_, graph_src = reinterpret_cast<::cudaGraph_t>(src.graph_ptr_);
-    safety_lock();
     ::cudaError_t err_ = ::cudaGraphClone(&graph_, graph_src);
-    safety_unlock();
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "CUDA clone graph failed with message \"%s\".\n", ::cudaGetErrorString(err_));
     }
@@ -183,10 +174,8 @@ std::tuple<cuda::GraphNode, void *> cuda::Graph::add_mem_alloc_node(std::uint64_
     for (std::uint64_t i = 0; i < dependancies.size(); i++) {
         dependancies[i] = reinterpret_cast<::cudaGraphNode_t>(deps[i].graphnode_ptr);
     }
-    safety_lock();
     ::cudaError_t err_ = ::cudaGraphAddMemAllocNode(&graph_node, reinterpret_cast<::cudaGraph_t>(this->graph_ptr_),
                                                     dependancies.data(), dependancies.size(), &node_params);
-    safety_unlock();
     if (err_ != 0) {
         FAILURE(cuda_runtime_error, "Add memory allocation node to graph failed with message \"%s\".\n",
                 ::cudaGetErrorString(err_));
@@ -320,9 +309,9 @@ void cuda::Graph::execute(const cuda::Stream & stream) {
     if (log_buffer[0]) {  // not a null started string
         WARNING("Launch graph executable failed with error \"%s\"\n", log_buffer);
     }
-    safety_lock();
+    std::uintptr_t current_ctx = stream.get_gpu().push_context();
     err_ = ::cudaGraphLaunch(exec_graph, reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr()));
-    safety_unlock();
+    cuda::Device::pop_context(current_ctx);
 }
 
 // Destructor

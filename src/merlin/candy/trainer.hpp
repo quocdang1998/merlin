@@ -46,6 +46,7 @@ class candy::Trainer {
     /** @brief Default constructor.*/
     Trainer(void) = default;
     /** @brief Constructor a trainer.
+     *  @warning This function will lock the mutex in GPU mode.
      *  @param model Candecomp model.
      *  @param data Data to be fitted by the model.
      *  @param optimizer Gradient method to train the model.
@@ -106,6 +107,7 @@ class candy::Trainer {
     /// @name Train CP model based on gradient descent
     /// @{
     /** @brief Update CP model according to gradient.
+     *  @warning This function will lock the mutex in GPU mode.
      *  @param rep Number of times to repeat the gradient descent update in each step.
      *  @param threshold Threshold to stop the training process.
      *  @param n_threads Number of parallel threads for training the model.
@@ -123,7 +125,9 @@ class candy::Trainer {
 
     /// @name Destructor
     /// @{
-    /** @brief Destructor.*/
+    /** @brief Default destructor.
+     *  @warning This function will lock the mutex in GPU mode.
+     */
     MERLIN_EXPORTS ~Trainer(void);
     /// @}
 
