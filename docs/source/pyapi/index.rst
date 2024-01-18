@@ -72,3 +72,13 @@ Multi-dimensional array
    merlin.array.Parcel
    merlin.array.Stock
 
+
+Grid API
+--------
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.grid.CartesianGrid

@@ -87,7 +87,7 @@ void splint::Interpolator::build_coefficients(std::uint64_t n_threads) {
 }
 
 // Interpolation by CPU.
-floatvec splint::Interpolator::evaluate(const array::Array & points, std::uint64_t n_threads) {
+void splint::Interpolator::evaluate(const array::Array & points, floatvec & result, std::uint64_t n_threads) {
     // check if interpolator is on CPU
     if (this->on_gpu()) {
         FAILURE(std::invalid_argument, "Interpolator is initialized on GPU.\n");
@@ -102,15 +102,16 @@ floatvec splint::Interpolator::evaluate(const array::Array & points, std::uint64
     if (points.shape()[1] != this->ndim_) {
         FAILURE(std::invalid_argument, "Array of coordinates and interpolator have different dimension.\n");
     }
+    if (points.shape()[0] != result.size()) {
+        FAILURE(std::invalid_argument, "Size of result array must be equal to the number of points.\n");
+    }
     // evaluate interpolation
-    floatvec evaluated_values(points.shape()[0]);
     std::shared_future<void> & current_sync = std::get<std::shared_future<void>>(this->synchronizer_.synchronizer);
     std::shared_future<void> new_sync = std::async(std::launch::async, splint::eval_intpl_cpu, current_sync,
                                                    this->p_coeff_->data(), this->p_grid_, this->p_method_,
-                                                   points.data(), evaluated_values.size(), evaluated_values.data(),
+                                                   points.data(), result.size(), result.data(),
                                                    n_threads).share();
     this->synchronizer_ = Synchronizer(std::move(new_sync));
-    return evaluated_values;
 }
 
 // String representation

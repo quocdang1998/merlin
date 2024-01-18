@@ -6,9 +6,11 @@
 #include "merlin/array/array.hpp"
 #include "merlin/array/operation.hpp"
 #include "merlin/grid/cartesian_grid.hpp"
+#include "merlin/grid/regular_grid.hpp"
 #include "merlin/linalg/matrix.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/regpl/polynomial.hpp"
+#include "merlin/regpl/regressor.hpp"
 #include "merlin/utils.hpp"
 
 using namespace merlin;
@@ -31,6 +33,7 @@ floatvec reference(const grid::CartesianGrid & grid, const array::Array & data, 
         write_matrix_row(point, polynom.order(), matrix_data.data() + i_point * polynom.size(), polynom.size());
     }
     linalg::Matrix matrix(matrix_data.data(), {grid.size(), polynom.size()});
+    MESSAGE("Reference Vandermonde: %s\n", matrix.str().c_str());
     // multiply matrix by data
     floatvec result(polynom.size());
     for (std::uint64_t i_term = 0; i_term < polynom.size(); i_term++) {
@@ -60,7 +63,10 @@ int main(void) {
         1.0, 2.4, 2.3, 5.1, 4.3, 2.7, 8.1, 9.1, 1.4, 2.7,
         1.1, 2.6, 2.1, 5.4, 4.5, 2.1, 8.4, 9.6, 1.3, 2.4
     };
+    grid::RegularGrid rgrid(grid.get_points());
     array::Array data(array_data, grid.shape(), array::contiguous_strides(grid.shape(), sizeof(double)), false);
+    floatvec data_vec;
+    data_vec.assign(array_data, 24);
     regpl::Polynomial polynom({2, 3, 2});
 
     // get vector and system matrix
@@ -68,18 +74,30 @@ int main(void) {
     intvec buffer(2 * n_threads * 3);
     #pragma omp parallel num_threads(n_threads)
     {
-        regpl::calc_vector(grid, data, polynom, buffer.data(), ::omp_get_thread_num(), n_threads);
+        // regpl::calc_vector(grid, data, polynom, buffer.data(), ::omp_get_thread_num(), n_threads);
+        regpl::calc_vector(rgrid, data_vec, polynom, buffer.data(), ::omp_get_thread_num(), n_threads);
     }
     MESSAGE("Coefficients after calculation: %s\n", polynom.coeff().str().c_str());
     floatvec system_buffer(polynom.size() * polynom.size());
     linalg::Matrix system(system_buffer.data(), {polynom.size(), polynom.size()});
     #pragma omp parallel num_threads(n_threads)
     {
-        regpl::calc_system(grid, polynom, system, buffer.data(), ::omp_get_thread_num(), n_threads);
+        // regpl::calc_system(grid, polynom, system, buffer.data(), ::omp_get_thread_num(), n_threads);
+        regpl::calc_system(rgrid, polynom, system, buffer.data(), ::omp_get_thread_num(), n_threads);
     }
     MESSAGE("Calculated linear system: %s\n", system.str().c_str());
+
+    // get Vandermonde matrix
+    MESSAGE("Vandermonde matrix: %s\n", polynom.calc_vandermonde(grid.get_points(), 4).str().c_str());
 
     // reference
     floatvec ref_result = reference(grid, data, polynom);
     MESSAGE("Reference calculation: %s\n", ref_result.str().c_str());
+
+    // launch regressor
+    regpl::Regressor reg(polynom, ProcessorType::Cpu);
+    // reg.fit_cpu(grid, data, 4);
+    reg.fit_cpu(rgrid, data_vec, 4);
+    reg.synchronize();
+    MESSAGE("Polynomial after solved: %s\n", reg.get_polynom().str().c_str());
 }

@@ -6,6 +6,7 @@
 #include <string>  // std::string
 
 #include "merlin/cuda_interface.hpp"  // __cudevice__, __cuhostdev__
+#include "merlin/exports.hpp"         // MERLIN_EXPORTS
 #include "merlin/vector.hpp"          // merlin::Vector
 
 namespace merlin {
@@ -14,12 +15,12 @@ namespace merlin {
 // ------
 
 /** @brief Get process ID in form of a string.*/
-std::string get_current_process_id(void);
+MERLIN_EXPORTS std::string get_current_process_id(void);
 
 /** @brief Get current time in form of a string.
  *  @details Return datetime in form of ``{year}-{month}-{day}_{hour}:{minute}:{second}``.
  */
-std::string get_time(void);
+MERLIN_EXPORTS std::string get_time(void);
 
 // CUDA kernel
 // -----------
@@ -150,6 +151,17 @@ __cuhostdev__ std::array<std::uint64_t, 2> index_in_subsequence(std::uint64_t in
  *  @returns Row (@f$ k @f$) and column (@f$ r @f$) index of lower triangular matrix.
  */
 __cuhostdev__ std::array<std::uint64_t, 2> triangular_index(std::uint64_t index) noexcept;
+
+// Random Subset
+// -------------
+
+/** @brief Get a random subset of index in a range.
+ *  @param num_points Number of points to get.
+ *  @param i_max Index of max range.
+ *  @param i_min Index of min range.
+ */
+MERLIN_EXPORTS intvec get_random_subset(std::uint64_t num_points, std::uint64_t i_max,
+                                        std::uint64_t i_min = 0) noexcept;
 
 }  // namespace merlin
 

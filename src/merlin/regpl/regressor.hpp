@@ -2,10 +2,13 @@
 #ifndef MERLIN_REGPL_REGRESSOR_HPP_
 #define MERLIN_REGPL_REGRESSOR_HPP_
 
+#include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Parcel
 #include "merlin/cuda/declaration.hpp"   // merlin::cuda::Stream
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/grid/declaration.hpp"  // merlin::grid::CartesianGrid, merlin::grid::RegularGrid
 #include "merlin/regpl/declaration.hpp"  // merlin::regpl::Polynomial, merlin::regpl::Regressor
 #include "merlin/synchronizer.hpp"  // merlin::ProcessorType, merlin::Synchronizer
+#include "merlin/vector.hpp"  // merlin::floatvec
 
 namespace merlin {
 
@@ -17,6 +20,20 @@ namespace regpl {
 /** @brief Allocate memory for regressor object on GPU.*/
 void allocate_mem_gpu(const regpl::Polynomial & polynom, regpl::Polynomial *& p_poly, double *& matrix_data,
                       std::uintptr_t stream_ptr);
+
+/** @brief Calculate coefficient for regression on Cartesian grid.*/
+void fit_cartgrid_by_cpu(std::shared_future<void> synch, regpl::Polynomial * p_poly, double * matrix_data,
+                         const grid::CartesianGrid * p_grid, const array::Array * p_data, std::uint64_t n_threads,
+                         char * cpu_buffer) noexcept;
+
+/** @brief Calculate coefficient for regression on regular grid.*/
+void fit_reggrid_by_cpu(std::shared_future<void> synch, regpl::Polynomial * p_poly, double * matrix_data,
+                        const grid::RegularGrid * p_grid, const floatvec * p_data, std::uint64_t n_threads,
+                        char * cpu_buffer) noexcept;
+
+/** @brief Evaluate regression.*/
+void eval_by_cpu(std::shared_future<void> synch, const regpl::Polynomial * p_poly, const array::Array * p_data,
+                 double * p_result, std::uint64_t n_threads, char * cpu_buffer) noexcept;
 
 }  // namespace regpl
 
@@ -46,6 +63,42 @@ class regpl::Regressor {
     }
     /** @brief Check if the interpolator is executed on GPU.*/
     constexpr bool on_gpu(void) const noexcept { return (this->synch_.synchronizer.index() == 1); }
+    /** @brief Get a copy of the polynomial.*/
+    MERLIN_EXPORTS regpl::Polynomial get_polynom(void) const;
+    /// @}
+
+    /// @name Fit data
+    /// @{
+    /** @brief Regression on a cartesian dataset using CPU parallelism.
+     *  @param grid Cartesian grid of points.
+     *  @param data Data to fit.
+     *  @param n_threads Number of threads for calculation.
+    */
+    MERLIN_EXPORTS void fit_cpu(const grid::CartesianGrid & grid, const array::Array & data,
+                                std::uint64_t n_threads = 1);
+    /** @brief Regression on a random dataset using CPU parallelism.
+     *  @param grid Grid of points.
+     *  @param data Data to fit.
+     *  @param n_threads Number of threads for calculation.
+    */
+    MERLIN_EXPORTS void fit_cpu(const grid::RegularGrid & grid, const floatvec & data, std::uint64_t n_threads = 1);
+    /// @}
+
+    /// @name Evaluate
+    /// @{
+    /** @brief Evaluate regression by CPU parallelism.
+     *  @param points 2D C-contiguous array of shape ``[npoint, ndim]``, in which ``npoint`` is the number of points
+     *  and ``ndim`` is the dimension of each point.
+     *  @param p_result Pointer to array storing result, size of at least ``double[npoint]``.
+     *  @param n_threads Number of threads for calculation.
+     */
+    void evaluate(const array::Array & points, double * p_result, std::uint64_t n_threads = 1);
+    /// @}
+
+    /// @name Synchronization
+    /// @{
+    /** @brief Force the current CPU to wait until all asynchronous tasks have finished.*/
+    void synchronize(void) { this->synch_.synchronize(); }
     /// @}
 
     /// @name Destructor
@@ -74,6 +127,10 @@ class regpl::Regressor {
 
     /** @brief Shared memory for calculation on GPU.*/
     std::uint64_t shared_mem_size_;
+
+  private:
+    /** @brief Resize CPU buffer.*/
+    void resize_cpu_buffer(std::uint64_t new_size);
 };
 
 }  // namespace merlin

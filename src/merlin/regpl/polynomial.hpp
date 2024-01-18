@@ -4,6 +4,7 @@
 
 #include <string>  // std::string
 
+#include "merlin/array/declaration.hpp"  // merlin::array::Array
 #include "merlin/cuda_interface.hpp"  // __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/regpl/declaration.hpp"  // merlin::regpl::Polynomial
@@ -50,11 +51,20 @@ class regpl::Polynomial {
     __cuhostdev__ constexpr const intvec & order(void) const noexcept { return this->order_; }
     /// @}
 
+    /// @name Vandermonde
+    /// @{
+    /** @brief Generate Vandermonde matrix.
+     *  @param grid_points Points of a grid.
+     *  @param n_threads Number of threads for calculating the Vandermonde matrix.
+    */
+    MERLIN_EXPORTS array::Array calc_vandermonde(const array::Array & grid_points, std::uint64_t n_threads = 1) const;
+    /// @}
+
     /// @name Evaluation
     /// @{
     /** @brief Evaluate polynomial value at a given point.
      *  @param point Pointer to coordinates of the point.
-     *  @param buffer Buffer memory for calculation,
+     *  @param buffer Buffer memory for calculation, size of at least ``double[ndim]``,
     */
     __cuhostdev__ double eval(const double * point, double * buffer) const noexcept;
     /// @}

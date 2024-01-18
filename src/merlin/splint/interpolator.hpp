@@ -114,17 +114,19 @@ class splint::Interpolator {
      *  @throw std::invalid_argument when the input array is not C-contiguous.
      *  @param points 2D C-contiguous array of shape ``[npoint, ndim]``, in which ``npoint`` is the number of points to
      *  interpolate and ``ndim`` is the dimension of the point.
+     *  @param result Array storing interpolation result.
      *  @param n_threads Number of CPU threads to evaluate the interpolation.
      */
-    MERLIN_EXPORTS floatvec evaluate(const array::Array & points, std::uint64_t n_threads = 1);
+    MERLIN_EXPORTS void evaluate(const array::Array & points, floatvec & result, std::uint64_t n_threads = 1);
     /** @brief Evaluate interpolate by GPU.
      *  @warning This function will lock the mutex.
      *  @throw std::invalid_argument when the input array is not C-contiguous.
      *  @param points 2D C-contiguous array of shape ``[npoint, ndim]``, in which ``npoint`` is the number of points to
      *  interpolate and ``ndim`` is the dimension of the point.
+     *  @param result Array storing interpolation result.
      *  @param n_threads Number of GPU threads to calculate the coefficients.
      */
-    MERLIN_EXPORTS floatvec evaluate(const array::Parcel & points, std::uint64_t n_threads = 32);
+    MERLIN_EXPORTS void evaluate(const array::Parcel & points, floatvec & result, std::uint64_t n_threads = 32);
     /// @}
 
     /// @name Synchronization

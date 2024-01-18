@@ -2,14 +2,14 @@
 #include "merlin/splint/interpolator.hpp"
 #include "merlin/splint/tools.hpp"
 
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+
 #include "merlin/array/array.hpp"
 #include "merlin/grid/cartesian_grid.hpp"
 #include "merlin/synchronizer.hpp"
 
-#include <iostream>
-
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
+#include "py_common.hpp"
 
 namespace py = pybind11;
 
@@ -46,18 +46,18 @@ void wrap_interpolator(py::module & splint_module) {
     interpolator_pyclass.def(
         py::init(
             [](const grid::CartesianGrid & grid, const array::Array & values, py::list & method,
-               ProcessorType processor) {
+               const std::string & processor) {
                 Vector<splint::Method> method_cpp(method.size());
                 std::uint64_t i = 0;
                 for (auto it = method.begin(); it != method.end(); ++it) {
                     method[i] = (*it).cast<splint::Method>();
                     i++;
                 }
-                return new splint::Interpolator(grid, values, method_cpp, processor);
+                return new splint::Interpolator(grid, values, method_cpp, proctype_map[processor]);
             }
         ),
         "Construct from an array of values.",
-        py::arg("grid"), py::arg("values"), py::arg("method"), py::arg("processor") = ProcessorType::Cpu
+        py::arg("grid"), py::arg("values"), py::arg("method"), py::arg("processor") = "cpu"
     );
     // attributes
     interpolator_pyclass.def_property_readonly(
@@ -76,12 +76,12 @@ void wrap_interpolator(py::module & splint_module) {
     interpolator_pyclass.def(
         "evaluate",
         [](splint::Interpolator & self, const array::Array & points, std::uint64_t n_threads) {
-            floatvec eval_values = self.evaluate(points, n_threads);
-            intvec eval_shape = {eval_values.size()};
-            intvec eval_strides = {sizeof(double)};
-            array::Array result(eval_values.data(), eval_shape, eval_strides, false);
-            eval_values.data() = nullptr;
-            return result;
+            intvec eval_shape = {points.shape()[0]};
+            array::Array * p_eval_values = new array::Array(eval_shape);
+            floatvec eval_values;
+            eval_values.assign(p_eval_values->data(), p_eval_values->size());
+            self.evaluate(points, eval_values, n_threads);
+            return p_eval_values;
         },
         "Evaluate interpolation by CPU.",
         py::arg("points"), py::arg("n_threads") = 1

@@ -90,17 +90,19 @@ Array manipulation
    merlin::array::fill
    merlin::array::print
 
-
-Interpolator API
-----------------
-
-Grid
-^^^^
+Grid API
+--------
 
 .. doxysummary::
    :toctree: generated
 
    merlin::grid::CartesianGrid
+   merlin::grid::RegularGrid
+
+
+Interpolator API
+----------------
+
 
 Polynomial interpolation
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -122,6 +124,15 @@ Low-level API
    merlin::splint::eval_intpl_cpu
    merlin::splint::eval_intpl_gpu
 
+
+Regression API
+--------------
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::regpl::Polynomial
+   merlin::regpl::Regressor
 
 Statistics API
 --------------

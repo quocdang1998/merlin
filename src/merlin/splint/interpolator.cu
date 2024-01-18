@@ -28,7 +28,7 @@ void splint::create_intpl_gpuptr(const grid::CartesianGrid & cpu_grid, const Vec
 }
 
 // Interpolate by GPU
-floatvec splint::Interpolator::evaluate(const array::Parcel & points, std::uint64_t n_threads) {
+void splint::Interpolator::evaluate(const array::Parcel & points, floatvec & result, std::uint64_t n_threads) {
     // check if interpolator is on CPU
     if (!this->on_gpu()) {
         FAILURE(std::invalid_argument, "Interpolator is initialized on CPU.\n");
@@ -43,20 +43,21 @@ floatvec splint::Interpolator::evaluate(const array::Parcel & points, std::uint6
     if (points.shape()[1] != this->ndim_) {
         FAILURE(std::invalid_argument, "Array of coordinates and interpolator have different dimension.\n");
     }
+    if (points.shape()[0] != result.size()) {
+        FAILURE(std::invalid_argument, "Size of result array must be equal to the number of points.\n");
+    }
     // get CUDA Stream
     cuda::Stream & stream = std::get<cuda::Stream>(this->synchronizer_.synchronizer);
     std::uintptr_t current_ctx = stream.get_gpu().push_context();
     // evaluate interpolation
-    floatvec evaluated_values(points.shape()[0]);
-    std::uint64_t bytes_size = evaluated_values.size() * sizeof(double);
+    std::uint64_t bytes_size = result.size() * sizeof(double);
     void * result_gpu = cuda_mem_alloc(bytes_size, stream.get_stream_ptr());
     splint::eval_intpl_gpu(this->p_coeff_->data(), this->p_grid_, this->p_method_, points.data(),
-                           evaluated_values.size(), reinterpret_cast<double *>(result_gpu), n_threads, this->ndim_,
+                           result.size(), reinterpret_cast<double *>(result_gpu), n_threads, this->ndim_,
                            this->shared_mem_size_, &stream);
-    cuda_mem_cpy_device_to_host(evaluated_values.data(), result_gpu, bytes_size, stream.get_stream_ptr());
+    cuda_mem_cpy_device_to_host(result.data(), result_gpu, bytes_size, stream.get_stream_ptr());
     cuda_mem_free(result_gpu, stream.get_stream_ptr());
     cuda::Device::pop_context(current_ctx);
-    return evaluated_values;
 }
 
 }  // namespace merlin

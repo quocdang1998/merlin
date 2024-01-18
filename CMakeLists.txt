@@ -38,6 +38,7 @@ list(APPEND MERLIN_SRC_CPP
      cuda/stream.cpp
      filelock.cpp
      grid/cartesian_grid.cpp
+     grid/regular_grid.cpp
      iterator.cpp
      # intpl/cartesian_grid.cpp
      # intpl/grid.cpp
@@ -56,6 +57,7 @@ list(APPEND MERLIN_SRC_CPP
      splint/interpolator.cpp
      splint/tools.cpp
      stat/moment.cpp
+     utils.cpp
 )
 list(APPEND MERLIN_SRC_CU
      array/array.cu
@@ -98,6 +100,7 @@ list(APPEND MERLIN_SRC_RDC
      # intpl/lagrange.rdc
      # intpl/newton.rdc
      grid/cartesian_grid.rdc
+     grid/regular_grid.rdc
      linalg/qr_solve.rdc
      linalg/matrix.rdc
      regpl/core.rdc

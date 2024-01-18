@@ -9,6 +9,23 @@ namespace merlin {
 // CartesianGrid
 // ---------------------------------------------------------------------------------------------------------------------
 
+// Write coordinate of point to a pre-allocated memory
+__cuhostdev__ void grid::CartesianGrid::get(std::uint64_t index, double * point_data) const noexcept {
+    std::uint64_t cum_prod = 1;
+    for (std::int64_t i = this->ndim() - 1; i >= 0; i--) {
+        std::uint64_t nd_index = (index / cum_prod) % this->grid_shape_[i];
+        point_data[i] = this->grid_vectors_[i][nd_index];
+        cum_prod *= this->grid_shape_[i];
+    }
+}
+
+// Write coordinate of point to a pre-allocated memory given index vector
+__cuhostdev__ void grid::CartesianGrid::get(const intvec & index, double * point_data) const noexcept {
+    for (std::uint64_t i = 0; i < this->ndim(); i++) {
+        point_data[i] = this->grid_vectors_[i][index[i]];
+    }
+}
+
 #ifdef __NVCC__
 
 // Copy to shared memory

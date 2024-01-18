@@ -67,6 +67,16 @@ class grid::CartesianGrid {
 
     /// @name Slicing operator
     /// @{
+    /** @brief Write coordinate of point to a pre-allocated memory given flatten index.
+     *  @param index Flatten index of point in the grid (in C order).
+     *  @param point_data Pointer to memory recording point coordinate.
+     */
+    __cuhostdev__ void get(std::uint64_t index, double * point_data) const noexcept;
+    /** @brief Write coordinate of point to a pre-allocated memory given index vector.
+     *  @param index Vector of index on each dimension.
+     *  @param point_data Pointer to memory recording point coordinate.
+     */
+    __cuhostdev__ void get(const intvec & index, double * point_data) const noexcept;
     /** @brief Get element at a given flatten index.
      *  @param index Flatten index of point in the grid (in C order).
      */
