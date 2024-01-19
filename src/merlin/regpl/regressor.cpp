@@ -95,6 +95,7 @@ void regpl::eval_by_cpu(std::shared_future<void> synch, const regpl::Polynomial 
         synch.get();
     }
     // evaluate polynomial
+    std::memset(cpu_buffer, 0, n_threads * p_poly->ndim() * sizeof(double));
     double * buffer = reinterpret_cast<double *>(cpu_buffer);
     #pragma omp parallel num_threads(n_threads)
     {
@@ -215,7 +216,6 @@ void regpl::Regressor::evaluate(const array::Array & points, double * p_result, 
     // resize buffer
     this->resize_cpu_buffer(n_threads * this->ndim_ * sizeof(double));
     // asynchronous calculate
-    std::memset(this->cpu_buffer_, 0, this->cpu_buffer_size_);
     std::shared_future<void> & current_sync = std::get<std::shared_future<void>>(this->synch_.synchronizer);
     std::shared_future<void> new_sync = std::async(std::launch::async, regpl::eval_by_cpu, current_sync, this->p_poly_,
                                                    &points, p_result, n_threads, this->cpu_buffer_).share();

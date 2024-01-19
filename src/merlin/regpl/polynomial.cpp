@@ -1,6 +1,8 @@
 // Copyright 2024 quocdang1998
 #include "merlin/regpl/polynomial.hpp"
 
+#include <algorithm>  // std::iota, std::stable_sort, std::unique
+#include <cinttypes>  // PRIu64
 #include <cmath>    // std::pow
 #include <sstream>  // std::ostringstream
 
@@ -8,7 +10,7 @@
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/logger.hpp"  // FAILURE, merlin::cuda_compile_error
-#include "merlin/utils.hpp"  // merlin::prod_elements
+#include "merlin/utils.hpp"  // merlin::prod_elements, merlin::ndim_to_contiguous_idx
 
 namespace merlin {
 
@@ -18,11 +20,58 @@ namespace merlin {
 
 // Constructor of an empty polynomial from order per dimension
 regpl::Polynomial::Polynomial(const intvec & order_per_dim) :
-order_(order_per_dim), coeff_(prod_elements(order_per_dim)) { }
+order_(order_per_dim), coeff_(prod_elements(order_per_dim)), term_idx_(this->coeff_.size()) {
+    std::iota(this->term_idx_.begin(), this->term_idx_.end(), 0);
+}
 
 // Constructor of a pre-allocated array of coefficients and order per dimension
-regpl::Polynomial::Polynomial(double * coeff_data, const intvec & order_per_dim) : order_(order_per_dim) {
-    this->coeff_.assign(coeff_data, prod_elements(order_per_dim));
+regpl::Polynomial::Polynomial(const floatvec & coeff_data, const intvec & order_per_dim) :
+order_(order_per_dim), coeff_(coeff_data), term_idx_(coeff_data.size()) {
+    if (coeff_data.size() != prod_elements(order_per_dim)) {
+        FAILURE(std::invalid_argument, "Insufficient number of coefficients provided for the given order_per_dim.\n");
+    }
+    std::iota(this->term_idx_.begin(), this->term_idx_.end(), 0);
+}
+
+// Constructor of a sparse polynomial
+regpl::Polynomial::Polynomial(const floatvec & coeff_data, const intvec & order_per_dim, const intvec & term_index) :
+order_(order_per_dim), coeff_(coeff_data.size()), term_idx_(coeff_data.size()) {
+    // check argument
+    if (term_index.size() % order_per_dim.size() != 0) {
+        FAILURE(std::invalid_argument, "Size of argument term_index must divide size of order_per_dim.\n");
+    }
+    if (coeff_data.size() * order_per_dim.size() != term_index.size()) {
+        FAILURE(std::invalid_argument, "Inconsistent argument provided.\n");
+    }
+    // initialize sort index
+    intvec sorted_idx(coeff_data.size());
+    std::iota(sorted_idx.begin(), sorted_idx.end(), 0);
+    // get term index
+    for (std::uint64_t i_term = 0; i_term < coeff_data.size(); i_term++) {
+        const std::uint64_t * term_idx_ptr = term_index.data() + i_term * order_per_dim.size();
+        // check for consistent
+        for (std::uint64_t i = 0; i < order_per_dim.size(); i++) {
+            if (term_idx_ptr[i] >= order_per_dim[i]) {
+                FAILURE(std::invalid_argument, "Invalid input at term %" PRIu64 ".\n", i_term);
+            }
+        }
+        intvec term_idx;
+        term_idx.assign(const_cast<std::uint64_t *>(term_idx_ptr), order_per_dim.size());
+        this->term_idx_[i_term] = ndim_to_contiguous_idx(term_idx, order_per_dim);
+    }
+    // sort term index
+    auto sort_lambda = [this](const std::uint64_t & i1, const std::uint64_t & i2) {
+        return this->term_idx_[i1] < this->term_idx_[i2];
+    };
+    std::stable_sort(sorted_idx.begin(), sorted_idx.end(), sort_lambda);
+    intvec argument_idx(this->term_idx_);
+    for (std::uint64_t i_term = 0; i_term < coeff_data.size(); i_term++) {
+        this->term_idx_[i_term] = argument_idx[sorted_idx[i_term]];
+        this->coeff_[i_term] = coeff_data[sorted_idx[i_term]];
+    }
+    if (std::unique(this->term_idx_.begin(), this->term_idx_.end()) != this->term_idx_.end()) {
+        FAILURE(std::invalid_argument, "Duplicate index detected.\n");
+    }
 }
 
 // Generate Vandermonde matrix

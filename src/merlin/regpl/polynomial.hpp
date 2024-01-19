@@ -19,10 +19,22 @@ class regpl::Polynomial {
     /// @{
     /** @brief Default constructor.*/
     Polynomial(void) = default;
-    /** @brief Constructor of an empty polynomial from order per dimension.*/
+    /** @brief Constructor of a full polynomial with zero-filled coefficients from max power per dimension.
+     *  @param order_per_dim Max power per dimension (one-more than highest power).
+     */
     MERLIN_EXPORTS Polynomial(const intvec & order_per_dim);
-    /** @brief Constructor of a pre-allocated array of coefficients and order per dimension.*/
-    MERLIN_EXPORTS Polynomial(double * coeff_data, const intvec & order_per_dim);
+    /** @brief Constructor of a full polynomial from array of coefficients and max power per dimension.
+     *  @param coeff_data Coefficient data (flatten in a C-contiguous order), with lower order first.
+     *  @param order_per_dim Max power per dimension (one-more than highest power).
+     */
+    MERLIN_EXPORTS Polynomial(const floatvec & coeff_data, const intvec & order_per_dim);
+    /** @brief Constructor of a sparse polynomial from array of coefficients, max power per dimension and the power
+     *  of each term.
+     *  @param coeff_data Coefficient data (in any order).
+     *  @param order_per_dim Max power per dimension (one-more than highest power).
+     *  @param term_index Powers of each variable in the monomial associated.
+     */
+    MERLIN_EXPORTS Polynomial(const floatvec & coeff_data, const intvec & order_per_dim, const intvec & term_index);
     /// @}
 
     /// @name Copy and move
@@ -124,8 +136,10 @@ class regpl::Polynomial {
   protected:
     /** @brief Coefficient data.*/
     floatvec coeff_;
-    /** @brief Order per dimension.*/
+    /** @brief Max power per dimension.*/
     intvec order_;
+    /** @brief Index of each term present in the polynomial.*/
+    intvec term_idx_;
 };
 
 }  // namespace merlin
