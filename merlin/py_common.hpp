@@ -19,16 +19,22 @@ namespace merlin {
 // Convert Python list to floatvec
 floatvec pylist_to_fvec(py::list & float_list);
 
+// Convert floatvec to Python list
+py::list fvec_to_pylist(const floatvec & vector);
+
 // Convert Python list to intvec
-intvec pylist_to_ivec(py::list & float_list);
+intvec pylist_to_ivec(py::list & int_list);
+
+// Convert intvec to Python list
+py::list ivec_to_pylist(const intvec & vector);
 
 // Wrap Libraries
 // --------------
 
-/** @brief Wrap ``merlin::Environment`` class.*/
+// Wrap ``merlin::Environment`` class
 void wrap_env(py::module & merlin_package);
 
-/** @brief Wrap ``merlin::cuda`` library.*/
+// @brief Wrap ``merlin::cuda`` library
 void wrap_cuda(py::module & merlin_package);
 
 /** @brief Wrap ``merlin::array`` library.*/
