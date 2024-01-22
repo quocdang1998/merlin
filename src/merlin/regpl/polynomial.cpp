@@ -20,13 +20,13 @@ namespace merlin {
 
 // Constructor of an empty polynomial from order per dimension
 regpl::Polynomial::Polynomial(const intvec & order_per_dim) :
-order_(order_per_dim), coeff_(prod_elements(order_per_dim)), term_idx_(this->coeff_.size()) {
+order_(order_per_dim), coeff_(prod_elements(order_per_dim)), term_idx_(this->coeff_.size()), full_n_(coeff_.size()) {
     std::iota(this->term_idx_.begin(), this->term_idx_.end(), 0);
 }
 
 // Constructor of a pre-allocated array of coefficients and order per dimension
 regpl::Polynomial::Polynomial(const floatvec & coeff_data, const intvec & order_per_dim) :
-order_(order_per_dim), coeff_(coeff_data), term_idx_(coeff_data.size()) {
+order_(order_per_dim), coeff_(coeff_data), term_idx_(coeff_data.size()), full_n_(coeff_data.size()) {
     if (coeff_data.size() != prod_elements(order_per_dim)) {
         FAILURE(std::invalid_argument, "Insufficient number of coefficients provided for the given order_per_dim.\n");
     }
@@ -35,7 +35,7 @@ order_(order_per_dim), coeff_(coeff_data), term_idx_(coeff_data.size()) {
 
 // Constructor of a sparse polynomial
 regpl::Polynomial::Polynomial(const floatvec & coeff_data, const intvec & order_per_dim, const intvec & term_index) :
-order_(order_per_dim), coeff_(coeff_data.size()), term_idx_(coeff_data.size()) {
+order_(order_per_dim), coeff_(coeff_data.size()), term_idx_(coeff_data.size()), full_n_(prod_elements(order_per_dim)) {
     // check argument
     if (term_index.size() % order_per_dim.size() != 0) {
         FAILURE(std::invalid_argument, "Size of argument term_index must divide size of order_per_dim.\n");
@@ -101,7 +101,7 @@ array::Array regpl::Polynomial::calc_vandermonde(const array::Array & grid_point
                 // calculate monomial expansion for each dimension
                 std::uint64_t cum_prod = 1;
                 for (std::int64_t i_dim = this->ndim() - 1; i_dim >= 0; i_dim--) {
-                    std::uint64_t nd_index = (i_term / cum_prod) % this->order_[i_dim];
+                    std::uint64_t nd_index = (this->term_idx_[i_term] / cum_prod) % this->order_[i_dim];
                     point_index[1] = i_dim;
                     row_data[i_term] *= std::pow(grid_points.get(point_index), nd_index);
                     cum_prod *= this->order_[i_dim];
@@ -134,7 +134,8 @@ std::string regpl::Polynomial::str(void) const {
     std::ostringstream os;
     os << "<Polynomial(";
     os << "order=" << this->order_.str() << ", ";
-    os << "coeff=" << this->coeff_.str();
+    os << "coeff=" << this->coeff_.str() << ", ";
+    os << "term_index=" << this->term_idx_.str();
     os << ")";
     return os.str();
 }

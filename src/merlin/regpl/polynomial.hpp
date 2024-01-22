@@ -87,6 +87,7 @@ class regpl::Polynomial {
     std::uint64_t cumalloc_size(void) const noexcept {
         std::uint64_t size = sizeof(regpl::Polynomial);
         size += this->size() * sizeof(double) + this->ndim() * sizeof(std::uint64_t);
+        size += this->size() * sizeof(std::uint64_t);
         return size;
     }
     /** @brief Copy the polynomial from CPU to a pre-allocated memory on GPU.
@@ -140,6 +141,10 @@ class regpl::Polynomial {
     intvec order_;
     /** @brief Index of each term present in the polynomial.*/
     intvec term_idx_;
+
+  private:
+    /** @brief Full number of terms.*/
+    std::uint64_t full_n_;
 };
 
 }  // namespace merlin

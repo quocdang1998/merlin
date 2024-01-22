@@ -9,8 +9,18 @@
 namespace py = pybind11;
 
 #include "merlin/synchronizer.hpp"
+#include "merlin/vector.hpp"
 
 namespace merlin {
+
+// Conversion
+// ----------
+
+// Convert Python list to floatvec
+floatvec pylist_to_fvec(py::list & float_list);
+
+// Convert Python list to intvec
+intvec pylist_to_ivec(py::list & float_list);
 
 // Wrap Libraries
 // --------------

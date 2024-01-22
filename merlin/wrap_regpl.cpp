@@ -53,6 +53,18 @@ void wrap_polynomial(py::module & regpl_module) {
         "Constructor from coefficients array.",
         py::arg("coeffs")
     );
+    polynomial_pyclass.def(
+        py::init(
+            [](py::list & coeff_array, py::list & order_per_dim, py::list & term_index) {
+                floatvec cpp_coeff = pylist_to_fvec(coeff_array);
+                intvec cpp_order = pylist_to_ivec(order_per_dim);
+                intvec cpp_term = pylist_to_ivec(term_index);
+                return new regpl::Polynomial(cpp_coeff, cpp_order, cpp_term);
+            }
+        ),
+        "Constructor of a sparse polynomial from coefficients.",
+        py::arg("coeff_array"), py::arg("order_per_dim"), py::arg("term_index")
+    );
     // attributes
     polynomial_pyclass.def(
         "order",

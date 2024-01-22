@@ -3,7 +3,7 @@
 
 #include <cmath>
 
-#include "merlin/utils.hpp"
+#include "merlin/utils.hpp"  // merlin::prod_elements
 
 namespace merlin {
 
@@ -31,10 +31,12 @@ __cuhostdev__ double regpl::Polynomial::eval(const double * point, double * buff
     buffer_vec.assign(buffer, this->ndim());
     buffer[0] = 0.0;
     buffer[this->ndim() - 1] = 0.0;
-    for (std::int64_t i_term = this->size() - 1; i_term >= 0; i_term--) {
+    for (std::int64_t i_term = this->full_n_ - 1, j_term = this->size() - 1; i_term >= 0; i_term--) {
+        // check if the term present in the polynomial
+        bool in_polynomial = (j_term >= 0) ? (i_term == this->term_idx_[j_term]) : false;
         // update the last dimension
         buffer[this->ndim() - 1] *= point[this->ndim() - 1];
-        buffer[this->ndim() - 1] += this->coeff_[i_term];
+        buffer[this->ndim() - 1] += (in_polynomial) ? this->coeff_[j_term] : 0.0;
         // get leaping dimension
         std::int64_t leaping_dim = leaping_dimension(i_term, this->order_);
         for (std::int64_t i_dim = this->ndim() - 2; i_dim >= leaping_dim; i_dim--) {
@@ -42,6 +44,8 @@ __cuhostdev__ double regpl::Polynomial::eval(const double * point, double * buff
             buffer[i_dim] += buffer[i_dim + 1];
             buffer[i_dim + 1] = 0.0;
         }
+        // update j_term
+        j_term -= (in_polynomial) ? 1 : 0;
     }
     return buffer[0];
 }
@@ -54,11 +58,15 @@ __cudevice__ void * regpl::Polynomial::copy_by_block(regpl::Polynomial * dest_pt
     // shallow copy of grid node, grid shape and grid vectors
     double * coeff_ptr = reinterpret_cast<double *>(coeff_data_ptr);
     std::uint64_t * order_ptr = reinterpret_cast<std::uint64_t *>(coeff_ptr + this->size());
+    std::uint64_t * term_idx_ptr = reinterpret_cast<std::uint64_t *>(order_ptr + this->ndim());
     if (thread_idx == 0) {
         dest_ptr->coeff_.data() = coeff_ptr;
         dest_ptr->coeff_.size() = this->size();
         dest_ptr->order_.data() = order_ptr;
         dest_ptr->order_.size() = this->ndim();
+        dest_ptr->term_idx_.data() = term_idx_ptr;
+        dest_ptr->term_idx_.size() = this->size();
+        dest_ptr->full_n_ = this->full_n_;
     }
     __syncthreads();
     // copy data of grid nodes and grid shape
@@ -71,7 +79,11 @@ __cudevice__ void * regpl::Polynomial::copy_by_block(regpl::Polynomial * dest_pt
         dest_ptr->order_[i_dim] = this->order_[i_dim];
     }
     __syncthreads();
-    return reinterpret_cast<void *>(order_ptr + this->ndim());
+    for (std::uint64_t i_term = thread_idx; i_term < size; i_term += block_size) {
+        dest_ptr->term_idx_[i_term] = this->term_idx_[i_term];
+    }
+    __syncthreads();
+    return reinterpret_cast<void *>(term_idx_ptr + this->size());
 }
 
 // Copy to shared memory by CUDA thread
@@ -79,10 +91,14 @@ __cudevice__ void * regpl::Polynomial::copy_by_thread(regpl::Polynomial * dest_p
     // shallow copy of grid node, grid shape and grid vectors
     double * coeff_ptr = reinterpret_cast<double *>(coeff_data_ptr);
     std::uint64_t * order_ptr = reinterpret_cast<std::uint64_t *>(coeff_ptr + this->size());
+    std::uint64_t * term_idx_ptr = reinterpret_cast<std::uint64_t *>(order_ptr + this->ndim());
     dest_ptr->coeff_.data() = coeff_ptr;
     dest_ptr->coeff_.size() = this->size();
     dest_ptr->order_.data() = order_ptr;
     dest_ptr->order_.size() = this->ndim();
+    dest_ptr->term_idx_.data() = term_idx_ptr;
+    dest_ptr->term_idx_.size() = this->size();
+    dest_ptr->full_n_ = this->full_n_;
     // copy data of grid nodes and grid shape
     std::uint64_t size = this->size(), ndim = this->ndim();
     for (std::uint64_t i_coeff = 0; i_coeff < size; i_coeff++) {
@@ -91,8 +107,11 @@ __cudevice__ void * regpl::Polynomial::copy_by_thread(regpl::Polynomial * dest_p
     for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
         dest_ptr->order_[i_dim] = this->order_[i_dim];
     }
+    for (std::uint64_t i_term = 0; i_term < size; i_term++) {
+        dest_ptr->term_idx_[i_term] = this->term_idx_[i_term];
+    }
     // re-calculate grid vectors
-    return reinterpret_cast<void *>(order_ptr + this->ndim());
+    return reinterpret_cast<void *>(term_idx_ptr + this->size());
 }
 
 #endif  // __NVCC__
