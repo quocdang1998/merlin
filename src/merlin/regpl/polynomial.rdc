@@ -27,7 +27,7 @@ __cuhostdev__ static inline std::int64_t leaping_dimension(const std::uint64_t &
 
 // Evaluate polynomial value at a given point
 __cuhostdev__ double regpl::Polynomial::eval(const double * point, double * buffer) const noexcept {
-    floatvec buffer_vec;
+    /*floatvec buffer_vec;
     buffer_vec.assign(buffer, this->ndim());
     buffer[0] = 0.0;
     buffer[this->ndim() - 1] = 0.0;
@@ -46,6 +46,23 @@ __cuhostdev__ double regpl::Polynomial::eval(const double * point, double * buff
         }
         // update j_term
         j_term -= (in_polynomial) ? 1 : 0;
+    }
+    return buffer[0];*/
+    floatvec buffer_vec;
+    buffer_vec.assign(buffer, this->ndim());
+    buffer[0] = 0.0;
+    buffer[this->ndim() - 1] = 0.0;
+    for (std::int64_t i_term = this->size() - 1; i_term >= 0; i_term--) {
+        // update the last dimension
+        buffer[this->ndim() - 1] *= point[this->ndim() - 1];
+        buffer[this->ndim() - 1] += this->coeff_[i_term];
+        // get leaping dimension
+        std::int64_t leaping_dim = leaping_dimension(i_term, this->order_);
+        for (std::int64_t i_dim = this->ndim() - 2; i_dim >= leaping_dim; i_dim--) {
+            buffer[i_dim] *= point[i_dim];
+            buffer[i_dim] += buffer[i_dim + 1];
+            buffer[i_dim + 1] = 0.0;
+        }
     }
     return buffer[0];
 }

@@ -40,4 +40,9 @@ int main(void) {
     floatvec point = {1.8, 0.7, 1.5};
     MESSAGE("Evaluation at point %s is %f\n", point.str().c_str(), p.eval(point.data(), buffer.data()));
     MESSAGE("Reference  of point %s is %f\n", point.str().c_str(), reference(point.data()));
+
+    p.serialize("polynom.txt");
+    regpl::Polynomial p_read;
+    p_read.deserialize("polynom.txt");
+    MESSAGE("Read polynomial: %s\n", p_read.str().c_str());
 }

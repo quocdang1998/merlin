@@ -15,11 +15,18 @@ from distutils import log
 
 from string import Template
 
+from threading import Thread
+
 from .config import *
 
 # CUDA architechture template
 cu_arch_template = Template("--generate-code=arch=compute_${arch},"
                             "code=[compute_${arch},sm_${arch}]")
+
+# thread object with result
+class ResultedThread(Thread):
+    def run(self):
+        self.result = self._target(*self._args, **self._kwargs)
 
 # overwrite method build_extension of setuptools.build_ext
 class build_ext(_sut_build_ext):
@@ -69,15 +76,35 @@ class custom_du_build_ext(_du_build_ext):
         # compile step
         if MERLIN_DEBUG:
             self.debug = True
-        objects = self.compiler.compile(
-            sources,
-            output_dir=self.build_temp,
-            macros=macros,
-            include_dirs=ext.include_dirs,
-            debug=self.debug,
-            extra_postargs=extra_args,
-            depends=ext.depends,
-        )
+        compile_opt = {
+            "output_dir": self.build_temp,
+            "macros": macros,
+            "include_dirs": ext.include_dirs,
+            "debug": self.debug,
+            "extra_postargs": extra_args,
+            "depends": ext.depends,
+        }
+        compile_threads = []
+        for source in sources:
+            compile_thread = ResultedThread(
+                    target=self.compiler.compile,
+                    args=[[source]], kwargs=compile_opt
+                )
+            compile_thread.start()
+            compile_threads.append(compile_thread)
+        objects = []
+        for thread in compile_threads:
+            thread.join()
+            objects.extend(thread.result)
+        # objects = self.compiler.compile(
+        #     sources,
+        #     output_dir=self.build_temp,
+        #     macros=macros,
+        #     include_dirs=ext.include_dirs,
+        #     debug=self.debug,
+        #     extra_postargs=extra_args,
+        #     depends=ext.depends,
+        # )
 
         # cuda device linker
         if MERLIN_CUDA:

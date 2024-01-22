@@ -82,6 +82,7 @@ list(APPEND MERLIN_SRC_GLB
      cuda/device.glb
      # intpl/lagrange.glb
      # intpl/newton.glb
+     regpl/regressor.glb
      splint/tools.glb
      stat/moment.glb
 )

@@ -5,25 +5,25 @@
 #include "merlin/cuda/event.hpp"
 #include "merlin/cuda/stream.hpp"
 
-#include <pybind11/pybind11.h>
+#include <string>
+#include <unordered_map>
 
+#include <pybind11/pybind11.h>
 namespace py = pybind11;
 
 namespace merlin {
 
+// wrap DeviceLimit
+static std::unordered_map<std::string, cuda::DeviceLimit> devicelimit_map = {
+    {"stacksize",          cuda::DeviceLimit::StackSize},
+    {"printfsize",         cuda::DeviceLimit::PrintfSize},
+    {"heapsize",           cuda::DeviceLimit::HeapSize},
+    {"syncdepth",          cuda::DeviceLimit::SyncDepth},
+    {"launchpendingcount", cuda::DeviceLimit::LaunchPendingCount}
+};
+
 // Wrap enums
 static void wrap_enums(py::module & cuda_module) {
-    // wrap cuda::DeviceLimit
-    auto device_limit_pyenum = py::enum_<cuda::DeviceLimit>(
-        cuda_module,
-        "DeviceLimit",
-        "Wrapper of :cpp:enum:`merlin::cuda::DeviceLimit`"
-    );
-    device_limit_pyenum.value("StackSize", cuda::DeviceLimit::StackSize);
-    device_limit_pyenum.value("PrintfSize", cuda::DeviceLimit::PrintfSize);
-    device_limit_pyenum.value("HeapSize", cuda::DeviceLimit::HeapSize);
-    device_limit_pyenum.value("SyncDepth", cuda::DeviceLimit::SyncDepth);
-    device_limit_pyenum.value("LaunchPendingCount", cuda::DeviceLimit::LaunchPendingCount);
     // wrap cuda::EventCategory
     auto event_category_pyenum = py::enum_<cuda::EventCategory>(
         cuda_module,
@@ -107,13 +107,13 @@ static void wrap_device(py::module & cuda_module) {
     );
     device_pyclass.def_static(
         "get_limit",
-        [](cuda::DeviceLimit limit) { return cuda::Device::limit(limit); },
+        [](const std::string & limit) { return cuda::Device::limit(devicelimit_map[limit]); },
         "Get setting limits of the current GPU.",
         py::arg("limit")
     );
     device_pyclass.def_static(
         "set_limit",
-        [](cuda::DeviceLimit limit, std::uint64_t size) { return cuda::Device::limit(limit, size); },
+        [](const std::string & limit, std::uint64_t size) { return cuda::Device::limit(devicelimit_map[limit], size); },
         "Set setting limits of the current GPU.",
         py::arg("limit"), py::arg("size")
     );
