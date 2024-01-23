@@ -14,8 +14,19 @@ namespace py = pybind11;
 namespace merlin {
 
 void wrap_utils(py::module & merlin_package) {
-    // add regpl submodule
+    // add utils submodule
     py::module utils_module = merlin_package.def_submodule("utils", "Utils.");
+    // contiguous to ndim idx
+    utils_module.def(
+        "contiguous_to_ndim_idx",
+        [](std::uint64_t index, py::list & shape) {
+            intvec shape_cpp(pylist_to_ivec(shape));
+            py::list ndim_idx = ivec_to_pylist(contiguous_to_ndim_idx(index, shape_cpp));
+            return ndim_idx;
+        },
+        "Convert C-contiguous index to n-dimensional index with allocating memory for result.",
+        py::arg("index"), py::arg("shape")
+    );
     // get random subset
     utils_module.def(
         "get_random_subset",
