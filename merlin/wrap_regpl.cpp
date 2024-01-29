@@ -85,6 +85,23 @@ void wrap_polynomial(py::module & regpl_module) {
         "Calculate Vandermonde matrix.",
         py::arg("grid_points"), py::arg("n_threads") = 1
     );
+    // serialization
+    polynomial_pyclass.def(
+        "serialize",
+        [](const regpl::Polynomial & self, const std::string & fname) {
+            self.serialize(fname);
+        },
+        "Save polynomial into a file.",
+        py::arg("fname")
+    );
+    polynomial_pyclass.def(
+        "deserialize",
+        [](regpl::Polynomial & self, const std::string & fname) {
+            self.deserialize(fname);
+        },
+        "Read polynomial from a file.",
+        py::arg("fname")
+    );
     // representation
     polynomial_pyclass.def(
         "__repr__",

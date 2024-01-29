@@ -2,6 +2,8 @@
 #ifndef MERLIN_REGPL_REGRESSOR_HPP_
 #define MERLIN_REGPL_REGRESSOR_HPP_
 
+#include <utility>  // std::exchange
+
 #include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Parcel
 #include "merlin/cuda/declaration.hpp"   // merlin::cuda::Stream
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
@@ -31,9 +33,14 @@ void fit_reggrid_by_cpu(std::shared_future<void> synch, regpl::Polynomial * p_po
                         const grid::RegularGrid * p_grid, const floatvec * p_data, std::uint64_t n_threads,
                         char * cpu_buffer) noexcept;
 
-/** @brief Evaluate regression.*/
+/** @brief Evaluate regression by CPU.*/
 void eval_by_cpu(std::shared_future<void> synch, const regpl::Polynomial * p_poly, const array::Array * p_data,
                  double * p_result, std::uint64_t n_threads, char * cpu_buffer) noexcept;
+
+/** @brief Evaluate regression by GPU.*/
+void eval_by_gpu(const regpl::Polynomial * p_poly, const double * p_data, double * p_result, std::uint64_t n_points,
+                 std::uint64_t ndim, std::uint64_t shared_mem_size, std::uint64_t n_threads,
+                 const cuda::Stream & stream) noexcept;
 
 }  // namespace regpl
 
@@ -50,6 +57,27 @@ class regpl::Regressor {
     Regressor(void) = default;
     /** @brief Constructor from polynomial object.*/
     MERLIN_EXPORTS Regressor(const regpl::Polynomial & polynom, ProcessorType proc_type = ProcessorType::Cpu);
+    /// @}
+
+    /// @name Copy and Move
+    /// @{
+    /** @brief Copy constructor.*/
+    Regressor(const Regressor & src) = delete;
+    /** @brief Copy assignment.*/
+    regpl::Regressor & operator=(const Regressor & src) = delete;
+    /** @brief Move constructor.*/
+    Regressor(Regressor && src) {
+        this->p_poly_ = std::exchange(src.p_poly_, nullptr);
+        this->matrix_data_ = std::exchange(src.matrix_data_, nullptr);
+        this->cpu_buffer_ = std::exchange(src.cpu_buffer_, nullptr);
+        this->synch_ = std::move(src.synch_);
+        this->num_coeff_ = src.num_coeff_;
+        this->ndim_ = src.ndim_;
+        this->cpu_buffer_size_ = src.cpu_buffer_size_;
+        this->shared_mem_size_ = src.shared_mem_size_;
+    }
+    /** @brief Move assignment.*/
+    regpl::Regressor & operator=(Regressor && src) = delete;
     /// @}
 
     /// @name Get elements and attributes
@@ -93,6 +121,13 @@ class regpl::Regressor {
      *  @param n_threads Number of threads for calculation.
      */
     void evaluate(const array::Array & points, double * p_result, std::uint64_t n_threads = 1);
+    /** @brief Evaluate regression by GPU parallelism.
+     *  @param points 2D C-contiguous array of shape ``[npoint, ndim]``, in which ``npoint`` is the number of points
+     *  and ``ndim`` is the dimension of each point.
+     *  @param p_result Pointer to array storing result, size of at least ``double[npoint]``.
+     *  @param n_threads Number of threads for calculation.
+     */
+    void evaluate(const array::Parcel & points, double * p_result, std::uint64_t n_threads = 32);
     /// @}
 
     /// @name Synchronization

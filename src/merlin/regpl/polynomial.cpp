@@ -4,6 +4,8 @@
 #include <algorithm>  // std::iota, std::stable_sort, std::unique
 #include <cinttypes>  // PRIu64
 #include <cmath>    // std::pow
+#include <cstdio>  // std::FILE, std::fread, std::fwrite, std::fopen, std::fclose
+#include <filesystem>  // std::filesystem::filesystem_error
 #include <sstream>  // std::ostringstream
 
 #include <omp.h>  // #pragma omp
@@ -13,6 +15,17 @@
 #include "merlin/utils.hpp"  // merlin::prod_elements, merlin::ndim_to_contiguous_idx
 
 namespace merlin {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Utility
+// ---------------------------------------------------------------------------------------------------------------------
+
+// read data from file
+static void read_data(void * dest, std::uint64_t size, std::uint64_t count, std::FILE * fstream) {
+    if (std::fread(dest, size, count, fstream) != count) {
+        FAILURE(std::runtime_error, "Failed to read data from file.\n");
+    }
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Polynomial
@@ -128,6 +141,47 @@ void * regpl::Polynomial::copy_from_gpu(double * data_from_gpu, std::uintptr_t s
 }
 
 #endif  // __MERLIN_CUDA__
+
+// Write polynomial data into a file
+void regpl::Polynomial::serialize(const std::string & fname) const {
+    // open file
+    std::FILE * file_stream = std::fopen(fname.c_str(), "wb");
+    if (file_stream == nullptr) {
+        FAILURE(std::filesystem::filesystem_error, "Cannot create file %s\n", fname.c_str());
+    }
+    // write ndim and size
+    std::uint64_t meta_data[2] = {this->ndim(), this->size()};
+    std::fwrite(meta_data, sizeof(std::uint64_t), 2, file_stream);
+    // write order per dim
+    std::fwrite(this->order_.data(), sizeof(std::uint64_t), this->ndim(), file_stream);
+    // write coefficients and coeff index
+    std::fwrite(this->coeff_.data(), sizeof(double), this->size(), file_stream);
+    std::fwrite(this->term_idx_.data(), sizeof(std::uint64_t), this->size(), file_stream);
+    // close file
+    std::fclose(file_stream);
+}
+
+// Read polynomial data from a file
+void regpl::Polynomial::deserialize(const std::string & fname) {
+    // open file
+    std::FILE * file_stream = std::fopen(fname.c_str(), "rb");
+    if (file_stream == nullptr) {
+        FAILURE(std::filesystem::filesystem_error, "Cannot read file %s\n", fname.c_str());
+    }
+    // read ndim and size
+    std::uint64_t meta_data[2];
+    read_data(meta_data, sizeof(std::uint64_t), 2, file_stream);
+    // read order per dim
+    this->order_ = intvec(meta_data[0]);
+    read_data(this->order_.data(), sizeof(std::uint64_t), meta_data[0], file_stream);
+    // read coefficients and coeff index
+    this->coeff_ = floatvec(meta_data[1]);
+    read_data(this->coeff_.data(), sizeof(double), meta_data[1], file_stream);
+    this->term_idx_ = intvec(meta_data[1]);
+    read_data(this->term_idx_.data(), sizeof(std::uint64_t), meta_data[1], file_stream);
+    // close file
+    std::fclose(file_stream);
+}
 
 // String representation
 std::string regpl::Polynomial::str(void) const {

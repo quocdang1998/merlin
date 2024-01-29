@@ -122,6 +122,14 @@ class regpl::Polynomial {
     MERLIN_EXPORTS void * copy_from_gpu(double * data_from_gpu, std::uintptr_t stream_ptr = 0) noexcept;
     /// @}
 
+    /// @name Serialization
+    /// @{
+    /** @brief Write polynomial data into a file.*/
+    void serialize(const std::string & fname) const;
+    /** @brief Read polynomial data from a file.*/
+    void deserialize(const std::string & fname);
+    /// @}
+
     /// @name Representation
     /// @{
     /** @brief String representation.*/
