@@ -93,6 +93,8 @@ class candy::Trainer {
     /// @{
     /** @brief Get a copy to the current CP model.*/
     MERLIN_EXPORTS candy::Model get_model(void) const;
+    /** @brief Get pointer to data.*/
+    array::NdData * get_data_ptr(void) noexcept { return this->p_data_; }
     /** @brief Get GPU ID on which the memory is allocated.*/
     constexpr unsigned int gpu_id(void) const noexcept {
         if (const cuda::Stream * stream_ptr = std::get_if<cuda::Stream>(&(this->synch_.synchronizer))) {
