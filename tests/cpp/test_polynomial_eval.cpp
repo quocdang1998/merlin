@@ -22,17 +22,10 @@ int main(void) {
     MESSAGE("Polynomial: %s\n", p.str().c_str());
     */
 
-    double coeff_simplified[6] = {1.3, 2.4, 3.8, -6.2, -1.8, -3.5};
+    double coeff_simplified[] = {1.3, 2.4, 3.8, -6.2, -1.8, -3.5};
     floatvec coeff_vec;
     coeff_vec.assign(coeff_simplified, 6);
-    intvec coef_idx = {
-        1, 0, 0,
-        0, 1, 0,
-        1, 0, 2,
-        0, 2, 1,
-        1, 2, 1,
-        1, 1, 1,
-    };
+    intvec coef_idx = {9, 3, 11, 7, 16, 13};
     regpl::Polynomial p(coeff_vec, {2, 3, 3}, coef_idx);
     MESSAGE("Polynomial: %s\n", p.str().c_str());
 
@@ -41,8 +34,9 @@ int main(void) {
     MESSAGE("Evaluation at point %s is %f\n", point.str().c_str(), p.eval(point.data(), buffer.data()));
     MESSAGE("Reference  of point %s is %f\n", point.str().c_str(), reference(point.data()));
 
-    p.serialize("polynom.txt");
+    p.save("polynom.txt", true);
     regpl::Polynomial p_read;
-    p_read.deserialize("polynom.txt");
+    p_read.load("polynom.txt");
     MESSAGE("Read polynomial: %s\n", p_read.str().c_str());
+
 }

@@ -5,6 +5,7 @@
 namespace merlin::regpl {
 class Polynomial;
 class Regressor;
+class Vandermonde;
 }  // namespace merlin::regpl
 
 #endif  // MERLIN_REGPL_DECLARATION_HPP_

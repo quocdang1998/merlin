@@ -51,7 +51,8 @@ list(APPEND MERLIN_SRC_CPP
      linalg/qr_solve.cpp
      linalg/matrix.cpp
      regpl/polynomial.cpp
-     regpl/regressor.cpp
+     regpl/vandermonde.cpp
+     # regpl/regressor.cpp
      slice.cpp
      shuffle.cpp
      splint/interpolator.cpp
@@ -74,7 +75,7 @@ list(APPEND MERLIN_SRC_CU
      # intpl/newton.cu
      grid/cartesian_grid.cu
      regpl/polynomial.cu
-     regpl/regressor.cu
+     # regpl/regressor.cu
      splint/interpolator.cu
 )
 list(APPEND MERLIN_SRC_GLB
@@ -82,7 +83,7 @@ list(APPEND MERLIN_SRC_GLB
      cuda/device.glb
      # intpl/lagrange.glb
      # intpl/newton.glb
-     regpl/regressor.glb
+     # regpl/regressor.glb
      splint/tools.glb
      stat/moment.glb
 )
@@ -104,7 +105,7 @@ list(APPEND MERLIN_SRC_RDC
      grid/regular_grid.rdc
      linalg/qr_solve.rdc
      linalg/matrix.rdc
-     regpl/core.rdc
+     # regpl/core.rdc
      regpl/polynomial.rdc
      slice.rdc
      splint/intpl/lagrange.rdc
@@ -222,6 +223,9 @@ if(MSVC)  # patch the MSVC OpenMP default 2.0 version
                  INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CXX>:-openmp:llvm>)
 endif(MSVC)
 
+# Eigen
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendors/eigen)
+
 # ======================================================================================================================
 # library
 # ======================================================================================================================
@@ -255,6 +259,7 @@ function(MerlinSetTargetProperties target_library)
         endif(MSVC)
     endif(MERLIN_DEBUG)
     target_link_libraries(${target_library} PRIVATE OpenMP::OpenMP_CXX)
+    target_link_libraries (${target_library} PRIVATE Eigen3::Eigen)
 endfunction(MerlinSetTargetProperties)
 
 # setting library for static variables
