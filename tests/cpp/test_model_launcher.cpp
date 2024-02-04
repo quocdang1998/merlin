@@ -44,7 +44,7 @@ int main(void) {
     merlin::array::Array train_data(data, data_dims, data_strides);
     MESSAGE("Data: %s\n", train_data.str().c_str());
 
-    merlin::candy::Model model({{1.0, 0.5, 2.1, 0.25}, {2.0, 1.0, 2.4, 1.2, 2.7, 1.6}}, 2);
+    merlin::candy::Model model({{1.0, 0.5}, {2.0, 1.0, 2.4}}, 1);
     MESSAGE("Model before trained: %s\n", model.str().c_str());
 
     merlin::Vector<double> gradient_data(model.num_params());

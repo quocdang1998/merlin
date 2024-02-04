@@ -4,7 +4,6 @@
 
 #include <string>  // std::string
 
-#include "merlin/array/declaration.hpp"  // merlin::array::Array
 #include "merlin/cuda_interface.hpp"  // __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/regpl/declaration.hpp"  // merlin::regpl::Polynomial
@@ -20,21 +19,21 @@ class regpl::Polynomial {
     /** @brief Default constructor.*/
     Polynomial(void) = default;
     /** @brief Constructor of a full polynomial with zero-filled coefficients from max power per dimension.
-     *  @param order_per_dim Max power per dimension (one-more than highest power).
+     *  @param order Max power per dimension (one-more than highest power).
      */
-    MERLIN_EXPORTS Polynomial(const intvec & order_per_dim);
+    MERLIN_EXPORTS Polynomial(const intvec & order);
     /** @brief Constructor of a full polynomial from array of coefficients and max power per dimension.
-     *  @param coeff_data Coefficient data (flatten in a C-contiguous order), with lower order first.
-     *  @param order_per_dim Max power per dimension (one-more than highest power).
+     *  @param coeff Coefficient data (flatten in a C-contiguous order), with lower order first.
+     *  @param order Max power per dimension (one-more than highest power).
      */
-    MERLIN_EXPORTS Polynomial(const floatvec & coeff_data, const intvec & order_per_dim);
+    MERLIN_EXPORTS Polynomial(const floatvec & coeff, const intvec & order);
     /** @brief Constructor of a sparse polynomial from array of coefficients, max power per dimension and the power
      *  of each term.
-     *  @param coeff_data Coefficient data (in any order).
-     *  @param order_per_dim Max power per dimension (one-more than highest power).
-     *  @param term_index Powers of each variable in the monomial associated.
+     *  @param coeff Coefficient data of each term index.
+     *  @param order Max power per dimension (one-more than highest power).
+     *  @param term_index Index of terms to assign.
      */
-    MERLIN_EXPORTS Polynomial(const floatvec & coeff_data, const intvec & order_per_dim, const intvec & term_index);
+    MERLIN_EXPORTS Polynomial(const floatvec & coeff, const intvec & order, const intvec & term_index);
     /// @}
 
     /// @name Copy and move
@@ -63,15 +62,6 @@ class regpl::Polynomial {
     __cuhostdev__ constexpr const intvec & order(void) const noexcept { return this->order_; }
     /// @}
 
-    /// @name Vandermonde
-    /// @{
-    /** @brief Generate Vandermonde matrix.
-     *  @param grid_points Points of a grid.
-     *  @param n_threads Number of threads for calculating the Vandermonde matrix.
-    */
-    MERLIN_EXPORTS array::Array calc_vandermonde(const array::Array & grid_points, std::uint64_t n_threads = 1) const;
-    /// @}
-
     /// @name Evaluation
     /// @{
     /** @brief Evaluate polynomial value at a given point.
@@ -85,16 +75,13 @@ class regpl::Polynomial {
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the polynomial and its data.*/
     std::uint64_t cumalloc_size(void) const noexcept {
-        std::uint64_t size = sizeof(regpl::Polynomial);
-        size += this->size() * sizeof(double) + this->ndim() * sizeof(std::uint64_t);
-        size += this->size() * sizeof(std::uint64_t);
-        return size;
+        return sizeof(regpl::Polynomial) + this->size() * sizeof(double) + this->ndim() * sizeof(std::uint64_t);
     }
     /** @brief Copy the polynomial from CPU to a pre-allocated memory on GPU.
      *  @details Values of vectors should be copied to the memory region that comes right after the copied object.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
      *  @param coeff_data_ptr Pointer to a pre-allocated GPU memory storing data of coefficients.
-     *  @param stream_ptr Pointer to CUDA stream for asynchronious copy.
+     *  @param stream_ptr Pointer to CUDA stream for asynchronous copy.
      */
     MERLIN_EXPORTS void * copy_to_gpu(regpl::Polynomial * gpu_ptr, void * coeff_data_ptr,
                                       std::uintptr_t stream_ptr = 0) const;
@@ -124,10 +111,16 @@ class regpl::Polynomial {
 
     /// @name Serialization
     /// @{
-    /** @brief Write polynomial data into a file.*/
-    void serialize(const std::string & fname) const;
-    /** @brief Read polynomial data from a file.*/
-    void deserialize(const std::string & fname);
+    /** @brief Write polynomial data into a file.
+     *  @param fname Name of the output file.
+     *  @param lock Lock the file when writing to prevent data race. The lock action may cause a delay.
+     */
+    void save(const std::string & fname, bool lock = false) const;
+    /** @brief Read polynomial data from a file.
+     *  @param fname Name of the input file.
+     *  @param lock Lock the file when reading to prevent data race. The lock action may cause a delay.
+     */
+    void load(const std::string & fname, bool lock = false);
     /// @}
 
     /// @name Representation
@@ -147,14 +140,9 @@ class regpl::Polynomial {
     floatvec coeff_;
     /** @brief Max power per dimension.*/
     intvec order_;
-    /** @brief Index of each term present in the polynomial.*/
-    intvec term_idx_;
-
-  private:
-    /** @brief Full number of terms.*/
-    std::uint64_t full_n_;
 };
 
 }  // namespace merlin
+
 
 #endif  // MERLIN_REGPL_POLYNOMIAL_HPP_

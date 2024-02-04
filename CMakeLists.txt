@@ -51,7 +51,8 @@ list(APPEND MERLIN_SRC_CPP
      linalg/qr_solve.cpp
      linalg/matrix.cpp
      regpl/polynomial.cpp
-     regpl/regressor.cpp
+     regpl/vandermonde.cpp
+     # regpl/regressor.cpp
      slice.cpp
      shuffle.cpp
      splint/interpolator.cpp
@@ -74,7 +75,7 @@ list(APPEND MERLIN_SRC_CU
      # intpl/newton.cu
      grid/cartesian_grid.cu
      regpl/polynomial.cu
-     regpl/regressor.cu
+     # regpl/regressor.cu
      splint/interpolator.cu
 )
 list(APPEND MERLIN_SRC_GLB
@@ -82,7 +83,7 @@ list(APPEND MERLIN_SRC_GLB
      cuda/device.glb
      # intpl/lagrange.glb
      # intpl/newton.glb
-     regpl/regressor.glb
+     # regpl/regressor.glb
      splint/tools.glb
      stat/moment.glb
 )
@@ -104,7 +105,7 @@ list(APPEND MERLIN_SRC_RDC
      grid/regular_grid.rdc
      linalg/qr_solve.rdc
      linalg/matrix.rdc
-     regpl/core.rdc
+     # regpl/core.rdc
      regpl/polynomial.rdc
      slice.rdc
      splint/intpl/lagrange.rdc
@@ -222,6 +223,47 @@ if(MSVC)  # patch the MSVC OpenMP default 2.0 version
                  INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CXX>:-openmp:llvm>)
 endif(MSVC)
 
+# Eigen
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/vendors/eigen)
+
+# Get all propreties that cmake supports
+if(NOT CMAKE_PROPERTY_LIST)
+    execute_process(COMMAND cmake --help-property-list OUTPUT_VARIABLE CMAKE_PROPERTY_LIST)
+    
+    # Convert command output into a CMake list
+    string(REGEX REPLACE ";" "\\\\;" CMAKE_PROPERTY_LIST "${CMAKE_PROPERTY_LIST}")
+    string(REGEX REPLACE "\n" ";" CMAKE_PROPERTY_LIST "${CMAKE_PROPERTY_LIST}")
+    list(REMOVE_DUPLICATES CMAKE_PROPERTY_LIST)
+endif()
+    
+function(print_properties)
+    message("CMAKE_PROPERTY_LIST = ${CMAKE_PROPERTY_LIST}")
+endfunction()
+    
+function(print_target_properties target)
+    if(NOT TARGET ${target})
+      message(STATUS "There is no target named '${target}'")
+      return()
+    endif()
+
+    foreach(property ${CMAKE_PROPERTY_LIST})
+        string(REPLACE "<CONFIG>" "${CMAKE_BUILD_TYPE}" property ${property})
+
+        # Fix https://stackoverflow.com/questions/32197663/how-can-i-remove-the-the-location-property-may-not-be-read-from-target-error-i
+        if(property STREQUAL "LOCATION" OR property MATCHES "^LOCATION_" OR property MATCHES "_LOCATION$")
+            continue()
+        endif()
+
+        get_property(was_set TARGET ${target} PROPERTY ${property} SET)
+        if(was_set)
+            get_target_property(value ${target} ${property})
+            message("${target} ${property} = ${value}")
+        endif()
+    endforeach()
+endfunction()
+
+print_target_properties(Eigen3::Eigen)
+
 # ======================================================================================================================
 # library
 # ======================================================================================================================
@@ -255,6 +297,8 @@ function(MerlinSetTargetProperties target_library)
         endif(MSVC)
     endif(MERLIN_DEBUG)
     target_link_libraries(${target_library} PRIVATE OpenMP::OpenMP_CXX)
+    # target_link_libraries (${target_library} PRIVATE Eigen3::Eigen)
+    target_include_directories(${target_library} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/vendors/eigen)
 endfunction(MerlinSetTargetProperties)
 
 # setting library for static variables
