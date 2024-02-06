@@ -1,14 +1,18 @@
 // Copyright 2024 quocdang1998
 #include "merlin/regpl/vandermonde.hpp"
 
+#include <numeric>  // std::iota
+
 #include <omp.h>  // #pragma omp
 
 #include "merlin/grid/cartesian_grid.hpp"  // merlin::grid::CartesianGrid
 #include "merlin/logger.hpp"               // FAILURE
+#include "merlin/regpl/polynomial.hpp"     // merlin::regpl::Polynomial
 #include "merlin/utils.hpp"                // merlin::prod_elements, merlin::contiguous_to_ndim_idx
 
-#include "Eigen/Dense"  // Eigen::MatrixXd
-#include <Eigen/SVD>    // Eigen::BDCSVD
+#include "Eigen/Core"   // Eigen::setNbThreads
+#include "Eigen/Dense"  // Eigen::MatrixXd, Eigen::Map, Eigen::VectorXd
+#include "Eigen/SVD"    // Eigen::BDCSVD
 
 namespace merlin {
 
@@ -34,11 +38,14 @@ void vandermonde_entry(std::uint64_t * term, double * point, const std::uint64_t
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Constructor from a full polynomial and Cartesian grid
-regpl::Vandermonde::Vandermonde(const intvec & order, const grid::CartesianGrid & grid, std::uint64_t n_threads) {
+regpl::Vandermonde::Vandermonde(const intvec & order, const grid::CartesianGrid & grid, std::uint64_t n_threads) :
+order_(order), term_idx_(prod_elements(order)) {
     // check argument
     if (order.size() != grid.ndim()) {
         FAILURE(std::invalid_argument, "Ndim of order vector and grid must be the same.\n");
     }
+    // create term index vector
+    std::iota(this->term_idx_.begin(), this->term_idx_.end(), 0);
     // create Vandermonde matrix
     Eigen::MatrixXd vandermonde_matrix(grid.size(), prod_elements(order));
     intvec buffer(n_threads * order.size());
@@ -56,11 +63,14 @@ regpl::Vandermonde::Vandermonde(const intvec & order, const grid::CartesianGrid 
         }
     }
     // solve matrix
+    Eigen::setNbThreads(n_threads);
     this->svd_decomp_ = new EigenSvd(vandermonde_matrix);
+    Eigen::setNbThreads(0);
 }
 
 // Constructor from a full polynomial and grid points
-regpl::Vandermonde::Vandermonde(const intvec & order, const array::Array & grid_points, std::uint64_t n_threads) {
+regpl::Vandermonde::Vandermonde(const intvec & order, const array::Array & grid_points, std::uint64_t n_threads) :
+order_(order), term_idx_(prod_elements(order)) {
     // check argument
     if (grid_points.ndim() != 2) {
         FAILURE(std::invalid_argument, "Invalid grid_points argument.\n");
@@ -71,6 +81,8 @@ regpl::Vandermonde::Vandermonde(const intvec & order, const array::Array & grid_
     if (order.size() != grid_points.shape()[1]) {
         FAILURE(std::invalid_argument, "Ndim of order vector and points must be the same.\n");
     }
+    // create term index vector
+    std::iota(this->term_idx_.begin(), this->term_idx_.end(), 0);
     // create Vandermonde matrix
     Eigen::MatrixXd vandermonde_matrix(grid_points.shape()[0], prod_elements(order));
     intvec buffer(n_threads * order.size());
@@ -86,7 +98,29 @@ regpl::Vandermonde::Vandermonde(const intvec & order, const array::Array & grid_
         }
     }
     // solve matrix
+    Eigen::setNbThreads(n_threads);
     this->svd_decomp_ = new EigenSvd(vandermonde_matrix);
+    Eigen::setNbThreads(0);
+}
+
+// Solve for the coefficients given the data
+regpl::Polynomial regpl::Vandermonde::solve(const floatvec & data, std::uint64_t n_threads) const {
+    // cast pointer back and check argument
+    if (this->svd_decomp_ == nullptr) {
+        FAILURE(std::runtime_error, "Object not initialized.\n");
+    }
+    const EigenSvd * svd_solver = reinterpret_cast<EigenSvd *>(this->svd_decomp_);
+    if (data.size() != svd_solver->rows()) {
+        FAILURE(std::invalid_argument, "Data not having the correct number of points.\n");
+    }
+    // solve for the coefficients
+    Eigen::Map<Eigen::VectorXd> data_eigen(const_cast<double *>(data.data()), data.size());
+    Eigen::setNbThreads(n_threads);
+    Eigen::VectorXd coeff_eigen = svd_solver->solve(data_eigen);
+    Eigen::setNbThreads(0);
+    floatvec coeff;
+    coeff.assign(coeff_eigen.data(), coeff_eigen.size());
+    return regpl::Polynomial(coeff, this->order_, this->term_idx_);
 }
 
 // Default destructor

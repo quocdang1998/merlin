@@ -145,6 +145,19 @@ class candy::Model {
     MERLIN_EXPORTS void * copy_from_gpu(double * data_from_gpu, std::uintptr_t stream_ptr = 0) noexcept;
     /// @}
 
+    /// @name Serialization
+    /// @{
+    /** @brief Write model into a file.
+     *  @param fname Name of the output file.
+     *  @param lock Lock the file when writing to prevent data race. The lock action may cause a delay.
+     */
+    void save(const std::string & fname, bool lock = false) const;
+    /** @brief Read model from a file.
+     *  @param fname Name of the input file.
+     *  @param lock Lock the file when reading to prevent data race. The lock action may cause a delay.
+     */
+    void load(const std::string & fname, bool lock = false);
+
     /// @name Representation
     /// @{
     /** @brief String representation.*/

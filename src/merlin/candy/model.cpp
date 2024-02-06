@@ -9,6 +9,7 @@
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/env.hpp"          // merlin::Environment
+#include "merlin/filelock.hpp"     // merlin::FileLock
 #include "merlin/logger.hpp"       // FAILURE
 #include "merlin/slice.hpp"        // merlin::Slice, merlin::slicevec
 #include "merlin/stat/moment.hpp"  // merlin::stat::mean_variance
@@ -138,6 +139,76 @@ void * candy::Model::copy_from_gpu(double * data_from_gpu, std::uintptr_t stream
 bool candy::Model::check_negative(void) const noexcept {
     return std::all_of(this->parameters_.cbegin(), this->parameters_.cend(),
                        [](const double & value) { return value >= 0; });
+}
+
+// Write model into a file
+void candy::Model::save(const std::string & fname, bool lock) const {
+    // open file
+    std::FILE * file_stream = std::fopen(fname.c_str(), "wb");
+    if (file_stream == nullptr) {
+        FAILURE(std::filesystem::filesystem_error, "Cannot create file %s\n", fname.c_str());
+    }
+    FileLock flock(file_stream);
+    // lambda write file
+    auto write_lambda = [&file_stream] (const void * data, std::size_t elem_size, std::size_t n_elems) {
+        std::size_t success_written = std::fwrite(data, elem_size, n_elems, file_stream);
+        if (success_written < n_elems) {
+            FAILURE(std::filesystem::filesystem_error, "Error occurred when writing the file.\n");
+        }
+    };
+    if (lock) {
+        flock.lock();
+    }
+    // write ndim and size
+    std::uint64_t meta_data[3] = {this->rank_, this->ndim(), this->num_params()};
+    write_lambda(meta_data, sizeof(std::uint64_t), 3);
+    // write rshape
+    write_lambda(this->rshape_.data(), sizeof(std::uint64_t), this->ndim());
+    // write parameters
+    write_lambda(this->parameters_.data(), sizeof(double), this->num_params());
+    // close file
+    if (lock) {
+        flock.unlock();
+    }
+    std::fclose(file_stream);
+}
+
+// Read polynomial data from a file
+void candy::Model::load(const std::string & fname, bool lock) {
+    // open file
+    std::FILE * file_stream = std::fopen(fname.c_str(), "rb");
+    if (file_stream == nullptr) {
+        FAILURE(std::filesystem::filesystem_error, "Cannot read file %s\n", fname.c_str());
+    }
+    FileLock flock(file_stream);
+    // lambda read file
+    auto read_lambda = [&file_stream] (void * data, std::size_t elem_size, std::size_t n_elems) {
+        std::size_t success_read = std::fread(data, elem_size, n_elems, file_stream);
+        if (success_read < n_elems) {
+            FAILURE(std::filesystem::filesystem_error, "Error occurred when reading the file.\n");
+        }
+    };
+    if (lock) {
+        flock.lock_shared();
+    }
+    // read ndim and size
+    std::uint64_t meta_data[3];
+    read_lambda(meta_data, sizeof(std::uint64_t), 3);
+    this->rank_ = meta_data[0];
+    // read rshape
+    this->rshape_ = intvec(meta_data[1]);
+    read_lambda(this->rshape_.data(), sizeof(std::uint64_t), meta_data[1]);
+    // read parameters
+    this->parameters_ = floatvec(meta_data[2]);
+    read_lambda(this->parameters_.data(), sizeof(double), meta_data[2]);
+    // calculate pointers
+    this->param_vectors_ = Vector<double *>(meta_data[1]);
+    ptr_to_subsequence(this->parameters_.data(), this->rshape_, this->param_vectors_.data());
+    // close file
+    if (lock) {
+        flock.unlock();
+    }
+    std::fclose(file_stream);
 }
 
 // String representation
