@@ -3,7 +3,7 @@
 
 #include <algorithm>  // std::all_of
 #include <cmath>      // std::pow, std::sqrt
-#include <random>     // std::mt19937_64
+#include <random>     // std::mt19937_64, std::normal_distribution, std::uniform_real_distribution
 #include <sstream>    // std::ostringstream
 #include <vector>     // std::vector
 
@@ -115,6 +115,37 @@ void candy::Model::initialize(const array::Array & train_data, std::uint64_t n_t
                     param = generator(Environment::random_generator);
                 } while (param <= 0);
             }
+        }
+    }
+}
+
+// Initialize values of model based on rank-1 model
+void candy::Model::initialize(const candy::Model & rank_1_model, double rtol) {
+    // check argument
+    if (rank_1_model.rank_ != 1) {
+        FAILURE(std::invalid_argument, "Model provided is not rank-1.\n");
+    }
+    if (this->ndim() != rank_1_model.ndim()) {
+        FAILURE(std::invalid_argument, "Expected rank-1 model having the same ndim as the current model.\n");
+    }
+    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+        if (rank_1_model.rshape_[i_dim] * this->rank_ != this->rshape_[i_dim]) {
+            FAILURE(std::invalid_argument, "Incoherent shape of 2 models.\n");
+        }
+    }
+    // calculate min and max in relative for each rank
+    double rstep = (2.0 * rtol) / static_cast<double>(this->rank_);
+    floatvec rtol_rank(this->rank_ + 1);
+    for (std::uint64_t r = 0; r < this->rank_ + 1; r++) {
+        rtol_rank[r] = 1.0 - rtol + r * rstep;
+    }
+    // initialize
+    for (std::uint64_t i_param = 0; i_param < rank_1_model.num_params(); i_param++) {
+        double param_value = rank_1_model.parameters_[i_param];
+        param_value /= std::pow(this->rank_, 1.0 / static_cast<double>(this->ndim()));
+        for (std::uint64_t r = 0; r < this->rank_; r++) {
+            std::uniform_real_distribution<double> generator(param_value * rtol_rank[r], param_value * rtol_rank[r+1]);
+            this->parameters_[i_param * this->rank_ + r] = generator(Environment::random_generator);
         }
     }
 }
