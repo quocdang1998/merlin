@@ -44,13 +44,16 @@ int main(void) {
     merlin::array::Array train_data(data, data_dims, data_strides);
     MESSAGE("Data: %s\n", train_data.str().c_str());
 
-    merlin::candy::Model model({{1.0, 0.5}, {2.0, 1.0, 2.4}}, 1);
+    merlin::candy::Model model({{1.0, 0.5, 1.6, 2.7}, {2.0, 1.0, 2.4, 1.2, 4.6, 3.5}}, 2);
     MESSAGE("Model before trained: %s\n", model.str().c_str());
 
     merlin::Vector<double> gradient_data(model.num_params());
     merlin::candy::Gradient grad(gradient_data.data(), model.num_params(), merlin::candy::TrainMetric::RelativeSquare);
 
-    merlin::candy::Optimizer opt = merlin::candy::create_grad_descent(0.1);
+    // merlin::candy::Optimizer opt = merlin::candy::create_grad_descent(0.1);
+    merlin::candy::Optimizer opt = merlin::candy::create_adagrad(0.1, model);
+    // merlin::candy::Optimizer opt = merlin::candy::create_adadelta(0.9, model);
+
 /*
     std::uint64_t n_thread = 5;
     merlin::intvec cache(n_thread * model.ndim());
@@ -65,7 +68,7 @@ int main(void) {
     MESSAGE("Model eval: %f\n", model.eval({1,1}));
 */
     merlin::candy::Trainer train(model, std::move(train_data), opt);
-    train.update(10, 1e-1, 5, merlin::candy::TrainMetric::RelativeSquare);
+    train.update(1000, 1e-2, 3, merlin::candy::TrainMetric::RelativeSquare);
     train.synchronize();
     MESSAGE("Model eval: %f\n", train.get_model().eval({1,1}));
 }
