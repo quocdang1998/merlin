@@ -17,8 +17,8 @@ namespace merlin {
 
 // Update model inside a GPU parallel region
 __cudevice__ void candy::optmz::Adam::update_gpu(void * optimizer_algor, candy::Model & model,
-                                                    const candy::Gradient & grad, std::uint64_t thread_idx,
-                                                    std::uint64_t n_threads) noexcept {
+                                                 const candy::Gradient & grad, std::uint64_t thread_idx,
+                                                 std::uint64_t n_threads) noexcept {
     candy::OptmzStatic & union_algor = *(reinterpret_cast<candy::OptmzStatic *>(optimizer_algor));
     candy::optmz::Adam & algor = std::get<candy::optmz::Adam>(union_algor);
     if (thread_idx == 0) {

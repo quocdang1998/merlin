@@ -76,28 +76,19 @@ void wrap_polynomial(py::module & regpl_module) {
         },
         "Get order per dimension of the polynomial."
     );
-    // get Vandermonde matrix
-    polynomial_pyclass.def(
-        "calc_vandermonde",
-        [](const regpl::Polynomial & self, const array::Array & grid_points, std::uint64_t n_threads) {
-            return new array::Array(self.calc_vandermonde(grid_points, n_threads));
-        },
-        "Calculate Vandermonde matrix.",
-        py::arg("grid_points"), py::arg("n_threads") = 1
-    );
     // serialization
     polynomial_pyclass.def(
-        "serialize",
+        "save",
         [](const regpl::Polynomial & self, const std::string & fname) {
-            self.serialize(fname);
+            self.save(fname);
         },
         "Save polynomial into a file.",
         py::arg("fname")
     );
     polynomial_pyclass.def(
-        "deserialize",
+        "load",
         [](regpl::Polynomial & self, const std::string & fname) {
-            self.deserialize(fname);
+            self.load(fname);
         },
         "Read polynomial from a file.",
         py::arg("fname")
@@ -108,7 +99,7 @@ void wrap_polynomial(py::module & regpl_module) {
         [](const regpl::Polynomial & self) { return self.str(); }
     );
 }
-
+/*
 // Wrap merlin::regpl::Regressor class
 void wrap_regressor(py::module & regpl_module) {
     auto regressor_pyclass = py::class_<regpl::Regressor>(
@@ -153,13 +144,13 @@ void wrap_regressor(py::module & regpl_module) {
         "Force the current CPU to wait until all asynchronous tasks have finished."
     );
 }
-
+*/
 void wrap_regpl(py::module & merlin_package) {
     // add regpl submodule
     py::module regpl_module = merlin_package.def_submodule("regpl", "Multi-dimensional polynomial regression API.");
     // add classes
     wrap_polynomial(regpl_module);
-    wrap_regressor(regpl_module);
+    // wrap_regressor(regpl_module);
 }
 
 }  // namespace merlin

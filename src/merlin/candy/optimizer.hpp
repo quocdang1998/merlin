@@ -5,6 +5,7 @@
 #include <variant>  // std::variant
 
 #include "merlin/candy/declaration.hpp"         // merlin::candy::Model
+#include "merlin/candy/optmz/adadelta.hpp"      // merlin::candy::optmz::AdaDelta
 #include "merlin/candy/optmz/adagrad.hpp"       // merlin::candy::optmz::AdaGrad
 #include "merlin/candy/optmz/adam.hpp"          // merlin::candy::optmz::Adam
 #include "merlin/candy/optmz/grad_descent.hpp"  // merlin::candy::optmz::GradDescent
@@ -16,7 +17,8 @@ namespace merlin {
 namespace candy {
 
 /** @brief Type for static data of optimizer.*/
-using OptmzStatic = std::variant<candy::optmz::GradDescent, candy::optmz::AdaGrad, candy::optmz::Adam>;
+using OptmzStatic = std::variant<candy::optmz::GradDescent, candy::optmz::AdaGrad, candy::optmz::Adam,
+                                 candy::optmz::AdaDelta>;
 
 }  // namespace candy
 
@@ -119,6 +121,10 @@ MERLIN_EXPORTS candy::Optimizer create_adagrad(double learning_rate, const candy
 /** @brief Create an optimizer with adam algorithm.*/
 MERLIN_EXPORTS candy::Optimizer create_adam(double learning_rate, double beta_m, double beta_v,
                                             const candy::Model & model, double bias = 1.0e-8);
+
+/** @brief Create an optimizer with adadelta algorithm.*/
+MERLIN_EXPORTS candy::Optimizer create_adadelta(double decay_constant, const candy::Model & model,
+                                                double bias = 1.0e-8);
 
 }  // namespace candy
 
