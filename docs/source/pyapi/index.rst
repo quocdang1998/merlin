@@ -17,6 +17,17 @@ Environment
    merlin.Environment
 
 
+Utility
+-------
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.utils.contiguous_to_ndim_idx
+   merlin.utils.get_random_subset
+
 GPU with CUDA
 -------------
 
@@ -29,7 +40,6 @@ GPU query
    :template: pyclass.rst
 
    merlin.cuda.Device
-   merlin.cuda.DeviceLimit
    merlin.cuda.print_gpus_spec
    merlin.cuda.test_all_gpu
 
@@ -42,9 +52,7 @@ CUDA Stream and Event
    :template: pyclass.rst
 
    merlin.cuda.Stream
-   merlin.cuda.StreamSetting
    merlin.cuda.Event
-   merlin.cuda.EventCategory
 
 
 Array API

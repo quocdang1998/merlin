@@ -22,34 +22,20 @@ static std::unordered_map<std::string, cuda::DeviceLimit> devicelimit_map = {
     {"launchpendingcount", cuda::DeviceLimit::LaunchPendingCount}
 };
 
+// wrap StreamSetting
+static std::unordered_map<std::string, cuda::StreamSetting> streamsetting_map = {
+    {"default",     cuda::StreamSetting::Default},
+    {"nonblocking", cuda::StreamSetting::NonBlocking}
+};
+
+// wrap EventWaitFlag
+static std::unordered_map<std::string, cuda::EventWaitFlag> eventwaitflag_map = {
+    {"default",  cuda::EventWaitFlag::Default},
+    {"external", cuda::EventWaitFlag::External}
+};
+
 // Wrap enums
 static void wrap_enums(py::module & cuda_module) {
-    // wrap cuda::EventCategory
-    auto event_category_pyenum = py::enum_<cuda::EventCategory>(
-        cuda_module,
-        "EventCategory",
-        "Wrapper of :cpp:enum:`merlin::cuda::EventCategory`"
-    );
-    event_category_pyenum.value("Default", cuda::EventCategory::Default);
-    event_category_pyenum.value("BlockingSync", cuda::EventCategory::BlockingSync);
-    event_category_pyenum.value("DisableTiming", cuda::EventCategory::DisableTiming);
-    event_category_pyenum.value("Interprocess", cuda::EventCategory::Interprocess);
-    // wrap cuda::EventWaitFlag
-    auto event_wait_pyenum = py::enum_<cuda::EventWaitFlag>(
-        cuda_module,
-        "EventWaitFlag",
-        "Wrapper of :cpp:enum:`merlin::cuda::EventWaitFlag`"
-    );
-    event_wait_pyenum.value("Default", cuda::EventWaitFlag::Default);
-    event_wait_pyenum.value("External", cuda::EventWaitFlag::External);
-    // wrap cuda::StreamSetting
-    auto stream_setting_pyenum = py::enum_<cuda::StreamSetting>(
-        cuda_module,
-        "StreamSetting",
-        "Wrapper of :cpp:enum:`merlin::cuda::StreamSetting`"
-    );
-    stream_setting_pyenum.value("Default", cuda::StreamSetting::Default);
-    stream_setting_pyenum.value("NonBlocking", cuda::StreamSetting::NonBlocking);
 }
 
 // Wrap merlin::cuda::Device
@@ -64,13 +50,16 @@ static void wrap_device(py::module & cuda_module) {
     );
     // constructors
     device_pyclass.def(
-        py::init([](){ return new cuda::Device(); }),
-        "Default constructor."
-    );
-    device_pyclass.def(
         py::init([](int id){ return new cuda::Device(id); }),
-        "Constructor from GPU ID.",
-        py::arg("id")
+        R"(
+        Constructor from GPU ID.
+        
+        Parameters
+        ----------
+        id : int, default = -1
+            ID of the GPU, ranging from 0 (included) to the number of GPUs attached to the machine (excluded). Input a
+            negative number will result in an invalid GPU error.)",
+        py::arg("id") = -1
     );
     // members
     device_pyclass.def_property(
@@ -107,14 +96,30 @@ static void wrap_device(py::module & cuda_module) {
     );
     device_pyclass.def_static(
         "get_limit",
-        [](const std::string & limit) { return cuda::Device::limit(devicelimit_map[limit]); },
-        "Get setting limits of the current GPU.",
+        [](const std::string & limit) { return cuda::Device::limit(devicelimit_map.at(limit)); },
+        R"(
+        Get setting limits of the current GPU.
+        
+        Parameters
+        ----------
+        limit : str
+            Limit to get, possible values are ``stacksize``, ``printfsize``, ``heapsize``, ``syncdepth``,
+            ``launchpendingcount``.)",
         py::arg("limit")
     );
     device_pyclass.def_static(
         "set_limit",
-        [](const std::string & limit, std::uint64_t size) { return cuda::Device::limit(devicelimit_map[limit], size); },
-        "Set setting limits of the current GPU.",
+        [](const std::string & limit, std::uint64_t size) {
+            return cuda::Device::limit(devicelimit_map.at(limit), size);
+        },
+        R"(
+        Set setting limits of the current GPU.
+        
+        Parameters
+        ----------
+        limit : str
+            Limit to set, possible values are ``stacksize``, ``printfsize``, ``heapsize``, ``syncdepth``,
+            ``launchpendingcount``.)",
         py::arg("limit"), py::arg("size")
     );
     device_pyclass.def_static(
@@ -157,9 +162,29 @@ static void wrap_event(py::module & cuda_module) {
     );
     // constructor
     event_pyclass.def(
-        py::init([](unsigned int category) { return new cuda::Event(category); }),
-        "Construct CUDA event from flag.",
-        py::arg("category") = cuda::EventCategory::Default
+        py::init(
+            [](bool blocking_sync, bool disable_timing, bool interprocess) {
+                unsigned int category = cuda::EventCategory::Default;
+                if (blocking_sync) {
+                    category |= cuda::EventCategory::BlockingSync;
+                }
+                return new cuda::Event(category);
+            }
+        ),
+        R"(
+        Construct CUDA event from flag.
+        
+        Parameters
+        ----------
+        blocking_sync : bool, default = False
+            Create a CUDA event with blocking synchronization flag. If this flag is on, the current CPU thread will be
+            locked until the event occurs. Otherwise, it will be put in busy-waiting state (query and wait loop).
+        disable_timing : bool, default = False
+            Disable the capability to record time. Should be switched on if the event is only used for stream
+            synchronization to improve performance of the code.
+        interprocess : bool, default = False
+            The event can be used for interprocess communication.)",
+        py::arg("blocking_sync") = false, py::arg("disable_timing") = false, py::arg("interprocess") = false
     );
     // attributes
     event_pyclass.def(
@@ -218,13 +243,27 @@ static void wrap_stream(py::module & cuda_module) {
     );
     // constructor
     stream_pyclass.def(
-        py::init([]() { return new cuda::Stream(); }),
-        "Construct the default null stream."
-    );
-    stream_pyclass.def(
-        py::init([](cuda::StreamSetting setting, int priority) { return new cuda::Stream(setting, priority); }),
-        "Construct CUDA stream from its setting and priority.",
-        py::arg("setting"), py::arg("priority") = 0
+        py::init([](const std::string & setting, int priority) {
+            cuda::Stream * self;
+            if (setting.compare("nullstream") == 0) {
+                self = new cuda::Stream();
+            } else {
+                self = new cuda::Stream(streamsetting_map.at(setting), priority);
+            }
+            return self;
+        }),
+        R"(
+        Construct CUDA stream from its setting and priority.
+        
+        Parameters
+        ----------
+        setting : str
+            Setting of the CUDA stream. Can be either ``nullstream`` (assign to default null stream), ``default``
+            (commands on the stream is blocked by the default null stream) or ``nonblocking`` (commands run parallel
+            with those executed on the null stream).
+        priority : int, default = 0
+            Priority of the stream. Lower number means higher priority.)",
+        py::arg("setting") = "nullstream", py::arg("priority") = 0
     );
     // attributes
     stream_pyclass.def(
@@ -234,7 +273,18 @@ static void wrap_stream(py::module & cuda_module) {
     );
     stream_pyclass.def(
         "get_setting",
-        [](cuda::Stream & self) { return self.get_setting(); },
+        [](cuda::Stream & self) {
+            std::string setting;
+            switch (self.get_setting()) {
+                case cuda::StreamSetting::Default : {
+                    setting = "default";
+                }
+                case cuda::StreamSetting::NonBlocking : {
+                    setting = "nonblocking";
+                }
+            }
+            return setting;
+        },
         "Get setting flag of the stream."
     );
     stream_pyclass.def(
@@ -272,9 +322,21 @@ static void wrap_stream(py::module & cuda_module) {
     );
     stream_pyclass.def(
         "wait_event",
-        [](cuda::Stream & self, cuda::Event & event, cuda::EventWaitFlag flag) { self.wait_event(event, flag); },
-        "Make the stream wait on an event.",
-        py::arg("event"), py::arg("flag") = cuda::EventWaitFlag::Default
+        [](cuda::Stream & self, cuda::Event & event, const std::string & flag) {
+            self.wait_event(event, eventwaitflag_map.at(flag));
+        },
+        R"(
+        Make the stream wait on an event.
+        
+        Parameters
+        ----------
+        event : merlin.cuda.Event
+            CUDA event to wait for.
+        flag : str, default = "default"
+            Wait flag, can be either ``default`` or ``external``. See :cpp:enum:`merlin::cuda::EventWaitFlag` for more
+            information.
+        )",
+        py::arg("event"), py::arg("flag") = "default"
     );
     stream_pyclass.def(
         "synchronize",

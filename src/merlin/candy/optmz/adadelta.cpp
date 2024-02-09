@@ -24,14 +24,12 @@ void candy::optmz::AdaDelta::update_cpu(void * optimizer_algor, candy::Model & m
         // calculate rms
         double rms = algor.rms_delta[2 * i_param];
         double delta = algor.rms_delta[2 * i_param + 1];
-        rms *= algor.rho;
-        rms += (1.0 - algor.rho) * grad.value()[i_param] * grad.value()[i_param];
-        // update parameter
-        double rescaled_grad = std::sqrt((delta + algor.bias) / (rms + algor.bias)) * grad.value()[i_param];
-        model[i_param] -= rescaled_grad;
+        rms = rms * algor.rho + (1.0 - algor.rho) * grad.value()[i_param] * grad.value()[i_param];
+        // calculate rescaled gradient
+        double rescaled_grad = (std::sqrt(delta + algor.bias) * grad.value()[i_param]) / std::sqrt(rms + algor.bias);
         // update delta
-        delta *= algor.rho;
-        delta += (1.0 - algor.rho) * rescaled_grad * rescaled_grad;
+        delta = delta * algor.rho + (1.0 - algor.rho) * rescaled_grad * rescaled_grad;
+        model[i_param] -= algor.learning_rate * rescaled_grad;
         algor.rms_delta[2 * i_param] = rms;
         algor.rms_delta[2 * i_param + 1] = delta;
     }

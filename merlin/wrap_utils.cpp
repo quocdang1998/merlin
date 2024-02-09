@@ -24,7 +24,15 @@ void wrap_utils(py::module & merlin_package) {
             py::list ndim_idx = ivec_to_pylist(contiguous_to_ndim_idx(index, shape_cpp));
             return ndim_idx;
         },
-        "Convert C-contiguous index to n-dimensional index with allocating memory for result.",
+        R"(
+        Convert C-contiguous index to n-dimensional index.
+
+        Parameters
+        ----------
+        index : int
+            C-contiguous index.
+        shape : List[int]
+            Shape of n-dimensional array.)",
         py::arg("index"), py::arg("shape")
     );
     // get random subset
@@ -36,7 +44,18 @@ void wrap_utils(py::module & merlin_package) {
             py::list subset_py = py::cast(subset_cpp);
             return subset_py;
         },
-        "Get a random subset of index in a range.",
+        R"(
+        Get a random subset of index in a range.
+        
+        Parameters
+        ----------
+        num_points : int
+            Number of random integer to generate.
+        i_max : int
+            Max value of the range.
+        i_min : int, default = 0
+            Min value of the range.
+        )",
         py::arg("num_points"), py::arg("i_max"), py::arg("i_min") = 0
     );
 }

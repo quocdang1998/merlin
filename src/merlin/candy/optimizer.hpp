@@ -123,7 +123,7 @@ MERLIN_EXPORTS candy::Optimizer create_adam(double learning_rate, double beta_m,
                                             const candy::Model & model, double bias = 1.0e-8);
 
 /** @brief Create an optimizer with adadelta algorithm.*/
-MERLIN_EXPORTS candy::Optimizer create_adadelta(double decay_constant, const candy::Model & model,
+MERLIN_EXPORTS candy::Optimizer create_adadelta(double learning_rate, double decay_constant, const candy::Model & model,
                                                 double bias = 1.0e-8);
 
 }  // namespace candy

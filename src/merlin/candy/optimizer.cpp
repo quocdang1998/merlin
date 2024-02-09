@@ -192,14 +192,15 @@ candy::Optimizer candy::create_adam(double learning_rate, double beta_m, double 
 }
 
 // Create an optimizer with adadelta algorithm
-candy::Optimizer candy::create_adadelta(double decay_constant, const candy::Model & model, double bias) {
+candy::Optimizer candy::create_adadelta(double learning_rate, double decay_constant, const candy::Model & model,
+                                        double bias) {
     candy::Optimizer opt;
     std::uint64_t num_params = model.num_params();
     opt.dynamic_size = 2 * sizeof(double) * num_params;
     opt.dynamic_data = new char[opt.dynamic_size];
     std::memset(opt.dynamic_data, 0, opt.dynamic_size);
     opt.static_data = candy::OptmzStatic(std::in_place_type<candy::optmz::AdaDelta>,
-                                         candy::optmz::AdaDelta(decay_constant, opt.dynamic_data, bias));
+                                         candy::optmz::AdaDelta(learning_rate, decay_constant, opt.dynamic_data, bias));
     return opt;
 }
 

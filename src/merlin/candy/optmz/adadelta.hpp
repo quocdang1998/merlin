@@ -28,12 +28,13 @@ struct candy::optmz::AdaDelta {
     /** @brief Default constructor.*/
     AdaDelta(void) = default;
     /** @brief Constructor from members.
+     *  @param lr Learning rate.
      *  @param r Constant controlling the decay of the previous parameter update.
      *  @param rms_delta_mem Pre-allocated data for storing values of RMS and rescaled moments.
      *  @param b Bias.
      */
-    AdaDelta(double r, char * rms_delta_mem, double b = 1.0e-8) :
-    rho(r), rms_delta(reinterpret_cast<double *>(rms_delta_mem)), bias(b) {}
+    AdaDelta(double lr, double r, char * rms_delta_mem, double b = 1.0e-8) :
+    learning_rate(lr), rho(r), rms_delta(reinterpret_cast<double *>(rms_delta_mem)), bias(b) {}
     /// @}
 
     /// @name Update model by gradient
@@ -50,6 +51,8 @@ struct candy::optmz::AdaDelta {
 
     /// @name Attributes
     /// @{
+    /** @brief Learning rate.*/
+    double learning_rate;
     /** @brief Constant controlling the decay of the previous parameter update.*/
     double rho;
     /** @brief Pointer to array containing RMS and rescaled moments.*/
