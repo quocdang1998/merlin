@@ -11,7 +11,6 @@
 #include "merlin/cuda/stream.hpp"        // merlin::cuda::Stream
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/iterator.hpp"           // merlin::Iterator
-#include "merlin/shuffle.hpp"            // merlin::Shuffle
 #include "merlin/slice.hpp"              // merlin::slicevec
 #include "merlin/vector.hpp"             // merlin::intvec
 

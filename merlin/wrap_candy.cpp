@@ -1,14 +1,9 @@
 // Copyright 2023 quocdang1998
-#include "merlin/candy/model.hpp"
+#include "py_api.hpp"
 
-#include <vector>  // std::vector
+#include "merlin/array/array.hpp"  // merlin::array::Array
+#include "merlin/candy/model.hpp"  // merlin::candy::Model
 
-#include "merlin/array/array.hpp"
-
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
-namespace py = pybind11;
 
 namespace merlin {
 
@@ -20,43 +15,26 @@ void wrap_model(py::module & candy_module) {
         R"(
         Canonical decomposition model.
 
-        Wrapper of :cpp:class:`merlin::candy::Model`.
-        )"
+        Wrapper of :cpp:class:`merlin::candy::Model`.)"
     );
-    // constructors
-    model_pyclass.def(
-        py::init([]() { return new candy::Model(); }),
-        "Default constructor."
-    );
+    // constructor
     model_pyclass.def(
         py::init(
-            [](py::list & shape, std::uint64_t rank) {
-                std::vector<std::uint64_t> shape_cpp = shape.cast<std::vector<std::uint64_t>>();
-                intvec shape_merlin;
-                shape_merlin.assign(shape_cpp.data(), shape_cpp.size());
-                return new candy::Model(shape_merlin, rank);
+            [](py::sequence & shape, std::uint64_t rank) {
+                intvec cpp_shape(pyseq_to_vector<std::uint64_t>(shape));
+                return new candy::Model(cpp_shape, rank);
             }
         ),
-        "Constructor from train data shape and rank.",
+        R"(
+        Constructor from train data shape and rank.
+        
+        Parameters
+        ----------
+        shape : Sequence[int]
+            Shape of decompressed data.
+        rank : int
+            Rank of canonical decomposition model (number of vector per axis).)",
         py::arg("shape"), py::arg("rank")
-    );
-    model_pyclass.def(
-        py::init(
-            [](py::list & param_vectors, std::uint64_t rank) {
-                std::vector<std::vector<double>> param_vector_cpp;
-                param_vector_cpp.reserve(param_vectors.size());
-                for (auto it : param_vectors) {
-                    param_vector_cpp.push_back((*it).cast<std::vector<double>>());
-                }
-                Vector<floatvec> param_vector_merlin(param_vector_cpp.size());
-                for(std::uint64_t i = 0; i < param_vector_merlin.size(); i++) {
-                    param_vector_merlin[i].assign(param_vector_cpp[i].data(), param_vector_cpp[i].size());
-                }
-                return new candy::Model(param_vector_merlin, rank);
-            }
-        ),
-        "Constructor from model values.",
-        py::arg("param_vectors"), py::arg("rank")
     );
     // attributes
     model_pyclass.def_property_readonly(
@@ -66,12 +44,7 @@ void wrap_model(py::module & candy_module) {
     );
     model_pyclass.def_property_readonly(
         "rshape",
-        [](const candy::Model & self) {
-            const intvec & rshape = self.rshape();
-            std::vector rshape_cpp(rshape.cbegin(), rshape.cend());
-            py::list rshape_python = py::cast(rshape_cpp);
-            return rshape_python;
-        },
+        [](const candy::Model & self) { return vector_to_pylist(self.rshape()); },
         "Get rank by shape."
     );
     model_pyclass.def_property_readonly(
@@ -117,10 +90,8 @@ void wrap_model(py::module & candy_module) {
     model_pyclass.def(
         "eval",
         [](candy::Model & self, py::sequence & index) {
-            std::vector<std::uint64_t> index_cpp = index.cast<std::vector<std::uint64_t>>();
-            intvec index_merlin;
-            index_merlin.assign(index_cpp.data(), index_cpp.size());
-            return self.eval(index_merlin);
+            intvec cpp_index(pyseq_to_vector<std::uint64_t>(index));
+            return self.eval(cpp_index);
         },
         "Evaluate result of the model at a given ndim index in the resulted array.",
         py::arg("index")
@@ -140,6 +111,21 @@ void wrap_model(py::module & candy_module) {
         "Initialize values of model based on train data.",
         py::arg("train_data"), py::arg("n_thread") = 1
     );
+    // serialization
+    model_pyclass.def(
+        "save",
+        [](candy::Model & self, const std::string & fname, bool lock) { self.save(fname, lock); },
+        R"(
+        Write model into a file.
+        
+        Parameters
+        ----------
+        fname : str
+            Name of the output file.
+        lock : bool, default=False
+            Lock the file when writing to prevent data race. The lock action may cause a delay.)",
+        py::arg("fname"), py::arg("lock") = false
+    );
     // representation
     model_pyclass.def(
         "__repr__",
@@ -147,11 +133,36 @@ void wrap_model(py::module & candy_module) {
     );
 }
 
+// Create empty C-contiguous array
+static void wrap_load_model(py::module & candy_module) {
+    // load model from a file
+    candy_module.def(
+        "load_model",
+        [](const std::string & fname, bool lock) {
+            candy::Model * p_model = new candy::Model();
+            p_model->load(fname, lock);
+            return p_model;
+        },
+        R"(
+        Read model from a file.
+
+        Parameters
+        ----------
+        fname : str
+            Name of the input file.
+        lock : bool, default=False
+            Lock the file when writing to prevent data race. The lock action may cause a delay.)",
+        py::arg("fname"), py::arg("lock") = false
+    );
+}
+
+
 void wrap_candy(py::module & merlin_package) {
     // add candy submodule
     py::module candy_module = merlin_package.def_submodule("candy", "Data compression by Candecomp-Paraface method.");
     // add classes
     wrap_model(candy_module);
+    wrap_load_model(candy_module);
 }
 
 }  // namespace merlin

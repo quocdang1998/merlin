@@ -51,13 +51,13 @@ int main(void) {
     merlin::candy::Gradient grad(gradient_data.data(), model.num_params(), merlin::candy::TrainMetric::RelativeSquare);
 
     // merlin::candy::Optimizer opt = merlin::candy::create_grad_descent(0.1);
-    merlin::candy::Optimizer opt = merlin::candy::create_adagrad(0.1, model);
-    // merlin::candy::Optimizer opt = merlin::candy::create_adadelta(0.9, model);
+    // merlin::candy::Optimizer opt = merlin::candy::create_adam(0.3, 0.9, 0.99, model);
+    merlin::candy::Optimizer opt = merlin::candy::create_adadelta(20.0, 0.9, model);
 
-/*
+
     std::uint64_t n_thread = 5;
     merlin::intvec cache(n_thread * model.ndim());
-    for (std::uint64_t i = 0; i < 100; i++) {
+    for (std::uint64_t i = 0; i < 1000; i++) {
         #pragma omp parallel num_threads(n_thread)
         {
             grad.calc_by_cpu(model, train_data, ::omp_get_thread_num(), n_thread, cache.data());
@@ -66,9 +66,10 @@ int main(void) {
     }
     MESSAGE("Model gradient: %s\n", grad.str().c_str());
     MESSAGE("Model eval: %f\n", model.eval({1,1}));
-*/
+/*
     merlin::candy::Trainer train(model, std::move(train_data), opt);
     train.update(1000, 1e-2, 3, merlin::candy::TrainMetric::RelativeSquare);
     train.synchronize();
     MESSAGE("Model eval: %f\n", train.get_model().eval({1,1}));
+*/
 }

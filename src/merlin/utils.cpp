@@ -1,8 +1,10 @@
 // Copyright 2022 quocdang1998
 #include "merlin/utils.hpp"
 
-#include <algorithm>  // std::shuffle
+#include <algorithm>  // std::swap
 #include <ctime>      // std::localtime, std::time, std::time_t, std::tm
+#include <numeric>    // std::iota
+#include <random>     // std::uniform_int_distribution
 #include <sstream>    // std::ostringstream
 
 #include "merlin/env.hpp"       // merlin::Environment
@@ -49,15 +51,28 @@ std::string get_time(void) {
 // Get a random subset of index in a range
 intvec get_random_subset(std::uint64_t num_points, std::uint64_t i_max, std::uint64_t i_min) noexcept {
     // check num_points
-    CASSERT(num_points > i_max - i_min, FAILURE, std::invalid_argument, "Number of points exceeding range.\n");
-    // calculate range index
-    intvec range_index(i_max - i_min);
-    for (std::uint64_t i = 0; i < range_index.size(); i++) {
-        range_index[i] = i_min + i;
+    if (num_points > i_max - i_min) {
+        FAILURE(std::invalid_argument, "Number of points exceeding range.\n");
     }
-    std::shuffle(range_index.begin(), range_index.end(), Environment::random_generator);
-    // return a few first index
-    return intvec(range_index.data(), num_points);
+    // calculate range index
+    std::uniform_int_distribution<std::uint64_t> distribution;
+    using param_t = std::uniform_int_distribution<std::uint64_t>::param_type;
+    intvec result(num_points);
+    std::iota(result.begin(), result.end(), i_min);
+    std::int64_t largest_val = i_min + num_points;
+    // swap with number out of range
+    for (std::int64_t i = i_max-1; i >= largest_val; i--) {
+        std::uint64_t destination_idx = distribution(Environment::random_generator, param_t(i_min, i));
+        if (destination_idx < largest_val) {
+            result[destination_idx - i_min] = i;
+        }
+    }
+    // swap with number in range
+    for (std::int64_t i = largest_val - 1; i >= static_cast<std::int64_t>(i_min); i--) {
+        std::uint64_t destination_idx = distribution(Environment::random_generator, param_t(i_min, i));
+        std::swap(result[destination_idx - i_min], result[i - i_min]);
+    }
+    return result;
 }
 
 }  // namespace merlin

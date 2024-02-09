@@ -71,7 +71,7 @@ class CudaDeleter {
     ~CudaDeleter(void) = default;
     /// @}
 
-    /// @name Call fucntion
+    /// @name Call function
     /// @{
     /** @brief Call CUDA deallocation (synchronous) on pointer.*/
     void operator()(void * pointer) { cuda_mem_free(pointer); }

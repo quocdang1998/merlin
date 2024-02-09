@@ -6,45 +6,30 @@ System requirements
 
 Prior to compiling the package, make sure that you have already installed these prerequisites:
 
--  C++ compiler: GNU ``g++>=9.3.0`` on **Linux** or Visual Studio 2022 ``cl.exe`` on **Windows**, with OpenMP enabled.
+-  C++ compiler: GNU ``g++>=11.2.0`` on **Linux** or Visual Studio 2022 ``cl.exe`` on **Windows**, with OpenMP enabled.
 
 -  Cmake: ``cmake>=3.25.0``
 
 -  Build-tool: GNU ``make`` on **Linux** or ``ninja`` on **Windows** (Ninja extenstion of MSVC).
 
--  CUDA ``nvcc>=11.4`` (optional, required if GPU parallelization option is ``ON``).
+-  CUDA ``nvcc>=12.1`` (optional, required if GPU parallelization option is ``ON``).
 
 .. _setup_script_build_dependancies:
 
 To compile the Python interface by using the ``setup.py`` script, ensure the installation of the following modules:
 
--  |Cython|_
+-  |Pybind11|_
 
 -  |Numpy|_
 
--  |Jinja2|_
-
--  |packaging|_
-
-.. |Cython| replace:: ``Cython>=3.0.0a10``
-.. _Cython: https://pypi.org/project/Cython/#history
+.. |Pybind11| replace:: ``Pybind11>=2.10``
+.. _Pybind11: https://pypi.org/project/pybind11/
 .. |Numpy| replace:: ``Numpy>1.17``
 .. _Numpy: https://pypi.org/project/numpy/
-.. |Jinja2| replace:: ``Jinja2``
-.. _Jinja2: https://pypi.org/project/Jinja2/
-.. |packaging| replace:: ``packaging``
-.. _packaging: https://pypi.org/project/packaging/
 
 .. code-block:: sh
 
-      pip install -U numpy Jinja2 packaging
-      pip install -U Cython --pre
-
-.. note::
-
-   By default, ``pip`` will install the newest release version of ``Cython``,
-   which is ``0.29``, but the ``setup`` script requires the pre-release one.
-   Thus, the argument ``--pre`` **is mandatory**.
+      pip install -U pybind11 numpy
 
 To compile the documentation, install the following packages:
 

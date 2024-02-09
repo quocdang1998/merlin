@@ -1,19 +1,20 @@
 // Copyright 2023 quocdang1998
-#include "merlin/splint/interpolator.hpp"
-#include "merlin/splint/tools.hpp"
+#include "py_api.hpp"
 
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
+#include <map>  // std::map
 
-#include "merlin/array/array.hpp"
-#include "merlin/grid/cartesian_grid.hpp"
-#include "merlin/synchronizer.hpp"
-
-#include "py_common.hpp"
-
-namespace py = pybind11;
+#include "merlin/array/array.hpp"          // merlin::array::Array
+#include "merlin/grid/cartesian_grid.hpp"  // merlin::grid::CartesianGrid
+#include "merlin/splint/interpolator.hpp"  // merlin::splint::Interpolator
+#include "merlin/splint/tools.hpp"         // merlin::splint::Method
 
 namespace merlin {
+
+// wrap ProcessorType
+static const std::map<std::string, ProcessorType> proctype_map = {
+    {"cpu", ProcessorType::Cpu},
+    {"gpu", ProcessorType::Gpu}
+};
 
 // Wrap merlin::splint::Method enum
 static void wrap_method(py::module & splint_module) {
@@ -28,7 +29,7 @@ static void wrap_method(py::module & splint_module) {
 }
 
 // Wrap merlin::splint::Interpolator class
-void wrap_interpolator(py::module & splint_module) {
+static void wrap_interpolator(py::module & splint_module) {
     auto interpolator_pyclass = py::class_<splint::Interpolator>(
         splint_module,
         "Interpolator",
@@ -38,22 +39,13 @@ void wrap_interpolator(py::module & splint_module) {
         Wrapper of :cpp:class:`merlin::splint::Interpolator`.
         )"
     );
-    // constructors
-    interpolator_pyclass.def(
-        py::init([]() { return new splint::Interpolator(); }),
-        "Default constructor."
-    );
+    // constructor
     interpolator_pyclass.def(
         py::init(
             [](const grid::CartesianGrid & grid, const array::Array & values, py::list & method,
                const std::string & processor) {
-                Vector<splint::Method> method_cpp(method.size());
-                std::uint64_t i = 0;
-                for (auto it = method.begin(); it != method.end(); ++it) {
-                    method[i] = (*it).cast<splint::Method>();
-                    i++;
-                }
-                return new splint::Interpolator(grid, values, method_cpp, proctype_map[processor]);
+                Vector<splint::Method> cpp_method(pyseq_to_vector<splint::Method>(method));
+                return new splint::Interpolator(grid, values, cpp_method, proctype_map.at(processor));
             }
         ),
         "Construct from an array of values.",

@@ -7,7 +7,7 @@ import numpy as np
 from merlin.array import Array
 
 x = np.array([0,1,2,3,4,5], dtype=np.double)
-a = Array(array=x)
+a = Array(x)
 print(a)
-b = Array(array=np.ones((2,3,4)))
+b = Array(np.ones((2,3,4)))
 print(b)

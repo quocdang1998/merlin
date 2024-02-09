@@ -1,19 +1,13 @@
 // Copyright 2023 quocdang1998
-#include "merlin/grid/cartesian_grid.hpp"
+#include "py_api.hpp"
 
-#include <vector>  // std::vector
-
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
-#include "merlin/array/array.hpp"
-
-namespace py = pybind11;
+#include "merlin/array/array.hpp"          // merlin::array::Array
+#include "merlin/grid/cartesian_grid.hpp"  // merlin::grid::CartesianGrid
 
 namespace merlin {
 
 // Wrap merlin::grid::CartesianGrid class
-void wrap_cartgrid(py::module & grid_module) {
+static void wrap_cartgrid(py::module & grid_module) {
     auto cartgrid_pyclass = py::class_<grid::CartesianGrid>(
         grid_module,
         "CartesianGrid",
@@ -23,24 +17,16 @@ void wrap_cartgrid(py::module & grid_module) {
         Wrapper of :cpp:class:`merlin::grid::CartesianGrid`.
         )"
     );
-    // constructors
-    cartgrid_pyclass.def(
-        py::init([]() { return new grid::CartesianGrid(); }),
-        "Default constructor."
-    );
+    // constructor
     cartgrid_pyclass.def(
         py::init(
             [](py::list & grid_vectors) {
-                std::vector<std::vector<double>> grid_vector_cpp;
-                grid_vector_cpp.reserve(grid_vectors.size());
-                for (auto it : grid_vectors) {
-                    grid_vector_cpp.push_back((*it).cast<std::vector<double>>());
+                Vector<floatvec> cpp_grid_vector(grid_vectors.size());
+                std::uint64_t i_dim = 0;
+                for (auto it = grid_vectors.begin(); it != grid_vectors.end(); ++it) {
+                    cpp_grid_vector[i_dim++] = pyseq_to_vector<double>(it->cast<py::sequence>());
                 }
-                Vector<floatvec> grid_vector_merlin(grid_vector_cpp.size());
-                for(std::uint64_t i = 0; i < grid_vector_merlin.size(); i++) {
-                    grid_vector_merlin[i].assign(grid_vector_cpp[i].data(), grid_vector_cpp[i].size());
-                }
-                return new grid::CartesianGrid(grid_vector_merlin);
+                return new grid::CartesianGrid(cpp_grid_vector);
             }
         ),
         "Constructor from list of nodes on each dimension.",
@@ -54,12 +40,7 @@ void wrap_cartgrid(py::module & grid_module) {
     );
     cartgrid_pyclass.def_property_readonly(
         "shape",
-        [](const grid::CartesianGrid & self) {
-            const intvec & shape = self.shape();
-            std::vector shape_cpp(shape.cbegin(), shape.cend());
-            py::list shape_python = py::cast(shape_cpp);
-            return shape_python;
-        },
+        [](const grid::CartesianGrid & self) { return vector_to_pylist(self.shape()); },
         "Get shape."
     );
     cartgrid_pyclass.def_property_readonly(
@@ -74,33 +55,21 @@ void wrap_cartgrid(py::module & grid_module) {
     );
     cartgrid_pyclass.def(
         "get_grid_vector",
-        [](const grid::CartesianGrid & self, std::uint64_t i_dim) {
-            const floatvec grid_vector = self.grid_vector(i_dim);
-            std::vector<double> grid_vector_cpp(grid_vector.cbegin(), grid_vector.cend());
-            py::list grid_vector_python = py::cast(grid_vector_cpp);
-            return grid_vector_python;
-        },
+        [](const grid::CartesianGrid & self, std::uint64_t i_dim) { return vector_to_pylist(self.grid_vector(i_dim)); },
         "Get grid vector of a given dimension.",
         py::arg("i_dim")
     );
     // slicing operator
     cartgrid_pyclass.def(
         "get",
-        [](const grid::CartesianGrid & self, std::uint64_t index) {
-            floatvec point = self[index];
-            std::vector<double> point_cpp(point.begin(), point.end());
-            py::list point_python = py::cast(point_cpp);
-            return point_python;
-        },
+        [](const grid::CartesianGrid & self, std::uint64_t index) { return vector_to_pylist(self[index]); },
         "Get element at a given flatten index.",
         py::arg("index")
     );
     // get points
     cartgrid_pyclass.def(
         "get_points",
-        [](const grid::CartesianGrid & self) {
-            return new array::Array(self.get_points());
-        },
+        [](const grid::CartesianGrid & self) { return new array::Array(self.get_points()); },
         "Get all points in the grid as a 2D array."
     );
     // representation

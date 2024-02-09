@@ -1,16 +1,9 @@
 // Copyright 2024 quocdang1998
-#include "merlin/regpl/polynomial.hpp"
-#include "merlin/regpl/regressor.hpp"
+#include "py_api.hpp"
 
-#include <vector>
-
-#include "merlin/array/array.hpp"
-
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-namespace py = pybind11;
-
-#include "py_common.hpp"
+#include "merlin/array/array.hpp"       // merlin::array::Array
+#include "merlin/regpl/polynomial.hpp"  // merlin::regpl::Polynomial
+#include "merlin/regpl/regressor.hpp"   // merlin::regpl::Regressor
 
 namespace merlin {
 
@@ -25,12 +18,8 @@ void wrap_polynomial(py::module & regpl_module) {
         Wrapper of :cpp:class:`merlin::regpl::Polynomial`.
         )"
     );
-    // constructors
-    polynomial_pyclass.def(
-        py::init([]() { return new regpl::Polynomial(); }),
-        "Default constructor."
-    );
-    polynomial_pyclass.def(
+    // constructor
+    /*polynomial_pyclass.def(
         py::init(
             [](py::list & order_per_dim) {
                 std::vector<std::uint64_t> order_per_dim_cpp = order_per_dim.cast<std::vector<std::uint64_t>>();
@@ -39,7 +28,7 @@ void wrap_polynomial(py::module & regpl_module) {
         ),
         "Constructor of an empty polynomial from order per dimension.",
         py::arg("order_per_dim")
-    );
+    );*/
     polynomial_pyclass.def(
         py::init(
             [](const array::Array & coeffs) {
@@ -53,7 +42,7 @@ void wrap_polynomial(py::module & regpl_module) {
         "Constructor from coefficients array.",
         py::arg("coeffs")
     );
-    polynomial_pyclass.def(
+    /*polynomial_pyclass.def(
         py::init(
             [](py::list & coeff_array, py::list & order_per_dim, py::list & term_index) {
                 floatvec cpp_coeff = pylist_to_fvec(coeff_array);
@@ -64,7 +53,7 @@ void wrap_polynomial(py::module & regpl_module) {
         ),
         "Constructor of a sparse polynomial from coefficients.",
         py::arg("coeff_array"), py::arg("order_per_dim"), py::arg("term_index")
-    );
+    );*/
     // attributes
     polynomial_pyclass.def(
         "order",
