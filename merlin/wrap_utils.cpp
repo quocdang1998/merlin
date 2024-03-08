@@ -46,7 +46,7 @@ void wrap_utils(py::module & merlin_package) {
         },
         R"(
         Get a random subset of index in a range.
-        
+
         Parameters
         ----------
         num_points : int

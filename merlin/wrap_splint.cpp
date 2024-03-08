@@ -50,7 +50,7 @@ void wrap_interpolator(py::module & splint_module) {
                 Vector<splint::Method> method_cpp(method.size());
                 std::uint64_t i = 0;
                 for (auto it = method.begin(); it != method.end(); ++it) {
-                    method[i] = (*it).cast<splint::Method>();
+                    method_cpp[i] = (*it).cast<splint::Method>();
                     i++;
                 }
                 return new splint::Interpolator(grid, values, method_cpp, proctype_map[processor]);
