@@ -23,9 +23,9 @@ __cuhostdev__ constexpr bool is_same_size(const Vector<T> & vec_1, const Vector<
 template <typename T>
 __cuhostdev__ bool is_zeros(const Vector<T> & vec) noexcept;
 
-/** @brief 1D un-resizable dynamic array.
+/** @brief 1D non-resizable dynamic array.
  *  @details Similar to ``std::vector``, but transportable to GPU global memory and shared memory.
- *  @tparam T Numeric type (``float``, ``int``, etc)
+ *  @tparam T Numeric type (``float``, ``int``, etc).
  */
 template <typename T>
 class Vector {
@@ -42,8 +42,6 @@ class Vector {
      */
     __cuhostdev__ explicit Vector(std::uint64_t size, const T & value = T());
     /** @brief Copy constructor from a pointer to first and last element.
-     *  @tparam Convertable Type convertable to ``T`` (constructor of ``T`` from ``Convertable``, i.e
-     *  ``T(Convertable)`` must exists).
      *  @param ptr_first Pointer to the first element.
      *  @param ptr_last Pointer to the last element.
      */

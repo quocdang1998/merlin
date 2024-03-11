@@ -11,7 +11,7 @@ Welcome to Merlin's documentation!
 Merlin is a C++ / `CUDA <https://docs.nvidia.com/cuda/index.html>`_ library for processing and interpolation of
 multi-parameterized cross sections resulting from lattice calculations in the two-step approach
 :cite:p:`galia2020dynamic`. The library also supports a Python interface facilitated by
-`Cython <https://cython.readthedocs.io/en/latest/>`_.
+`Pybind11 <https://pybind11.readthedocs.io/en/stable/>`_.
 
 Major features include:
 
@@ -19,7 +19,8 @@ Major features include:
 
 -  **Polynomial interpolation**: interpolate a dataset over a multidimensional Cartesian grid and hierarchical grids
    :cite:p:`garcke2006sparse` by Lagrange :cite:p:`berrut2004barycentric` and Newton method
-   :cite:p:`neidinger2019multivariate`.
+   :cite:p:`neidinger2019multivariate`. Mixed interpolation method (linear interpolation on some specific axes) are
+   also supported.
 
 -  **Tensor decomposition**: decompose multidimensional array to sum of tensor products of one-dimensional vectors by
    gradient approach :cite:p:`acar2011scalable`.

@@ -3,6 +3,7 @@
 
 #include <algorithm>  // std::shuffle
 #include <ctime>      // std::localtime, std::time, std::time_t, std::tm
+#include <random>     // std::uniform_int_distribution
 #include <sstream>    // std::ostringstream
 
 #include "merlin/env.hpp"       // merlin::Environment
@@ -51,13 +52,17 @@ intvec get_random_subset(std::uint64_t num_points, std::uint64_t i_max, std::uin
     // check num_points
     CASSERT(num_points > i_max - i_min, FAILURE, std::invalid_argument, "Number of points exceeding range.\n");
     // calculate range index
-    intvec range_index(i_max - i_min);
-    for (std::uint64_t i = 0; i < range_index.size(); i++) {
-        range_index[i] = i_min + i;
+    std::uniform_int_distribution<std::uint64_t> distribution;
+    using param_t = std::uniform_int_distribution<std::uint64_t>::param_type;
+    intvec result(num_points);
+    std::uint64_t largest_val = i_min + num_points;
+    for (std::int64_t i = i_max-1; i >= i_min; i--) {
+        std::uint64_t destination_idx = distribution(Environment::random_generator, param_t(i_min, i));
+        if (destination_idx < largest_val) {
+            result[destination_idx - i_min] = i;
+        }
     }
-    std::shuffle(range_index.begin(), range_index.end(), Environment::random_generator);
-    // return a few first index
-    return intvec(range_index.data(), num_points);
+    return result;
 }
 
 }  // namespace merlin
