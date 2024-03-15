@@ -1,7 +1,7 @@
 // Copyright 2022 quocdang1998
 #include "merlin/utils.hpp"
 
-#include <algorithm>  // std::shuffle, std::swap
+#include <algorithm>  // std::swap
 #include <ctime>      // std::localtime, std::time, std::time_t, std::tm
 #include <numeric>    // std::iota
 #include <random>     // std::uniform_int_distribution
@@ -58,7 +58,7 @@ intvec get_random_subset(std::uint64_t num_points, std::uint64_t i_max, std::uin
     std::uniform_int_distribution<std::uint64_t> distribution;
     using param_t = std::uniform_int_distribution<std::uint64_t>::param_type;
     intvec result(num_points);
-    std::iota(result.begin(), result.end(), 0);
+    std::iota(result.begin(), result.end(), i_min);
     std::int64_t largest_val = i_min + num_points;
     // swap with number out of range
     for (std::int64_t i = i_max-1; i >= largest_val; i--) {

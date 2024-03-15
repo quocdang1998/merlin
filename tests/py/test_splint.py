@@ -19,8 +19,8 @@ for i in range(grid.size):
 np_buffer = np.array(data)
 np_buffer = np_buffer.reshape(grid.shape)
 value=Array(buffer=np_buffer, copy=False)
-methods = [Method.Newton] * 3
-interp = Interpolator(grid=grid, values=value, method=methods)
+methods = [Method.Linear] * 3
+interp = Interpolator(grid=grid, values=value, method=methods, processor="cpu")
 interp.build_coefficients()
 
 points = np.array([[0.1, 1.2, 0.3], [0.24, 2.6, 0.12]], dtype=np.float64)

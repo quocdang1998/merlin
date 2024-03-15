@@ -1,20 +1,15 @@
 // Copyright 2023 quocdang1998
-#include "merlin/array/array.hpp"
-#include "merlin/array/nddata.hpp"
-#include "merlin/array/parcel.hpp"
-#include "merlin/array/stock.hpp"
+#include "py_api.hpp"
 
-#include <vector>
-
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-
-namespace py = pybind11;
+#include "merlin/array/array.hpp"   // merlin::array::Array
+#include "merlin/array/nddata.hpp"  // merlin::array::NdData
+#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
+#include "merlin/array/stock.hpp"   // merlin::array::Stock
 
 namespace merlin {
 
 // Wrap merlin::array::NdData class
-void wrap_nddata(py::module & array_module) {
+static void wrap_nddata(py::module & array_module) {
     auto nddata_pyclass = py::class_<array::NdData>(
         array_module,
         "NdData",
@@ -24,7 +19,7 @@ void wrap_nddata(py::module & array_module) {
         Wrapper of :cpp:class:`merlin::array::NdData`.
         )"
     );
-    // constructors
+    // constructor
     nddata_pyclass.def(
         py::init([]() { return new array::NdData(); }),
         "Default constructor."
@@ -37,22 +32,12 @@ void wrap_nddata(py::module & array_module) {
     );
     nddata_pyclass.def_property_readonly(
         "shape",
-        [](const array::NdData & self) {
-            const intvec & shape = self.shape();
-            std::vector shape_cpp(shape.cbegin(), shape.cend());
-            py::list shape_python = py::cast(shape_cpp);
-            return shape_python;
-        },
+        [](const array::NdData & self) { return vector_to_pylist(self.shape()); },
         "Get shape vector."
     );
     nddata_pyclass.def_property_readonly(
         "strides",
-        [](const array::NdData & self) {
-            const intvec & strides = self.strides();
-            std::vector strides_cpp(strides.cbegin(), strides.cend());
-            py::list strides_python = py::cast(strides_cpp);
-            return strides_python;
-        },
+        [](const array::NdData & self) { return vector_to_pylist(self.strides()); },
         "Get stride vector."
     );
     nddata_pyclass.def_property_readonly(
@@ -74,12 +59,7 @@ void wrap_nddata(py::module & array_module) {
     );
     nddata_pyclass.def(
         "get",
-        [](const array::NdData & self, py::tuple & index) {
-            std::vector<std::uint64_t> index_cpp = index.cast<std::vector<std::uint64_t>>();
-            intvec index_merlin;
-            index_merlin.assign(index_cpp.data(), index_cpp.size());
-            return self.get(index_merlin);
-        },
+        [](const array::NdData & self, py::tuple & index) { return self.get(pyseq_to_vector<std::uint64_t>(index)); },
         "Get value of element at a n-dim index.",
         py::arg("index")
     );
@@ -92,10 +72,7 @@ void wrap_nddata(py::module & array_module) {
     nddata_pyclass.def(
         "set",
         [](array::NdData & self, py::tuple & index, double value) {
-            std::vector<std::uint64_t> index_cpp = index.cast<std::vector<std::uint64_t>>();
-            intvec index_merlin;
-            index_merlin.assign(index_cpp.data(), index_cpp.size());
-            self.set(index_merlin, value);
+            self.set(pyseq_to_vector<std::uint64_t>(index), value);
         },
         "Set value of element at a ndim index.",
         py::arg("index"), py::arg("value")
@@ -103,10 +80,7 @@ void wrap_nddata(py::module & array_module) {
     // operations
     nddata_pyclass.def(
         "reshape",
-        [](array::NdData & self, py::sequence & new_shape) {
-            std::vector<std::uint64_t> new_shape_cpp = new_shape.cast<std::vector<std::uint64_t>>();
-            self.reshape(intvec(new_shape_cpp.data(), new_shape_cpp.size()));
-        },
+        [](array::NdData & self, py::sequence & new_shape) { self.reshape(pyseq_to_vector<std::uint64_t>(new_shape)); },
         "Reshape the dataset.",
         py::arg("new_shape")
     );
@@ -129,7 +103,7 @@ void wrap_nddata(py::module & array_module) {
 }
 
 // Wrap merlin::array::Array class
-void wrap_array_(py::module & array_module) {
+static void wrap_array_(py::module & array_module) {
     auto array_pyclass = py::class_<array::Array, array::NdData>(
         array_module,
         "Array",
@@ -140,21 +114,7 @@ void wrap_array_(py::module & array_module) {
         Wrapper of :cpp:class:`merlin::array::Array`.
         )"
     );
-    // constructors
-    array_pyclass.def(
-        py::init([]() { return new array::Array(); }),
-        "Default constructor."
-    );
-    array_pyclass.def(
-        py::init(
-            [](py::list & shape) {
-                std::vector<std::uint64_t> shape_cpp = shape.cast<std::vector<std::uint64_t>>();
-                return new array::Array(intvec(shape_cpp.data(), shape_cpp.size()));
-            }
-        ),
-        "Construct C-contiguous empty array from dimension vector.",
-        py::arg("shape")
-    );
+    // constructor
     array_pyclass.def(
         py::init(
             [](py::buffer buffer, bool copy) {
@@ -171,7 +131,15 @@ void wrap_array_(py::module & array_module) {
                 return new merlin::array::Array(reinterpret_cast<double *>(info.ptr), shape, strides, copy);
             }
         ),
-        "Construct array from pointer, to data and meta-data.",
+        R"(Construct array from buffer memory (Numpy array, Pandas Array, etc).
+
+        Parameters
+        ----------
+        buffer :
+            Original array.
+        copy :
+            If ``True``, copy data from the buffer to a new C-contiguous array. otherwise, directly assign the array
+            to the pointer of the buffer.)",
         py::arg("buffer"), py::arg("copy") = false
     );
     // conversion to Numpy
@@ -200,7 +168,7 @@ void wrap_array_(py::module & array_module) {
 }
 
 // Wrap merlin::array::Parcel class
-void wrap_parcel(py::module & array_module) {
+static void wrap_parcel(py::module & array_module) {
     auto parcel_pyclass = py::class_<array::Parcel, array::NdData>(
         array_module,
         "Parcel",
@@ -210,20 +178,10 @@ void wrap_parcel(py::module & array_module) {
         Wrapper of :cpp:class:`merlin::array::Parcel`.
         )"
     );
-    // constructors
+    // constructor
     parcel_pyclass.def(
         py::init([]() { return new array::Parcel(); }),
         "Default constructor."
-    );
-    parcel_pyclass.def(
-        py::init(
-            [](py::list & shape, const cuda::Stream & stream) {
-                std::vector<std::uint64_t> shape_cpp = shape.cast<std::vector<std::uint64_t>>();
-                return new array::Parcel(intvec(shape_cpp.data(), shape_cpp.size()), stream);
-            }
-        ),
-        "Construct a contiguous array from shape on GPU.",
-        py::arg("shape"), py::arg("stream") = cuda::Stream()
     );
     // transfer data to GPU
     parcel_pyclass.def(
@@ -233,6 +191,15 @@ void wrap_parcel(py::module & array_module) {
         },
         "Transfer data to GPU from CPU array.",
         py::arg("cpu_array"), py::arg("stream") = cuda::Stream()
+    );
+    // deallocate current data
+    parcel_pyclass.def(
+        "free_current_data",
+        [](array::Parcel & self, const cuda::Stream & stream) {
+            self.free_current_data(stream);
+        },
+        "Deallocate the momory on GPU pointed by the object.",
+        py::arg("stream") = cuda::Stream()
     );
 }
 
@@ -247,21 +214,7 @@ void wrap_stock(py::module & array_module) {
         Wrapper of :cpp:class:`merlin::array::Stock`.
         )"
     );
-    // constructors
-    stock_pyclass.def(
-        py::init([]() { return new array::Stock(); }),
-        "Default constructor."
-    );
-    stock_pyclass.def(
-        py::init(
-            [](const std::string & filename, py::list & shape, std::uint64_t offset, bool thread_safe) {
-                std::vector<std::uint64_t> shape_cpp = shape.cast<std::vector<std::uint64_t>>();
-                return new array::Stock(filename, intvec(shape_cpp.data(), shape_cpp.size()), offset, thread_safe);
-            }
-        ),
-        "Open an empty file for storing data.",
-        py::arg("filename"), py::arg("shape"), py::arg("offset") = 0, py::arg("thread_safe") = true
-    );
+    // constructor
     stock_pyclass.def(
         py::init(
             [](const std::string & filename, std::uint64_t offset, bool thread_safe) {
@@ -291,6 +244,61 @@ void wrap_stock(py::module & array_module) {
     );
 }
 
+// Create empty C-contiguous array
+static void wrap_empty_constructors(py::module & array_module) {
+    // empty CPU array
+    array_module.def(
+        "empty_array",
+        [](py::sequence & shape) {
+            return new array::Array(pyseq_to_vector<std::uint64_t>(shape));
+        },
+        R"(
+        Construct C-contiguous empty CPU array from shape vector.
+
+        Parameters
+        ----------
+        shape : Sequence[int]
+            Shape of n-dimensional array.)",
+        py::arg("shape")
+    );
+    // empty GPU array
+    array_module.def(
+        "empty_parcel",
+        [](py::sequence & shape) {
+            return new array::Parcel(pyseq_to_vector<std::uint64_t>(shape));
+        },
+        R"(
+        Construct C-contiguous empty GPU array from shape vector.
+
+        Parameters
+        ----------
+        shape : Sequence[int]
+            Shape of n-dimensional array.)",
+        py::arg("shape")
+    );
+    // empty out-of-core array
+    array_module.def(
+        "empty_stock",
+        [](const std::string & filename, py::sequence & shape, std::uint64_t offset, bool thread_safe) {
+            return new array::Stock(filename, pyseq_to_vector<std::uint64_t>(shape), offset, thread_safe);
+        },
+        R"(
+        Open an empty file for storing data.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file storing data of the array.
+        shape : Sequence[int]
+            Shape of n-dimensional array.
+        offset : int, default=0
+            Number of bytes to start the reading, counting from the beginning of the file.
+        thread_safe : bool, default=False
+            Using filelock to avoid data race when the file is accessed by multiple threads.)",
+        py::arg("filename"), py::arg("shape"), py::arg("offset") = 0, py::arg("thread_safe") = false
+    );
+}
+
 void wrap_array(py::module & merlin_package) {
     // add array submodule
     py::module array_module = merlin_package.def_submodule("array", "Multi-dimensional array wrapper API.");
@@ -299,6 +307,8 @@ void wrap_array(py::module & merlin_package) {
     wrap_array_(array_module);
     wrap_parcel(array_module);
     wrap_stock(array_module);
+    wrap_empty_constructors(array_module);
 }
 
 }  // namespace merlin
+

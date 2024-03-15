@@ -51,11 +51,11 @@ list(APPEND MERLIN_SRC_CPP
      # intpl/sparse_grid.cpp
      linalg/qr_solve.cpp
      linalg/matrix.cpp
+     permutation.cpp
      regpl/polynomial.cpp
      regpl/vandermonde.cpp
      # regpl/regressor.cpp
      slice.cpp
-     shuffle.cpp
      splint/interpolator.cpp
      splint/tools.cpp
      stat/moment.cpp

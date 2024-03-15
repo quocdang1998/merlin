@@ -1,15 +1,14 @@
 // Copyright 2023 quocdang1998
-#include "merlin/cuda_interface.hpp"
-#include "merlin/cuda/device.hpp"
-#include "merlin/cuda/enum_wrapper.hpp"
-#include "merlin/cuda/event.hpp"
-#include "merlin/cuda/stream.hpp"
+#include "py_api.hpp"
 
-#include <string>
-#include <unordered_map>
+#include <string>         // std::string
+#include <unordered_map>  // std::unordered_map
 
-#include <pybind11/pybind11.h>
-namespace py = pybind11;
+#include "merlin/cuda/device.hpp"        // merlin::cuda::Device
+#include "merlin/cuda/enum_wrapper.hpp"  // merlin::cuda::DeviceLimit, merlin::cuda::EventWaitFlag,
+                                         // merlin::cuda::StreamSetting
+#include "merlin/cuda/event.hpp"         // merlin::cuda::Event
+#include "merlin/cuda/stream.hpp"        // merlin::cuda::Stream
 
 namespace merlin {
 
@@ -34,10 +33,6 @@ static std::unordered_map<std::string, cuda::EventWaitFlag> eventwaitflag_map = 
     {"external", cuda::EventWaitFlag::External}
 };
 
-// Wrap enums
-static void wrap_enums(py::module & cuda_module) {
-}
-
 // Wrap merlin::cuda::Device
 static void wrap_device(py::module & cuda_module) {
     auto device_pyclass = py::class_<cuda::Device>(
@@ -53,7 +48,7 @@ static void wrap_device(py::module & cuda_module) {
         py::init([](int id){ return new cuda::Device(id); }),
         R"(
         Constructor from GPU ID.
-        
+
         Parameters
         ----------
         id : int, default = -1
@@ -99,7 +94,7 @@ static void wrap_device(py::module & cuda_module) {
         [](const std::string & limit) { return cuda::Device::limit(devicelimit_map.at(limit)); },
         R"(
         Get setting limits of the current GPU.
-        
+
         Parameters
         ----------
         limit : str
@@ -114,7 +109,7 @@ static void wrap_device(py::module & cuda_module) {
         },
         R"(
         Set setting limits of the current GPU.
-        
+
         Parameters
         ----------
         limit : str
@@ -168,12 +163,18 @@ static void wrap_event(py::module & cuda_module) {
                 if (blocking_sync) {
                     category |= cuda::EventCategory::BlockingSync;
                 }
+                if (disable_timing) {
+                    category |= cuda::EventCategory::DisableTiming;
+                }
+                if (interprocess) {
+                    category |= cuda::EventCategory::Interprocess;
+                }
                 return new cuda::Event(category);
             }
         ),
         R"(
         Construct CUDA event from flag.
-        
+
         Parameters
         ----------
         blocking_sync : bool, default = False
@@ -254,7 +255,7 @@ static void wrap_stream(py::module & cuda_module) {
         }),
         R"(
         Construct CUDA stream from its setting and priority.
-        
+
         Parameters
         ----------
         setting : str
@@ -327,7 +328,7 @@ static void wrap_stream(py::module & cuda_module) {
         },
         R"(
         Make the stream wait on an event.
-        
+
         Parameters
         ----------
         event : merlin.cuda.Event
@@ -354,7 +355,6 @@ void wrap_cuda(py::module & merlin_package) {
     // add cuda submodule
     py::module cuda_module = merlin_package.def_submodule("cuda", "CUDA runtime API wrapper.");
     // add classes and enums
-    wrap_enums(cuda_module);
     wrap_device(cuda_module);
     wrap_event(cuda_module);
     wrap_stream(cuda_module);

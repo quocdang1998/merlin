@@ -129,11 +129,17 @@ std::string array::print(const NdArray * target, const std::string & nametype, b
     // trivial case
     if (target->ndim() == 1) {
         os << "<";
+        if (first_call) {
+            os << nametype << "(";
+        }
         for (std::uint64_t i = 0; i < target->shape()[0]; i++) {
             if (i > 0) {
                 os << " ";
             }
             os << target->get({i});
+        }
+        if (first_call) {
+            os << ")";
         }
         os << ">";
         return os.str();
