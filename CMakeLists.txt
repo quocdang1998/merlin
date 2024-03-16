@@ -49,6 +49,7 @@ list(APPEND MERLIN_SRC_CPP
      # intpl/nodes.cpp
      # intpl/regular_grid.cpp
      # intpl/sparse_grid.cpp
+     linalg/dot.cpp
      linalg/qr_solve.cpp
      linalg/matrix.cpp
      permutation.cpp
@@ -225,6 +226,40 @@ if(MSVC)  # patch the MSVC OpenMP default 2.0 version
                  INTERFACE_COMPILE_OPTIONS $<$<COMPILE_LANGUAGE:CXX>:-openmp:llvm>)
 endif(MSVC)
 
+# AVX
+include(CheckCXXSourceRuns)
+set(AVX_CODE "
+#include <immintrin.h>
+
+int main(void) {
+    __m256d a = _mm256_set1_pd(0.0), b = _mm256_set1_pd(1.0), c = _mm256_set1_pd(2.0);
+    c = _mm256_fmadd_pd(a, b, c);
+}
+")
+macro(CHECK_AVX TYPE FLAG)
+    set(CMAKE_REQUIRED_QUIET 1)
+    set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+    set(CMAKE_REQUIRED_FLAGS ${FLAG})
+    check_cxx_source_runs("${${TYPE}_CODE}" CXX_HAS_${TYPE})
+    if (CXX_HAS_${TYPE})
+        message(STATUS "Current CPU supports ${FLAG}")
+    endif()
+    set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
+endmacro()
+set(AVX_COMPILE_OPTION)
+if(UNIX)
+    check_avx(AVX "-mfma -mavx")
+    if(CXX_HAS_AVX)
+        set(AVX_COMPILE_OPTION -mfma -mavx)
+    endif(CXX_HAS_AVX)
+elseif(MSVC)
+    check_avx(AVX "/arch:AVX2")
+    if(CXX_HAS_AVX)
+        set(AVX_COMPILE_OPTION /arch:AVX2)
+    endif(CXX_HAS_AVX)
+endif()
+
+
 # ======================================================================================================================
 # library
 # ======================================================================================================================
@@ -240,6 +275,7 @@ function(MerlinSetTargetProperties target_library)
         $<INSTALL_INTERFACE:include>
     )
     set_property(TARGET ${target_library} PROPERTY INTERPROCEDURAL_OPTIMIZATION ON)
+    target_compile_options(${target_library} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${AVX_COMPILE_OPTION}>)
     if(MERLIN_CUDA)
         set_property(TARGET ${target_library} PROPERTY CUDA_ARCHITECTURES "${CUDA_ARCH_LIST}")
         target_compile_definitions(${target_library} PUBLIC __MERLIN_CUDA__)

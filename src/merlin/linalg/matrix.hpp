@@ -6,9 +6,9 @@
 #include <cstdint>  // std::uint64_t, std::uintptr_t
 #include <string>   // std::string
 
-#include "merlin/cuda_interface.hpp"      // merlin::linalg::Matrix
+#include "merlin/cuda_interface.hpp"      // __cuhostdev__
 #include "merlin/exports.hpp"             // MERLIN_EXPORTS
-#include "merlin/linalg/declaration.hpp"  // __cuhostdev__
+#include "merlin/linalg/declaration.hpp"  // merlin::linalg::Matrix
 
 namespace merlin {
 
