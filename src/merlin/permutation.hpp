@@ -2,10 +2,12 @@
 #ifndef MERLIN_PERMUTATION_HPP_
 #define MERLIN_PERMUTATION_HPP_
 
+#include <utility>  // std::swap
 #include <string>  // std::string
 
+#include "merlin/cuda_interface.hpp"  // __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/vector.hpp"  // merlin::intvec
+#include "merlin/vector.hpp"   // merlin::intvec
 
 namespace merlin {
 
@@ -36,12 +38,34 @@ class Permutation {
 
     /// @name Attributes
     /// @{
-    /** @brief Reference to index vector.*/
-    constexpr Vector<std::int64_t> & index(void) noexcept { return this->index_; }
     /** @brief Constant reference to index vector.*/
-    constexpr const Vector<std::int64_t> & index(void) const noexcept { return this->index_; }
+    __cuhostdev__ constexpr const Vector<std::int64_t> & index(void) const noexcept { return this->index_; }
     /** @brief Get number of elements permuted.*/
-    constexpr std::uint64_t size(void) const noexcept { return this->index_.size(); }
+    __cuhostdev__ constexpr std::uint64_t size(void) const noexcept { return this->index_.size(); }
+    /// @}
+
+    /// @name Modification
+    /// @{
+    /** @brief Permutate 2 indices.*/
+    __cuhostdev__ constexpr void transpose(std::uint64_t index1, std::uint64_t index2) noexcept {
+        std::swap(this->index_[index1], this->index_[index2]);
+    }
+    /// @}
+
+    /// @name Permutate index of a range
+    /// @{
+    /** @brief Permute and copy a range into another.
+     *  @tparam InputIterator Iterator of the source container.
+     *  @tparam OutputIterator Iterator of the destination container.
+     *  @param src Iterator to the first element of the source container.
+     *  @param dest Iterator to the first element of the destination container.
+     */
+    template <typename InputIterator, typename OutputIterator>
+    __cuhostdev__ constexpr void permute(InputIterator src, OutputIterator dest) const {
+        for (std::uint64_t i = 0; i < this->size(); i++) {
+            *(dest + this->index_[i]) = *(src + i);
+        }
+    }
     /// @}
 
     /// @name Representation
