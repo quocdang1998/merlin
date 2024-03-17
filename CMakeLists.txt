@@ -50,8 +50,9 @@ list(APPEND MERLIN_SRC_CPP
      # intpl/regular_grid.cpp
      # intpl/sparse_grid.cpp
      linalg/dot.cpp
-     linalg/qr_solve.cpp
      linalg/matrix.cpp
+     linalg/tri_solve.cpp
+     linalg/qr_solve.cpp
      permutation.cpp
      regpl/polynomial.cpp
      regpl/vandermonde.cpp
@@ -107,7 +108,6 @@ list(APPEND MERLIN_SRC_RDC
      grid/cartesian_grid.rdc
      grid/regular_grid.rdc
      linalg/qr_solve.rdc
-     linalg/matrix.rdc
      # regpl/core.rdc
      regpl/polynomial.rdc
      slice.rdc
