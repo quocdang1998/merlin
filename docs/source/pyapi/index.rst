@@ -25,8 +25,8 @@ Utility
    :nosignatures:
    :template: pyclass.rst
 
-   merlin.utils.contiguous_to_ndim_idx
-   merlin.utils.get_random_subset
+   merlin.contiguous_to_ndim_idx
+   merlin.get_random_subset
 
 GPU with CUDA
 -------------

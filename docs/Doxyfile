@@ -6,7 +6,7 @@ EXTRACT_PRIVATE        = YES
 EXTRACT_PRIV_VIRTUAL   = YES
 EXTRACT_STATIC         = YES
 HIDE_FRIEND_COMPOUNDS  = NO
-INPUT                  = ../src
+INPUT                  = ../src/merlin/
 FILE_PATTERNS          = *.hpp
 RECURSIVE              = YES
 EXCLUDE                =
@@ -30,3 +30,4 @@ PREDEFINED             = "__cuhost__=__host__" \
                          "MERLIN_DEPRECATED=1"
 SORT_MEMBER_DOCS       = NO
 SORT_GROUP_NAMES       = YES
+VERBATIM_HEADERS       = YES

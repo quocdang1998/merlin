@@ -17,7 +17,7 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Norm of contiguous vector calculated without using AVX
-void linalg::__norm_no_avx(double * vector, std::uint64_t size, double & result) {
+void linalg::__norm_no_avx(double * vector, std::uint64_t size, double & result) noexcept {
     result = 0.0;
     std::uint64_t num_iteration = size / 4, remainder = size % 4;
     std::array<double, 4> reg;
@@ -36,9 +36,10 @@ void linalg::__norm_no_avx(double * vector, std::uint64_t size, double & result)
     }
 }
 
-// Norm of contiguous vector (with 256-bits register AVX optimization)
-void linalg::__norm_256_avx(double * vector, std::uint64_t size, double & result) {
 #ifdef __AVX__
+
+// Norm of contiguous vector (with 256-bits register AVX optimization)
+void linalg::__norm_256_avx(double * vector, std::uint64_t size, double & result) noexcept {
     result = 0.0;
     std::uint64_t num_avx_iteration = size / 4, remainder = size % 4;
     // calculate norm using avx on 4-double chunks
@@ -55,18 +56,16 @@ void linalg::__norm_256_avx(double * vector, std::uint64_t size, double & result
     for (std::uint64_t i = 4 * num_avx_iteration; i < size; i++) {
         result = std::fma(vector[i], vector[i], result);
     }
-#else
-    WARNING("Compiled without using AVX, fallback to regular optimization.\n");
-    linalg::__dot_no_avx(vector, size, result);
-#endif  // __AVX__
 }
+
+#endif  // __AVX__
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Dot Product
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Dot product of contiguous vector calculated without using AVX
-void linalg::__dot_no_avx(double * vector1, double * vector2, std::uint64_t size, double & result) {
+void linalg::__dot_no_avx(double * vector1, double * vector2, std::uint64_t size, double & result) noexcept {
     result = 0.0;
     std::uint64_t num_iteration = size / 4, remainder = size % 4;
     std::array<double, 4> reg;
@@ -85,9 +84,10 @@ void linalg::__dot_no_avx(double * vector1, double * vector2, std::uint64_t size
     }
 }
 
-// Dot product of contiguous vectors (with 256-bits register AVX optimization)
-void linalg::__dot_256_avx(double * vector1, double * vector2, std::uint64_t size, double & result) {
 #ifdef __AVX__
+
+// Dot product of contiguous vectors (with 256-bits register AVX optimization)
+void linalg::__dot_256_avx(double * vector1, double * vector2, std::uint64_t size, double & result) noexcept {
     result = 0.0;
     std::uint64_t num_avx_iteration = size / 4, remainder = size % 4;
     // calculate dot product using avx on 4-double chunks
@@ -105,10 +105,8 @@ void linalg::__dot_256_avx(double * vector1, double * vector2, std::uint64_t siz
     for (std::uint64_t i = 4 * num_avx_iteration; i < size; i++) {
         result = std::fma(vector1[i], vector2[i], result);
     }
-#else
-    WARNING("Compiled without using AVX, fallback to regular optimization.\n");
-    linalg::__dot_no_avx(vector1, vector2, size, result);
-#endif  // __AVX__
 }
+
+#endif  // __AVX__
 
 }  // namespace merlin

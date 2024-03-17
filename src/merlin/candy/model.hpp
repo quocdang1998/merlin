@@ -157,12 +157,12 @@ class candy::Model {
      *  @param fname Name of the output file.
      *  @param lock Lock the file when writing to prevent data race. The lock action may cause a delay.
      */
-    void save(const std::string & fname, bool lock = false) const;
+    MERLIN_EXPORTS void save(const std::string & fname, bool lock = false) const;
     /** @brief Read model from a file.
      *  @param fname Name of the input file.
      *  @param lock Lock the file when reading to prevent data race. The lock action may cause a delay.
      */
-    void load(const std::string & fname, bool lock = false);
+    MERLIN_EXPORTS void load(const std::string & fname, bool lock = false);
 
     /// @name Representation
     /// @{

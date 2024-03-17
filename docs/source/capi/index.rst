@@ -155,9 +155,8 @@ Vector inner product
 .. doxysummary::
    :toctree: generated
 
-   merlin::linalg::inner_product
+   merlin::linalg::dot
    merlin::linalg::norm
-   merlin::linalg::normalize
 
 Solving linear system by QR decomposition
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -281,4 +280,4 @@ Low level API
 .. doxysummary::
    :toctree: generated
 
-   merlin::Shuffle
+   merlin::Permutation
