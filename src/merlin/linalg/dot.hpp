@@ -23,13 +23,7 @@ MERLIN_EXPORTS void __norm_256_avx(double * vector, std::uint64_t size, double &
  *  @param size Number of elements in the vector.
  *  @param result Returned norm.
  */
-void norm(double * vector, std::uint64_t size, double & result) noexcept {
-#ifdef __AVX__
-    linalg::__norm_256_avx(vector, size, result);
-#else
-    linalg::__norm_no_avx(vector, size, result);
-#endif  // __AVX__
-}
+void norm(double * vector, std::uint64_t size, double & result) noexcept;
 
 // Dot product
 // -----------
