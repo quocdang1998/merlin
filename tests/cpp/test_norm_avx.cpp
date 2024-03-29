@@ -23,11 +23,13 @@ int main(void) {
     generate(b, 2);
     std::chrono::time_point<std::chrono::high_resolution_clock> start, end;
     double result1, result2;
+    linalg::norm(a.data(), a.size(), result1);
+    std::cout << "Initializing : " << result1 << "\n";
 
     // calculation time using regular O3 optimization
     start = std::chrono::high_resolution_clock::now();
-    linalg::norm(a.data(), a.size(), result1);
-    // linalg::__dot_no_avx(a.data(), b.data(), a.size(), result1);
+    // linalg::norm(a.data(), a.size(), result1);
+    linalg::dot(a.data(), b.data(), a.size(), result1);
     end = std::chrono::high_resolution_clock::now();
     std::cout << std::setw(25) << "Baseline Elapsed Time: " << std::setw(8)
               << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()
@@ -35,8 +37,8 @@ int main(void) {
 
     // calculation time using AVX
     start = std::chrono::high_resolution_clock::now();
-    linalg::norm(a.data(), a.size(), result2);
-    // linalg::__dot_256_avx(a.data(), b.data(), a.size(), result2);
+    // linalg::norm(a.data(), a.size(), result2);
+    linalg::dot(a.data(), b.data(), a.size(), result2);
     end = std::chrono::high_resolution_clock::now();
     std::cout << std::setw(25) << "AVX2-FMA Elapsed Time: " << std::setw(8)
               << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()

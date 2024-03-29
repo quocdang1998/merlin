@@ -157,6 +157,7 @@ Vector inner product
 
    merlin::linalg::dot
    merlin::linalg::norm
+   merlin::linalg::householder
 
 Solving linear system by QR decomposition
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
