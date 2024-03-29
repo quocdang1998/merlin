@@ -13,62 +13,14 @@ namespace merlin {
 // Norm
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Norm of contiguous vector calculated without using AVX
-void linalg::__norm_no_avx(double * vector, std::uint64_t size, double & result) noexcept {
-    result = 0.0;
-    std::uint64_t num_iteration = size / 4, remainder = size % 4;
-    std::array<double, 4> reg;
-    // vectorize dot product on 4-double chunks
-    for (std::uint64_t iter = 0; iter < num_iteration; iter++) {
-        for (std::uint64_t j = 0; j < 4; j++) {
-            reg[j] = std::fma(vector[4 * iter + j], vector[4 * iter + j], reg[j]);
-        }
-    }
-    for (std::uint64_t i = 0; i < 4; i++) {
-        result += reg[i];
-    }
-    // add remainder
-    for (std::uint64_t i = 4 * num_iteration; i < size; i++) {
-        result = std::fma(vector[i], vector[i], result);
-    }
-}
-
-#ifdef __AVX__
-
-// Norm of contiguous vector (with 256-bits register AVX optimization)
-void linalg::__norm_256_avx(double * vector, std::uint64_t size, double & result) noexcept {
-    result = 0.0;
-    std::uint64_t num_avx_iteration = size / 4, remainder = size % 4;
-    // calculate norm using avx on 4-double chunks
-    ::__m256d avx_result = ::_mm256_set1_pd(0.0);
-    ::__m256d avx_clone;
-    for (std::uint64_t avx_iteration = 0; avx_iteration < num_avx_iteration; avx_iteration++) {
-        avx_clone = ::_mm256_loadu_pd(vector);
-        avx_result = ::_mm256_fmadd_pd(avx_clone, avx_clone, avx_result);
-        vector += 4;
-    }
-    // add remainder
-    avx_clone = ::_mm256_set1_pd(0.0);
-    for (std::uint64_t i = 0; i < remainder; i++) {
-        reinterpret_cast<double *>(&avx_clone)[i] = vector[i];
-    }
-    avx_result = ::_mm256_fmadd_pd(avx_clone, avx_clone, avx_result);
-    // add result
-    for (std::uint64_t i = 0; i < 4; i++) {
-        result += *(reinterpret_cast<double *>(&avx_result) + i);
-    }
-}
-
-#endif  // __AVX__
-
 // Norm of contiguous vector
-void linalg::norm(double * vector, std::uint64_t size, double & result) noexcept {
+void linalg::norm(const double * vector, std::uint64_t size, double & result) noexcept {
     result = 0.0;
-    std::uint64_t num_avx_iteration = size / 4, remainder = size % 4;
+    std::uint64_t num_chunks = size / 4, remainder = size % 4;
     // calculate norm using avx on 4-double chunks
     PackedDouble<use_avx> chunk_result;
     PackedDouble<use_avx> clone_data;
-    for (std::uint64_t avx_iteration = 0; avx_iteration < num_avx_iteration; avx_iteration++) {
+    for (std::uint64_t i_chunk = 0; i_chunk < num_chunks; i_chunk++) {
         clone_data = PackedDouble<use_avx>(vector);
         chunk_result.fma(clone_data, clone_data);
         vector += 4;
@@ -86,49 +38,55 @@ void linalg::norm(double * vector, std::uint64_t size, double & result) noexcept
 // Dot Product
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Dot product of contiguous vector calculated without using AVX
-void linalg::__dot_no_avx(double * vector1, double * vector2, std::uint64_t size, double & result) noexcept {
+// Dot product of contiguous vectors
+void linalg::dot(const double * vector1, const double * vector2, std::uint64_t size, double & result) noexcept {
     result = 0.0;
-    std::uint64_t num_iteration = size / 4, remainder = size % 4;
-    std::array<double, 4> reg;
-    // vectorize dot product on 4-double chunks
-    for (std::uint64_t iter = 0; iter < num_iteration; iter++) {
-        for (std::uint64_t j = 0; j < 4; j++) {
-            reg[j] = std::fma(vector1[4 * iter + j], vector2[4 * iter + j], reg[j]);
-        }
-    }
-    for (std::uint64_t i = 0; i < 4; i++) {
-        result += reg[i];
-    }
-    // add remainder
-    for (std::uint64_t i = 4 * num_iteration; i < size; i++) {
-        result = std::fma(vector1[i], vector2[i], result);
-    }
-}
-
-#ifdef __AVX__
-
-// Dot product of contiguous vectors (with 256-bits register AVX optimization)
-void linalg::__dot_256_avx(double * vector1, double * vector2, std::uint64_t size, double & result) noexcept {
-    result = 0.0;
-    std::uint64_t num_avx_iteration = size / 4, remainder = size % 4;
+    std::uint64_t num_chunks = size / 4, remainder = size % 4;
     // calculate dot product using avx on 4-double chunks
-    ::__m256d avx_result = ::_mm256_set1_pd(0.0);
-    ::__m256d avx_clone1, avx_clone2;
-    for (std::uint64_t avx_iteration = 0; avx_iteration < num_avx_iteration; avx_iteration++) {
-        avx_clone1 = ::_mm256_loadu_pd(vector1 + 4 * avx_iteration);
-        avx_clone2 = ::_mm256_loadu_pd(vector2 + 4 * avx_iteration);
-        avx_result = ::_mm256_fmadd_pd(avx_clone1, avx_clone2, avx_result);
+    PackedDouble<use_avx> chunk_result;
+    PackedDouble<use_avx> chunk_vec1, chunk_vec2;
+    for (std::uint64_t i_chunk = 0; i_chunk < num_chunks; i_chunk++) {
+        chunk_vec1 = PackedDouble<use_avx>(vector1);
+        chunk_vec2 = PackedDouble<use_avx>(vector2);
+        chunk_result.fma(chunk_vec1, chunk_vec2);
+        vector1 += 4;
+        vector2 += 4;
     }
     for (std::uint64_t i = 0; i < 4; i++) {
-        result += *(reinterpret_cast<double *>(&avx_result) + i);
+        result += chunk_result[i];
     }
     // add remainder
-    for (std::uint64_t i = 4 * num_avx_iteration; i < size; i++) {
+    for (std::uint64_t i = 0; i < remainder; i++) {
         result = std::fma(vector1[i], vector2[i], result);
     }
 }
 
-#endif  // __AVX__
+// ---------------------------------------------------------------------------------------------------------------------
+// Householder Reflection
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Apply Householder reflection on a vector
+void linalg::householder(const double * reflector, double * target, std::uint64_t size, std::uint64_t range) noexcept {
+    // calculate dot product between reflector and target
+    double inner_prod;
+    linalg::dot(reflector, target, size, inner_prod);
+    inner_prod *= -2.0;
+    // apply reflection by chunks
+    std::uint64_t num_chunks = range / 4, remainder = range % 4;
+    PackedDouble<use_avx> factor(inner_prod);
+    PackedDouble<use_avx> chunk_reflector, chunk_target;
+    for (std::uint64_t i_chunk = 0; i_chunk < num_chunks; i_chunk++) {
+        chunk_reflector = PackedDouble<use_avx>(reflector);
+        chunk_target = PackedDouble<use_avx>(chunk_target);
+        chunk_target.fma(factor, chunk_reflector);
+        chunk_target.store(target);
+        target += 4;
+        reflector += 4;
+    }
+    // apply reflection on remainder
+    for (std::uint64_t i = 0; i < remainder; i++) {
+        target[i] = std::fma(inner_prod, reflector[i], target[i]);
+    }
+}
 
 }  // namespace merlin
