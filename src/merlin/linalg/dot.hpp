@@ -19,6 +19,13 @@ namespace merlin::linalg {
  */
 MERLIN_EXPORTS void norm(const double * vector, std::uint64_t size, double & result) noexcept;
 
+/** @brief Normalize a contiguous vector.
+ *  @param src_vector Pointer to the vector to normalize.
+ *  @param dest_vector Pointer to the location to write normalized value. Can be the same as source vector.
+ *  @param size Size of vector.
+ */
+MERLIN_EXPORTS void normalize(const double * src_vector, double * dest_vector, std::uint64_t size) noexcept;
+
 // Dot product
 // -----------
 

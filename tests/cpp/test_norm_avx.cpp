@@ -23,6 +23,8 @@ int main(void) {
     generate(b, 2);
     std::chrono::time_point<std::chrono::high_resolution_clock> start, end;
     double result1, result2;
+    linalg::norm(a.data(), a.size(), result1);
+    std::cout << "Initializing : " << result1 << "\n";
 
     // calculation time using regular O3 optimization
     start = std::chrono::high_resolution_clock::now();

@@ -2,7 +2,7 @@
 #include "merlin/linalg/dot.hpp"
 
 #include <array>  // std::array
-#include <cmath>  // std::fma
+#include <cmath>  // std::fma, std::sqrt
 
 #include "merlin/avx.hpp"     // merlin::PackedDouble, merlin::use_avx
 #include "merlin/logger.hpp"  // WARNING
@@ -31,6 +31,29 @@ void linalg::norm(const double * vector, std::uint64_t size, double & result) no
     // add remainder
     for (std::uint64_t i = 0; i < remainder; i++) {
         result = std::fma(vector[i], vector[i], result);
+    }
+}
+
+// Normalize a contiguous vector
+void linalg::normalize(const double * src_vector, double * dest_vector, std::uint64_t size) noexcept {
+    // calculate square root of the norm
+    double norm;
+    linalg::norm(src_vector, size, norm);
+    norm = std::sqrt(norm);
+    // divide by the norm on 4-double chunks
+    std::uint64_t num_chunks = size / 4, remainder = size % 4;
+    PackedDouble<use_avx> chunk_data;
+    PackedDouble<use_avx> chunk_norm(norm);
+    for (std::uint64_t i_chunk = 0; i_chunk < num_chunks; i_chunk++) {
+        chunk_data = PackedDouble<use_avx>(src_vector);
+        chunk_data.divide(chunk_norm);
+        chunk_data.store(dest_vector);
+        src_vector += 4;
+        dest_vector += 4;
+    }
+    // divide remainder
+    for (std::uint64_t i = 0; i < remainder; i++) {
+        dest_vector[i] = src_vector[i] / norm;
     }
 }
 

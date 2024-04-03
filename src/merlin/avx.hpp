@@ -5,8 +5,6 @@
 #include <cmath>    // std::fma
 #include <cstdint>  // std::uint64_t
 
-#include <cstdio>
-
 #ifdef __AVX__
     #include <immintrin.h>
 #endif  // __AVX__
@@ -94,6 +92,14 @@ struct PackedDouble<AvxFlag::NoAvx> {
             this->core[i] = std::fma(a.core[i], b.core[i], this->core[i]);
         }
     }
+    /** @brief Division.
+     *  @details Perform element-wise division of 2 vectors and store the result to the current object.
+     */
+    inline void divide(const PackedDouble<AvxFlag::NoAvx> & a) {
+        for (std::uint64_t i = 0; i < 4; i++) {
+            this->core[i] /= a.core[i];
+        }
+    }
     /// @}
 
     /// @name Store
@@ -105,7 +111,7 @@ struct PackedDouble<AvxFlag::NoAvx> {
         }
     }
     /** @brief Write some values back to memory.
-     *  @details Copy some elements from register back to memory. 
+     *  @details Copy some elements from register back to memory.
      */
     inline void store(double * dest, std::uint64_t n) {
         for (std::uint64_t i = 0; i < n; i++) {
@@ -175,6 +181,12 @@ struct PackedDouble<AvxFlag::AvxOn> {
     inline void fma(const PackedDouble<AvxFlag::AvxOn> & a, const PackedDouble<AvxFlag::AvxOn> & b) {
         this->core = ::_mm256_fmadd_pd(a.core, b.core, this->core);
     }
+    /** @brief Division.
+     *  @details Perform element-wise division of 2 vectors and store the result to the current object.
+     */
+    inline void divide(const PackedDouble<AvxFlag::AvxOn> & a) {
+        this->core = ::_mm256_div_pd(this->core, a.core);
+    }
     /// @}
 
     /// @name Store
@@ -182,7 +194,7 @@ struct PackedDouble<AvxFlag::AvxOn> {
     /** @brief Write values back to memory.*/
     inline void store(double * dest) { ::_mm256_storeu_pd(dest, this->core); }
     /** @brief Write some values back to memory.
-     *  @details Copy some elements from register back to memory. 
+     *  @details Copy some elements from register back to memory.
      */
     inline void store(double * dest, std::uint64_t n) {
         static const ::__m256i masks[5] = {
