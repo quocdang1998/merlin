@@ -22,6 +22,15 @@ __cuhostdev__ std::uint64_t prod_elements(const intvec & v) {
     return result;
 }
 
+// Product of all elements of the vector
+__cuhostdev__ std::uint64_t prod_elements(const std::uint64_t * v, std::uint64_t size) {
+    std::uint64_t result = 1;
+    for (std::uint64_t i = 0; i < size; i++) {
+        result *= v[i];
+    }
+    return result;
+}
+
 // Inner product of 2 index vectors
 __cuhostdev__ std::uint64_t inner_prod(const intvec & v1, const intvec & v2) {
     // check size of 2 vectors

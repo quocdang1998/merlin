@@ -56,19 +56,6 @@ static inline void read_from_file(double * dest, std::FILE * file, double * src,
 // Array
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Constructor Array of one element
-array::Array::Array(double value) {
-    // allocate data
-    this->data_ = array::allocate_memory(1);
-    this->data_[0] = value;
-
-    // set metadata
-    this->size_ = 1;
-    this->strides_ = intvec({sizeof(double)});
-    this->shape_ = intvec({1});
-    this->release = true;
-}
-
 // Construct empty Array from shape vector
 array::Array::Array(const intvec & shape) : array::NdData(shape) {
     // initialize data
@@ -79,24 +66,33 @@ array::Array::Array(const intvec & shape) : array::NdData(shape) {
 
 // Construct Array from Numpy array
 array::Array::Array(double * data, const intvec & shape, const intvec & strides, bool copy) {
-    this->shape_ = shape;
+    // argument checking
+    if (shape.size() > max_dim) {
+        FAILURE(std::invalid_argument, "Exceeding maximum ndim (%" PRIu64 ").\n", max_dim);
+    }
+    if (!is_same_size(shape, strides)) {
+        FAILURE(std::invalid_argument, "Shape and strides vectors must have the same size.\n");
+    }
+    // copy shape
+    std::copy(shape.begin(), shape.end(), this->shape_.begin());
+    this->ndim_ = shape.size();
     this->calc_array_size();
+    // copy or assign data
     this->release = copy;
-    // copy / assign data
-    if (copy) {  // copy data
+    if (copy) {
         // allocate a new tensor
         this->data_ = array::allocate_memory(this->size());
         // reform the stride tensor (force into C shape)
-        this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
+        this->strides_ = array::contiguous_strides(this->shape_, this->ndim_, sizeof(double));
         // copy data from old tensor to new tensor (optimized with memcpy)
         array::NdData src(data, shape, strides);
         array::copy(dynamic_cast<array::NdData *>(this), &src, std::memcpy);
     } else {
         // assign strides and data pointer
-        this->strides_ = strides;
+        std::copy(strides.begin(), strides.end(), this->strides_.begin());
         this->data_ = data;
         // pin memory
-        std::uint64_t last_elem = array::get_leap(this->size_ - 1, shape, strides);
+        std::uint64_t last_elem = array::get_leap(this->size_ - 1, this->shape_, this->strides_, this->ndim_);
         array::cuda_pin_memory(this->data_, last_elem + sizeof(double));
     }
 }

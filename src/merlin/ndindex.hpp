@@ -4,6 +4,8 @@
 #include <array>    // std::array
 #include <cstdint>  // std::uint64_t
 
+#include "merlin/cuda_interface.hpp"  // __cuhostdev__
+
 namespace merlin {
 
 inline constexpr const std::uint64_t max_dim = 16;

@@ -21,26 +21,26 @@ set(MERLIN_EXT ""
 # source list
 list(APPEND MERLIN_SRC_CPP
      array/nddata.cpp
-     array/array.cpp
-     array/parcel.cpp
-     array/stock.cpp
-     candy/optmz/adadelta.cpp
-     candy/optmz/adam.cpp
-     candy/optmz/adagrad.cpp
-     candy/optmz/grad_descent.cpp
-     candy/gradient.cpp
-     candy/loss.cpp
-     candy/model.cpp
-     candy/optimizer.cpp
-     candy/trainer.cpp
+     ##array/array.cpp
+     ##array/parcel.cpp
+     ##array/stock.cpp
+     ##candy/optmz/adadelta.cpp
+     ##candy/optmz/adam.cpp
+     ##candy/optmz/adagrad.cpp
+     ##candy/optmz/grad_descent.cpp
+     ##candy/gradient.cpp
+     ##candy/loss.cpp
+     ##candy/model.cpp
+     ##candy/optimizer.cpp
+     ##candy/trainer.cpp
      cuda/device.cpp
      cuda/event.cpp
      cuda/graph.cpp
      cuda/stream.cpp
      filelock.cpp
-     grid/cartesian_grid.cpp
-     grid/regular_grid.cpp
-     iterator.cpp
+     ##grid/cartesian_grid.cpp
+     ##grid/regular_grid.cpp
+     ##iterator.cpp
      # intpl/cartesian_grid.cpp
      # intpl/grid.cpp
      # intpl/interpolant.cpp
@@ -54,21 +54,21 @@ list(APPEND MERLIN_SRC_CPP
      linalg/tri_solve.cpp
      linalg/qr_solve.cpp
      permutation.cpp
-     regpl/polynomial.cpp
-     regpl/vandermonde.cpp
+     ##regpl/polynomial.cpp
+     ##regpl/vandermonde.cpp
      # regpl/regressor.cpp
      slice.cpp
-     splint/interpolator.cpp
-     splint/tools.cpp
-     stat/moment.cpp
+     ## splint/interpolator.cpp
+     ## splint/tools.cpp
+     ## stat/moment.cpp
      utils.cpp
 )
 list(APPEND MERLIN_SRC_CU
-     array/array.cu
-     array/parcel.cu
-     candy/model.cu
-     candy/optimizer.cu
-     candy/trainer.cu
+     ##array/array.cu
+     ##array/parcel.cu
+     ##candy/model.cu
+     ##candy/optimizer.cu
+     ##candy/trainer.cu
      cuda/device.cu
      cuda/event.cu
      cuda/graph.cu
@@ -76,45 +76,45 @@ list(APPEND MERLIN_SRC_CU
      # intpl/cartesian_grid.cu
      # intpl/lagrange.cu
      # intpl/newton.cu
-     grid/cartesian_grid.cu
-     regpl/polynomial.cu
+     ##grid/cartesian_grid.cu
+     ##regpl/polynomial.cu
      # regpl/regressor.cu
-     splint/interpolator.cu
+     ##splint/interpolator.cu
 )
 list(APPEND MERLIN_SRC_GLB
-     candy/trainer.glb
+     ##candy/trainer.glb
      cuda/device.glb
      # intpl/lagrange.glb
      # intpl/newton.glb
      # regpl/regressor.glb
-     splint/tools.glb
-     stat/moment.glb
+     ##splint/tools.glb
+     ##stat/moment.glb
 )
 list(APPEND MERLIN_SRC_RDC
-     array/operation.rdc
-     array/parcel.rdc
-     candy/optmz/adadelta.rdc
-     candy/optmz/adagrad.rdc
-     candy/optmz/adam.rdc
-     candy/optmz/grad_descent.rdc
-     candy/gradient.rdc
-     candy/loss.rdc
-     candy/model.rdc
-     candy/optimizer.rdc
+     ##array/operation.rdc
+     ##array/parcel.rdc
+     ##candy/optmz/adadelta.rdc
+     ##candy/optmz/adagrad.rdc
+     ##candy/optmz/adam.rdc
+     ##candy/optmz/grad_descent.rdc
+     ##candy/gradient.rdc
+     ##candy/loss.rdc
+     ##candy/model.rdc
+     ##candy/optimizer.rdc
      cuda/device.rdc
      # intpl/cartesian_grid.rdc
      # intpl/lagrange.rdc
      # intpl/newton.rdc
      grid/cartesian_grid.rdc
      grid/regular_grid.rdc
-     linalg/qr_solve.rdc
+     ##linalg/qr_solve.rdc
      # regpl/core.rdc
-     regpl/polynomial.rdc
+     ##regpl/polynomial.rdc
      slice.rdc
-     splint/intpl/lagrange.rdc
-     splint/intpl/linear.rdc
-     splint/intpl/newton.rdc
-     splint/tools.rdc
+     ##splint/intpl/lagrange.rdc
+     ##splint/intpl/linear.rdc
+     ##splint/intpl/newton.rdc
+     ##splint/tools.rdc
      utils.rdc
 )
 list(APPEND MERLIN_SRC_SHR

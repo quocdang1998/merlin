@@ -44,10 +44,6 @@ class array::Array : public array::NdData {
     /// @{
     /** @brief Default constructor (do nothing).*/
     Array(void) = default;
-    /** @brief Construct 1D array holding a double precision value.
-     *  @param value Assigned value.
-     */
-    MERLIN_EXPORTS Array(double value);
     /** @brief Construct C-contiguous empty array from dimension vector.
      *  @param shape Shape vector.
      */
@@ -65,7 +61,7 @@ class array::Array : public array::NdData {
      *  @param whole merlin::array::Array of the original array.
      *  @param slices List of merlin::array::Slice on each dimension.
      */
-    MERLIN_EXPORTS Array(const array::Array & whole, const slicevec & slices);
+    // MERLIN_EXPORTS Array(const array::Array & whole, const slicevec & slices);
     /// @}
 
     /// @name Copy and move

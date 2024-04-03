@@ -2,14 +2,12 @@
 #ifndef MERLIN_ARRAY_OPERATION_HPP_
 #define MERLIN_ARRAY_OPERATION_HPP_
 
-#include <cstdint>  // std::uint64_t, std::int64_t
+#include <cstdint>  // std::uint64_t
 #include <string>   // std::string
-#include <tuple>    // std::tuple
 
 #include "merlin/array/nddata.hpp"    // merlin::array::NdData
-#include "merlin/cuda_interface.hpp"  // __cuhost__, __cuhostdev__
-#include "merlin/exports.hpp"         // MERLIN_EXPORTS
-#include "merlin/vector.hpp"          // merlin::intvec
+#include "merlin/cuda_interface.hpp"  // __cuhostdev__
+#include "merlin/ndindex.hpp"         // merlin::Index
 
 namespace merlin::array {
 
@@ -17,18 +15,28 @@ namespace merlin::array {
  *  @details Get stride vector from dims vector and size of one element as if the merlin::array::NdData is
  *  C-contiguous.
  *  @param shape Shape vector.
+ *  @param ndim Number of dimensions.
  *  @param element_size Size on one element.
  */
-__cuhostdev__ intvec contiguous_strides(const merlin::intvec & shape, std::uint64_t element_size);
+constexpr Index contiguous_strides(const Index & shape, std::uint64_t ndim, std::uint64_t element_size) {
+    Index c_strides;
+    c_strides[ndim - 1] = element_size;
+    for (std::int64_t i = ndim - 2; i >= 0; i--) {
+        c_strides[i] = shape[i + 1] * c_strides[i + 1];
+    }
+    return c_strides;
+}
 
 /** @brief Calculate the number of bytes to jump to get element at a given C-contiguous index.
  *  @details This function is equivalent to the successive calls of `merlin::contiguous_to_ndim_idx` and
  *  `merlin::inner_prod`, but it does not require any memory allocation.
  *  @param index C-contiguous index.
  *  @param shape Shape vector.
- *  @param strides Strides vector
+ *  @param strides Strides vector.
+ *  @param ndim Number of dimensions.
  */
-__cuhostdev__ std::uint64_t get_leap(std::uint64_t index, const intvec & shape, const intvec & strides) noexcept;
+__cuhostdev__ std::uint64_t get_leap(std::uint64_t index, const Index & shape, const Index & strides,
+                                     std::uint64_t ndim) noexcept;
 
 /** @brief Calculate the longest contiguous segment and break index of an tensor.
  *  @details Longest contiguous segment is the length (in bytes) of the longest sub-tensor that is C-contiguous in the
@@ -41,8 +49,23 @@ __cuhostdev__ std::uint64_t get_leap(std::uint64_t index, const intvec & shape, 
  *  @param shape Shape vector.
  *  @param strides Strides vector.
  */
-__cuhostdev__ std::tuple<std::uint64_t, std::int64_t> lcseg_and_brindex(const merlin::intvec & shape,
-                                                                        const merlin::intvec & strides);
+constexpr std::array<std::uint64_t, 2> lcseg_and_brindex(const Index & shape, const Index & strides,
+                                                         std::uint64_t ndim) {
+    std::uint64_t longest_contiguous_segment = sizeof(double);
+    std::uint64_t break_index = ndim - 1;
+    for (std::int64_t i = ndim - 1; i > 0; i--) {
+        if (strides[i] != longest_contiguous_segment) {
+            break;
+        }
+        longest_contiguous_segment *= shape[i];
+        break_index -= 1;
+    }
+    if (strides[0] == longest_contiguous_segment) {
+        longest_contiguous_segment *= shape[0];
+        break_index = UINT_MAX;
+    }
+    return {longest_contiguous_segment, break_index};
+}
 
 /** @brief Copy data from an merlin::array::NdData to another.
  *  @details This function allows user to choose the copy function (for example, ``std::memcpy``, or ``cudaMemcpy``).
