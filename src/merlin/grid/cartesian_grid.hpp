@@ -2,6 +2,7 @@
 #ifndef MERLIN_GRID_CARTESIAN_GRID_HPP_
 #define MERLIN_GRID_CARTESIAN_GRID_HPP_
 
+#include <array>             // std::array
 #include <cstdint>           // std::uint64_t
 #include <initializer_list>  // std::initializer_list
 #include <string>            // std::string
@@ -9,9 +10,10 @@
 #include "merlin/array/declaration.hpp"  // merlin::array::Array
 #include "merlin/cuda_interface.hpp"     // __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
-#include "merlin/slice.hpp"              // merlin::slicevec
 #include "merlin/grid/declaration.hpp"   // merlin::grid::CartesianGrid
-#include "merlin/vector.hpp"             // merlin::floatvec, merlin::intvec, merlin::Vector
+#include "merlin/settings.hpp"           // merlin::DPtrArray, merlin::Index, merlin::max_dim
+#include "merlin/slice.hpp"              // merlin::SliceArray
+#include "merlin/vector.hpp"             // merlin::DoubleVec
 
 namespace merlin {
 
@@ -28,9 +30,9 @@ class grid::CartesianGrid {
     /** @brief Default constructor.*/
     CartesianGrid(void) = default;
     /** @brief Constructor from list of initializer lists.*/
-    MERLIN_EXPORTS CartesianGrid(const Vector<floatvec> & grid_vectors);
+    MERLIN_EXPORTS CartesianGrid(const Vector<DoubleVec> & grid_vectors);
     /** @brief Constructor as a sub-grid from a larger grid.*/
-    MERLIN_EXPORTS CartesianGrid(const grid::CartesianGrid & whole, const slicevec & slices);
+    MERLIN_EXPORTS CartesianGrid(const grid::CartesianGrid & whole, const SliceArray & slices);
     /// @}
 
     /// @name Copy and Move
@@ -48,17 +50,17 @@ class grid::CartesianGrid {
     /// @name Get members and attributes
     /// @{
     /** @brief Get grid vector of a given dimension.*/
-    __cuhostdev__ const floatvec grid_vector(std::uint64_t i_dim) const noexcept {
-        floatvec grid_vector;
+    __cuhostdev__ const DoubleVec grid_vector(std::uint64_t i_dim) const noexcept {
+        DoubleVec grid_vector;
         grid_vector.assign(const_cast<double *>(this->grid_vectors_[i_dim]), this->grid_shape_[i_dim]);
         return grid_vector;
     }
     /** @brief Get constant reference to grid vector pointers.*/
-    __cuhostdev__ constexpr const Vector<double *> & grid_vectors(void) const noexcept { return this->grid_vectors_; }
+    __cuhostdev__ constexpr const DPtrArray & grid_vectors(void) const noexcept { return this->grid_vectors_; }
     /** @brief Get dimensions of the grid.*/
-    __cuhostdev__ constexpr std::uint64_t ndim(void) const noexcept { return this->grid_shape_.size(); }
+    __cuhostdev__ constexpr std::uint64_t ndim(void) const noexcept { return this->ndim_; }
     /** @brief Get shape of the grid.*/
-    __cuhostdev__ constexpr const intvec & shape(void) const noexcept { return this->grid_shape_; }
+    __cuhostdev__ constexpr const Index & shape(void) const noexcept { return this->grid_shape_; }
     /** @brief Get total number of points in the grid.*/
     __cuhostdev__ constexpr std::uint64_t size(void) const noexcept { return this->size_; }
     /** @brief Get total number of nodes on all dimension.*/
@@ -76,15 +78,23 @@ class grid::CartesianGrid {
      *  @param index Vector of index on each dimension.
      *  @param point_data Pointer to memory recording point coordinate.
      */
-    __cuhostdev__ void get(const intvec & index, double * point_data) const noexcept;
+    __cuhostdev__ void get(const Index & index, double * point_data) const noexcept;
     /** @brief Get element at a given flatten index.
      *  @param index Flatten index of point in the grid (in C order).
      */
-    MERLIN_EXPORTS floatvec operator[](std::uint64_t index) const noexcept;
+    DoubleVec operator[](std::uint64_t index) const noexcept {
+        DoubleVec point(this->ndim());
+        this->get(index, point.data());
+        return point;
+    }
     /** @brief Get element at a given index vector.
      *  @param index Vector of index on each dimension.
      */
-    MERLIN_EXPORTS floatvec operator[](const intvec & index) const noexcept;
+    DoubleVec operator[](const Index & index) const noexcept {
+        DoubleVec point(this->ndim());
+        this->get(index, point.data());
+        return point;
+    }
     /// @}
 
     /// @name Get points
@@ -97,9 +107,7 @@ class grid::CartesianGrid {
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the grid and its data.*/
     std::uint64_t cumalloc_size(void) const noexcept {
-        std::uint64_t size = sizeof(grid::CartesianGrid);
-        size += this->num_nodes() * sizeof(double) + this->ndim() * (sizeof(std::uint64_t) + sizeof(double *));
-        return size;
+        return sizeof(grid::CartesianGrid) + this->num_nodes() * sizeof(double);
     }
     /** @brief Copy the grid from CPU to a pre-allocated memory on GPU.
      *  @details Values of vectors should be copied to the memory region that comes right after the copied object.
@@ -116,7 +124,7 @@ class grid::CartesianGrid {
      *  @details The copy action is performed by the whole CUDA thread block.
      *  @param dest_ptr Memory region where the grid is copied to.
      *  @param grid_data_ptr Pointer to a pre-allocated GPU memory storing data of grid vectors, size of
-     *  ``floatvec[this->ndim()] + double[this->size()]``.
+     *  ``DoubleVec[this->ndim()] + double[this->size()]``.
      *  @param thread_idx Flatten ID of the current CUDA thread in the block.
      *  @param block_size Number of threads in the current CUDA block.
      */
@@ -125,7 +133,7 @@ class grid::CartesianGrid {
     /** @brief Copy grid to a pre-allocated memory region by a single GPU threads.
      *  @param dest_ptr Memory region where the grid is copied to.
      *  @param grid_data_ptr Pointer to a pre-allocated GPU memory storing data of grid vectors, size of
-     *  ``floatvec[this->ndim()] + double[this->size()]``.
+     *  ``DoubleVec[this->ndim()] + double[this->size()]``.
      */
     __cudevice__ void * copy_by_thread(grid::CartesianGrid * dest_ptr, void * grid_data_ptr) const;
 #endif  // __NVCC__
@@ -145,15 +153,17 @@ class grid::CartesianGrid {
 
   protected:
     /** @brief Vector of contiguous grid nodes per dimension.*/
-    floatvec grid_nodes_;
+    DoubleVec grid_nodes_;
     /** @brief Shape of the grid.*/
-    intvec grid_shape_;
-    /** @brief Number of points in the grid.*/
-    std::uint64_t size_ = 0;
+    Index grid_shape_;
+    /** @brief Number of dimensions.*/
+    std::uint64_t ndim_ = 0;
 
   private:
+    /** @brief Number of points in the grid.*/
+    std::uint64_t size_ = 0;
     /** @brief Pointer to first node in each dimension.*/
-    Vector<double *> grid_vectors_;
+    DPtrArray grid_vectors_;
 };
 
 }  // namespace merlin

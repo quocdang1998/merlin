@@ -6,12 +6,10 @@
 #include <cstdio>   // std::FILE
 #include <string>   // std::string
 
-#include "merlin/array/declaration.hpp"  // merlin::array::Array
+#include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Stock
 #include "merlin/array/nddata.hpp"       // merlin::array::NdData
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/filelock.hpp"           // merlin::FileLock
-#include "merlin/slice.hpp"        // merlin::slicevec
-#include "merlin/vector.hpp"             // merlin::Vector
 
 namespace merlin {
 
@@ -34,21 +32,16 @@ class array::Stock : public array::NdData {
      *  @param filename Name of input file (or output file).
      *  @param shape Shape of the array to be written to file.
      *  @param offset Starting position from the beginning of file.
-     *  @param thread_safe Threasafe policy.
+     *  @param thread_safe Threadsafe policy.
      */
-    MERLIN_EXPORTS Stock(const std::string & filename, const intvec & shape, std::uint64_t offset = 0,
+    MERLIN_EXPORTS Stock(const std::string & filename, const Index & shape, std::uint64_t offset = 0,
                          bool thread_safe = true);
     /** @brief Open an already existing file for reading and storing data.
      *  @param filename Name of input file (or output file).
      *  @param offset Starting position from the beginning of file.
-     *  @param thread_safe Threasafe policy.
+     *  @param thread_safe Threadsafe policy.
      */
     MERLIN_EXPORTS Stock(const std::string & filename, std::uint64_t offset = 0, bool thread_safe = true);
-    /** @brief Constructor from a slice.
-     *  @param whole merlin::array::Stock of the original array.
-     *  @param slices List of merlin::array::Slice on each dimension.
-     */
-    MERLIN_EXPORTS Stock(const array::Stock & whole, const slicevec & slices);
     /// @}
 
     /// @name Copy and Move
@@ -78,11 +71,11 @@ class array::Stock : public array::NdData {
     /// @name Get and set element
     /// @{
     /** @brief Get value of element at a n-dim index.*/
-    MERLIN_EXPORTS double get(const intvec & index) const;
+    MERLIN_EXPORTS double get(const Index & index) const;
     /** @brief Get value of element at a C-contiguous index.*/
     MERLIN_EXPORTS double get(std::uint64_t index) const;
     /** @brief Set value of element at a n-dim index.*/
-    MERLIN_EXPORTS void set(const intvec index, double value);
+    MERLIN_EXPORTS void set(const Index & index, double value);
     /** @brief Set value of element at a C-contiguous index.*/
     MERLIN_EXPORTS void set(std::uint64_t index, double value);
     /// @}
@@ -91,6 +84,20 @@ class array::Stock : public array::NdData {
     /// @{
     /** @brief Set value of all elements.*/
     MERLIN_EXPORTS void fill(double value);
+    /** @brief Calculate mean and variance of all non-zero and finite elements.*/
+    MERLIN_EXPORTS std::array<double, 2> get_mean_variance(void) const;
+    /** @brief Create a sub-array.*/
+    array::NdData * sub_array(const SliceArray & slices) const {
+        array::Stock * p_result = new array::Stock();
+        this->create_sub_array(*p_result, slices);
+        p_result->file_ptr_ = this->file_ptr_;
+        p_result->flock_ = this->flock_;
+        p_result->offset_ = this->offset_;
+        p_result->thread_safe_ = this->thread_safe_;
+        p_result->filename_ = this->filename_;
+        p_result->release = false;
+        return p_result;
+    }
     /// @}
 
     /// @name Write to file

@@ -49,7 +49,7 @@ std::string get_time(void) {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Get a random subset of index in a range
-intvec get_random_subset(std::uint64_t num_points, std::uint64_t i_max, std::uint64_t i_min) noexcept {
+UIntVec get_random_subset(std::uint64_t num_points, std::uint64_t i_max, std::uint64_t i_min) noexcept {
     // check num_points
     if (num_points > i_max - i_min) {
         FAILURE(std::invalid_argument, "Number of points exceeding range.\n");
@@ -57,7 +57,7 @@ intvec get_random_subset(std::uint64_t num_points, std::uint64_t i_max, std::uin
     // calculate range index
     std::uniform_int_distribution<std::uint64_t> distribution;
     using param_t = std::uniform_int_distribution<std::uint64_t>::param_type;
-    intvec result(num_points);
+    UIntVec result(num_points);
     std::iota(result.begin(), result.end(), i_min);
     std::int64_t largest_val = i_min + num_points;
     // swap with number out of range

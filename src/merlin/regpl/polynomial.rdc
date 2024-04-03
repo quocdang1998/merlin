@@ -10,13 +10,14 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Get the leaping dimension
-__cuhostdev__ static inline std::int64_t leaping_dimension(const std::uint64_t & i_term, const intvec & shape) {
-    std::int64_t leaping_dim = shape.size() - 1;
+__cuhostdev__ static inline std::int64_t leaping_dimension(const std::uint64_t & i_term, const std::uint64_t * shape,
+                                                           std::uint64_t ndim) {
+    std::int64_t leaping_dim = ndim - 1;
     std::uint64_t cum_prod = 1, nd_index = 0;
     bool not_detected = true;
-    for (std::int64_t i_dim = shape.size() - 1; i_dim >= 0; i_dim--) {
+    for (std::int64_t i_dim = ndim - 1; i_dim >= 0; i_dim--) {
         nd_index = (i_term / cum_prod) % shape[i_dim];
-        leaping_dim = ((nd_index == 0) && not_detected) ? leaping_dim-1 : leaping_dim;
+        leaping_dim = ((nd_index == 0) && not_detected) ? leaping_dim - 1 : leaping_dim;
         not_detected &= (nd_index == 0);
         cum_prod *= shape[i_dim];
     }
@@ -24,9 +25,7 @@ __cuhostdev__ static inline std::int64_t leaping_dimension(const std::uint64_t &
 }
 
 // Evaluate polynomial value at a given point
-__cuhostdev__ double regpl::Polynomial::eval(const double * point, double * buffer) const noexcept {
-    floatvec buffer_vec;
-    buffer_vec.assign(buffer, this->ndim());
+__cuhostdev__ double regpl::Polynomial::eval(const Point & point, Point & buffer) const noexcept {
     buffer[0] = 0.0;
     buffer[this->ndim() - 1] = 0.0;
     for (std::int64_t i_term = this->size() - 1; i_term >= 0; i_term--) {
@@ -34,7 +33,7 @@ __cuhostdev__ double regpl::Polynomial::eval(const double * point, double * buff
         buffer[this->ndim() - 1] *= point[this->ndim() - 1];
         buffer[this->ndim() - 1] += this->coeff_[i_term];
         // get leaping dimension
-        std::int64_t leaping_dim = leaping_dimension(i_term, this->order_);
+        std::int64_t leaping_dim = leaping_dimension(i_term, this->order_.data(), this->ndim_);
         for (std::int64_t i_dim = this->ndim() - 2; i_dim >= leaping_dim; i_dim--) {
             buffer[i_dim] *= point[i_dim];
             buffer[i_dim] += buffer[i_dim + 1];
@@ -51,12 +50,10 @@ __cudevice__ void * regpl::Polynomial::copy_by_block(regpl::Polynomial * dest_pt
                                                      std::uint64_t thread_idx, std::uint64_t block_size) const {
     // shallow copy of grid node, grid shape and grid vectors
     double * coeff_ptr = reinterpret_cast<double *>(coeff_data_ptr);
-    std::uint64_t * order_ptr = reinterpret_cast<std::uint64_t *>(coeff_ptr + this->size());
     if (thread_idx == 0) {
         dest_ptr->coeff_.data() = coeff_ptr;
         dest_ptr->coeff_.size() = this->size();
-        dest_ptr->order_.data() = order_ptr;
-        dest_ptr->order_.size() = this->ndim();
+        dest_ptr->ndim_ = this->ndim_;
     }
     __syncthreads();
     // copy data of grid nodes and grid shape
@@ -69,18 +66,16 @@ __cudevice__ void * regpl::Polynomial::copy_by_block(regpl::Polynomial * dest_pt
         dest_ptr->order_[i_dim] = this->order_[i_dim];
     }
     __syncthreads();
-    return reinterpret_cast<void *>(order_ptr + this->ndim());
+    return reinterpret_cast<void *>(coeff_ptr + size);
 }
 
 // Copy to shared memory by CUDA thread
 __cudevice__ void * regpl::Polynomial::copy_by_thread(regpl::Polynomial * dest_ptr, void * coeff_data_ptr) const {
     // shallow copy of grid node, grid shape and grid vectors
     double * coeff_ptr = reinterpret_cast<double *>(coeff_data_ptr);
-    std::uint64_t * order_ptr = reinterpret_cast<std::uint64_t *>(coeff_ptr + this->size());
     dest_ptr->coeff_.data() = coeff_ptr;
     dest_ptr->coeff_.size() = this->size();
-    dest_ptr->order_.data() = order_ptr;
-    dest_ptr->order_.size() = this->ndim();
+    dest_ptr->ndim_ = this->ndim_;
     // copy data of grid nodes and grid shape
     std::uint64_t size = this->size(), ndim = this->ndim();
     for (std::uint64_t i_coeff = 0; i_coeff < size; i_coeff++) {
@@ -90,7 +85,7 @@ __cudevice__ void * regpl::Polynomial::copy_by_thread(regpl::Polynomial * dest_p
         dest_ptr->order_[i_dim] = this->order_[i_dim];
     }
     // re-calculate grid vectors
-    return reinterpret_cast<void *>(order_ptr + this->ndim());
+    return reinterpret_cast<void *>(coeff_ptr + size);
 }
 
 #endif  // __NVCC__

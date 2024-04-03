@@ -20,12 +20,23 @@ Preliminary
 
    merlin::Environment
 
+Type aliasing
+-------------
+
 .. doxysummary::
    :toctree: generated
 
    merlin::Vector
-   merlin::intvec
-   merlin::floatvec
+   merlin::UIntVec
+   merlin::DoubleVec
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::max_dim
+   merlin::Index
+   merlin::Point
+   merlin::DPtrArray
 
 GPU with CUDA
 -------------
@@ -88,6 +99,7 @@ Array manipulation
 
    merlin::array::copy
    merlin::array::fill
+   merlin::array::stat
    merlin::array::print
 
 Grid API
@@ -102,7 +114,6 @@ Grid API
 
 Interpolator API
 ----------------
-
 
 Polynomial interpolation
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -133,18 +144,6 @@ Regression API
 
    merlin::regpl::Polynomial
    merlin::regpl::Regressor
-
-Statistics API
---------------
-
-Statistical moments
-^^^^^^^^^^^^^^^^^^^
-
-.. doxysummary::
-   :toctree: generated
-
-   merlin::stat::mean(const array::Array &, std::uint64_t) "mean_cpu"
-   merlin::stat::mean(const array::Parcel &, std::uint64_t n_threads, const cuda::Stream &) "mean_gpu"
 
 Linear algebra API
 ------------------

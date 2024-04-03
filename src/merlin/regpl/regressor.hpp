@@ -10,7 +10,7 @@
 #include "merlin/grid/declaration.hpp"  // merlin::grid::CartesianGrid, merlin::grid::RegularGrid
 #include "merlin/regpl/declaration.hpp"  // merlin::regpl::Polynomial, merlin::regpl::Regressor
 #include "merlin/synchronizer.hpp"  // merlin::ProcessorType, merlin::Synchronizer
-#include "merlin/vector.hpp"  // merlin::floatvec
+#include "merlin/vector.hpp"  // merlin::DoubleVec
 
 namespace merlin {
 
@@ -30,7 +30,7 @@ void fit_cartgrid_by_cpu(std::shared_future<void> synch, regpl::Polynomial * p_p
 
 /** @brief Calculate coefficient for regression on regular grid.*/
 void fit_reggrid_by_cpu(std::shared_future<void> synch, regpl::Polynomial * p_poly, double * matrix_data,
-                        const grid::RegularGrid * p_grid, const floatvec * p_data, std::uint64_t n_threads,
+                        const grid::RegularGrid * p_grid, const DoubleVec * p_data, std::uint64_t n_threads,
                         char * cpu_buffer) noexcept;
 
 /** @brief Evaluate regression by CPU.*/
@@ -109,7 +109,7 @@ class regpl::Regressor {
      *  @param data Data to fit.
      *  @param n_threads Number of threads for calculation.
     */
-    MERLIN_EXPORTS void fit_cpu(const grid::RegularGrid & grid, const floatvec & data, std::uint64_t n_threads = 1);
+    MERLIN_EXPORTS void fit_cpu(const grid::RegularGrid & grid, const DoubleVec & data, std::uint64_t n_threads = 1);
     /// @}
 
     /// @name Evaluate

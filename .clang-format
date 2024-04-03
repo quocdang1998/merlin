@@ -64,3 +64,9 @@ SpacesInLineCommentPrefix:
   Maximum:         1
 Standard:        c++20
 RemoveBracesLLVM: false
+PenaltyBreakAssignment: 40
+AllowAllParametersOfDeclarationOnNextLine: false
+AlignAfterOpenBracket: Align  # only in C++
+# Python specific 
+#BinPackArguments: false
+#AlignAfterOpenBracket: BlockIndent

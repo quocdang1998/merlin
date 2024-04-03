@@ -21,7 +21,7 @@ __global__ void print_element_from_shared_memory(merlin::array::Parcel * parcel_
         sum = 0;
     }
     __syncthreads();
-    ::atomicAdd(&sum, share_ptr[0][blockIdx.x*blockDim.x+threadIdx.x]);
+    ::atomicAdd_block(&sum, share_ptr[0][blockIdx.x*blockDim.x+threadIdx.x]);
     if (blockIdx.x*blockDim.x+threadIdx.x == 0) {
         CUDAOUT("Summed value: %.1f\n", sum);
     }
@@ -31,12 +31,12 @@ __global__ void print_element_from_shared_memory(merlin::array::Parcel * parcel_
 int main(void) {
     // initialize an tensor
     double A_data[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    merlin::intvec dims = {2, 3};
-    merlin::intvec strides = {5*sizeof(double), 2*sizeof(double)};
+    merlin::UIntVec dims = {2, 3};
+    merlin::UIntVec strides = {5*sizeof(double), 2*sizeof(double)};
     merlin::array::Array A(A_data, dims, strides, false);
+    MESSAGE("CPU Array: %s\n", A.str().c_str());
 
     // copy data to GPU and print each element of the tensor
-    MESSAGE("Initialize Parcel object with elements: 1.0 3.0 5.0 6.0 8.0 10.0.\n");
     merlin::cuda::Stream s(merlin::cuda::StreamSetting::Default);
     merlin::array::Parcel B(A.shape());
     B.transfer_data_to_gpu(A, s);

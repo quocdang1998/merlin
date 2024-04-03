@@ -14,29 +14,25 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Product of all elements of the vector
-__cuhostdev__ std::uint64_t prod_elements(const intvec & v) {
+__cuhostdev__ std::uint64_t prod_elements(const std::uint64_t * v, std::uint64_t size) {
     std::uint64_t result = 1;
-    for (std::uint64_t i = 0; i < v.size(); i++) {
+    for (std::uint64_t i = 0; i < size; i++) {
         result *= v[i];
     }
     return result;
 }
 
 // Inner product of 2 index vectors
-__cuhostdev__ std::uint64_t inner_prod(const intvec & v1, const intvec & v2) {
-    // check size of 2 vectors
-    CASSERT(!is_same_size(v1, v2), CUHDERR, std::invalid_argument,
-            "Size of v1 (%" PRIu64 ") and size of v2 (%" PRIu64 ") are not equal.\n", v1.size(), v2.size());
-    // calculate inner product
+__cuhostdev__ std::uint64_t inner_prod(const std::uint64_t * v1, const std::uint64_t * v2, std::uint64_t size) {
     std::uint64_t inner_product = 0;
-    for (std::uint64_t i = 0; i < v1.size(); i++) {
+    for (std::uint64_t i = 0; i < size; i++) {
         inner_product += v1[i] * v2[i];
     }
     return inner_product;
 }
 
 // Convert n-dimensional index to C-contiguous index
-__cuhostdev__ std::uint64_t ndim_to_contiguous_idx(const intvec & index, const intvec & shape) {
+__cuhostdev__ std::uint64_t ndim_to_contiguous_idx(const UIntVec & index, const UIntVec & shape) {
     // check size of 2 vectors
     CASSERT(!is_same_size(index, shape), CUHDERR, std::invalid_argument,
             "Size of index (%" PRIu64 ") and size of shape (%" PRIu64 ") are not equal.\n", index.size(), shape.size());
@@ -49,35 +45,21 @@ __cuhostdev__ std::uint64_t ndim_to_contiguous_idx(const intvec & index, const i
     return c_index;
 }
 
-// Convert C-contiguous index to n-dimensional index with allocating memory for result
-__cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape) {
-    // calculate index vector
-    intvec nd_index(shape.size());
-    std::uint64_t cum_prod = 1;
-    for (std::int64_t i = shape.size() - 1; i >= 0; i--) {
-        nd_index[i] = (index / cum_prod) % shape[i];
-        cum_prod *= shape[i];
-    }
-    return nd_index;
-}
-
 // Convert C-contiguous index to n-dimensional index and save data to a pre-allocated memory
-__cuhostdev__ void contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape, std::uint64_t * data_ptr) {
+__cuhostdev__ void contiguous_to_ndim_idx(std::uint64_t index, const std::uint64_t * shape, std::uint64_t ndim,
+                                          std::uint64_t * data_ptr) {
     // calculate index vector
     std::uint64_t cum_prod = 1;
-    for (std::int64_t i = shape.size() - 1; i >= 0; i--) {
+    for (std::int64_t i = ndim - 1; i >= 0; i--) {
         data_ptr[i] = (index / cum_prod) % shape[i];
         cum_prod *= shape[i];
     }
 }
 
 // Increment of n-dim index
-__cuhostdev__ std::int64_t increment_index(intvec & index, const intvec & shape) {
-    // check size of 2 vectors
-    CASSERT(!is_same_size(index, shape), CUHDERR, std::invalid_argument,
-            "Size of index (%" PRIu64 ") and size of shape (%" PRIu64 ") are not equal.\n", index.size(), shape.size());
+__cuhostdev__ std::int64_t increment_index(std::uint64_t * index, const std::uint64_t * shape, std::uint64_t ndim) {
     // increasing index
-    std::int64_t i_dim = index.size();
+    std::int64_t i_dim = ndim;
     bool keep_decresing, not_dim_break;
     do {
         i_dim--;
@@ -89,7 +71,7 @@ __cuhostdev__ std::int64_t increment_index(intvec & index, const intvec & shape)
 }
 
 // Increment of n-dim index
-__cuhostdev__ std::int64_t decrement_index(intvec & index, const intvec & shape) {
+__cuhostdev__ std::int64_t decrement_index(UIntVec & index, const UIntVec & shape) {
     // check size of 2 vectors
     CASSERT(!is_same_size(index, shape), CUHDERR, std::invalid_argument,
             "Size of index (%" PRIu64 ") and size of shape (%" PRIu64 ") are not equal.\n", index.size(), shape.size());
@@ -110,28 +92,22 @@ __cuhostdev__ std::int64_t decrement_index(intvec & index, const intvec & shape)
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Get a list of pointers divided from an original array
-__cuhostdev__ Vector<double *> ptr_to_subsequence(double * original, const intvec & divider_length,
-                                                  double ** data_ptr) {
-    Vector<double *> result;
-    if (data_ptr != nullptr) {
-        result.assign(data_ptr, divider_length.size());
-    } else {
-        result = Vector<double *>(divider_length.size());
-    }
+__cuhostdev__ void ptr_to_subsequence(double * original, const std::uint64_t * divider_length, std::uint64_t num_seq,
+                                      double ** data_ptr) {
     std::uint64_t jump = 0;
-    for (std::uint64_t i = 0; i < divider_length.size(); i++) {
-        result[i] = original + jump;
+    for (std::uint64_t i = 0; i < num_seq; i++) {
+        data_ptr[i] = original + jump;
         jump += divider_length[i];
     }
-    return result;
 }
 
 // Get index of sequence and index in that sequence of an index in original array
 __cuhostdev__ std::array<std::uint64_t, 2> index_in_subsequence(std::uint64_t index_full_array,
-                                                                const intvec & divider_length) noexcept {
+                                                                const std::uint64_t * divider_length,
+                                                                std::uint64_t num_seq) noexcept {
     std::uint64_t i_list = 0;
     std::int64_t index_in_list = index_full_array;
-    for (std::uint64_t i = 0; i < divider_length.size(); i++) {
+    for (std::uint64_t i = 0; i < num_seq; i++) {
         index_in_list -= divider_length[i];
         i_list += (index_in_list >= 0) ? 1 : 0;
         index_full_array = (index_in_list >= 0) ? index_in_list : index_full_array;
@@ -152,7 +128,7 @@ __cuhostdev__ std::array<std::uint64_t, 2> triangular_index(std::uint64_t index)
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Get size of a sub-grid given its level vector
-__cuhostdev__ std::uint64_t calc_subgrid_size(const intvec & level_vector) noexcept {
+__cuhostdev__ std::uint64_t calc_subgrid_size(const UIntVec & level_vector) noexcept {
     std::uint64_t subgrid_size = 1;
     for (std::uint64_t i_dim = 0; i_dim < level_vector.size(); i_dim++) {
         const std::uint64_t & dim_level = level_vector[i_dim];
@@ -165,8 +141,8 @@ __cuhostdev__ std::uint64_t calc_subgrid_size(const intvec & level_vector) noexc
 }
 
 // Get shape of Cartesian subgrid
-__cuhostdev__ intvec get_level_shape(const intvec & level_vector) {
-    intvec grid_shape(level_vector.size());
+__cuhostdev__ UIntVec get_level_shape(const UIntVec & level_vector) {
+    UIntVec grid_shape(level_vector.size());
     for (std::uint64_t i = 0; i < level_vector.size(); i++) {
         if (level_vector[i] == 0) {
             grid_shape[i] = 1;

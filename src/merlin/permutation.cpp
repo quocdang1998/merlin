@@ -18,7 +18,7 @@ Permutation::Permutation(std::uint64_t range) : index_(range) {
 }
 
 // Constructor from permutation index
-Permutation::Permutation(const intvec & index) : index_(index.size()) {
+Permutation::Permutation(const UIntVec & index) : index_(index.size()) {
     // check if it is a valid permutation
     std::vector<bool> tracker(index.size());
     std::fill_n(tracker.begin(), tracker.size(), false);

@@ -28,9 +28,8 @@ __cuhostdev__ void construct_linear(double * coeff, const double * grid_nodes, c
  *  @param coeff Value of interpolation coefficient.
  *  @param result Variable to which the result of the interpolation is added to.
  */
-__cuhostdev__ void evaluate_linear(const double * grid_nodes, const std::uint64_t & grid_shape,
-                                     const double & point, const std::uint64_t & coeff_index, const double & coeff,
-                                     double & result) noexcept;
+__cuhostdev__ void evaluate_linear(const double * grid_nodes, const std::uint64_t & grid_shape, const double & point,
+                                   const std::uint64_t & coeff_index, const double & coeff, double & result) noexcept;
 
 }  // namespace merlin::splint::intpl
 

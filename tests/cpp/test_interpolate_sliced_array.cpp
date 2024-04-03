@@ -1,6 +1,10 @@
+#include <vector>
+#include <random>
+
 #include "merlin/array/array.hpp"
 #include "merlin/grid/cartesian_grid.hpp"
 #include "merlin/splint/interpolator.hpp"
+#include "merlin/env.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
 #include "merlin/vector.hpp"
@@ -10,7 +14,7 @@
 
 #include <cinttypes>
 
-double foo(const merlin::floatvec & v) {
+double foo(const merlin::DoubleVec & v) {
     return (2.f*v[0] + v[2])*v[2] + 3.f*v[1];
 }
 
@@ -19,7 +23,7 @@ merlin::array::Array point_generator(std::uint64_t num_point, const merlin::grid
     std::vector<std::uniform_real_distribution<double>> dists;
     dists.reserve(grid.ndim());
     for (std::uint64_t i_dim = 0; i_dim < grid.ndim(); i_dim++) {
-        const merlin::floatvec grid_vector = grid.grid_vector(i_dim);
+        const merlin::DoubleVec grid_vector = grid.grid_vector(i_dim);
         const auto [it_min, it_max] = std::minmax_element(grid_vector.cbegin(), grid_vector.cend());
         dists.push_back(std::uniform_real_distribution<double>(*it_min, *it_max));
     }
@@ -37,8 +41,7 @@ int main(void) {
     merlin::grid::CartesianGrid cart_gr({{0.1, 0.2, 0.3}, {1.0, 2.0, 3.0, 4.0}, {0.0, 0.25, 0.5}});
     merlin::array::Array value(cart_gr.shape());
     for (std::uint64_t i = 0; i < cart_gr.size(); i++) {
-        merlin::intvec index(merlin::contiguous_to_ndim_idx(i, cart_gr.shape()));
-        value[index] = foo(cart_gr[index]);
+        value.set(i, foo(cart_gr[i]));
     }
 
     // calculate Lagrange coefficients
@@ -49,24 +52,23 @@ int main(void) {
         merlin::splint::Method::Newton
     };
     merlin::splint::Interpolator interp(cart_gr, coeff, methods, merlin::ProcessorType::Cpu);
-    interp.build_coefficients(4);
+    interp.build_coefficients(10);
     interp.synchronize();
     MESSAGE("Interpolation coefficients: %s\n", interp.get_coeff().str().c_str());
 
     // interpolation
-    merlin::array::Array points = point_generator(1200, cart_gr);
-    merlin::floatvec eval_values(1200);
-    interp.evaluate(points, eval_values, 24);
+    merlin::array::Array points = point_generator(12, cart_gr);
+    merlin::DoubleVec eval_values(12);
+    interp.evaluate(points, eval_values, 32);
     interp.synchronize();
-    // interp.synchronize();
     MESSAGE("Evaluated values: %s.\n", eval_values.str().c_str());
     MESSAGE(
         "Function values: %f %f %f.\n",
-        foo(merlin::floatvec(&points[0], &points[3])),
-        foo(merlin::floatvec(&points[3], &points[6])),
-        foo(merlin::floatvec(&points[6], &points[9]))
+        foo(merlin::DoubleVec(&points[0], &points[3])),
+        foo(merlin::DoubleVec(&points[3], &points[6])),
+        foo(merlin::DoubleVec(&points[6], &points[9]))
     );
-
+    interp.synchronize();
 
 /*
     merlin::splint::construct_coeff_cpu(coeff.data(), cart_gr, methods, 5);

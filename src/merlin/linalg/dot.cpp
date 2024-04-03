@@ -85,6 +85,30 @@ void linalg::dot(const double * vector1, const double * vector2, std::uint64_t s
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Vector operation
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Vector operation with another vector
+void linalg::saxpy(double a, const double * x, double * y, std::uint64_t size) noexcept {
+    std::uint64_t num_chunks = size / 4, remainder = size % 4;
+    // performing linear update using avx on 4-double chunks
+    PackedDouble<use_avx> chunk_x, chunk_y;
+    PackedDouble<use_avx> chunk_a(a);
+    for (std::uint64_t i_chunk = 0; i_chunk < num_chunks; i_chunk++) {
+        chunk_x = PackedDouble<use_avx>(x);
+        chunk_y = PackedDouble<use_avx>(y);
+        chunk_y.fma(chunk_a, chunk_x);
+        chunk_y.store(y);
+        x += 4;
+        y += 4;
+    }
+    // add remainder
+    for (std::uint64_t i = 0; i < remainder; i++) {
+        y[i] = std::fma(a, x[i], y[i]);
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Householder Reflection
 // ---------------------------------------------------------------------------------------------------------------------
 

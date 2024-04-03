@@ -68,9 +68,11 @@ static void wrap_interpolator(py::module & splint_module) {
     interpolator_pyclass.def(
         "evaluate",
         [](splint::Interpolator & self, const array::Array & points, std::uint64_t n_threads) {
-            intvec eval_shape = {points.shape()[0]};
+            Index eval_shape;
+            eval_shape.fill(0);
+            eval_shape[0] = points.shape()[0];
             array::Array * p_eval_values = new array::Array(eval_shape);
-            floatvec eval_values;
+            DoubleVec eval_values;
             eval_values.assign(p_eval_values->data(), p_eval_values->size());
             self.evaluate(points, eval_values, n_threads);
             return p_eval_values;

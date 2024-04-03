@@ -11,20 +11,13 @@ namespace merlin {
 // Parcel
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Constructor from a slice
-array::Parcel::Parcel(const array::Parcel & whole, const slicevec & slices) : array::NdData(whole, slices) {
-    this->device_ = whole.device_;
-}
-
 // String representation
-std::string array::Parcel::str(bool first_call) const {
-    return array::print(this, "Parcel", first_call);
-}
+std::string array::Parcel::str(bool first_call) const { return array::print(this, "Parcel", first_call); }
 
 #ifndef __MERLIN_CUDA__
 
 // Constructor from shape vector
-array::Parcel::Parcel(const intvec & shape, const cuda::Stream & stream) {
+array::Parcel::Parcel(const Index & shape, const cuda::Stream & stream) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 
@@ -51,7 +44,7 @@ array::Parcel & array::Parcel::operator=(array::Parcel && src) {
 }
 
 // Get value of element at a n-dim index
-double array::Parcel::get(const intvec & index) const {
+double array::Parcel::get(const Index & index) const {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
     return 0;
 }
@@ -63,7 +56,7 @@ double array::Parcel::get(std::uint64_t index) const {
 }
 
 // Set value of element at a n-dim index
-void array::Parcel::set(const intvec index, double value) {
+void array::Parcel::set(const Index & index, double value) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 
@@ -75,6 +68,12 @@ void array::Parcel::set(std::uint64_t index, double value) {
 // Set value of all elements
 void array::Parcel::fill(double value) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
+}
+
+// Calculate mean and variance of all non-zero and finite elements
+std::array<double, 2> array::Parcel::get_mean_variance(void) const {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
+    return std::array<double, 2>();
 }
 
 // Transfer data to GPU

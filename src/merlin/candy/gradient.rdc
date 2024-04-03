@@ -3,15 +3,9 @@
 
 #include <array>  // std::array
 
-#if defined(__MERLIN_LINUX__)
-    #include <cmath>  // std::isfinite, std::isnormal
-#elif defined(__MERLIN_WINDOWS__)
-    #include <math.h>  // isfinite, isnormal
-#endif  // __MERLIN_LINUX__
-
 #include "merlin/array/nddata.hpp"  // merlin::array::NdData
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/utils.hpp"         // merlin::index_in_subsequence
+#include "merlin/utils.hpp"         // merlin::index_in_subsequence, merlin::is_normal
 
 namespace merlin {
 
@@ -20,31 +14,13 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Get ndim index with skipped dimension
-__cuhostdev__ static void ndim_idx_wkd(std::uint64_t index, std::uint64_t skip_dim, const intvec & shape,
-                                       intvec & ndim_idx) noexcept {
+__cuhostdev__ static void ndim_idx_wkd(std::uint64_t index, std::uint64_t skip_dim, const std::uint64_t * shape,
+                                       std::uint64_t ndim, std::uint64_t * ndim_idx) noexcept {
     std::uint64_t cum_prod = 1;
-    for (std::int64_t i = shape.size() - 1; i >= 0; i--) {
+    for (std::int64_t i = ndim - 1; i >= 0; i--) {
         ndim_idx[i] = (i == skip_dim) ? (ndim_idx[i]) : ((index / cum_prod) % shape[i]);
         cum_prod *= (i == skip_dim) ? 1.0 : shape[i];
     }
-}
-
-// Check if a value is normal
-__cuhostdev__ static inline bool check_normal(double value) noexcept {
-#if defined(__MERLIN_LINUX__) && !defined(__CUDA_ARCH__)
-    return std::isnormal(value);
-#else
-    return isfinite(value) && (value != 0.0);
-#endif  // __MERLIN_LINUX__ && !__CUDA_ARCH__
-}
-
-// Check if a value is finite
-__cuhostdev__ static inline bool check_finite(double value) noexcept {
-#if defined(__MERLIN_LINUX__) && !defined(__CUDA_ARCH__)
-    return std::isfinite(value);
-#else
-    return isfinite(value);
-#endif  // __MERLIN_LINUX__ && !__CUDA_ARCH__
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -53,17 +29,14 @@ __cuhostdev__ static inline bool check_finite(double value) noexcept {
 
 // Calculate gradient of a model based on relative square metric
 __cuhostdev__ void candy::rlsquare_grad(const candy::Model & model, const array::NdData & train_data,
-                                        floatvec & gradient, std::uint64_t thread_idx, std::uint64_t n_threads,
-                                        std::uint64_t * cache_mem) noexcept {
-    // assign cache memory for each thread
-    intvec index_mem;
-    index_mem.assign(cache_mem + thread_idx * model.ndim(), model.ndim());
+                                        DoubleVec & gradient, std::uint64_t thread_idx, std::uint64_t n_threads,
+                                        Index & index_mem) noexcept {
     // loop over each parameter
     for (std::uint64_t i_param = thread_idx; i_param < model.num_params(); i_param += n_threads) {
         // initialize gradient
         double param_gradient = 0.0;
         // get parameter index
-        auto [param_dim, param_index] = index_in_subsequence(i_param, model.rshape());
+        auto [param_dim, param_index] = index_in_subsequence(i_param, model.rshape().data(), model.ndim());
         std::uint64_t param_rank = param_index % model.rank();
         param_index /= model.rank();
         // loop over each point in the dataset to calculate the gradient
@@ -71,7 +44,7 @@ __cuhostdev__ void candy::rlsquare_grad(const candy::Model & model, const array:
         index_mem[param_dim] = param_index;
         for (std::uint64_t i_point = 0; i_point < n_subset; i_point++) {
             // calculate ndim index
-            ndim_idx_wkd(i_point, param_dim, train_data.shape(), index_mem);
+            ndim_idx_wkd(i_point, param_dim, train_data.shape().data(), train_data.ndim(), index_mem.data());
             // get point value
             std::uintptr_t point_ptr = reinterpret_cast<std::uintptr_t>(train_data.data());
             for (std::uint64_t i = 0; i < train_data.ndim(); i++) {
@@ -79,7 +52,7 @@ __cuhostdev__ void candy::rlsquare_grad(const candy::Model & model, const array:
             }
             double point_value = *(reinterpret_cast<double *>(point_ptr));
             // check for normal data
-            if (!check_normal(point_value)) {
+            if (!is_normal(point_value)) {
                 continue;
             }
             double point_gradient = 1.0;
@@ -101,17 +74,14 @@ __cuhostdev__ void candy::rlsquare_grad(const candy::Model & model, const array:
 
 // Calculate gradient of a model based on relative square metric
 __cuhostdev__ void candy::absquare_grad(const candy::Model & model, const array::NdData & train_data,
-                                        floatvec & gradient, std::uint64_t thread_idx, std::uint64_t n_threads,
-                                        std::uint64_t * cache_mem) noexcept {
-    // assign cache memory for each thread
-    intvec index_mem;
-    index_mem.assign(cache_mem + thread_idx * model.ndim(), model.ndim());
+                                        DoubleVec & gradient, std::uint64_t thread_idx, std::uint64_t n_threads,
+                                        Index & index_mem) noexcept {
     // loop over each parameter
     for (std::uint64_t i_param = thread_idx; i_param < model.num_params(); i_param += n_threads) {
         // initialize gradient
         double param_gradient = 0.0;
         // get parameter index
-        auto [param_dim, param_index] = index_in_subsequence(i_param, model.rshape());
+        auto [param_dim, param_index] = index_in_subsequence(i_param, model.rshape().data(), model.ndim());
         std::uint64_t param_rank = param_index % model.rank();
         param_index /= model.rank();
         // loop over each point in the dataset to calculate the gradient
@@ -119,7 +89,7 @@ __cuhostdev__ void candy::absquare_grad(const candy::Model & model, const array:
         index_mem[param_dim] = param_index;
         for (std::uint64_t i_point = 0; i_point < n_subset; i_point++) {
             // calculate ndim index
-            ndim_idx_wkd(i_point, param_dim, train_data.shape(), index_mem);
+            ndim_idx_wkd(i_point, param_dim, train_data.shape().data(), train_data.ndim(), index_mem.data());
             // get point value
             std::uintptr_t point_ptr = reinterpret_cast<std::uintptr_t>(train_data.data());
             for (std::uint64_t i = 0; i < train_data.ndim(); i++) {
@@ -127,7 +97,7 @@ __cuhostdev__ void candy::absquare_grad(const candy::Model & model, const array:
             }
             double point_value = *(reinterpret_cast<double *>(point_ptr));
             // check for normal data
-            if (!check_finite(point_value)) {
+            if (!is_finite(point_value)) {
                 continue;
             }
             double point_gradient = 1.0;
@@ -154,10 +124,10 @@ __cuhostdev__ void candy::absquare_grad(const candy::Model & model, const array:
 // Calculate gradient from data in GPU parallel section
 __cudevice__ void candy::Gradient::calc_by_gpu(candy::Model & model, const array::Parcel & train_data,
                                                std::uint64_t thread_idx, std::uint64_t n_threads,
-                                               std::uint64_t * cache_mem) noexcept {
+                                               Index & index_mem) noexcept {
     static std::array<candy::GradientCalc, 2> grad_methods = {candy::rlsquare_grad, candy::absquare_grad};
     unsigned int metric = static_cast<unsigned int>(this->train_metric_);
-    grad_methods[metric](model, train_data, this->value_, thread_idx, n_threads, cache_mem);
+    grad_methods[metric](model, train_data, this->value_, thread_idx, n_threads, index_mem);
     __syncthreads();
 }
 

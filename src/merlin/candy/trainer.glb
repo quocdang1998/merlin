@@ -1,19 +1,13 @@
 // Copyright 2023 quocdang1998
 #include "merlin/candy/trainer.hpp"
 
-#if defined(__MERLIN_LINUX__)
-    #include <cmath>  // std::isfinite, std::isnormal
-#elif defined(__MERLIN_WINDOWS__)
-    #include <math.h>  // isfinite, isnormal
-#endif  // __MERLIN_LINUX__
-
 #include "merlin/array/parcel.hpp"     // merlin::array::Parcel
 #include "merlin/candy/gradient.hpp"   // merlin::candy::Gradient
 #include "merlin/candy/loss.hpp"       // merlin::candy::rmse_gpu
 #include "merlin/candy/model.hpp"      // merlin::candy::Model
 #include "merlin/candy/optimizer.hpp"  // merlin::candy::Optimizer
 #include "merlin/cuda/memory.hpp"      // merlin::cuda::copy_objects
-#include "merlin/utils.hpp"            // merlin::flatten_thread_index, merlin::size_of_block
+#include "merlin/utils.hpp"            // merlin::flatten_thread_index, merlin::size_of_block, merlin::is_normal
 
 namespace merlin {
 
@@ -21,20 +15,11 @@ namespace merlin {
 // Utility
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Check if a value is normal
-__cudevice__ static inline bool check_normal(double value) noexcept {
-#if defined(__MERLIN_LINUX__) && !defined(__CUDA_ARCH__)
-    return std::isnormal(value);
-#else
-    return isfinite(value) && (value != 0.0);
-#endif  // __MERLIN_LINUX__ && !__CUDA_ARCH__
-}
-
 // Update based on error
 __device__ inline void update_go_on(double & priori_error, double & posteriori_error, const double & threshold,
                                     bool & go_on, bool & local_go_on, const std::uint64_t & thread_idx) {
     if (thread_idx == 0) {
-        if (check_normal(posteriori_error)) {
+        if (is_normal(posteriori_error)) {
             go_on = (std::abs(priori_error - posteriori_error) / posteriori_error > threshold);
         } else {
             go_on = false;
@@ -53,28 +38,33 @@ __global__ static void train_kernel(candy::Model * p_model, array::Parcel * p_da
     auto [grad_mem, p_model_shr, p_data_shr, p_optmz_shr] = cuda::copy_objects(shared_mem, *p_model, *p_data, *p_optmz);
     // assign data to gradient
     candy::Gradient gradient(reinterpret_cast<double *>(grad_mem), p_model_shr->num_params(), metric);
-    // get buffer data
-    std::uint64_t * buffer = reinterpret_cast<std::uint64_t *>(gradient.value().end());
     // initialize error variable
     __shared__ double priori_error;
     __shared__ double posteriori_error;
+    __shared__ unsigned long long normal_count;
     __shared__ bool go_on;
     bool local_go_on = true;
     if (thread_idx == 0) {
         priori_error = 0.0;
         go_on = true;
     }
-    candy::rmse_gpu(p_model_shr, p_data_shr, buffer, &posteriori_error, thread_idx, block_size);
+    __syncthreads();
+    // calculate posteriori error before training
+    Index index_mem;
+    index_mem.fill(0);
+    candy::rmse_gpu(p_model_shr, p_data_shr, &posteriori_error, &normal_count, thread_idx, block_size, index_mem);
     do {
+        // copy posterioiri error -> priori error
         if (thread_idx == 0) {
             priori_error = posteriori_error;
         }
         __syncthreads();
+        // repeat training process
         for (std::uint64_t i = 0; i < rep; i++) {
-            gradient.calc_by_gpu(*p_model_shr, *p_data_shr, thread_idx, block_size, buffer);
+            gradient.calc_by_gpu(*p_model_shr, *p_data_shr, thread_idx, block_size, index_mem);
             p_optmz->update_gpu(*p_model_shr, gradient, thread_idx, block_size);
         }
-        candy::rmse_gpu(p_model_shr, p_data_shr, buffer, &posteriori_error, thread_idx, block_size);
+        candy::rmse_gpu(p_model_shr, p_data_shr, &posteriori_error, &normal_count, thread_idx, block_size, index_mem);
         update_go_on(priori_error, posteriori_error, threshold, go_on, local_go_on, thread_idx);
     } while (local_go_on);
     // copy model data from shared memory back to global memory
@@ -85,11 +75,9 @@ __global__ static void train_kernel(candy::Model * p_model, array::Parcel * p_da
 void candy::train_by_gpu(candy::Model * p_model, array::Parcel * p_data, candy::Optimizer * p_optimizer,
                          candy::TrainMetric metric, std::uint64_t rep, std::uint64_t n_threads, std::uint64_t ndim,
                          double threshold, std::uint64_t shared_mem_size, cuda::Stream & stream) {
-    // add memory for cache
-    std::uint64_t total_shared_mem = shared_mem_size + n_threads * ndim;
     // launch the calculation asynchronously on GPU
     ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr());
-    train_kernel<<<1, n_threads, total_shared_mem, cuda_stream>>>(p_model, p_data, p_optimizer, metric, rep, threshold);
+    train_kernel<<<1, n_threads, shared_mem_size, cuda_stream>>>(p_model, p_data, p_optimizer, metric, rep, threshold);
 }
 
 }  // namespace merlin

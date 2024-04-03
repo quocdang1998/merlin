@@ -5,7 +5,7 @@
 
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/candy/model.hpp"   // merlin::candy::Model
-#include "merlin/utils.hpp"         // merlin::contiguous_to_ndim_idx
+#include "merlin/utils.hpp"         // merlin::contiguous_to_ndim_idx, merlin::is_normal, merlin::is_finite
 
 namespace merlin {
 
@@ -16,42 +16,35 @@ namespace merlin {
 #ifdef __NVCC__
 
 // CUDA function calculating relative mean square error with GPU parallelism
-__cudevice__ void candy::rmse_gpu(const candy::Model * p_model, const array::Parcel * p_data, std::uint64_t * buffer,
-                                  double * p_result, std::uint64_t thread_idx, std::uint64_t block_size) noexcept {
+__cudevice__ void candy::rmse_gpu(const candy::Model * p_model, const array::Parcel * p_data, double * p_result,
+                                  unsigned long long * p_count, std::uint64_t thread_idx, std::uint64_t block_size,
+                                  Index & index_mem) noexcept {
     // initialize result
+    std::uint64_t thread_count = 0;
+    double thread_rmse = 0.0;
     if (thread_idx == 0) {
         *p_result = 0.0;
+        *p_count = 0;
     }
     __syncthreads();
-    // initialize thread result
-    std::uint64_t non_zero = 0;
-    double thread_rmse = 0.0;
-    // assign index vector
-    intvec index;
-    index.assign(buffer + thread_idx * p_data->ndim(), p_data->ndim());
     // summing on all points
     for (std::uint64_t i_point = thread_idx; i_point < p_data->size(); i_point += block_size) {
-        contiguous_to_ndim_idx(i_point, p_data->shape(), index.data());
-        double x_data = (*p_data)[index];
-        if (x_data == 0.0) {
+        contiguous_to_ndim_idx(i_point, p_data->shape().data(), p_data->ndim(), index_mem.data());
+        double x_data = (*p_data)[index_mem];
+        if (!is_normal(x_data)) {
             continue;
         }
-        non_zero += 1;
-        double x_model = p_model->eval(index);
+        thread_count += 1;
+        double x_model = p_model->eval(index_mem);
         double rel_err = (x_model - x_data) / x_data;
         thread_rmse += rel_err * rel_err;
     }
     __syncthreads();
     // accumulate
-    unsigned long long * non_zero_buffer = reinterpret_cast<unsigned long long *>(buffer);
-    if (thread_idx == 0) {
-        *non_zero_buffer = 0;
-    }
-    __syncthreads();
-    ::atomicAdd_block(non_zero_buffer, static_cast<unsigned long long>(non_zero));
+    ::atomicAdd_block(p_count, static_cast<unsigned long long>(thread_count));
     ::atomicAdd_block(p_result, thread_rmse);
     if (thread_idx == 0) {
-        *p_result = std::sqrt(*p_result / *non_zero_buffer);
+        *p_result = std::sqrt(*p_result / *p_count);
     }
     __syncthreads();
 }
@@ -65,32 +58,32 @@ __cudevice__ void candy::rmse_gpu(const candy::Model * p_model, const array::Par
 #ifdef __NVCC__
 
 // CUDA function calculating relative mean square error with GPU parallelism
-__cudevice__ void candy::rmae_gpu(const candy::Model * p_model, const array::Parcel * p_data, std::uint64_t * buffer,
-                                  double * p_result, std::uint64_t thread_idx, std::uint64_t block_size) noexcept {
+__cudevice__ void candy::rmae_gpu(const candy::Model * p_model, const array::Parcel * p_data, double * p_result,
+                                  unsigned long long * p_count, std::uint64_t thread_idx, std::uint64_t block_size,
+                                  Index & index_mem) noexcept {
     // initialize result
+    std::uint64_t thread_count = 0;
+    double thread_rmae = 0.0;
     if (thread_idx == 0) {
         *p_result = 0.0;
+        *p_count = 0;
     }
-    __syncthreads();
-    // initialize thread result
-    double thread_rmse = 0.0;
-    // assign index vector
-    intvec index;
-    index.assign(buffer + thread_idx * p_data->ndim(), p_data->ndim());
     // summing on all points
     for (std::uint64_t i_point = thread_idx; i_point < p_data->size(); i_point += block_size) {
-        contiguous_to_ndim_idx(i_point, p_data->shape(), index.data());
-        double x_data = (*p_data)[index];
-        if (x_data == 0.0) {
+        contiguous_to_ndim_idx(i_point, p_data->shape().data(), p_data->ndim(), index_mem.data());
+        double x_data = (*p_data)[index_mem];
+        if (!is_finite(x_data)) {
             continue;
         }
-        double x_model = p_model->eval(index);
+        thread_count += 1;
+        double x_model = p_model->eval(index_mem);
         double rel_err = std::abs(x_model - x_data) / x_data;
-        thread_rmse = (thread_rmse < rel_err) ? rel_err : thread_rmse;
+        thread_rmae = (thread_rmae < rel_err) ? rel_err : thread_rmae;
     }
     __syncthreads();
     // accumulate
-    ::atomicMax_block(reinterpret_cast<long long int *>(p_result), __double_as_longlong(thread_rmse));
+    ::atomicAdd_block(p_count, static_cast<unsigned long long>(thread_count));
+    ::atomicMax_block(reinterpret_cast<long long int *>(p_result), __double_as_longlong(thread_rmae));
 }
 
 #endif  // __NVCC__

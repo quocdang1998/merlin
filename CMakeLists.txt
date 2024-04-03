@@ -21,6 +21,7 @@ set(MERLIN_EXT ""
 # source list
 list(APPEND MERLIN_SRC_CPP
      array/nddata.cpp
+     array/operation.cpp
      array/array.cpp
      array/parcel.cpp
      array/stock.cpp
@@ -40,7 +41,6 @@ list(APPEND MERLIN_SRC_CPP
      filelock.cpp
      grid/cartesian_grid.cpp
      grid/regular_grid.cpp
-     iterator.cpp
      # intpl/cartesian_grid.cpp
      # intpl/grid.cpp
      # intpl/interpolant.cpp
@@ -52,15 +52,15 @@ list(APPEND MERLIN_SRC_CPP
      linalg/dot.cpp
      linalg/matrix.cpp
      linalg/tri_solve.cpp
-     linalg/qr_solve.cpp
+     ##linalg/qr_solve.cpp
      permutation.cpp
      regpl/polynomial.cpp
-     regpl/vandermonde.cpp
+     ##regpl/vandermonde.cpp
      # regpl/regressor.cpp
      slice.cpp
      splint/interpolator.cpp
      splint/tools.cpp
-     stat/moment.cpp
+     ## stat/moment.cpp
      utils.cpp
 )
 list(APPEND MERLIN_SRC_CU
@@ -88,7 +88,7 @@ list(APPEND MERLIN_SRC_GLB
      # intpl/newton.glb
      # regpl/regressor.glb
      splint/tools.glb
-     stat/moment.glb
+     ##stat/moment.glb
 )
 list(APPEND MERLIN_SRC_RDC
      array/operation.rdc
@@ -107,7 +107,7 @@ list(APPEND MERLIN_SRC_RDC
      # intpl/newton.rdc
      grid/cartesian_grid.rdc
      grid/regular_grid.rdc
-     linalg/qr_solve.rdc
+     ##linalg/qr_solve.rdc
      # regpl/core.rdc
      regpl/polynomial.rdc
      slice.rdc

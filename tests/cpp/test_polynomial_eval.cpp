@@ -23,16 +23,18 @@ int main(void) {
     */
 
     double coeff_simplified[] = {1.3, 2.4, 3.8, -6.2, -1.8, -3.5};
-    floatvec coeff_vec;
+    DoubleVec coeff_vec;
     coeff_vec.assign(coeff_simplified, 6);
-    intvec coef_idx = {9, 3, 11, 7, 16, 13};
-    regpl::Polynomial p(coeff_vec, {2, 3, 3}, coef_idx);
+    UIntVec coef_idx = {9, 3, 11, 7, 16, 13};
+    regpl::Polynomial p(coeff_vec, make_array<std::uint64_t>({2, 3, 3}), coef_idx);
     MESSAGE("Polynomial: %s\n", p.str().c_str());
 
-    floatvec buffer(3);
-    floatvec point = {1.8, 0.7, 1.5};
-    MESSAGE("Evaluation at point %s is %f\n", point.str().c_str(), p.eval(point.data(), buffer.data()));
-    MESSAGE("Reference  of point %s is %f\n", point.str().c_str(), reference(point.data()));
+    Point buffer;
+    Point point = make_array<double>({1.8, 0.7, 1.5});
+    DoubleVec point_vector;
+    point_vector.assign(point.data(), 3);
+    MESSAGE("Evaluation at point %s is %f\n", point_vector.str().c_str(), p.eval(point, buffer));
+    MESSAGE("Reference  of point %s is %f\n", point_vector.str().c_str(), reference(point.data()));
 
     p.save("polynom.txt", true);
     regpl::Polynomial p_read;

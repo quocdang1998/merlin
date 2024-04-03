@@ -18,7 +18,7 @@ __cuhostdev__ void splint::intpl::evaluate_linear(const double * grid_nodes, con
                                                   const double & point, const std::uint64_t & coeff_index,
                                                   const double & coeff, double & result) noexcept {
     // skip for out of range
-    if (point < grid_nodes[0] || point > grid_nodes[grid_shape-1]) {
+    if (point < grid_nodes[0] || point > grid_nodes[grid_shape - 1]) {
         return;
     }
     // exactly at the point
@@ -28,11 +28,11 @@ __cuhostdev__ void splint::intpl::evaluate_linear(const double * grid_nodes, con
     }
     // get upper and lower
     double upper = 0, lower = 0;
-    if (coeff_index != grid_shape-1) {
-        upper = grid_nodes[coeff_index+1] - point;
+    if (coeff_index != grid_shape - 1) {
+        upper = grid_nodes[coeff_index + 1] - point;
     }
     if (coeff_index != 0) {
-        lower = point - grid_nodes[coeff_index-1];
+        lower = point - grid_nodes[coeff_index - 1];
     }
     // skip if out of range
     if ((upper < 0) || (lower < 0)) {
@@ -40,10 +40,10 @@ __cuhostdev__ void splint::intpl::evaluate_linear(const double * grid_nodes, con
     }
     // determine if it is lower of upper
     if (point > grid_nodes[coeff_index]) {
-        result += coeff * upper / (grid_nodes[coeff_index+1] - grid_nodes[coeff_index]);
+        result += coeff * upper / (grid_nodes[coeff_index + 1] - grid_nodes[coeff_index]);
         return;
     } else {
-        result += coeff * lower / (grid_nodes[coeff_index] - grid_nodes[coeff_index-1]);
+        result += coeff * lower / (grid_nodes[coeff_index] - grid_nodes[coeff_index - 1]);
         return;
     }
 }

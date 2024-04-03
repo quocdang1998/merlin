@@ -24,9 +24,9 @@ void create_trainer_gpu_ptr(const candy::Model & cpu_model, const array::Array &
                             cuda::Stream & stream);
 
 /** @brief Train a model using CPU parallelism.*/
-void train_by_cpu(std::shared_future<void> synch, candy::Model * p_model, array::Array * p_data,
+void train_by_cpu(std::future<void> && synch, candy::Model * p_model, array::Array * p_data,
                   candy::Optimizer * p_optimizer, double * cpu_grad_mem, candy::TrainMetric metric, std::uint64_t rep,
-                  double threshold, std::uint64_t n_threads, intvec * p_cache_mem);
+                  double threshold, std::uint64_t n_threads);
 
 /** @brief Train a model using GPU parallelism.*/
 void train_by_gpu(candy::Model * p_model, array::Parcel * p_data, candy::Optimizer * p_optimizer,
@@ -64,10 +64,7 @@ class candy::Trainer {
     candy::Trainer & operator=(const candy::Trainer & src) = delete;
     /** @brief Move constructor.*/
     Trainer(candy::Trainer && src) :
-    ndim_(src.ndim_),
-    synch_(std::move(src.synch_)),
-    cpu_cache_mem_(src.cpu_cache_mem_),
-    shared_mem_size_(src.shared_mem_size_) {
+    ndim_(src.ndim_), synch_(std::move(src.synch_)), shared_mem_size_(src.shared_mem_size_) {
         this->p_model_ = std::exchange(src.p_model_, nullptr);
         this->p_data_ = std::exchange(src.p_data_, nullptr);
         this->p_optmz_ = std::exchange(src.p_optmz_, nullptr);
@@ -82,7 +79,6 @@ class candy::Trainer {
         this->ndim_ = src.ndim_;
         this->synch_ = std::move(src.synch_);
         this->cpu_grad_mem_ = std::exchange(src.cpu_grad_mem_, nullptr);
-        this->cpu_cache_mem_ = std::move(src.cpu_cache_mem_);
         this->shared_mem_size_ = src.shared_mem_size_;
         this->p_parcel_ = std::exchange(src.p_parcel_, nullptr);
         return *this;
@@ -148,12 +144,10 @@ class candy::Trainer {
 
     /** @brief Memory for storing gradient (only for CPU launch).*/
     double * cpu_grad_mem_ = nullptr;
-    /** @brief Cache memory for calculating the gradient.*/
-    intvec cpu_cache_mem_;
 
     /** @brief Size of shared memory to reserve (only for GPU launch).*/
     std::uint64_t shared_mem_size_ = 0;
-    /** @brief GPU data (only for GPU launch).*/
+    /** @brief Pointer to GPU data from CPU (only for GPU launch).*/
     array::Parcel * p_parcel_ = nullptr;
 };
 

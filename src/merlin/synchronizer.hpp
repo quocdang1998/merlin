@@ -2,7 +2,7 @@
 #ifndef MERLIN_SYNCHRONIZER_HPP_
 #define MERLIN_SYNCHRONIZER_HPP_
 
-#include <future>   // std::shared_future
+#include <future>   // std::future
 #include <utility>  // std::in_place_type, std::forward, std::move
 #include <variant>  // std::variant
 
@@ -25,8 +25,8 @@ struct Synchronizer {
     /** @brief Default constructor.*/
     Synchronizer(void) = default;
     /** @brief Constructor from CPU synchronizer.*/
-    Synchronizer(std::shared_future<void> && cpu_sync) :
-    synchronizer(std::in_place_type<std::shared_future<void>>, std::forward<std::shared_future<void>>(cpu_sync)) {}
+    Synchronizer(std::future<void> && cpu_sync) :
+    synchronizer(std::in_place_type<std::future<void>>, std::forward<std::future<void>>(cpu_sync)) {}
     /** @brief Constructor from GPU synchronizer.*/
     Synchronizer(cuda::Stream && gpu_sync) :
     synchronizer(std::in_place_type<cuda::Stream>, std::forward<cuda::Stream>(gpu_sync)) {}
@@ -49,7 +49,7 @@ struct Synchronizer {
     void synchronize(void) {
         switch (this->synchronizer.index()) {
             case 0 : {
-                std::shared_future<void> & cpu_sync = std::get<std::shared_future<void>>(this->synchronizer);
+                std::future<void> & cpu_sync = std::get<std::future<void>>(this->synchronizer);
                 if (cpu_sync.valid()) {
                     cpu_sync.get();
                 }
@@ -66,7 +66,7 @@ struct Synchronizer {
     /// @name Attributes
     /// @{
     /** @brief Synchronizer.*/
-    std::variant<std::shared_future<void>, cuda::Stream> synchronizer;
+    std::variant<std::future<void>, cuda::Stream> synchronizer;
     /// @}
 
     /// @name Destructor

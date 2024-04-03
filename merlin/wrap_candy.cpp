@@ -21,8 +21,7 @@ void wrap_model(py::module & candy_module) {
     model_pyclass.def(
         py::init(
             [](py::sequence & shape, std::uint64_t rank) {
-                intvec cpp_shape(pyseq_to_vector<std::uint64_t>(shape));
-                return new candy::Model(cpp_shape, rank);
+                return new candy::Model(pyseq_to_array<std::uint64_t>(shape), rank);
             }
         ),
         R"(
@@ -44,7 +43,7 @@ void wrap_model(py::module & candy_module) {
     );
     model_pyclass.def_property_readonly(
         "rshape",
-        [](const candy::Model & self) { return vector_to_pylist(self.rshape()); },
+        [](const candy::Model & self) { return py::cast(self.rshape()); },
         "Get rank by shape."
     );
     model_pyclass.def_property_readonly(
@@ -90,8 +89,7 @@ void wrap_model(py::module & candy_module) {
     model_pyclass.def(
         "eval",
         [](candy::Model & self, py::sequence & index) {
-            intvec cpp_index(pyseq_to_vector<std::uint64_t>(index));
-            return self.eval(cpp_index);
+            return self.eval(pyseq_to_array<std::uint64_t>(index));
         },
         "Evaluate result of the model at a given ndim index in the resulted array.",
         py::arg("index")
@@ -105,11 +103,11 @@ void wrap_model(py::module & candy_module) {
     // initialization
     model_pyclass.def(
         "initialize",
-        [](candy::Model & self, const array::Array & train_data, std::uint64_t n_thread) {
-            self.initialize(train_data, n_thread);
+        [](candy::Model & self, const array::Array & train_data) {
+            self.initialize(train_data);
         },
         "Initialize values of model based on train data.",
-        py::arg("train_data"), py::arg("n_thread") = 1
+        py::arg("train_data")
     );
     // serialization
     model_pyclass.def(

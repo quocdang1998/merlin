@@ -7,7 +7,7 @@
 
 #include "merlin/cuda_interface.hpp"  // __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/vector.hpp"   // merlin::intvec
+#include "merlin/vector.hpp"   // merlin::UIntVec
 
 namespace merlin {
 
@@ -21,7 +21,7 @@ class Permutation {
     /** @brief Constructor of a random permutation given its range.*/
     MERLIN_EXPORTS Permutation(std::uint64_t range);
     /** @brief Constructor from permutation index.*/
-    MERLIN_EXPORTS Permutation(const intvec & index);
+    MERLIN_EXPORTS Permutation(const UIntVec & index);
     /// @}
 
     /// @name Copy and move

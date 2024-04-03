@@ -40,7 +40,7 @@ double get_max(const merlin::candy::Model & model, const merlin::array::Array & 
 int main(void) {
     double data[6] = {1.2, 2.3, 3.6, 4.8, 7.1, 2.5};
     // double data[6] = {2.5, 3.0, 3.5, 4.45, 5.34, 6.07};
-    merlin::intvec data_dims = {2, 3}, data_strides = merlin::array::contiguous_strides(data_dims, sizeof(double));
+    merlin::UIntVec data_dims = {2, 3}, data_strides = {data_dims[1] * sizeof(double), sizeof(double)};
     merlin::array::Array train_data(data, data_dims, data_strides);
     MESSAGE("Data: %s\n", train_data.str().c_str());
 
@@ -50,11 +50,11 @@ int main(void) {
     merlin::Vector<double> gradient_data(model.num_params());
     merlin::candy::Gradient grad(gradient_data.data(), model.num_params(), merlin::candy::TrainMetric::RelativeSquare);
 
-    // merlin::candy::Optimizer opt = merlin::candy::create_grad_descent(0.1);
+    merlin::candy::Optimizer opt = merlin::candy::create_grad_descent(0.1);
     // merlin::candy::Optimizer opt = merlin::candy::create_adam(0.3, 0.9, 0.99, model);
-    merlin::candy::Optimizer opt = merlin::candy::create_adadelta(20.0, 0.9, model);
+    // merlin::candy::Optimizer opt = merlin::candy::create_adadelta(20.0, 0.9, model);
 
-
+/*
     std::uint64_t n_thread = 5;
     merlin::intvec cache(n_thread * model.ndim());
     for (std::uint64_t i = 0; i < 1000; i++) {
@@ -66,10 +66,10 @@ int main(void) {
     }
     MESSAGE("Model gradient: %s\n", grad.str().c_str());
     MESSAGE("Model eval: %f\n", model.eval({1,1}));
-/*
+*/
     merlin::candy::Trainer train(model, std::move(train_data), opt);
-    train.update(1000, 1e-2, 3, merlin::candy::TrainMetric::RelativeSquare);
+    train.update(10000, 1e-2, 3, merlin::candy::TrainMetric::RelativeSquare);
     train.synchronize();
     MESSAGE("Model eval: %f\n", train.get_model().eval({1,1}));
-*/
+
 }

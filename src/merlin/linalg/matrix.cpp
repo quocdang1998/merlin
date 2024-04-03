@@ -1,6 +1,7 @@
 // Copyright 2023 quocdang1998
 #include "merlin/linalg/matrix.hpp"
 
+#include <new>      // std::align_val_t
 #include <sstream>  // std::ostringstream
 
 namespace merlin {
@@ -8,6 +9,12 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 // Matrix
 // ---------------------------------------------------------------------------------------------------------------------
+
+// Create an empty matrix from shape
+linalg::Matrix::Matrix(const std::array<std::uint64_t, 2> & shape) : shape_(shape) {
+    this->ld_ = shape[0];
+    this->data_ = new (std::align_val_t(32)) double[shape[0] * shape[1]];
+}
 
 // String representation
 std::string linalg::Matrix::str(void) const {
@@ -28,6 +35,13 @@ std::string linalg::Matrix::str(void) const {
     }
     os << ")>";
     return os.str();
+}
+
+// Default destructor
+linalg::Matrix::~Matrix(void) {
+    if (this->data_ != nullptr) {
+        delete[] this->data_;
+    }
 }
 
 }  // namespace merlin

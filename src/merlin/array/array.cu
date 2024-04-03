@@ -31,7 +31,7 @@ double * array::allocate_memory(std::uint64_t size) {
 void array::cuda_pin_memory(double * ptr, std::uint64_t mem_size) {
     ::cudaError_t err_ = ::cudaHostRegister(ptr, mem_size, cudaHostRegisterDefault);
     if ((err_ != 0) && (err_ != 712)) {
-        std::printf("Error code: %u\n", static_cast<unsigned>(err_));
+        // note: 712 = memory already page locked
         FAILURE(cuda_runtime_error, "Pin pageable memory failed with message \"%s\".\n", ::cudaGetErrorString(err_));
     }
 }

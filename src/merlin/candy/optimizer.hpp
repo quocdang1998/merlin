@@ -17,8 +17,8 @@ namespace merlin {
 namespace candy {
 
 /** @brief Type for static data of optimizer.*/
-using OptmzStatic = std::variant<candy::optmz::GradDescent, candy::optmz::AdaGrad, candy::optmz::Adam,
-                                 candy::optmz::AdaDelta>;
+using OptmzStatic =
+    std::variant<candy::optmz::GradDescent, candy::optmz::AdaGrad, candy::optmz::Adam, candy::optmz::AdaDelta>;
 
 }  // namespace candy
 

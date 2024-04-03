@@ -5,12 +5,12 @@
 
 #include "merlin/cuda/memory.hpp"            // merlin::cuda::copy_objects
 #include "merlin/cuda/stream.hpp"            // merlin::cuda::Stream
-#include "merlin/splint/intpl/linear.hpp"    // merlin::splint::intpl::construct_linear
 #include "merlin/splint/intpl/lagrange.hpp"  // merlin::splint::intpl::construct_lagrange
+#include "merlin/splint/intpl/linear.hpp"    // merlin::splint::intpl::construct_linear
 #include "merlin/splint/intpl/newton.hpp"    // merlin::splint::intpl::construction_newton
 #include "merlin/thread_divider.hpp"         // merlin::ThreadDivider
-#include "merlin/utils.hpp"                  // merlin::prod_elements, merlin::flatten_thread_index,
-                                             // merlin::size_of_block
+#include "merlin/utils.hpp"                  // merlin::flatten_thread_index, merlin::size_of_block,
+                                             // merlin::increment_index
 
 namespace merlin {
 
@@ -20,62 +20,50 @@ namespace merlin {
 
 // Kernel calculating coefficients
 __global__ static void construct_coeff_kernel(double * coeff, const grid::CartesianGrid * p_grid,
-                                              const Vector<splint::Method> * p_method) {
+                                              const std::array<unsigned int, max_dim> * p_method) {
     // functor to coefficient construction methods
-    static const std::array<splint::ConstructionMethod, 3> construction_funcs {
+    static const std::array<splint::ConstructionMethod, 3> construction_funcs{
         splint::intpl::construct_linear,
         splint::intpl::construct_lagrange,
-        splint::intpl::construction_newton
+        splint::intpl::construction_newton,
     };
     // get thread index and num threads
     std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
     // copy data to dynamic shared memory
     extern __shared__ char dynamic_shmem[];
-    auto [end_shr_ptr, grid_shr, method_shr] = cuda::copy_objects(dynamic_shmem, *p_grid, *p_method);
-    // assign variable to static share memory
-    const intvec & shape = grid_shr->shape();
-    __shared__ std::uint64_t static_shmem[3];
-    std::uint64_t & num_subsystem = static_shmem[0];
-    std::uint64_t & subsystem_size = static_shmem[1];
-    std::uint64_t & element_size = static_shmem[2];
+    auto [end_shr_ptr, grid_shr] = cuda::copy_objects(dynamic_shmem, *p_grid);
+    std::array<unsigned int, max_dim> cache_method(*p_method);
+    const Index & shape = grid_shr->shape();
     // initialization
-    if (thread_idx == 0) {
-        num_subsystem = 1;
-        element_size = prod_elements(shape);
-        subsystem_size = 0;
-    }
-    __syncthreads();
+    std::uint64_t num_subsystem = 1;
+    std::uint64_t element_size = grid_shr->size();
+    std::uint64_t subsystem_size = 0;
     // solve matrix for each dimension
     for (std::uint64_t i_dim = 0; i_dim < grid_shr->ndim(); i_dim++) {
         // calculate number of thread per groups
-        if (thread_idx == 0) {
-            subsystem_size = element_size;
-            element_size /= shape[i_dim];
-        }
-        __syncthreads();
+        subsystem_size = element_size;
+        element_size /= shape[i_dim];
         // parallel subsystem over the number of groups
         ThreadDivider thr_grp(num_subsystem, thread_idx, block_size);
         std::uint64_t local_num_subsystem = num_subsystem;
         std::uint64_t local_subsystem_size = subsystem_size;
         std::uint64_t local_element_size = element_size;
-        unsigned int i_method = static_cast<unsigned int>((*method_shr)[i_dim]);
+        unsigned int i_method = static_cast<unsigned int>(cache_method[i_dim]);
         for (std::uint64_t i_task = thr_grp.group_idx; i_task < local_num_subsystem; i_task += thr_grp.num_groups) {
             double * subsystem_start = coeff + i_task * local_subsystem_size;
             construction_funcs[i_method](subsystem_start, grid_shr->grid_vectors()[i_dim], shape[i_dim],
                                          local_element_size, thr_grp.thread_idx_in_group, thr_grp.numthreads_pertask);
         }
-        __syncthreads();
         // update number of sub-system
-        if (thread_idx == 0) {
-            num_subsystem *= shape[i_dim];
-        }
+        num_subsystem *= shape[i_dim];
+        // force synchronize threads befor moving on to the next axis
         __syncthreads();
     }
 }
 
 // Construct interpolation coefficients with GPU parallelism
 void splint::construct_coeff_gpu(double * coeff, const grid::CartesianGrid * p_grid,
-                                 const Vector<splint::Method> * p_method, std::uint64_t n_threads,
+                                 const std::array<unsigned int, max_dim> * p_method, std::uint64_t n_threads,
                                  std::uint64_t shared_mem_size, const cuda::Stream * stream_ptr) noexcept {
     // create an asynchrnous CUDA stream
     ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr->get_stream_ptr());
@@ -89,71 +77,43 @@ void splint::construct_coeff_gpu(double * coeff, const grid::CartesianGrid * p_g
 
 // Kernel evaluating interpolation
 __global__ static void eval_intpl_kernel(double * coeff, const grid::CartesianGrid * p_grid,
-                                         const Vector<splint::Method> * p_method, double * points,
+                                         const std::array<unsigned int, max_dim> * p_method, double * points,
                                          std::uint64_t n_points, double * result) {
     // get thread index and num threads
     std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
     // copy to share memory
     extern __shared__ char dynamic_shmem[];
     auto [end_shr_ptr, grid_shr] = cuda::copy_objects(dynamic_shmem, *p_grid);
-    __shared__ std::int64_t last_updated_dim;
-    // assign loop index vector
-    std::uint64_t ndim = grid_shr->ndim();
-    std::uintptr_t free_shared_mem = reinterpret_cast<std::uintptr_t>(end_shr_ptr);
-    std::uint64_t * loop_index_data = reinterpret_cast<std::uint64_t *>(free_shared_mem);
-    intvec loop_index;
-    loop_index.assign(loop_index_data, ndim);
-    if (thread_idx == 0) {
-        for (std::uint64_t i = 0; i < ndim; i++) {
-            loop_index[i] = 0;
-        }
-    }
-    __syncthreads();
-    // assign memory for storing point coordinates and cache
-    free_shared_mem = reinterpret_cast<std::uintptr_t>(loop_index.end()) + thread_idx * ndim * 2 * sizeof(double);
-    double * point_data = reinterpret_cast<double *>(free_shared_mem);
-    floatvec point;
-    point.assign(point_data, ndim);
-    double * cache_data = point_data + ndim;
-    floatvec cache;
-    cache.assign(cache_data, ndim);
-    for (std::uint64_t i = 0; i < ndim; i++) {
-        cache[i] = 0.0;
-    }
-    // assign value to vector of enum
-    std::uintptr_t method_ptr = reinterpret_cast<std::uintptr_t>(loop_index.end());
-    method_ptr += block_size * ndim * 2 * sizeof(double);
-    auto [_, method_shr] = cuda::copy_objects(reinterpret_cast<void *>(method_ptr), *p_method);
+    std::array<unsigned int, max_dim> cache_method(*p_method);
+    // initialization
+    Index loop_index;
+    loop_index.fill(0);
+    Point cache, point;
+    cache.fill(0.0);
+    point.fill(0.0);
+    std::uint64_t ndim = p_grid->ndim();
     // parallel calculation for each point
     std::uint64_t grid_size = grid_shr->size();
+    const Index & shape = grid_shr->shape();
     for (std::uint64_t i_point = thread_idx; i_point < n_points; i_point += block_size) {
-        // copy point coordinate to shared memory
+        // copy point coordinate to cache memory
         for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
             point[i_dim] = points[i_point * ndim + i_dim];
         }
         // set last updated dimension and contiguous index
-        if (thread_idx == 0) {
-            last_updated_dim = ndim-1;
-        }
-        __syncthreads();
-        std::int64_t register_last_updated_dim = last_updated_dim;
+        std::int64_t last_updated_dim = ndim - 1;
         std::uint64_t contiguous_index = 0;
         // loop on each index and save evaluation by each coefficient to the cache array
         do {
             splint::recursive_interpolate(coeff, grid_size, contiguous_index, loop_index.data(), cache.data(),
-                                          point_data, register_last_updated_dim, grid_shr->shape().data(),
-                                          grid_shr->grid_vectors().data(), *method_shr, grid_shr->ndim());
-            if (thread_idx == 0) {
-                last_updated_dim = increment_index(loop_index, grid_shr->shape());
-            }
-            __syncthreads();
-            register_last_updated_dim = last_updated_dim;
+                                          point.data(), last_updated_dim, shape.data(), grid_shr->grid_vectors().data(),
+                                          cache_method, grid_shr->ndim());
+            last_updated_dim = increment_index(loop_index.data(), shape.data(), ndim);
             contiguous_index++;
-        } while (register_last_updated_dim != -1);
+        } while (last_updated_dim != -1);
         // perform one last iteration on the last coefficient
-        splint::recursive_interpolate(coeff, grid_size, contiguous_index, loop_index.data(), cache.data(),
-                                      point_data, 0, grid_shr->shape().data(), grid_shr->grid_vectors().data(),
-                                      *method_shr, grid_shr->ndim());
+        splint::recursive_interpolate(coeff, grid_size, contiguous_index, loop_index.data(), cache.data(), point.data(),
+                                      0, shape.data(), grid_shr->grid_vectors().data(), cache_method, grid_shr->ndim());
         // save result and reset the cache
         result[i_point] = cache[0];
         cache[0] = 0.0;
@@ -162,13 +122,12 @@ __global__ static void eval_intpl_kernel(double * coeff, const grid::CartesianGr
 
 // Evaluate interpolation with GPU parallelism
 void splint::eval_intpl_gpu(double * coeff, const grid::CartesianGrid * p_grid,
-                            const Vector<splint::Method> * p_method, double * points, std::uint64_t n_points,
+                            const std::array<unsigned int, max_dim> * p_method, double * points, std::uint64_t n_points,
                             double * result, std::uint64_t n_threads, std::uint64_t ndim, std::uint64_t shared_mem_size,
                             const cuda::Stream * stream_ptr) noexcept {
     // create an asynchrnous CUDA stream
     ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr->get_stream_ptr());
     // launch calculation
-    shared_mem_size += ndim * (n_threads * 2 * sizeof(double) + sizeof(std::uint64_t));
     eval_intpl_kernel<<<1, n_threads, shared_mem_size, stream>>>(coeff, p_grid, p_method, points, n_points, result);
 }
 

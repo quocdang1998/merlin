@@ -56,6 +56,7 @@ struct PackedDouble<AvxFlag::NoAvx> {
      *  @param n Number of elements to copy, should be less than or equal to 4.
      */
     inline PackedDouble(const double * data, std::uint64_t n) {
+        this->core.fill(0);
         for (std::uint64_t i = 0; i < n; i++) {
             this->core[i] = data[i];
         }

@@ -20,12 +20,12 @@ __cuhostdev__ void splint::intpl::construction_newton(double * coeff, const doub
         std::int64_t last_node = shape - 1 - jump;
         for (std::uint64_t i_node = 0; i_node <= last_node; i_node++) {
             // calculate 1 / (node[j] - node[j+i])
-            double solvent = grid_nodes[i_node] - grid_nodes[i_node+jump];
+            double solvent = grid_nodes[i_node] - grid_nodes[i_node + jump];
             solvent = 1.f / solvent;
             // calculate divide difference: coeff[j] <- (coeff[j] - coeff[j+1]) /  (node[j] - node[j+i])
             for (std::uint64_t i_coeff = thread_idx; i_coeff < element_size; i_coeff += n_threads) {
-                coeff[i_node*element_size + i_coeff] -= coeff[(i_node+1)*element_size + i_coeff];
-                coeff[i_node*element_size + i_coeff] *= solvent;
+                coeff[i_node * element_size + i_coeff] -= coeff[(i_node + 1) * element_size + i_coeff];
+                coeff[i_node * element_size + i_coeff] *= solvent;
             }
         }
     }

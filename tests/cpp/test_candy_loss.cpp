@@ -16,7 +16,8 @@ double get_max(const merlin::candy::Model & model, const merlin::array::Array & 
     merlin::Vector<double> max_vector(::omp_get_max_threads(), 0.0);
     #pragma omp parallel for
     for (std::int64_t i_point = 0; i_point < train_data.size(); i_point++) {
-        merlin::intvec index = merlin::contiguous_to_ndim_idx(i_point, train_data.shape());
+        merlin::Index index;
+        merlin::contiguous_to_ndim_idx(i_point, train_data.shape().data(), train_data.ndim(), index.data());
         double data_point = train_data.get(index);
         double error = (data_point == 0) ? 0.0 : std::abs(model.eval(index) / data_point - 1.f);
         std::uint64_t i_thread = i_point % max_vector.size();
@@ -32,7 +33,7 @@ double get_max(const merlin::candy::Model & model, const merlin::array::Array & 
 int main(void) {
     double data[6] = {1.2, 2.3, 3.0, 4.8, 7.1, 2.5};
     // double data[6] = {2.5, 3.0, 3.5, 4.45, 5.34, 6.07};
-    merlin::intvec data_dims = {2, 3}, data_strides = merlin::array::contiguous_strides(data_dims, sizeof(double));
+    merlin::UIntVec data_dims = {2, 3}, data_strides = {data_dims[1] * sizeof(double), sizeof(double)};
     merlin::array::Array train_data(data, data_dims, data_strides);
     MESSAGE("Data: %s\n", train_data.str().c_str());
 
@@ -40,7 +41,14 @@ int main(void) {
     MESSAGE("Model: %s\n", model.str().c_str());
 
     std::uint64_t n_threads = 10;
-    merlin::intvec buffer(model.ndim() * n_threads);
-    MESSAGE("Value of RMSE: %f\n", merlin::candy::rmse_cpu(&model, &train_data, buffer.data(), n_threads));
-    MESSAGE("Value of RMAE: %f\n", merlin::candy::rmae_cpu(&model, &train_data, buffer.data(), n_threads));
+    double rmse, rmae;
+    std::uint64_t normal_count, finite_count;
+    _Pragma("omp parallel") {
+        merlin::Index index;
+        std::uint64_t thread_idx = ::omp_get_thread_num();
+        merlin::candy::rmse_cpu(&model, &train_data, rmse, normal_count, thread_idx, n_threads, index);
+        merlin::candy::rmae_cpu(&model, &train_data, rmae, finite_count, thread_idx, n_threads, index);
+    }
+    MESSAGE("Value of RMSE: %f\n", rmse);
+    MESSAGE("Value of RMAE: %f\n", rmae);
 }
