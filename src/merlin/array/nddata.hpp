@@ -30,12 +30,7 @@ class array::NdData {
      */
     MERLIN_EXPORTS NdData(double * data, const intvec & shape, const intvec & strides);
     /** @brief Constructor from shape vector.*/
-    MERLIN_EXPORTS NdData(const intvec & shape);
-    /** @brief Constructor from a slice.
-     *  @param whole merlin::array::NdData of the original array.
-     *  @param slices List of merlin::array::Slice on each dimension.
-     */
-    // MERLIN_EXPORTS NdData(const array::NdData & whole, const slicevec & slices);
+    MERLIN_EXPORTS NdData(const Index & shape);
     /// @}
 
     /// @name Copy and move
@@ -56,8 +51,12 @@ class array::NdData {
     __cuhostdev__ constexpr double * data(void) const noexcept { return this->data_; }
     /** @brief Get number of dimension.*/
     __cuhostdev__ constexpr const std::uint64_t & ndim(void) const noexcept { return this->ndim_; }
+    /** @brief Get reference to shape vector.*/
+    __cuhostdev__ constexpr Index & shape(void) noexcept { return this->shape_; }
     /** @brief Get constant reference to shape vector.*/
     __cuhostdev__ constexpr const Index & shape(void) const noexcept { return this->shape_; }
+    /** @brief Get reference to stride vector.*/
+    __cuhostdev__ constexpr Index & strides(void) noexcept { return this->strides_; }
     /** @brief Get constant reference to stride vector.*/
     __cuhostdev__ constexpr const Index & strides(void) const noexcept { return this->strides_; }
     /// @}
@@ -75,11 +74,11 @@ class array::NdData {
     /// @name Get and set element
     /// @{
     /** @brief Get value of element at a n-dim index.*/
-    virtual double get(const intvec & index) const { return 0.0; }
+    virtual double get(const Index & index) const { return 0.0; }
     /** @brief Get value of element at a C-contiguous index.*/
     virtual double get(std::uint64_t index) const { return 0.0; }
     /** @brief Set value of element at a n-dim index.*/
-    virtual void set(const intvec index, double value) {}
+    virtual void set(const Index & index, double value) {}
     /** @brief Set value of element at a C-contiguous index.*/
     virtual void set(std::uint64_t index, double value) {}
     /// @}
@@ -99,10 +98,10 @@ class array::NdData {
     /** @brief Set value of all elements.*/
     virtual void fill(double value) {}
     /** @brief Create a sub-array.*/
-    array::NdData sub_array(const slicevec & slices) const {
-        array::NdData result;
-        this->create_sub_array(result, slices);
-        return result;
+    virtual array::NdData * sub_array(const slicevec & slices) const {
+        array::NdData * p_result = new array::NdData();
+        this->create_sub_array(*p_result, slices);
+        return p_result;
     }
     /// @}
 
@@ -134,10 +133,13 @@ class array::NdData {
      */
     Index strides_;
 
+    /// @name Hidden utility functions
+    /// @{
     /** @brief Calculate size of array.*/
     MERLIN_EXPORTS void calc_array_size(void) noexcept;
     /** @brief Create sub-array.*/
     MERLIN_EXPORTS void create_sub_array(array::NdData & sub_array, const slicevec & slices) const noexcept;
+    /// @}
 };
 
 }  // namespace merlin

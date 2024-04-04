@@ -4,6 +4,9 @@
 
 #include <cstdint>  // std::uint64_t
 #include <string>   // std::string
+#include <utility>  // std::pair
+
+#include <iostream>
 
 #include "merlin/array/nddata.hpp"    // merlin::array::NdData
 #include "merlin/cuda_interface.hpp"  // __cuhostdev__
@@ -49,10 +52,10 @@ __cuhostdev__ std::uint64_t get_leap(std::uint64_t index, const Index & shape, c
  *  @param shape Shape vector.
  *  @param strides Strides vector.
  */
-constexpr std::array<std::uint64_t, 2> lcseg_and_brindex(const Index & shape, const Index & strides,
-                                                         std::uint64_t ndim) {
+constexpr std::pair<std::uint64_t, std::int64_t> lcseg_and_brindex(const Index & shape, const Index & strides,
+                                                                   std::uint64_t ndim) {
     std::uint64_t longest_contiguous_segment = sizeof(double);
-    std::uint64_t break_index = ndim - 1;
+    std::int64_t break_index = ndim - 1;
     for (std::int64_t i = ndim - 1; i > 0; i--) {
         if (strides[i] != longest_contiguous_segment) {
             break;
@@ -62,7 +65,7 @@ constexpr std::array<std::uint64_t, 2> lcseg_and_brindex(const Index & shape, co
     }
     if (strides[0] == longest_contiguous_segment) {
         longest_contiguous_segment *= shape[0];
-        break_index = UINT_MAX;
+        break_index = -1;
     }
     return {longest_contiguous_segment, break_index};
 }

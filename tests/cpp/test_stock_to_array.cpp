@@ -1,5 +1,6 @@
 #include "merlin/array/stock.hpp"
 #include "merlin/array/array.hpp"
+#include "merlin/logger.hpp"
 #include "merlin/vector.hpp"
 
 #include <chrono>
@@ -25,9 +26,11 @@ int main(void) {
     merlin::intvec dims = {3, 2};
     merlin::intvec strides = {2*(dims[1] * sizeof(double)), sizeof(double)};
     merlin::array::Array Ar(A, dims, strides, false);
+    MESSAGE("CPU array: %s\n", Ar.str().c_str());
     {
         merlin::array::Stock Stk("temp.txt", Ar.shape());
         Stk.record_data_to_file(Ar);
+        MESSAGE("Stock array: %s\n", Stk.str().c_str());
     }
 
     std::mutex m;
@@ -37,12 +40,8 @@ int main(void) {
         merlin::array::Array Ar_read(S.shape());
         Ar_read.extract_data_from_file(S);
         m.lock();
-        MESSAGE("From thread %d\nNdim: %" PRIu64 ".\nDims: %" PRIu64 " %" PRIu64 ".\n", omp_get_thread_num(),
-                Ar_read.ndim(), Ar_read.shape()[0], Ar_read.shape()[1]);
-        for (merlin::array::Array::iterator it = Ar_read.begin(); it != Ar_read.end(); ++it) {
-            std::printf("%.1f ", Ar_read[it.index()]);
-        }
-        std::printf("\n");
+        MESSAGE("From thread %d: %s\n", omp_get_thread_num(), Ar_read.str().c_str());
         m.unlock();
     }
+
 }

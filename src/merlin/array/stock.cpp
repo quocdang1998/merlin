@@ -66,26 +66,28 @@ static inline bool check_file_exist(const char * name) noexcept {
 
 // Read metadata from file
 std::uint64_t array::Stock::read_metadata(void) {
+    // zero fill shape and stride
+    this->shape_.fill(0);
+    this->strides_.fill(0);
     // read ndim and shape data from file at position offset
-    std::uint64_t ndim;
     SHARED_LOCK_THREADSAFE();
     std::fseek(this->file_ptr_, this->offset_, SEEK_SET);
-    if (std::fread(&ndim, sizeof(std::uint64_t), 1, this->file_ptr_) != 1) {
+    if (std::fread(&(this->ndim_), sizeof(std::uint64_t), 1, this->file_ptr_) != 1) {
         FAILURE(std::ios_base::failure, "Read file error.\n");
     }
-    this->shape_ = intvec(ndim);
-    if (std::fread(this->shape_.data(), sizeof(std::uint64_t), ndim, this->file_ptr_) != ndim) {
+    if (std::fread(this->shape_.data(), sizeof(std::uint64_t), this->ndim_, this->file_ptr_) != this->ndim_) {
         FAILURE(std::ios_base::failure, "Read file error.\n");
     }
     std::uint64_t cursor = std::ftell(this->file_ptr_);
     UNLOCK_THREADSAFE();
     // calculate stride and assign data pointer
     this->calc_array_size();
-    this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
+    this->strides_ = array::contiguous_strides(this->shape_, this->ndim_, sizeof(double));
     this->data_ = reinterpret_cast<double *>(cursor);
     // check file size
     std::uint64_t file_size = std::filesystem::file_size(this->filename_);
-    std::uint64_t expected_size = this->offset_ + (1 + ndim) * sizeof(std::uint64_t) + this->size() * sizeof(double);
+    std::uint64_t expected_size = this->offset_ + (1 + this->ndim_) * sizeof(std::uint64_t);
+    expected_size += this->size() * sizeof(double);
     if (file_size < expected_size) {
         FAILURE(std::filesystem::filesystem_error, "Expected filesize of at least %" PRIu64 ", got %" PRIu64 ".\n",
                 expected_size, file_size);
@@ -113,7 +115,7 @@ std::uint64_t array::Stock::write_metadata(void) {
 }
 
 // Construct empty Array from shape vector
-array::Stock::Stock(const std::string & filename, const intvec & shape, std::uint64_t offset, bool thread_safe) :
+array::Stock::Stock(const std::string & filename, const Index & shape, std::uint64_t offset, bool thread_safe) :
 array::NdData(shape), filename_(filename), offset_(0), thread_safe_(thread_safe) {
     // create file if not exists
     bool file_exist = check_file_exist(filename.c_str());
@@ -156,19 +158,9 @@ filename_(filename), offset_(offset), thread_safe_(thread_safe) {
     this->release = true;
 }
 
-// Constructor from a slice
-array::Stock::Stock(const array::Stock & whole, const slicevec & slices) : array::NdData(whole, slices) {
-    this->file_ptr_ = whole.file_ptr_;
-    this->flock_ = whole.flock_;
-    this->offset_ = whole.offset_;
-    this->thread_safe_ = whole.thread_safe_;
-    this->filename_ = whole.filename_;
-    this->release = false;
-}
-
 // Get value of element at a n-dim index
-double array::Stock::get(const intvec & index) const {
-    std::uint64_t leap = inner_prod(index, this->strides_);
+double array::Stock::get(const Index & index) const {
+    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     double result;
     SHARED_LOCK_THREADSAFE();
@@ -179,7 +171,7 @@ double array::Stock::get(const intvec & index) const {
 
 // Get value of element at a C-contiguous index
 double array::Stock::get(std::uint64_t index) const {
-    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_);
+    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_, this->ndim_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     double result;
     SHARED_LOCK_THREADSAFE();
@@ -189,8 +181,8 @@ double array::Stock::get(std::uint64_t index) const {
 }
 
 // Set value of element at a n-dim index
-void array::Stock::set(const intvec index, double value) {
-    std::uint64_t leap = inner_prod(index, this->strides_);
+void array::Stock::set(const Index & index, double value) {
+    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     EXCLUSIVE_LOCK_THREADSAFE();
     write_to_file(this->file_ptr_, reinterpret_cast<double *>(data_ptr), &value, sizeof(double));
@@ -199,7 +191,7 @@ void array::Stock::set(const intvec index, double value) {
 
 // Set value of element at a C-contiguous index
 void array::Stock::set(std::uint64_t index, double value) {
-    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_);
+    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_, this->ndim_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     EXCLUSIVE_LOCK_THREADSAFE();
     write_to_file(this->file_ptr_, reinterpret_cast<double *>(data_ptr), &value, sizeof(double));
@@ -223,9 +215,7 @@ void array::Stock::record_data_to_file(const array::Array & src) {
 }
 
 // String representation
-std::string array::Stock::str(bool first_call) const {
-    return array::print(this, "Stock", first_call);
-}
+std::string array::Stock::str(bool first_call) const { return array::print(this, "Stock", first_call); }
 
 // Destructor
 array::Stock::~Stock(void) {

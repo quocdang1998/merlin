@@ -93,6 +93,14 @@ __cuhostdev__ std::uint64_t prod_elements(const std::uint64_t * v, std::uint64_t
  */
 __cuhostdev__ std::uint64_t inner_prod(const intvec & v1, const intvec & v2);
 
+/** @brief Inner product of 2 index vectors.
+ *  @details Return convolution product / scalar product of 2 vectors.
+ *  @param v1 First vector.
+ *  @param v2 Second vector.
+ *  @param size Size of 2 vectors.
+ */
+__cuhostdev__ std::uint64_t inner_prod(const std::uint64_t * v1, const std::uint64_t * v2, std::uint64_t size);
+
 /** @brief Convert n-dimensional index to C-contiguous index.
  *  @param index Multi-dimensional index.
  *  @param shape Shape vector.

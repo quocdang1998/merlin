@@ -1,5 +1,6 @@
 Language:        Cpp
 BasedOnStyle:  LLVM
+AlignAfterOpenBracket: Align
 AlignArrayOfStructures: Right
 AlignConsecutiveAssignments:
   PadOperators:    false
@@ -64,3 +65,5 @@ SpacesInLineCommentPrefix:
   Maximum:         1
 Standard:        c++20
 RemoveBracesLLVM: false
+PenaltyBreakAssignment: 40
+AllowAllParametersOfDeclarationOnNextLine: false

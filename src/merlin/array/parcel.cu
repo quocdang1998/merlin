@@ -1,6 +1,7 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/parcel.hpp"
 
+#include <cinttypes>   // PRIu64
 #include <functional>  // std::bind, std::placeholders
 
 #include "merlin/array/array.hpp"      // merlin::array::Array
@@ -28,7 +29,7 @@ void array::Parcel::free_current_data(const cuda::Stream & stream) {
 }
 
 // Constructor from shape vector
-array::Parcel::Parcel(const intvec & shape, const cuda::Stream & stream) : array::NdData(shape) {
+array::Parcel::Parcel(const Index & shape, const cuda::Stream & stream) : array::NdData(shape) {
     // allocate data
     this->release = true;
     ::cudaError_t err_ = ::cudaMallocAsync(&(this->data_), sizeof(double) * this->size(),
@@ -45,7 +46,7 @@ array::Parcel::Parcel(const array::Parcel & src) : array::NdData(src) {
     // get device id and context
     this->device_ = cuda::Device::get_current_gpu();
     // reform strides vector
-    this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
+    this->strides_ = array::contiguous_strides(this->shape_, this->ndim_, sizeof(double));
     // allocate data
     this->release = true;
     ::cudaError_t err_ = ::cudaMalloc(&(this->data_), sizeof(double) * this->size());
@@ -70,14 +71,14 @@ array::Parcel & array::Parcel::operator=(const array::Parcel & src) {
     this->free_current_data();
     // copy metadata and reform strides vector
     this->array::NdData::operator=(src);
-    this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
+    this->strides_ = array::contiguous_strides(this->shape_, this->ndim_, sizeof(double));
     // get device and context
     this->device_ = cuda::Device::get_current_gpu();
     // allocate data
     this->release = true;
     cudaError_t err_ = ::cudaMalloc(&(this->data_), sizeof(double) * this->size());
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", cudaGetErrorString(err_));
+        FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // create copy function and copy data to GPU
     if (this->device_ != src.device_) {
@@ -99,6 +100,7 @@ array::Parcel::Parcel(array::Parcel && src) : array::NdData(src) {
     // take over pointer to source
     this->release = src.release;
     src.data_ = nullptr;
+    src.release = false;
 }
 
 // Move assignment
@@ -108,16 +110,17 @@ array::Parcel & array::Parcel::operator=(array::Parcel && src) {
     // move device id and context
     this->device_ = src.device_;
     // copy metadata
-    this->array::NdData::operator=(src);
+    this->array::NdData::operator=(std::forward<array::Parcel>(src));
     // take over pointer to source
     src.data_ = nullptr;
     this->release = src.release;
+    src.release = false;
     return *this;
 }
 
 // Get value of element at a n-dim index
-double array::Parcel::get(const intvec & index) const {
-    std::uint64_t leap = inner_prod(index, this->strides_);
+double array::Parcel::get(const Index & index) const {
+    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     double result;
     std::uintptr_t current_ctx = this->device().push_context();
@@ -128,7 +131,7 @@ double array::Parcel::get(const intvec & index) const {
 
 // Get value of element at a C-contiguous index
 double array::Parcel::get(std::uint64_t index) const {
-    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_);
+    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_, this->ndim_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     double result;
     std::uintptr_t current_ctx = this->device().push_context();
@@ -138,8 +141,8 @@ double array::Parcel::get(std::uint64_t index) const {
 }
 
 // Set value of element at a n-dim index
-void array::Parcel::set(const intvec index, double value) {
-    std::uint64_t leap = inner_prod(index, this->strides_);
+void array::Parcel::set(const Index & index, double value) {
+    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     std::uintptr_t current_ctx = this->device().push_context();
     ::cudaMemcpy(reinterpret_cast<double *>(data_ptr), &value, sizeof(double), ::cudaMemcpyHostToDevice);
@@ -148,7 +151,7 @@ void array::Parcel::set(const intvec index, double value) {
 
 // Set value of element at a C-contiguous index
 void array::Parcel::set(std::uint64_t index, double value) {
-    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_);
+    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_, this->ndim_);
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     std::uintptr_t current_ctx = this->device().push_context();
     ::cudaMemcpy(reinterpret_cast<double *>(data_ptr), &value, sizeof(double), ::cudaMemcpyHostToDevice);
@@ -176,24 +179,11 @@ void array::Parcel::transfer_data_to_gpu(const array::Array & cpu_array, const c
 }
 
 // Copy data to a pre-allocated memory
-void * array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * shape_strides_ptr, std::uintptr_t stream_ptr) const {
-    // initialize buffer to store data of the copy before cloning it to GPU
-    array::Parcel copy_on_gpu;
-    // shallow copy of the current object
-    copy_on_gpu.data_ = this->data_;
-    copy_on_gpu.size_ = this->size_;
-    copy_on_gpu.device_ = this->device_;
-    // copy temporary object to GPU
-    ::cudaMemcpyAsync(gpu_ptr, &copy_on_gpu, sizeof(array::Parcel), ::cudaMemcpyHostToDevice,
+void * array::Parcel::copy_to_gpu(array::Parcel * gpu_ptr, void * data_ptr, std::uintptr_t stream_ptr) const {
+    // directly copy data to GPU
+    ::cudaMemcpyAsync(gpu_ptr, this, sizeof(array::Parcel), ::cudaMemcpyHostToDevice,
                       reinterpret_cast<::cudaStream_t>(stream_ptr));
-    // copy shape and strides data
-    void * strides_data_ptr_gpu = this->shape_.copy_to_gpu(&(gpu_ptr->shape_), shape_strides_ptr, stream_ptr);
-    void * result_ptr = this->strides_.copy_to_gpu(&(gpu_ptr->strides_), strides_data_ptr_gpu, stream_ptr);
-    // nullify data pointer to avoid free data
-    copy_on_gpu.data_ = nullptr;
-    copy_on_gpu.shape_.data() = nullptr;
-    copy_on_gpu.strides_.data() = nullptr;
-    return result_ptr;
+    return data_ptr;
 }
 
 // Destructor

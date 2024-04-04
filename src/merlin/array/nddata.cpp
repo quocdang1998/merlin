@@ -1,8 +1,9 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/nddata.hpp"
 
-#include <algorithm>  // std::copy, std::fill
+#include <algorithm>  // std::copy, std::fill, std::find
 #include <cinttypes>  // PRIu64
+#include <iterator>   // std::distance
 #include <utility>    // std::move, std::swap
 #include <vector>     // std::vector
 
@@ -53,15 +54,20 @@ array::NdData::NdData(double * data, const intvec & shape, const intvec & stride
         FAILURE(std::invalid_argument, "Shape and strides vectors must have the same size.\n");
     }
     this->ndim_ = shape.size();
+    this->shape_.fill(0);
+    this->strides_.fill(0);
     std::copy(shape.begin(), shape.end(), this->shape_.begin());
     std::copy(strides.begin(), strides.end(), this->strides_.begin());
     this->calc_array_size();
 }
 
 // Constructor from shape vector
-array::NdData::NdData(const intvec & shape) {
-    std::copy(shape.begin(), shape.end(), this->shape_.begin());
-    this->ndim_ = shape.size();
+array::NdData::NdData(const Index & shape) {
+    this->shape_.fill(0);
+    this->strides_.fill(0);
+    Index::const_iterator first_zero_element = std::find(shape.begin(), shape.end(), 0);
+    std::copy(shape.begin(), first_zero_element, this->shape_.begin());
+    this->ndim_ = std::distance(shape.begin(), first_zero_element);
     this->strides_ = array::contiguous_strides(this->shape_, this->ndim_, sizeof(double));
     this->calc_array_size();
 }
@@ -129,9 +135,7 @@ void array::NdData::squeeze(void) {
 }
 
 // String representation
-std::string array::NdData::str(bool first_call) const {
-    return array::print(this, "NdData", first_call);
-}
+std::string array::NdData::str(bool first_call) const { return array::print(this, "NdData", first_call); }
 
 // Destructor
 array::NdData::~NdData(void) {}

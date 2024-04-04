@@ -21,9 +21,9 @@ set(MERLIN_EXT ""
 # source list
 list(APPEND MERLIN_SRC_CPP
      array/nddata.cpp
-     ##array/array.cpp
-     ##array/parcel.cpp
-     ##array/stock.cpp
+     array/array.cpp
+     array/parcel.cpp
+     array/stock.cpp
      ##candy/optmz/adadelta.cpp
      ##candy/optmz/adam.cpp
      ##candy/optmz/adagrad.cpp
@@ -52,7 +52,7 @@ list(APPEND MERLIN_SRC_CPP
      linalg/dot.cpp
      linalg/matrix.cpp
      linalg/tri_solve.cpp
-     linalg/qr_solve.cpp
+     ##linalg/qr_solve.cpp
      permutation.cpp
      ##regpl/polynomial.cpp
      ##regpl/vandermonde.cpp
@@ -64,8 +64,8 @@ list(APPEND MERLIN_SRC_CPP
      utils.cpp
 )
 list(APPEND MERLIN_SRC_CU
-     ##array/array.cu
-     ##array/parcel.cu
+     array/array.cu
+     array/parcel.cu
      ##candy/model.cu
      ##candy/optimizer.cu
      ##candy/trainer.cu
@@ -91,8 +91,8 @@ list(APPEND MERLIN_SRC_GLB
      ##stat/moment.glb
 )
 list(APPEND MERLIN_SRC_RDC
-     ##array/operation.rdc
-     ##array/parcel.rdc
+     array/operation.rdc
+     array/parcel.rdc
      ##candy/optmz/adadelta.rdc
      ##candy/optmz/adagrad.rdc
      ##candy/optmz/adam.rdc

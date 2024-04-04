@@ -44,6 +44,15 @@ __cuhostdev__ std::uint64_t inner_prod(const intvec & v1, const intvec & v2) {
     return inner_product;
 }
 
+// Inner product of 2 index vectors
+__cuhostdev__ std::uint64_t inner_prod(const std::uint64_t * v1, const std::uint64_t * v2, std::uint64_t size) {
+    std::uint64_t inner_product = 0;
+    for (std::uint64_t i = 0; i < size; i++) {
+        inner_product += v1[i] * v2[i];
+    }
+    return inner_product;
+}
+
 // Convert n-dimensional index to C-contiguous index
 __cuhostdev__ std::uint64_t ndim_to_contiguous_idx(const intvec & index, const intvec & shape) {
     // check size of 2 vectors

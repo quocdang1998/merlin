@@ -18,8 +18,9 @@ int main(void) {
     // [1.0, 5.0, 9.0 ]
     // [2.0, 6.0, 10.0]
 
-    merlin::array::Array X({1024,256,8});
-    X.fill(std::nan(""));
+    // merlin::array::Array X({1024,256,8});
+    // X.fill(std::nan(""));
+    // MESSAGE("Array X: %s\n", X.str().c_str());
 
     MESSAGE("Initialize Array A.\n");
     double A[10] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
@@ -27,9 +28,9 @@ int main(void) {
     merlin::intvec strides({2*(dims[1] * sizeof(double)), sizeof(double)});
 
     // copy array
-    MESSAGE("Copy Array A to Ar_copy.\n");
     // merlin::Array Ar_copy(A, ndim, dims, strides); // copy using pointer constructor
-    merlin::array::Array Ar(A, dims, strides);  // copy using copy constructor
+    merlin::array::Array Ar(A, dims, strides, false);  // copy using copy constructor
+    MESSAGE("Original array: %s\n", Ar.str().c_str());
     merlin::array::Array Ar_copy = Ar;
 
     // print array

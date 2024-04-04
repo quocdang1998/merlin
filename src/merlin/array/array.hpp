@@ -6,7 +6,7 @@
 #include <cstdint>  // std::uint64_t, std::uintptr_t
 #include <string>   // std::string
 
-#include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Parcel
+#include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Parcel, merlin::array::Stock
 #include "merlin/array/nddata.hpp"       // merlin::array::NdData
 #include "merlin/cuda/stream.hpp"        // merlin::cuda::Stream
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
@@ -44,10 +44,6 @@ class array::Array : public array::NdData {
     /// @{
     /** @brief Default constructor (do nothing).*/
     Array(void) = default;
-    /** @brief Construct C-contiguous empty array from dimension vector.
-     *  @param shape Shape vector.
-     */
-    MERLIN_EXPORTS Array(const intvec & shape);
     /** @brief Construct array from pointer, to data and meta-data.
      *  @param data Pointer to data.
      *  @param shape Size per dimension.
@@ -57,11 +53,8 @@ class array::Array : public array::NdData {
         copied tensor is automatically deallocated inside the destructor.
      */
     MERLIN_EXPORTS Array(double * data, const intvec & shape, const intvec & strides, bool copy = false);
-    /** @brief Constructor from a slice.
-     *  @param whole merlin::array::Array of the original array.
-     *  @param slices List of merlin::array::Slice on each dimension.
-     */
-    // MERLIN_EXPORTS Array(const array::Array & whole, const slicevec & slices);
+    /** @brief Constructor C-contiguous empty array from shape vector.*/
+    MERLIN_EXPORTS Array(const Index & shape);
     /// @}
 
     /// @name Copy and move
@@ -79,11 +72,11 @@ class array::Array : public array::NdData {
     /// @name Slicing operator
     /// @{
     /** @brief Get reference to element at a given ndim index.*/
-    MERLIN_EXPORTS double & operator[](const intvec & index);
+    MERLIN_EXPORTS double & operator[](const Index & index);
     /** @brief Get reference to element at a given C-contiguous index.*/
     MERLIN_EXPORTS double & operator[](std::uint64_t index);
     /** @brief Get constant reference to element at a given ndim index.*/
-    MERLIN_EXPORTS const double & operator[](const intvec & index) const;
+    MERLIN_EXPORTS const double & operator[](const Index & index) const;
     /** @brief Get const reference to element at a given C-contiguous index.*/
     MERLIN_EXPORTS const double & operator[](std::uint64_t index) const;
     /// @}
@@ -91,11 +84,11 @@ class array::Array : public array::NdData {
     /// @name Get and set element
     /// @{
     /** @brief Get value of element at a n-dim index.*/
-    MERLIN_EXPORTS double get(const intvec & index) const;
+    MERLIN_EXPORTS double get(const Index & index) const;
     /** @brief Get value of element at a C-contiguous index.*/
     MERLIN_EXPORTS double get(std::uint64_t index) const;
     /** @brief Set value of element at a n-dim index.*/
-    MERLIN_EXPORTS void set(const intvec index, double value);
+    MERLIN_EXPORTS void set(const Index & index, double value);
     /** @brief Set value of element at a C-contiguous index.*/
     MERLIN_EXPORTS void set(std::uint64_t index, double value);
     /// @}
@@ -104,6 +97,12 @@ class array::Array : public array::NdData {
     /// @{
     /** @brief Set value of all elements.*/
     MERLIN_EXPORTS void fill(double value);
+    /** @brief Create a sub-array.*/
+    array::NdData * sub_array(const slicevec & slices) const {
+        array::Array * p_result = new array::Array();
+        this->create_sub_array(*p_result, slices);
+        return p_result;
+    }
     /// @}
 
     /// @name Transfer data
