@@ -12,9 +12,7 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // String representation
-std::string array::Parcel::str(bool first_call) const {
-    return array::print(this, "Parcel", first_call);
-}
+std::string array::Parcel::str(bool first_call) const { return array::print(this, "Parcel", first_call); }
 
 #ifndef __MERLIN_CUDA__
 

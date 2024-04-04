@@ -10,7 +10,6 @@
 #include "merlin/cuda/stream.hpp"        // merlin::cuda::Stream
 #include "merlin/cuda_interface.hpp"     // __cudevice__, __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
-#include "merlin/vector.hpp"             // merlin::intvec
 
 namespace merlin {
 

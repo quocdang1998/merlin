@@ -12,7 +12,6 @@
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/iterator.hpp"           // merlin::Iterator
 #include "merlin/slice.hpp"              // merlin::slicevec
-#include "merlin/vector.hpp"             // merlin::intvec
 
 namespace merlin {
 

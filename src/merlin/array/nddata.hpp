@@ -11,7 +11,6 @@
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/ndindex.hpp"            // merlin::Index
 #include "merlin/slice.hpp"              // merlin::slicevec
-#include "merlin/vector.hpp"             // merlin::intvec
 
 namespace merlin {
 

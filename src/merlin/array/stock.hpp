@@ -10,8 +10,7 @@
 #include "merlin/array/nddata.hpp"       // merlin::array::NdData
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/filelock.hpp"           // merlin::FileLock
-#include "merlin/slice.hpp"        // merlin::slicevec
-#include "merlin/vector.hpp"             // merlin::Vector
+#include "merlin/slice.hpp"              // merlin::slicevec
 
 namespace merlin {
 
