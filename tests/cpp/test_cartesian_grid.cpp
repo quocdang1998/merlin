@@ -1,6 +1,7 @@
 // Copyright 2022 quocdang1998
 #include <cinttypes>
 
+#include "merlin/array/array.hpp"
 #include "merlin/grid/cartesian_grid.hpp"
 #include "merlin/logger.hpp"
 
@@ -11,4 +12,7 @@ int main(void) {
 
     merlin::grid::CartesianGrid cart_gr2(cart_gr);
     MESSAGE("Copied Cartesian grid: %s\n", cart_gr.str().c_str());
+
+    merlin::array::Array grid_points = cart_gr2.get_points();
+    MESSAGE("Grid points: %s\n", grid_points.str().c_str());
 }

@@ -10,7 +10,7 @@
 
 #include "merlin/array/nddata.hpp"    // merlin::array::NdData
 #include "merlin/cuda_interface.hpp"  // __cuhostdev__
-#include "merlin/ndindex.hpp"         // merlin::Index
+#include "merlin/settings.hpp"        // merlin::Index
 
 namespace merlin::array {
 

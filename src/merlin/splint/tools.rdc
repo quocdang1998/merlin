@@ -19,7 +19,7 @@ __cuhostdev__ void splint::recursive_interpolate(const double * coeff, const std
                                                  const std::uint64_t * ndim_index_coeff,
                                                  double * cache_array, const double * point, const std::int64_t & i_dim,
                                                  const std::uint64_t * grid_shape, double * const * grid_vectors,
-                                                 const Vector<splint::Method> & method,
+                                                 const Vector<unsigned int> * p_method,
                                                  const std::uint64_t & ndim) noexcept {
     // functor map to evaluation methods
     static const std::array<splint::EvaluationMethod, 3> evaluation_funcs {
@@ -29,20 +29,20 @@ __cuhostdev__ void splint::recursive_interpolate(const double * coeff, const std
     };
     if (i_dim == ndim-1) {
         // trivial case for the last dimension
-        unsigned int i_method = static_cast<unsigned int>(method[i_dim]);
+        unsigned int i_method = (*p_method)[i_dim];
         evaluation_funcs[i_method](grid_vectors[i_dim], grid_shape[i_dim], point[i_dim], ndim_index_coeff[i_dim],
                                    coeff[c_index_coeff], cache_array[i_dim]);
     } else {
         // recursive save upto the current dimension
         for (std::int64_t i = ndim-2; i >= i_dim; i--) {
             std::uint64_t previous_index = (ndim_index_coeff[i] != 0) ? ndim_index_coeff[i] - 1 : grid_shape[i] - 1;
-            unsigned int i_method = static_cast<unsigned int>(method[i]);
+            unsigned int i_method = (*p_method)[i_dim];
             evaluation_funcs[i_method](grid_vectors[i], grid_shape[i], point[i], previous_index, cache_array[i+1],
                                        cache_array[i]);
             cache_array[i+1] = 0.0;
         }
         // calculate for the current index on the last dimension
-        unsigned int i_method = static_cast<unsigned int>(method[ndim-1]);
+        unsigned int i_method = (*p_method)[i_dim];
         evaluation_funcs[i_method](grid_vectors[ndim-1], grid_shape[ndim-1], point[ndim-1], 0, coeff[c_index_coeff],
                                    cache_array[ndim-1]);
     }

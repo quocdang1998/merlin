@@ -23,8 +23,8 @@ int main(void) {
     // [2.0, 6.0, 10.0]
 
     double A[10] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
-    merlin::intvec dims = {3, 2};
-    merlin::intvec strides = {2*(dims[1] * sizeof(double)), sizeof(double)};
+    merlin::UIntVec dims = {3, 2};
+    merlin::UIntVec strides = {2*(dims[1] * sizeof(double)), sizeof(double)};
     merlin::array::Array Ar(A, dims, strides, false);
     MESSAGE("CPU array: %s\n", Ar.str().c_str());
     {

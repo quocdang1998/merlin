@@ -38,9 +38,8 @@ list(APPEND MERLIN_SRC_CPP
      cuda/graph.cpp
      cuda/stream.cpp
      filelock.cpp
-     ##grid/cartesian_grid.cpp
-     ##grid/regular_grid.cpp
-     ##iterator.cpp
+     grid/cartesian_grid.cpp
+     grid/regular_grid.cpp
      # intpl/cartesian_grid.cpp
      # intpl/grid.cpp
      # intpl/interpolant.cpp
@@ -58,8 +57,8 @@ list(APPEND MERLIN_SRC_CPP
      ##regpl/vandermonde.cpp
      # regpl/regressor.cpp
      slice.cpp
-     ## splint/interpolator.cpp
-     ## splint/tools.cpp
+     splint/interpolator.cpp
+     splint/tools.cpp
      ## stat/moment.cpp
      utils.cpp
 )
@@ -76,10 +75,10 @@ list(APPEND MERLIN_SRC_CU
      # intpl/cartesian_grid.cu
      # intpl/lagrange.cu
      # intpl/newton.cu
-     ##grid/cartesian_grid.cu
+     grid/cartesian_grid.cu
      ##regpl/polynomial.cu
      # regpl/regressor.cu
-     ##splint/interpolator.cu
+     splint/interpolator.cu
 )
 list(APPEND MERLIN_SRC_GLB
      ##candy/trainer.glb
@@ -87,7 +86,7 @@ list(APPEND MERLIN_SRC_GLB
      # intpl/lagrange.glb
      # intpl/newton.glb
      # regpl/regressor.glb
-     ##splint/tools.glb
+     splint/tools.glb
      ##stat/moment.glb
 )
 list(APPEND MERLIN_SRC_RDC
@@ -111,10 +110,10 @@ list(APPEND MERLIN_SRC_RDC
      # regpl/core.rdc
      ##regpl/polynomial.rdc
      slice.rdc
-     ##splint/intpl/lagrange.rdc
-     ##splint/intpl/linear.rdc
-     ##splint/intpl/newton.rdc
-     ##splint/tools.rdc
+     splint/intpl/lagrange.rdc
+     splint/intpl/linear.rdc
+     splint/intpl/newton.rdc
+     splint/tools.rdc
      utils.rdc
 )
 list(APPEND MERLIN_SRC_SHR

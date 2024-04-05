@@ -19,16 +19,21 @@ namespace merlin {
 
 // Create pointer to copied members of merlin::splint::Interpolator on GPU
 void splint::create_intpl_gpuptr(const grid::CartesianGrid & cpu_grid, const Vector<splint::Method> & cpu_methods,
-                                 grid::CartesianGrid *& gpu_pgrid, Vector<splint::Method> *& gpu_pmethods,
+                                 grid::CartesianGrid *& gpu_pgrid, Vector<unsigned int> *& gpu_pmethods,
                                  std::uintptr_t stream_ptr) {
-    cuda::Memory gpu_mem(stream_ptr, cpu_grid, cpu_methods);
+    // temporary patch
+    Vector<unsigned int> converted_cpu_methods(cpu_methods.size());
+    for (std::uint64_t i = 0; i < cpu_methods.size(); i++) {
+        converted_cpu_methods[i] = static_cast<unsigned int>(cpu_methods[i]);
+    }
+    cuda::Memory gpu_mem(stream_ptr, cpu_grid, converted_cpu_methods);
     gpu_pgrid = gpu_mem.get<0>();
     gpu_pmethods = gpu_mem.get<1>();
     gpu_mem.disown();
 }
 
 // Interpolate by GPU
-void splint::Interpolator::evaluate(const array::Parcel & points, floatvec & result, std::uint64_t n_threads) {
+void splint::Interpolator::evaluate(const array::Parcel & points, DoubleVec & result, std::uint64_t n_threads) {
     // check if interpolator is on CPU
     if (!this->on_gpu()) {
         FAILURE(std::invalid_argument, "Interpolator is initialized on CPU.\n");

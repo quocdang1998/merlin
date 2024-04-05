@@ -19,7 +19,6 @@ static inline std::uint64_t smallest_power_of_2(std::uint64_t n) {
     while (result < n) {
         result <<= 1;  // Left shift to multiply by 2
     }
-
     return result;
 }
 
@@ -28,8 +27,8 @@ static inline std::uint64_t smallest_power_of_2(std::uint64_t n) {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Constructor number of points
-grid::RegularGrid::RegularGrid(std::uint64_t num_points, std::uint64_t n_dim) : n_dim_(n_dim), num_points_(num_points) {
-    this->grid_data_ = floatvec(smallest_power_of_2(num_points) * n_dim);
+grid::RegularGrid::RegularGrid(std::uint64_t num_points, std::uint64_t ndim) : ndim_(ndim), num_points_(num_points) {
+    this->grid_data_ = DoubleVec(smallest_power_of_2(num_points) * ndim);
 }
 
 // Constructor from an array of point coordinates
@@ -40,24 +39,20 @@ grid::RegularGrid::RegularGrid(const array::Array & point_coordinates) {
     }
     // allocate memory
     this->num_points_ = point_coordinates.shape()[0];
-    this->n_dim_ = point_coordinates.shape()[1];
-    this->grid_data_ = floatvec(smallest_power_of_2(this->num_points_) * this->n_dim_);
+    this->ndim_ = point_coordinates.shape()[1];
+    this->grid_data_ = DoubleVec(smallest_power_of_2(this->num_points_) * this->ndim_);
     // copy point coordinates
-    intvec index(2);
+    Index pt_index;
     for (std::uint64_t i_point = 0; i_point < this->num_points_; i_point++) {
-        index[0] = i_point;
-        for (std::uint64_t i_dim = 0; i_dim < this->n_dim_; i_dim++) {
-            index[1] = i_dim;
-            this->grid_data_[i_point * this->n_dim_ + i_dim] = point_coordinates.get(index);
+        pt_index[0] = i_point;
+        for (std::uint64_t i_dim = 0; i_dim < this->ndim_; i_dim++) {
+            pt_index[1] = i_dim;
+            this->grid_data_[i_point * this->ndim_ + i_dim] = point_coordinates.get(pt_index);
         }
     }
 }
 
-// Get element at a given flatten index
-floatvec grid::RegularGrid::operator[](std::uint64_t index) const noexcept {
-    floatvec point(this->n_dim_);
-    this->get(index, point.data());
-    return point;
-}
+// Destructor
+grid::RegularGrid::~RegularGrid(void) {}
 
 }  // namespace merlin

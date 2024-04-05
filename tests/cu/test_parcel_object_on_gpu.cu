@@ -31,8 +31,8 @@ __global__ void print_element_from_shared_memory(merlin::array::Parcel * parcel_
 int main(void) {
     // initialize an tensor
     double A_data[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    merlin::intvec dims = {2, 3};
-    merlin::intvec strides = {5*sizeof(double), 2*sizeof(double)};
+    merlin::UIntVec dims = {2, 3};
+    merlin::UIntVec strides = {5*sizeof(double), 2*sizeof(double)};
     merlin::array::Array A(A_data, dims, strides, false);
     MESSAGE("CPU Array: %s\n", A.str().c_str());
 

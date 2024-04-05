@@ -59,7 +59,7 @@ static inline void read_from_file(double * dest, std::FILE * file, double * src,
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Construct Array from Numpy array
-array::Array::Array(double * data, const intvec & shape, const intvec & strides, bool copy) :
+array::Array::Array(double * data, const UIntVec & shape, const UIntVec & strides, bool copy) :
 array::NdData(data, shape, strides) {
     // copy or assign data
     this->release = copy;

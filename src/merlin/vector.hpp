@@ -189,10 +189,10 @@ class Vector {
 };
 
 /** @brief Vector of unsigned integer values.*/
-using intvec = Vector<std::uint64_t>;
+using UIntVec = Vector<std::uint64_t>;
 
 /** @brief Vector of floating-point type.*/
-using floatvec = Vector<double>;
+using DoubleVec = Vector<double>;
 
 /** @brief Create a vector from its arguments.*/
 template <typename T, typename... Args>

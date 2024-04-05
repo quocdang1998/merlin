@@ -9,7 +9,7 @@
 
 #include "merlin/cuda_interface.hpp"  // __cuhostdev__
 #include "merlin/exports.hpp"         // MERLIN_EXPORTS
-#include "merlin/vector.hpp"          // merlin::Vector
+#include "merlin/settings.hpp"        // merlin::max_dim
 
 namespace merlin {
 
@@ -120,8 +120,8 @@ class Slice {
     __cuhostdev__ void check_validity(void) const;
 };
 
-/** @brief %Vector of slices.*/
-using slicevec = Vector<Slice>;
+/** @brief Array of slices.*/
+using SliceArray = std::array<Slice, max_dim>;
 
 }  // namespace merlin
 

@@ -74,24 +74,10 @@ __cudevice__ constexpr std::uint64_t flatten_kernel_index(void) {
 /** @brief Product of entries of a vector.
  *  @details Return product of all elements of the vector.
  *  @param v Vector.
- *  @note This function returns ``1`` if ``v`` has zero size.
- */
-__cuhostdev__ std::uint64_t prod_elements(const intvec & v);
-
-/** @brief Product of entries of a vector.
- *  @details Return product of all elements of the vector.
- *  @param v Vector.
  *  @param size Number of element in the vector.
  *  @note This function returns ``1`` if ``v`` has zero size.
  */
 __cuhostdev__ std::uint64_t prod_elements(const std::uint64_t * v, std::uint64_t size);
-
-/** @brief Inner product of 2 index vectors.
- *  @details Return convolution product / scalar product of 2 vectors.
- *  @param v1 First vector.
- *  @param v2 Second vector.
- */
-__cuhostdev__ std::uint64_t inner_prod(const intvec & v1, const intvec & v2);
 
 /** @brief Inner product of 2 index vectors.
  *  @details Return convolution product / scalar product of 2 vectors.
@@ -106,34 +92,31 @@ __cuhostdev__ std::uint64_t inner_prod(const std::uint64_t * v1, const std::uint
  *  @param shape Shape vector.
  *  @return C-contiguous index as an ``std::uint64_t``.
  */
-__cuhostdev__ std::uint64_t ndim_to_contiguous_idx(const intvec & index, const intvec & shape);
-
-/** @brief Convert C-contiguous index to n-dimensional index with allocating memory for result.
- *  @param index C-contiguous index.
- *  @param shape Shape vector.
- */
-__cuhostdev__ intvec contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape);
+__cuhostdev__ std::uint64_t ndim_to_contiguous_idx(const UIntVec & index, const UIntVec & shape);
 
 /** @brief Convert C-contiguous index to n-dimensional index and save data to a pre-allocated memory.
  *  @param index C-contiguous index.
  *  @param shape Shape vector.
+ *  @param ndim Number of dimension.
  *  @param data_ptr Pointer to result data.
  */
-__cuhostdev__ void contiguous_to_ndim_idx(std::uint64_t index, const intvec & shape, std::uint64_t * data_ptr);
+__cuhostdev__ void contiguous_to_ndim_idx(std::uint64_t index, const std::uint64_t * shape, std::uint64_t ndim,
+                                          std::uint64_t * data_ptr);
 
 /** @brief Increase an n-dimensional index by one unit.
  *  @param index Multi-dimensional index.
  *  @param shape Shape vector.
+ *  @param ndim Number of dimension.
  *  @return Lowest changed dimension.
  */
-__cuhostdev__ std::int64_t increment_index(intvec & index, const intvec & shape);
+__cuhostdev__ std::int64_t increment_index(std::uint64_t * index, const std::uint64_t * shape, std::uint64_t ndim);
 
 /** @brief Decrease an n-dimensional index by one unit.
  *  @param index Multi-dimensional index.
  *  @param shape Shape vector.
  *  @return Lowest changed dimension.
  */
-__cuhostdev__ std::int64_t decrement_index(intvec & index, const intvec & shape);
+__cuhostdev__ std::int64_t decrement_index(UIntVec & index, const UIntVec & shape);
 
 // List Division
 // -------------
@@ -141,10 +124,11 @@ __cuhostdev__ std::int64_t decrement_index(intvec & index, const intvec & shape)
 /** @brief Get a list of pointers divided from an original array.
  *  @param original Pointer to the first element of the original array.
  *  @param divider_length Size of each subsequence.
+ *  @param num_seq Number of sequences.
  *  @param data_ptr Pointer to result data. If the value is ``nullptr``, new instance is allocated.
  */
-__cuhostdev__ Vector<double *> ptr_to_subsequence(double * original, const intvec & divider_length,
-                                                  double ** data_ptr = nullptr);
+__cuhostdev__ void ptr_to_subsequence(double * original, const std::uint64_t * divider_length, std::uint64_t num_seq,
+                                      double ** data_ptr);
 
 /** @brief Get index of sequence and index in that sequence of an index in original array.
  *  @param index_full_array Index in original array.
@@ -154,7 +138,7 @@ __cuhostdev__ Vector<double *> ptr_to_subsequence(double * original, const intve
  *  dimension, and the offset with respect to the last element in the sequence.
  */
 __cuhostdev__ std::array<std::uint64_t, 2> index_in_subsequence(std::uint64_t index_full_array,
-                                                                const intvec & divider_length) noexcept;
+                                                                const UIntVec & divider_length) noexcept;
 
 // Triangular Index
 // ----------------
@@ -176,7 +160,7 @@ __cuhostdev__ std::array<std::uint64_t, 2> triangular_index(std::uint64_t index)
  *  @param i_max Index of max range.
  *  @param i_min Index of min range.
  */
-MERLIN_EXPORTS intvec get_random_subset(std::uint64_t num_points, std::uint64_t i_max,
+MERLIN_EXPORTS UIntVec get_random_subset(std::uint64_t num_points, std::uint64_t i_max,
                                         std::uint64_t i_min = 0) noexcept;
 
 }  // namespace merlin

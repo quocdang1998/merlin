@@ -3,14 +3,15 @@
 #define MERLIN_ARRAY_NDDATA_HPP_
 
 #include <cstddef>  // nullptr
-#include <cstdint>  // std::int64_t, std::uint64_t, std::uintptr_t
+#include <cstdint>  // std::uint64_t
 #include <string>   // std::string
 
 #include "merlin/array/declaration.hpp"  // merlin::array::NdData
 #include "merlin/cuda_interface.hpp"     // __cuhost__, __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
-#include "merlin/ndindex.hpp"            // merlin::Index
-#include "merlin/slice.hpp"              // merlin::slicevec
+#include "merlin/settings.hpp"           // merlin::Index
+#include "merlin/slice.hpp"              // merlin::SliceArray
+#include "merlin/vector.hpp"             // merlin::UIntVec
 
 namespace merlin {
 
@@ -27,7 +28,7 @@ class array::NdData {
      *  @param shape Shape vector.
      *  @param strides Strides vector.
      */
-    MERLIN_EXPORTS NdData(double * data, const intvec & shape, const intvec & strides);
+    MERLIN_EXPORTS NdData(double * data, const UIntVec & shape, const UIntVec & strides);
     /** @brief Constructor from shape vector.*/
     MERLIN_EXPORTS NdData(const Index & shape);
     /// @}
@@ -87,7 +88,7 @@ class array::NdData {
     /** @brief Reshape the dataset.
      *  @param new_shape New shape.
      */
-    MERLIN_EXPORTS void reshape(const intvec & new_shape);
+    MERLIN_EXPORTS void reshape(const UIntVec & new_shape);
     /** @brief Remove dimension with size 1.
      *  @param i_dim Index of dimension to remove.
      */
@@ -97,7 +98,7 @@ class array::NdData {
     /** @brief Set value of all elements.*/
     virtual void fill(double value) {}
     /** @brief Create a sub-array.*/
-    virtual array::NdData * sub_array(const slicevec & slices) const {
+    virtual array::NdData * sub_array(const SliceArray & slices) const {
         array::NdData * p_result = new array::NdData();
         this->create_sub_array(*p_result, slices);
         return p_result;
@@ -128,7 +129,7 @@ class array::NdData {
      */
     Index shape_;
     /** @brief Stride vector.
-     *  @details Number of increasing bytes in memory when an intvec of a dimension jumps by 1.
+     *  @details Number of increasing bytes in memory when index of an axis increases by 1.
      */
     Index strides_;
 
@@ -137,7 +138,7 @@ class array::NdData {
     /** @brief Calculate size of array.*/
     MERLIN_EXPORTS void calc_array_size(void) noexcept;
     /** @brief Create sub-array.*/
-    MERLIN_EXPORTS void create_sub_array(array::NdData & sub_array, const slicevec & slices) const noexcept;
+    MERLIN_EXPORTS void create_sub_array(array::NdData & sub_array, const SliceArray & slices) const noexcept;
     /// @}
 };
 

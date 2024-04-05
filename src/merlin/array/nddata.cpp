@@ -9,7 +9,6 @@
 
 #include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides
 #include "merlin/logger.hpp"           // FAILURE
-#include "merlin/slice.hpp"            // merlin::Slice
 
 namespace merlin {
 
@@ -26,11 +25,7 @@ void array::NdData::calc_array_size(void) noexcept {
 }
 
 // Create sub-array
-void array::NdData::create_sub_array(array::NdData & sub_array, const slicevec & slices) const noexcept {
-    // check size
-    if (slices.size() != this->ndim_) {
-        FAILURE(std::invalid_argument, "Dimension of Slices and NdData not compatible.\n");
-    }
+void array::NdData::create_sub_array(array::NdData & sub_array, const SliceArray & slices) const noexcept {
     // create result
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_);
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
@@ -46,7 +41,7 @@ void array::NdData::create_sub_array(array::NdData & sub_array, const slicevec &
 }
 
 // Member initialization for C++ interface
-array::NdData::NdData(double * data, const intvec & shape, const intvec & strides) : data_(data) {
+array::NdData::NdData(double * data, const UIntVec & shape, const UIntVec & strides) : data_(data) {
     if (shape.size() > max_dim) {
         FAILURE(std::invalid_argument, "Exceeding maximum ndim (%" PRIu64 ").\n", max_dim);
     }
@@ -85,7 +80,7 @@ bool array::NdData::is_c_contiguous(void) const {
 }
 
 // Reshape
-void array::NdData::reshape(const intvec & new_shape) {
+void array::NdData::reshape(const UIntVec & new_shape) {
     if (this->ndim_ != 1) {
         FAILURE(std::invalid_argument, "Cannot reshape array of n-dim bigger than 1.\n");
     }

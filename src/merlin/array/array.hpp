@@ -10,8 +10,6 @@
 #include "merlin/array/nddata.hpp"       // merlin::array::NdData
 #include "merlin/cuda/stream.hpp"        // merlin::cuda::Stream
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
-#include "merlin/iterator.hpp"           // merlin::Iterator
-#include "merlin/slice.hpp"              // merlin::slicevec
 
 namespace merlin {
 
@@ -51,7 +49,7 @@ class array::Array : public array::NdData {
      *  @note The original memory tied to the pointer will not be freed at destruction. But if copy is true, the
         copied tensor is automatically deallocated inside the destructor.
      */
-    MERLIN_EXPORTS Array(double * data, const intvec & shape, const intvec & strides, bool copy = false);
+    MERLIN_EXPORTS Array(double * data, const UIntVec & shape, const UIntVec & strides, bool copy = false);
     /** @brief Constructor C-contiguous empty array from shape vector.*/
     MERLIN_EXPORTS Array(const Index & shape);
     /// @}
@@ -97,7 +95,7 @@ class array::Array : public array::NdData {
     /** @brief Set value of all elements.*/
     MERLIN_EXPORTS void fill(double value);
     /** @brief Create a sub-array.*/
-    array::NdData * sub_array(const slicevec & slices) const {
+    array::NdData * sub_array(const SliceArray & slices) const {
         array::Array * p_result = new array::Array();
         this->create_sub_array(*p_result, slices);
         return p_result;

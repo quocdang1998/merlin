@@ -3,7 +3,7 @@
 
 #include <algorithm>  // std::stable_sort
 #include <cinttypes>  // PRIu64
-#include <cstddef>    // std::size_t
+#include <cstddef>    // std::size_t, nullptr
 #include <iterator>   // std::distance
 #include <numeric>    // std::iota
 #include <sstream>    // std::ostringstream
@@ -44,12 +44,15 @@ static bool has_duplicated_element(const std::vector<double> & grid_vector) {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Construct from initializer list
-grid::CartesianGrid::CartesianGrid(const Vector<floatvec> & grid_vectors) :
-grid_shape_(grid_vectors.size()), grid_vectors_(grid_vectors.size()) {
+grid::CartesianGrid::CartesianGrid(const Vector<DoubleVec> & grid_vectors) : ndim_(grid_vectors.size()) {
+    // fill array
+    this->grid_shape_.fill(0);
+    this->grid_vectors_.fill(nullptr);
+    // count number of nodes
     std::uint64_t num_nodes = 0;
     for (std::uint64_t i_dim = 0; i_dim < grid_vectors.size(); i_dim++) {
         // check for duplicate element
-        const floatvec & grid_vector = grid_vectors[i_dim];
+        const DoubleVec & grid_vector = grid_vectors[i_dim];
         if (has_duplicated_element(std::vector<double>(grid_vector.begin(), grid_vector.end()))) {
             FAILURE(std::invalid_argument, "Found duplicated elements.\n");
         }
@@ -59,10 +62,10 @@ grid_shape_(grid_vectors.size()), grid_vectors_(grid_vectors.size()) {
         this->grid_shape_[i_dim] = grid_vector.size();
     }
     // reserve vector of grid node
-    this->grid_nodes_ = floatvec(num_nodes);
+    this->grid_nodes_ = DoubleVec(num_nodes);
     // re-arrange each node into grid node vector
     std::uint64_t node_idx = 0;
-    for (const floatvec & grid_vector : grid_vectors) {
+    for (const DoubleVec & grid_vector : grid_vectors) {
         // if nodes are already sorted
         if (std::is_sorted(grid_vector.begin(), grid_vector.end())) {
             for (const double & node : grid_vector) {
@@ -78,54 +81,54 @@ grid_shape_(grid_vectors.size()), grid_vectors_(grid_vectors.size()) {
         }
     }
     // calculate pointers per dimension
-    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->grid_vectors_.data());
+    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_.data(), this->ndim_, this->grid_vectors_.data());
     // calculate size
-    this->size_ = prod_elements(this->grid_shape_);
+    this->size_ = prod_elements(this->grid_shape_.data(), this->ndim_);
 }
 
 // Constructor as a sub-grid from a larger grid
-grid::CartesianGrid::CartesianGrid(const grid::CartesianGrid & whole, const slicevec & slices) :
-grid_shape_(whole.ndim()), grid_vectors_(whole.ndim()) {
-    // check size
-    if (slices.size() != whole.ndim()) {
-        FAILURE(std::invalid_argument,
-                "Dimension of Slices and CartesianGrid not compatible (expected %" PRIu64 ", got %" PRIu64 ").\n",
-                whole.ndim(), slices.size());
-    }
+grid::CartesianGrid::CartesianGrid(const grid::CartesianGrid & whole, const SliceArray & slices) : ndim_(whole.ndim_) {
+    // fill array
+    this->grid_shape_.fill(0);
+    this->grid_vectors_.fill(nullptr);
     // get new shape for each dimension and total number of nodes
     std::uint64_t num_nodes = 0;
-    for (std::uint64_t i_dim = 0; i_dim < whole.ndim(); i_dim++) {
+    for (std::uint64_t i_dim = 0; i_dim < whole.ndim_; i_dim++) {
         auto [_, dim_shape, __] = slices[i_dim].slice_on(whole.grid_shape_[i_dim], sizeof(double));
         this->grid_shape_[i_dim] = dim_shape;
         num_nodes += dim_shape;
     }
     // copy value to grid node array
+    this->grid_nodes_ = DoubleVec(num_nodes);
     std::uint64_t count_node = 0;
-    for (std::uint64_t i_dim = 0; i_dim < whole.ndim(); i_dim++) {
-        const floatvec grid_vector = whole.grid_vector(i_dim);
+    for (std::uint64_t i_dim = 0; i_dim < whole.ndim_; i_dim++) {
+        const DoubleVec grid_vector = whole.grid_vector(i_dim);
         for (std::uint64_t i_node = 0; i_node < this->grid_shape_[i_dim]; i_node++) {
             std::uint64_t idx_in_original = slices[i_dim].get_index_in_whole_array(i_node);
             this->grid_nodes_[count_node++] = grid_vector[idx_in_original];
         }
     }
     // calculate pointers per dimension
-    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->grid_vectors_.data());
+    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_.data(), this->ndim_, this->grid_vectors_.data());
     // calculate size
-    this->size_ = prod_elements(this->grid_shape_);
+    this->size_ = prod_elements(this->grid_shape_.data(), this->ndim_);
 }
 
 // Copy constructor
 grid::CartesianGrid::CartesianGrid(const grid::CartesianGrid & src) :
-grid_nodes_(src.grid_nodes_), grid_shape_(src.grid_shape_), grid_vectors_(src.ndim()) {
-    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->grid_vectors_.data());
+grid_nodes_(src.grid_nodes_), grid_shape_(src.grid_shape_), ndim_(src.ndim_), size_(src.size_) {
+    this->grid_vectors_.fill(nullptr);
+    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_.data(), this->ndim_, this->grid_vectors_.data());
 }
 
 // Copy assignment
 grid::CartesianGrid & grid::CartesianGrid::operator=(const grid::CartesianGrid & src) {
     this->grid_nodes_ = src.grid_nodes_;
     this->grid_shape_ = src.grid_shape_;
-    this->grid_vectors_ = Vector<double *>(this->ndim());
-    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_, this->grid_vectors_.data());
+    this->ndim_ = src.ndim_;
+    this->size_ = src.size_;
+    this->grid_vectors_.fill(nullptr);
+    ptr_to_subsequence(this->grid_nodes_.data(), this->grid_shape_.data(), this->ndim_, this->grid_vectors_.data());
     return *this;
 }
 
@@ -140,31 +143,20 @@ void * grid::CartesianGrid::copy_to_gpu(grid::CartesianGrid * gpu_ptr, void * gr
 
 #endif  // __MERLIN_CUDA__
 
-// Get element at a C-contiguous index
-floatvec grid::CartesianGrid::operator[](std::uint64_t index) const noexcept {
-    floatvec point(this->ndim());
-    this->get(index, point.data());
-    return point;
-}
-
-// Get element at a multi-dimensional index
-floatvec grid::CartesianGrid::operator[](const intvec & index) const noexcept {
-    floatvec point(this->ndim());
-    this->get(index, point.data());
-    return point;
-}
-
 // Get all points in the grid
 array::Array grid::CartesianGrid::get_points(void) const {
     // initialize result
-    std::uint64_t shape_data[2] = {this->size_, this->ndim()};
-    intvec points_shape;
-    points_shape.assign(shape_data, 2);
-    array::Array points(points_shape);
+    Index shape_data;
+    shape_data.fill(0);
+    shape_data[0] = this->size_;
+    shape_data[1] = this->ndim_;
+    array::Array points(shape_data);
+    Index point_idx;
+    point_idx.fill(0);
     for (std::uint64_t i_point = 0; i_point < this->size_; i_point++) {
-        double * point_data = points.data() + i_point * this->ndim();
-        intvec point_idx = contiguous_to_ndim_idx(i_point, this->grid_shape_);
-        for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+        double * point_data = points.data() + i_point * this->ndim_;
+        contiguous_to_ndim_idx(i_point, this->grid_shape_.data(), this->ndim_, point_idx.data());
+        for (std::uint64_t i_dim = 0; i_dim < this->ndim_; i_dim++) {
             point_data[i_dim] = this->grid_vectors_[i_dim][point_idx[i_dim]];
         }
     }
@@ -175,11 +167,11 @@ array::Array grid::CartesianGrid::get_points(void) const {
 std::string grid::CartesianGrid::str(void) const {
     std::ostringstream os;
     os << "<CartesianGrid(";
-    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+    for (std::uint64_t i_dim = 0; i_dim < this->ndim_; i_dim++) {
         if (i_dim != 0) {
             os << " ";
         }
-        const floatvec grid_vector = this->grid_vector(i_dim);
+        const DoubleVec grid_vector = this->grid_vector(i_dim);
         os << grid_vector.str();
     }
     os << ")>";

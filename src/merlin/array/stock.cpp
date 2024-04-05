@@ -12,7 +12,6 @@
 #include "merlin/logger.hpp"           // WARNING, FAILURE
 #include "merlin/platform.hpp"         // __MERLIN_LINUX__, __MERLIN_WINDOWS__
 #include "merlin/utils.hpp"            // merlin::get_current_process_id, merlin::get_time
-#include "merlin/vector.hpp"           // merlin::intvec
 
 // Acquire lockfile if thread safe
 #define EXCLUSIVE_LOCK_THREADSAFE()                                                                                    \

@@ -11,7 +11,7 @@
 #include "merlin/cuda_interface.hpp"         // merlin::cuda_mem_free
 #include "merlin/env.hpp"                    // merlin::Environment
 #include "merlin/logger.hpp"                 // FAILURE, merlin::cuda_compile_error
-#include "merlin/splint/tools.hpp"           // merlin::splint::construct_coeff_cpu
+#include "merlin/splint/tools.hpp"           // merlin::splint::construct_coeff_cpu, merlin::splint::construct_coeff_gpu
 
 #define push_gpu(gpu)                                                                                                  \
     std::uintptr_t current_ctx = gpu.push_context()
@@ -28,7 +28,7 @@ namespace merlin {
 
 // Create pointer to copied members of merlin::splint::Interpolator on GPU
 void splint::create_intpl_gpuptr(const grid::CartesianGrid & cpu_grid, const Vector<splint::Method> & cpu_methods,
-                                 grid::CartesianGrid *& gpu_pgrid, Vector<splint::Method> *& gpu_pmethods,
+                                 grid::CartesianGrid *& gpu_pgrid, Vector<unsigned int> *& gpu_pmethods,
                                  std::uintptr_t stream_ptr) {
     FAILURE(cuda_compile_error, "Cannot invoke GPU function since merlin is not compiled with CUDA option.\n");
 }
@@ -55,7 +55,11 @@ ndim_(grid.ndim()), shared_mem_size_(grid.sharedmem_size() + method.sharedmem_si
         // CPU
         this->synchronizer_ = Synchronizer(std::shared_future<void>());
         this->p_grid_ = new grid::CartesianGrid(grid);
-        this->p_method_ = new Vector<splint::Method>(method);
+        // temporary patch
+        this->p_method_ = new Vector<unsigned int>(method.size());
+        for (std::uint64_t i = 0; i < method.size(); i++) {
+            (*(this->p_method_))[i] = static_cast<unsigned int>(method[i]);
+        }
         this->p_coeff_ = new array::Array(values);
     } else if (processor == ProcessorType::Gpu) {
         // GPU
@@ -87,7 +91,7 @@ void splint::Interpolator::build_coefficients(std::uint64_t n_threads) {
 }
 
 // Interpolation by CPU.
-void splint::Interpolator::evaluate(const array::Array & points, floatvec & result, std::uint64_t n_threads) {
+void splint::Interpolator::evaluate(const array::Array & points, DoubleVec & result, std::uint64_t n_threads) {
     // check if interpolator is on CPU
     if (this->on_gpu()) {
         FAILURE(std::invalid_argument, "Interpolator is initialized on GPU.\n");

@@ -10,7 +10,6 @@
 #include "merlin/array/nddata.hpp"       // merlin::array::NdData
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/filelock.hpp"           // merlin::FileLock
-#include "merlin/slice.hpp"              // merlin::slicevec
 
 namespace merlin {
 
@@ -86,7 +85,7 @@ class array::Stock : public array::NdData {
     /** @brief Set value of all elements.*/
     MERLIN_EXPORTS void fill(double value);
     /** @brief Create a sub-array.*/
-    array::NdData * sub_array(const slicevec & slices) const {
+    array::NdData * sub_array(const SliceArray & slices) const {
         array::Stock * p_result = new array::Stock();
         this->create_sub_array(*p_result, slices);
         p_result->file_ptr_ = this->file_ptr_;
