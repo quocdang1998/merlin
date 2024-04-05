@@ -66,7 +66,7 @@ __cuhostdev__ void recursive_interpolate(const double * coeff, const std::uint64
                                          const std::uint64_t & c_index_coeff, const std::uint64_t * ndim_index_coeff,
                                          double * cache_array, const double * point, const std::int64_t & i_dim,
                                          const std::uint64_t * grid_shape, double * const * grid_vectors,
-                                         const Vector<unsigned int> * p_method, const std::uint64_t & ndim) noexcept;
+                                         const Vector<unsigned int> & method, const std::uint64_t & ndim) noexcept;
 
 /** @brief Evaluate interpolation with CPU parallelism.
  *  @param current_job Pointer to previous asynchronous job.

@@ -105,14 +105,14 @@ void splint::eval_intpl_cpu(std::shared_future<void> current_job, const double *
             do {
                 splint::recursive_interpolate(coeff, p_grid->size(), contiguous_index, loop_index.data(), cache.data(),
                                               point_data, last_updated_dim, p_grid->shape().data(),
-                                              p_grid->grid_vectors().data(), p_method, p_grid->ndim());
+                                              p_grid->grid_vectors().data(), *p_method, p_grid->ndim());
                 last_updated_dim = increment_index(loop_index.data(), p_grid->shape().data(), p_grid->ndim());
                 contiguous_index++;
             } while (last_updated_dim != -1);
             // perform one last iteration on the last coefficient
             splint::recursive_interpolate(coeff, p_grid->size(), contiguous_index, loop_index.data(), cache.data(),
                                           point_data, 0, p_grid->shape().data(), p_grid->grid_vectors().data(),
-                                          p_method, p_grid->ndim());
+                                          *p_method, p_grid->ndim());
             // save result and reset the cache
             result[i_point] = cache[0];
             cache[0] = 0.0;

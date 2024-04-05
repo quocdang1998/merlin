@@ -52,14 +52,14 @@ int main(void) {
         merlin::splint::Method::Newton
     };
     merlin::splint::Interpolator interp(cart_gr, coeff, methods, merlin::ProcessorType::Cpu);
-    interp.build_coefficients(4);
+    interp.build_coefficients(10);
     interp.synchronize();
-    // MESSAGE("Interpolation coefficients: %s\n", interp.get_coeff().str().c_str());
+    MESSAGE("Interpolation coefficients: %s\n", interp.get_coeff().str().c_str());
 
     // interpolation
     merlin::array::Array points = point_generator(1200, cart_gr);
     merlin::DoubleVec eval_values(1200);
-    interp.evaluate(points, eval_values, 24);
+    interp.evaluate(points, eval_values, 32);
     interp.synchronize();
     // interp.synchronize();
     MESSAGE("Evaluated values: %s.\n", eval_values.str().c_str());

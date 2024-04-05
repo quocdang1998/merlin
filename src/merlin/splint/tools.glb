@@ -104,14 +104,14 @@ __global__ static void eval_intpl_kernel(double * coeff, const grid::CartesianGr
         do {
             splint::recursive_interpolate(coeff, grid_size, contiguous_index, loop_index.data(), cache.data(),
                                           point.data(), last_updated_dim, thread_shape.data(),
-                                          grid_shr->grid_vectors().data(), method_shr, grid_shr->ndim());
+                                          grid_shr->grid_vectors().data(), *method_shr, grid_shr->ndim());
             last_updated_dim = increment_index(loop_index.data(), thread_shape.data(), ndim);
             contiguous_index++;
         } while (last_updated_dim != -1);
         // perform one last iteration on the last coefficient
         splint::recursive_interpolate(coeff, grid_size, contiguous_index, loop_index.data(), cache.data(),
                                       point.data(), 0, thread_shape.data(), grid_shr->grid_vectors().data(),
-                                      method_shr, grid_shr->ndim());
+                                      *method_shr, grid_shr->ndim());
         // save result and reset the cache
         result[i_point] = cache[0];
         cache[0] = 0.0;
