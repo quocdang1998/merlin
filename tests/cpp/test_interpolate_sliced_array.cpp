@@ -57,11 +57,10 @@ int main(void) {
     MESSAGE("Interpolation coefficients: %s\n", interp.get_coeff().str().c_str());
 
     // interpolation
-    merlin::array::Array points = point_generator(1200, cart_gr);
-    merlin::DoubleVec eval_values(1200);
+    merlin::array::Array points = point_generator(12, cart_gr);
+    merlin::DoubleVec eval_values(12);
     interp.evaluate(points, eval_values, 32);
     interp.synchronize();
-    // interp.synchronize();
     MESSAGE("Evaluated values: %s.\n", eval_values.str().c_str());
     MESSAGE(
         "Function values: %f %f %f.\n",
@@ -69,7 +68,7 @@ int main(void) {
         foo(merlin::DoubleVec(&points[3], &points[6])),
         foo(merlin::DoubleVec(&points[6], &points[9]))
     );
-
+    interp.synchronize();
 
 /*
     merlin::splint::construct_coeff_cpu(coeff.data(), cart_gr, methods, 5);

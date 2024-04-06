@@ -53,8 +53,8 @@ void array::copy(array::NdData * dest, const array::NdData * src, CopyFunction c
 }
 
 // Fill all array with a given value
-template <class CopyFunction>
-void array::fill(array::NdData * target, double fill_value, CopyFunction write_engine, std::uint64_t buffer) {
+template <class CopyFunction, std::uint64_t buffer>
+void array::fill(array::NdData * target, double fill_value, CopyFunction write_engine) {
     // trivial case: size zero
     if (target->ndim() == 0) {
         return;

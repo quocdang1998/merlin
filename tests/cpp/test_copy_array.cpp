@@ -18,9 +18,9 @@ int main(void) {
     // [1.0, 5.0, 9.0 ]
     // [2.0, 6.0, 10.0]
 
-    // merlin::array::Array X({1024,256,8});
-    // X.fill(std::nan(""));
-    // MESSAGE("Array X: %s\n", X.str().c_str());
+    /*merlin::array::Array X({20,16,8});
+    X.fill(std::nan(""));
+    MESSAGE("Array X: %s\n", X.str().c_str());*/
 
     MESSAGE("Initialize Array A.\n");
     double A[10] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};

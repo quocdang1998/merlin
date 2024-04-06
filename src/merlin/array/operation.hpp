@@ -84,14 +84,13 @@ void copy(array::NdData * dest, const array::NdData * src, CopyFunction copy);
 /** @brief Fill all array with a given value.
  *  @tparam WriteFunction Function writing from a CPU array to the target pointer data, having the prototype of
  *  ``void WriteFunction(void * dest, const void * src, std::size_t size_in_bytes)``.
+ *  @tparam buffer Size of the buffer to write to the array, should be divisible by ``sizeof(double)``.
  *  @param target Target array to fill.
  *  @param fill_value Value to fill the array.
  *  @param write_engine Name of the function writing to array.
- *  @param buffer Size of the buffer to write to the array
  */
-template <class CopyFunction>
-void fill(array::NdData * target, double fill_value, CopyFunction write_engine,
-          std::uint64_t buffer = 1024 * sizeof(double));
+template <class CopyFunction, std::uint64_t buffer = 1024 * sizeof(double)>
+void fill(array::NdData * target, double fill_value, CopyFunction write_engine);
 
 /** @brief String representation of an array.
  *  @param target Target array to print.

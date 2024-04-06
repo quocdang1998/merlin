@@ -56,7 +56,7 @@ double array::Parcel::get(std::uint64_t index) const {
 }
 
 // Set value of element at a n-dim index
-void array::Parcel::set(const Index index, double value) {
+void array::Parcel::set(const Index & index, double value) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 

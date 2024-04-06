@@ -9,7 +9,7 @@
 #include "merlin/array/nddata.hpp"         // merlin::array::NdData
 #include "merlin/exports.hpp"              // MERLIN_EXPORTS
 #include "merlin/grid/cartesian_grid.hpp"  // merlin::grid::CartesianGrid
-#include "merlin/splint/declaration.hpp"         // merlin::splint::Method
+#include "merlin/splint/declaration.hpp"   // merlin::splint::Method
 #include "merlin/synchronizer.hpp"         // merlin::ProcessorType, merlin::Synchronizer
 #include "merlin/vector.hpp"               // merlin::Vector, merlin::DoubleVec
 
@@ -19,7 +19,7 @@ namespace splint {
 
 /** @brief Create pointer to copied members for merlin::splint::Interpolator on GPU.*/
 void create_intpl_gpuptr(const grid::CartesianGrid & cpu_grid, const Vector<splint::Method> & cpu_methods,
-                         grid::CartesianGrid *& gpu_pgrid, Vector<unsigned int> *& gpu_pmethods,
+                         grid::CartesianGrid *& gpu_pgrid, std::array<unsigned int, max_dim> *& gpu_pmethods,
                          std::uintptr_t stream_ptr);
 
 }  // namespace splint
@@ -45,7 +45,7 @@ class splint::Interpolator {
      *  @param values Multi-dimensional array containing the data.
      *  @param method Interpolation method to use for each dimension.
      *  @param processor Flag indicate the processor performing the interpolation (CPU or GPU).
-    */
+     */
     MERLIN_EXPORTS Interpolator(const grid::CartesianGrid & grid, const array::Array & values,
                                 const Vector<splint::Method> & method, ProcessorType processor = ProcessorType::Cpu);
     /// @}
@@ -86,9 +86,9 @@ class splint::Interpolator {
     /** @brief Get const reference to the coefficient array.*/
     constexpr const array::NdData & get_coeff(void) const noexcept { return *(this->p_coeff_); }
     /** @brief Get reference to the interpolation methods applied to each dimension.*/
-    constexpr Vector<unsigned int> & get_method(void) noexcept { return *(this->p_method_); }
+    constexpr std::array<unsigned int, max_dim> & get_method(void) noexcept { return *(this->p_method_); }
     /** @brief Get constant reference to the interpolation methods applied to each dimension.*/
-    constexpr const Vector<unsigned int> & get_method(void) const noexcept { return *(this->p_method_); }
+    constexpr const std::array<unsigned int, max_dim> & get_method(void) const noexcept { return *(this->p_method_); }
     /** @brief Get GPU ID on which the memory is allocated.*/
     constexpr unsigned int gpu_id(void) const noexcept {
         if (const cuda::Stream * stream_ptr = std::get_if<cuda::Stream>(&(this->synchronizer_.synchronizer))) {
@@ -132,9 +132,7 @@ class splint::Interpolator {
     /// @name Synchronization
     /// @{
     /** @brief Force the current CPU to wait until all asynchronous tasks have finished.*/
-    void synchronize(void) {
-        this->synchronizer_.synchronize();
-    }
+    void synchronize(void) { this->synchronizer_.synchronize(); }
     /// @}
 
     /// @name Representation
@@ -152,12 +150,12 @@ class splint::Interpolator {
     /// @}
 
   protected:
-     /** @brief Cartesian grid to interpolate.*/
+    /** @brief Cartesian grid to interpolate.*/
     grid::CartesianGrid * p_grid_ = nullptr;
     /** @brief Pointer to coefficient array.*/
     array::NdData * p_coeff_ = nullptr;
     /** @brief Interpolation method to applied on each dimension.*/
-    Vector<unsigned int> * p_method_ = nullptr;
+    std::array<unsigned int, max_dim> * p_method_ = nullptr;
 
   private:
     /** @brief Number of dimension of the interpolation.*/

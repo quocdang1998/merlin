@@ -3,13 +3,13 @@
 
 #include <utility>  // std::move
 
-#include "merlin/array/parcel.hpp"           // merlin::array::Parcel
-#include "merlin/cuda_interface.hpp"         // merlin::cuda_mem_alloc, merlin::cuda_mem_cpy_device_to_host,
-                                             // merlin::cuda_mem_free
-#include "merlin/cuda/memory.hpp"            // merlin::cuda::Memory
-#include "merlin/env.hpp"                    // merlin::Environment
-#include "merlin/logger.hpp"                 // FAILURE
-#include "merlin/splint/tools.hpp"           // merlin::splint::construct_coeff_gpu
+#include "merlin/array/parcel.hpp"    // merlin::array::Parcel
+#include "merlin/cuda_interface.hpp"  // merlin::cuda_mem_alloc, merlin::cuda_mem_cpy_device_to_host,
+                                      // merlin::cuda_mem_free
+#include "merlin/cuda/memory.hpp"     // merlin::cuda::Memory
+#include "merlin/env.hpp"             // merlin::Environment
+#include "merlin/logger.hpp"          // FAILURE
+#include "merlin/splint/tools.hpp"    // merlin::splint::construct_coeff_gpu
 
 namespace merlin {
 
@@ -19,10 +19,10 @@ namespace merlin {
 
 // Create pointer to copied members of merlin::splint::Interpolator on GPU
 void splint::create_intpl_gpuptr(const grid::CartesianGrid & cpu_grid, const Vector<splint::Method> & cpu_methods,
-                                 grid::CartesianGrid *& gpu_pgrid, Vector<unsigned int> *& gpu_pmethods,
+                                 grid::CartesianGrid *& gpu_pgrid, std::array<unsigned int, max_dim> *& gpu_pmethods,
                                  std::uintptr_t stream_ptr) {
-    // temporary patch
-    Vector<unsigned int> converted_cpu_methods(cpu_methods.size());
+    std::array<unsigned int, max_dim> converted_cpu_methods;
+    converted_cpu_methods.fill(0);
     for (std::uint64_t i = 0; i < cpu_methods.size(); i++) {
         converted_cpu_methods[i] = static_cast<unsigned int>(cpu_methods[i]);
     }
@@ -57,9 +57,9 @@ void splint::Interpolator::evaluate(const array::Parcel & points, DoubleVec & re
     // evaluate interpolation
     std::uint64_t bytes_size = result.size() * sizeof(double);
     void * result_gpu = cuda_mem_alloc(bytes_size, stream.get_stream_ptr());
-    splint::eval_intpl_gpu(this->p_coeff_->data(), this->p_grid_, this->p_method_, points.data(),
-                           result.size(), reinterpret_cast<double *>(result_gpu), n_threads, this->ndim_,
-                           this->shared_mem_size_, &stream);
+    splint::eval_intpl_gpu(this->p_coeff_->data(), this->p_grid_, this->p_method_, points.data(), result.size(),
+                           reinterpret_cast<double *>(result_gpu), n_threads, this->ndim_, this->shared_mem_size_,
+                           &stream);
     cuda_mem_cpy_device_to_host(result.data(), result_gpu, bytes_size, stream.get_stream_ptr());
     cuda_mem_free(result_gpu, stream.get_stream_ptr());
     cuda::Device::pop_context(current_ctx);
