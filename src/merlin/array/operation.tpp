@@ -5,17 +5,18 @@
 #include <algorithm>  // std::copy, std::fill_n, std::min, std::max
 #include <sstream>    // std::ostringstream
 
-#include "merlin/logger.hpp"  // FAILURE
+#include "merlin/logger.hpp"  // WARNING, FAILURE
 #include "merlin/utils.hpp"   // merlin::inner_prod, merlin::prod_elements
 
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
-// NdData tools
+// Actions on NdData
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Copy each segment from source to destination
 template <class CopyFunction>
+requires array::TransferFunction<CopyFunction>
 void array::copy(array::NdData * dest, const array::NdData * src, CopyFunction copy) {
     // check if shape vector are the same
     if (src->ndim() != dest->ndim()) {
@@ -54,6 +55,7 @@ void array::copy(array::NdData * dest, const array::NdData * src, CopyFunction c
 
 // Fill all array with a given value
 template <class CopyFunction, std::uint64_t buffer>
+requires array::TransferFunction<CopyFunction>
 void array::fill(array::NdData * target, double fill_value, CopyFunction write_engine) {
     // trivial case: size zero
     if (target->ndim() == 0) {
@@ -61,22 +63,12 @@ void array::fill(array::NdData * target, double fill_value, CopyFunction write_e
     }
     // allocate a buffer and fill it with data
     auto [lcseg, break_index] = array::lcseg_and_brindex(target->shape(), target->strides(), target->ndim());
-    std::uint64_t buffer_size = std::min(lcseg, buffer);
+    std::uint64_t buffer_size = std::min(lcseg, buffer * sizeof(double));
     double * buffer_data = reinterpret_cast<double *>(new char[buffer_size]);
     std::fill_n(buffer_data, buffer_size / sizeof(double), fill_value);
     std::uint64_t n_chunk = lcseg / buffer_size, remainder = lcseg % buffer_size;
-    // original arrays are perfectly contiguous
-    if (break_index == UINT_MAX) {
-        std::uintptr_t target_data_ptr = reinterpret_cast<std::uintptr_t>(target->data());
-        for (std::uint64_t i_chunk = 0; i_chunk < n_chunk; i_chunk++) {
-            write_engine(reinterpret_cast<double *>(target_data_ptr), buffer_data, buffer_size);
-            target_data_ptr += buffer_size;
-        }
-        write_engine(reinterpret_cast<double *>(target_data_ptr), buffer_data, remainder);
-        return;
-    }
     // memcpy each longest_contiguous_segment
-    std::uint64_t num_segments = prod_elements(target->shape().data(), target->ndim());
+    std::uint64_t num_segments = (break_index == -1) ? 1 : prod_elements(target->shape().data(), break_index + 1);
     for (std::uint64_t i_segment = 0; i_segment < num_segments; i_segment++) {
         // calculate ptr to each segment
         std::uint64_t leap = array::get_leap(i_segment, target->shape(), target->strides(), break_index + 1);
@@ -86,10 +78,54 @@ void array::fill(array::NdData * target, double fill_value, CopyFunction write_e
             write_engine(reinterpret_cast<double *>(target_data_ptr), buffer_data, buffer_size);
             target_data_ptr += buffer_size;
         }
-        write_engine(reinterpret_cast<double *>(target_data_ptr), buffer_data, remainder);
+        if (remainder > 0) {
+            write_engine(reinterpret_cast<double *>(target_data_ptr), buffer_data, remainder);
+        }
     }
     // deallocate buffer
     delete[] reinterpret_cast<char *>(buffer_data);
+}
+
+// Calculate mean and variance of an array
+template <class CopyFunction, std::uint64_t buffer = 1024>
+requires array::TransferFunction<CopyFunction>
+std::array<double, 2> array::stat(const array::NdData * target, CopyFunction copy) {
+    // trivial case: size zero
+    if (target->ndim() == 0) {
+        WARNING("Zero-elements array do not have mean nor variance, return 0.\n");
+        return {0.0, 0.0};
+    }
+    // allocate a buffer and fill it with data
+    auto [lcseg, break_index] = array::lcseg_and_brindex(target->shape(), target->strides(), target->ndim());
+    std::uint64_t buffer_size = std::min(lcseg, buffer * sizeof(double));
+    double * buffer_data = reinterpret_cast<double *>(new char[buffer_size]);
+    std::uint64_t n_chunk = lcseg / buffer_size, remainder = lcseg % buffer_size;
+    std::uint64_t buffer_nelems = buffer_size / sizeof(double), remainder_nelems = remainder / sizeof(double);
+    double total_mean = 0, total_var = 0, partial_mean, partial_var;
+    std::uint64_t total_normal = 0, partial_normal;
+    // memcpy each longest_contiguous_segment
+    std::uint64_t num_segments = (break_index == -1) ? 1 : prod_elements(target->shape().data(), break_index + 1);
+    for (std::uint64_t i_segment = 0; i_segment < num_segments; i_segment++) {
+        // calculate ptr to each segment
+        std::uint64_t leap = array::get_leap(i_segment, target->shape(), target->strides(), break_index + 1);
+        std::uintptr_t target_data_ptr = reinterpret_cast<std::uintptr_t>(target->data()) + leap;
+        // fill the segment
+        for (std::uint64_t i_chunk = 0; i_chunk < n_chunk; i_chunk++) {
+            copy(buffer_data, reinterpret_cast<double *>(target_data_ptr), buffer_size);
+            array::calc_mean_variance(buffer_data, buffer_nelems, partial_mean, partial_var, partial_normal);
+            array::combine_stas(total_mean, total_var, total_normal, partial_mean, partial_var, partial_normal);
+            target_data_ptr += buffer_size;
+        }
+        // check remainder
+        if (remainder > 0) {
+            copy(buffer_data, reinterpret_cast<double *>(target_data_ptr), remainder);
+            array::calc_mean_variance(buffer_data, remainder_nelems, partial_mean, partial_var, partial_normal);
+            array::combine_stas(total_mean, total_var, total_normal, partial_mean, partial_var, partial_normal);
+        }
+    }
+    // deallocate buffer
+    delete[] reinterpret_cast<char *>(buffer_data);
+    return {total_mean, total_var / total_normal};
 }
 
 // String representation of an array

@@ -94,6 +94,8 @@ class array::Array : public array::NdData {
     /// @{
     /** @brief Set value of all elements.*/
     MERLIN_EXPORTS void fill(double value);
+    /** @brief Calculate mean and variance of all non-zero and finite elements.*/
+    MERLIN_EXPORTS std::array<double, 2> get_mean_variance(void) const;
     /** @brief Create a sub-array.*/
     array::NdData * sub_array(const SliceArray & slices) const {
         array::Array * p_result = new array::Array();

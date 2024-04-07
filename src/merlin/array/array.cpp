@@ -46,7 +46,7 @@ void array::free_memory(double * ptr) { delete[] ptr; }
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Read an array from file
-static inline void read_from_file(double * dest, std::FILE * file, double * src, std::uint64_t bytes) {
+static inline void read_from_file(void * dest, std::FILE * file, const void * src, std::uint64_t bytes) {
     std::fseek(file, reinterpret_cast<std::uintptr_t>(src), SEEK_SET);
     std::uint64_t count = bytes / sizeof(double);
     if (std::fread(dest, sizeof(double), count, file) != count) {
@@ -197,6 +197,9 @@ void array::Array::set(std::uint64_t index, double value) {
 
 // Set value of all elements
 void array::Array::fill(double value) { array::fill(this, value, std::memcpy); }
+
+// Calculate mean and variance of all non-zero and finite elements
+std::array<double, 2> array::Array::get_mean_variance(void) const { return array::stat(this, std::memcpy); }
 
 // Copy data from GPU array
 #ifndef __MERLIN_CUDA__

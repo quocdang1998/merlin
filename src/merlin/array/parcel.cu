@@ -165,6 +165,13 @@ void array::Parcel::fill(double value) {
     array::fill(this, value, copy_func);
 }
 
+// Calculate mean and variance of all non-zero and finite elements
+std::array<double, 2> array::Parcel::get_mean_variance(void) const {
+    auto copy_func = std::bind(::cudaMemcpy, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                               ::cudaMemcpyDeviceToHost);
+    return array::stat(this, copy_func);
+}
+
 // Transfer data to GPU
 void array::Parcel::transfer_data_to_gpu(const array::Array & cpu_array, const cuda::Stream & stream) {
     // get device id

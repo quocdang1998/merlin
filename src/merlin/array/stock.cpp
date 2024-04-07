@@ -32,7 +32,7 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Read an array from file
-static inline void read_from_file(double * dest, std::FILE * file, double * src, std::uint64_t bytes) {
+static inline void read_from_file(void * dest, std::FILE * file, const void * src, std::uint64_t bytes) {
     std::fseek(file, reinterpret_cast<std::uintptr_t>(src), SEEK_SET);
     std::uint64_t count = bytes / sizeof(double);
     if (std::fread(dest, sizeof(double), count, file) != count) {
@@ -41,7 +41,7 @@ static inline void read_from_file(double * dest, std::FILE * file, double * src,
 }
 
 // Write an array from file
-static inline void write_to_file(std::FILE * file, double * dest, double * src, std::uint64_t bytes) {
+static inline void write_to_file(std::FILE * file, void * dest, const void * src, std::uint64_t bytes) {
     std::fseek(file, reinterpret_cast<std::uintptr_t>(dest), SEEK_SET);
     std::uint64_t count = bytes / sizeof(double);
     if (std::fwrite(src, sizeof(double), bytes / sizeof(double), file) != count) {
@@ -202,6 +202,13 @@ void array::Stock::fill(double value) {
     auto write_func = std::bind(write_to_file, this->file_ptr_, std::placeholders::_1, std::placeholders::_2,
                                 std::placeholders::_3);
     array::fill(this, value, write_func);
+}
+
+// Calculate mean and variance of all non-zero and finite elements
+std::array<double, 2> array::Stock::get_mean_variance(void) const {
+    auto read_func = std::bind(read_from_file, std::placeholders::_1, this->file_ptr_, std::placeholders::_2,
+                                std::placeholders::_3);
+    return array::stat(this, read_func);
 }
 
 // Write data from an array to a file

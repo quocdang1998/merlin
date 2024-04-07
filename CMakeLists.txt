@@ -21,6 +21,7 @@ set(MERLIN_EXT ""
 # source list
 list(APPEND MERLIN_SRC_CPP
      array/nddata.cpp
+     array/operation.cpp
      array/array.cpp
      array/parcel.cpp
      array/stock.cpp
@@ -30,7 +31,7 @@ list(APPEND MERLIN_SRC_CPP
      ##candy/optmz/grad_descent.cpp
      ##candy/gradient.cpp
      ##candy/loss.cpp
-     ##candy/model.cpp
+     candy/model.cpp
      ##candy/optimizer.cpp
      ##candy/trainer.cpp
      cuda/device.cpp

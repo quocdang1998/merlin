@@ -2,6 +2,7 @@
 #ifndef MERLIN_CANDY_MODEL_HPP_
 #define MERLIN_CANDY_MODEL_HPP_
 
+#include <array>    // std::array
 #include <cstdint>  // std::uint64_t
 #include <string>   // std::string
 
@@ -9,7 +10,8 @@
 #include "merlin/candy/declaration.hpp"  // merlin::candy::Model
 #include "merlin/cuda_interface.hpp"     // __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
-#include "merlin/vector.hpp"             // merlin::Vector, merlin::floatvec
+#include "merlin/settings.hpp"           // merlin::DPtrArray, merlin::Index
+#include "merlin/vector.hpp"             // merlin::DoubleVec, merlin::Vector
 
 namespace merlin {
 
@@ -24,12 +26,12 @@ class candy::Model {
      *  @param shape Shape of the desired reconstructed data.
      *  @param rank Rank of the model.
      */
-    MERLIN_EXPORTS Model(const intvec & shape, std::uint64_t rank);
+    MERLIN_EXPORTS Model(const Index & shape, std::uint64_t rank);
     /** @brief Constructor from model values.
      *  @param param_vectors Vector of flatten parameters.
      *  @param rank Rank of the model.
      */
-    MERLIN_EXPORTS Model(const Vector<floatvec> & param_vectors, std::uint64_t rank);
+    MERLIN_EXPORTS Model(const Vector<DoubleVec> & param_vectors, std::uint64_t rank);
     /// @}
 
     /// @name Copy and move
@@ -47,13 +49,13 @@ class candy::Model {
     /// @name Get attributes
     /// @{
     /** @brief Get reference to parameters.*/
-    __cuhostdev__ constexpr Vector<double *> & param_vectors(void) noexcept { return this->param_vectors_; }
+    __cuhostdev__ constexpr DPtrArray & param_vectors(void) noexcept { return this->param_vectors_; }
     /** @brief Get constant reference to parameters.*/
-    __cuhostdev__ constexpr const Vector<double *> & param_vectors(void) const noexcept { return this->param_vectors_; }
+    __cuhostdev__ constexpr const DPtrArray & param_vectors(void) const noexcept { return this->param_vectors_; }
     /** @brief Get number of dimension.*/
-    __cuhostdev__ constexpr std::uint64_t ndim(void) const noexcept { return this->rshape_.size(); }
+    __cuhostdev__ constexpr std::uint64_t ndim(void) const noexcept { return this->ndim_; }
     /** @brief Get rank by shape.*/
-    __cuhostdev__ constexpr const intvec & rshape(void) const noexcept { return this->rshape_; }
+    __cuhostdev__ constexpr const Index & rshape(void) const noexcept { return this->rshape_; }
     /** @brief Get rank.*/
     __cuhostdev__ constexpr std::uint64_t rank(void) const noexcept { return this->rank_; }
     /** @brief Get number of parameters.*/
@@ -86,9 +88,8 @@ class candy::Model {
      *  to parameter. The standard deviation @f$ \sigma @f$ the standard deviation of the hyper-slice corrected in
      *  corresponding with the mean.
      *  @param train_data Data to train the model.
-     *  @param n_thread Number of parallel threads for calculation the mean and variance.
      */
-    MERLIN_EXPORTS void initialize(const array::Array & train_data, std::uint64_t n_thread = 1);
+    MERLIN_EXPORTS void initialize(const array::Array & train_data);
     /** @brief Initialize values of model based on rank-1 model.
      *  @details Initialized values randomly of a model based on another trained rank-1 model.
      *  @param rank_1_model Rank-1 model, must have the same shape as the current model.
@@ -100,7 +101,7 @@ class candy::Model {
     /// @name Evaluation of the model
     /// @{
     /** @brief Evaluate result of the model at a given ndim index in the resulted array.*/
-    __cuhostdev__ double eval(const intvec & index) const noexcept;
+    __cuhostdev__ double eval(const Index & index) const noexcept;
     /// @}
 
     /// @name Check negative value
@@ -115,9 +116,7 @@ class candy::Model {
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the model and its data.*/
     std::uint64_t cumalloc_size(void) const noexcept {
-        std::uint64_t size = sizeof(candy::Model);
-        size += this->num_params() * sizeof(double) + this->ndim() * (sizeof(std::uint64_t) + sizeof(double *));
-        return size;
+        return sizeof(candy::Model) + this->num_params() * sizeof(double);
     }
     /** @brief Copy the model from CPU to a pre-allocated memory on GPU.
      *  @details Values of vectors should be copied to the memory region that comes right after the copied object.
@@ -178,17 +177,19 @@ class candy::Model {
 
   protected:
     /** @brief Vector of contiguous parameters per dimension and rank.*/
-    floatvec parameters_;
+    DoubleVec parameters_;
     /** @brief Number of parameters per dimension.
      *  @details Equals to rank times shape.
      */
-    intvec rshape_;
+    Index rshape_;
+    /** @brief Number of dimensions.*/
+    std::uint64_t ndim_ = 0;
     /** @brief Rank of the decomposition.*/
     std::uint64_t rank_ = 0;
 
   private:
     /** @brief Pointer to the first parameters per dimension.*/
-    Vector<double *> param_vectors_;
+    DPtrArray param_vectors_;
 };
 
 }  // namespace merlin

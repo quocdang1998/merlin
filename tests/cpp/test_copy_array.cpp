@@ -4,6 +4,7 @@
 
 #include "merlin/logger.hpp"
 #include "merlin/array/array.hpp"  // merlin::Array
+#include "merlin/array/operation.hpp"
 #include "merlin/utils.hpp"
 #include "merlin/array/operation.hpp"
 
@@ -36,4 +37,7 @@ int main(void) {
     // print array
     MESSAGE("Expected values : 1.0 2.0 5.0 6.0 9.0 10.0\n");
     MESSAGE("Result          : %s\n", Ar_copy.str().c_str());
+
+    auto [m, v] = Ar.get_mean_variance();
+    MESSAGE("Mean-variance   : %f %f\n", m, v);
 }

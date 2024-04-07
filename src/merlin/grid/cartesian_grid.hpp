@@ -10,9 +10,9 @@
 #include "merlin/array/declaration.hpp"  // merlin::array::Array
 #include "merlin/cuda_interface.hpp"     // __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
-#include "merlin/settings.hpp"            // merlin::Index, merlin::max_dim
-#include "merlin/slice.hpp"              // merlin::SliceArray
 #include "merlin/grid/declaration.hpp"   // merlin::grid::CartesianGrid
+#include "merlin/settings.hpp"           // merlin::DPtrArray, merlin::Index, merlin::max_dim
+#include "merlin/slice.hpp"              // merlin::SliceArray
 #include "merlin/vector.hpp"             // merlin::DoubleVec
 
 namespace merlin {
@@ -25,11 +25,6 @@ namespace merlin {
  */
 class grid::CartesianGrid {
   public:
-    /// @name Typedef
-    /// @{
-    using DPtrArray = std::array<double *, max_dim>;
-    /// @}
-
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/

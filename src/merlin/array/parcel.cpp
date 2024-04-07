@@ -70,6 +70,12 @@ void array::Parcel::fill(double value) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 
+// Calculate mean and variance of all non-zero and finite elements
+std::array<double, 2> array::Parcel::get_mean_variance(void) const {
+    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
+    return std::array<double, 2>();
+}
+
 // Transfer data to GPU
 void array::Parcel::transfer_data_to_gpu(const array::Array & cpu_array, const cuda::Stream & stream) {
     FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");

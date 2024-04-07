@@ -2,17 +2,19 @@
 #ifndef MERLIN_ARRAY_OPERATION_HPP_
 #define MERLIN_ARRAY_OPERATION_HPP_
 
-#include <cstdint>  // std::uint64_t
-#include <string>   // std::string
-#include <utility>  // std::pair
-
-#include <iostream>
+#include <cstdint>   // std::uint64_t
+#include <string>    // std::string
+#include <utility>   // std::pair
 
 #include "merlin/array/nddata.hpp"    // merlin::array::NdData
 #include "merlin/cuda_interface.hpp"  // __cuhostdev__
+#include "merlin/exports.hpp"         // MERLIN_EXPORTS
 #include "merlin/settings.hpp"        // merlin::Index
 
 namespace merlin::array {
+
+// Stride manipulation
+// -------------------
 
 /** @brief Calculate C-contiguous stride vector.
  *  @details Get stride vector from dims vector and size of one element as if the merlin::array::NdData is
@@ -70,6 +72,33 @@ constexpr std::pair<std::uint64_t, std::int64_t> lcseg_and_brindex(const Index &
     return {longest_contiguous_segment, break_index};
 }
 
+// Mean and variance
+// -------------------
+
+/** @brief Calculate mean and second moment of a vector, while skipping all zeros and non finite elements.*/
+MERLIN_EXPORTS void calc_mean_variance(const double * data, std::uint64_t size, double & mean, double & second_moment,
+                                       std::uint64_t & normal_count);
+
+/** @brief Combine mean and variance of 2 subsets.
+ *  @details Means (@f$ m_1, m_2 @f$) and second moments (@f$ V_1, V_2 @f$) of 2 subsets (@f$ N_1, N_2 @f$) can be
+ *  calculated by:
+ *  
+ *  @f[ m = \frac{m_1 N_1 + m_2 N_2}{N_1 + N_2} @f]
+ *  @f[ V = V_1 + V_2 + \frac{N_1 N_2}{N_1 + N_2} (m_1 - m_2)^2 @f]
+ */
+MERLIN_EXPORTS void combine_stas(double & mean, double & second_moment, std::uint64_t & normal_count,
+                                const double & partial_mean, const double & partial_var, std::uint64_t partial_size);
+
+// Actions on NdData
+// -----------------
+
+/** @brief Function copy an array to another, having the prototype of
+ *  ``TransferFunction(void * dest, const void * src, std::size_t size_in_bytes)``.*/
+template <typename Function>
+concept TransferFunction = requires (Function & func, void * dest, const void * src, std::size_t size) {
+    { func(dest, src, size) };
+};
+
 /** @brief Copy data from an merlin::array::NdData to another.
  *  @details This function allows user to choose the copy function (for example, ``std::memcpy``, or ``cudaMemcpy``).
  *  @tparam CopyFunction Function copy an array to another, having the prototype of
@@ -79,18 +108,31 @@ constexpr std::pair<std::uint64_t, std::int64_t> lcseg_and_brindex(const Index &
  *  @param copy Name of the copy function.
  */
 template <class CopyFunction>
+requires array::TransferFunction<CopyFunction>
 void copy(array::NdData * dest, const array::NdData * src, CopyFunction copy);
 
 /** @brief Fill all array with a given value.
  *  @tparam WriteFunction Function writing from a CPU array to the target pointer data, having the prototype of
  *  ``void WriteFunction(void * dest, const void * src, std::size_t size_in_bytes)``.
- *  @tparam buffer Size of the buffer to write to the array, should be divisible by ``sizeof(double)``.
+ *  @tparam buffer Size of the buffer to write to the array.
  *  @param target Target array to fill.
  *  @param fill_value Value to fill the array.
  *  @param write_engine Name of the function writing to array.
  */
-template <class CopyFunction, std::uint64_t buffer = 1024 * sizeof(double)>
+template <class CopyFunction, std::uint64_t buffer = 1024>
+requires array::TransferFunction<CopyFunction>
 void fill(array::NdData * target, double fill_value, CopyFunction write_engine);
+
+/** @brief Calculate mean and variance of an array.
+ *  @details Calculate mean and variance of all non-zero elements inside an array.
+ *  @tparam CopyFunction Function copy an array to another, having the prototype of
+ *  ``void WriteFunction(void * dest, const void * src, std::size_t size_in_bytes)``.
+ *  @param target Target array to calculate mean and variance.
+ *  @returns Mean and variance of the array.
+ */
+template <class CopyFunction, std::uint64_t buffer = 1024>
+requires array::TransferFunction<CopyFunction>
+std::array<double, 2> stat(const array::NdData * target, CopyFunction copy);
 
 /** @brief String representation of an array.
  *  @param target Target array to print.
@@ -99,6 +141,7 @@ void fill(array::NdData * target, double fill_value, CopyFunction write_engine);
  */
 template <class NdArray>
 std::string print(const NdArray * target, const std::string & nametype, bool first_call);
+
 
 }  // namespace merlin::array
 

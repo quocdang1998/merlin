@@ -12,6 +12,8 @@ using Index = std::array<std::uint64_t, max_dim>;
 
 using Point = std::array<double, max_dim>;
 
+using DPtrArray = std::array<double *, max_dim>;
+
 }  // namespace merlin
 
 #endif  // MERLIN_SETTINGS_HPP_
