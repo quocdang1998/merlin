@@ -126,7 +126,7 @@ void candy::Model::initialize(const array::Array & train_data) {
         }
     }
 }
-/*
+
 // Initialize values of model based on rank-1 model
 void candy::Model::initialize(const candy::Model & rank_1_model, double rtol) {
     // check argument
@@ -136,23 +136,24 @@ void candy::Model::initialize(const candy::Model & rank_1_model, double rtol) {
     if (this->ndim() != rank_1_model.ndim()) {
         FAILURE(std::invalid_argument, "Expected rank-1 model having the same ndim as the current model.\n");
     }
-    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+    for (std::uint64_t i_dim = 0; i_dim < this->ndim_; i_dim++) {
         if (rank_1_model.rshape_[i_dim] * this->rank_ != this->rshape_[i_dim]) {
             FAILURE(std::invalid_argument, "Incoherent shape of 2 models.\n");
         }
     }
     // calculate min and max in relative for each rank
     double rstep = (2.0 * rtol) / static_cast<double>(this->rank_);
-    floatvec rtol_rank(this->rank_ + 1);
+    DoubleVec rtol_rank(this->rank_ + 1);
     for (std::uint64_t r = 0; r < this->rank_ + 1; r++) {
         rtol_rank[r] = 1.0 - rtol + r * rstep;
     }
     // initialize
     for (std::uint64_t i_param = 0; i_param < rank_1_model.num_params(); i_param++) {
         double param_value = rank_1_model.parameters_[i_param];
-        param_value /= std::pow(this->rank_, 1.0 / static_cast<double>(this->ndim()));
+        param_value /= std::pow(this->rank_, 1.0 / static_cast<double>(this->ndim_));
         for (std::uint64_t r = 0; r < this->rank_; r++) {
-            std::uniform_real_distribution<double> generator(param_value * rtol_rank[r], param_value * rtol_rank[r+1]);
+            std::uniform_real_distribution<double> generator(param_value * rtol_rank[r],
+                                                             param_value * rtol_rank[r + 1]);
             this->parameters_[i_param * this->rank_ + r] = generator(Environment::random_generator);
         }
     }
@@ -189,7 +190,7 @@ void candy::Model::save(const std::string & fname, bool lock) const {
     }
     FileLock flock(file_stream);
     // lambda write file
-    auto write_lambda = [&file_stream] (const void * data, std::size_t elem_size, std::size_t n_elems) {
+    auto write_lambda = [&file_stream](const void * data, std::size_t elem_size, std::size_t n_elems) {
         std::size_t success_written = std::fwrite(data, elem_size, n_elems, file_stream);
         if (success_written < n_elems) {
             FAILURE(std::filesystem::filesystem_error, "Error occurred when writing the file.\n");
@@ -199,10 +200,10 @@ void candy::Model::save(const std::string & fname, bool lock) const {
         flock.lock();
     }
     // write ndim and size
-    std::uint64_t meta_data[3] = {this->rank_, this->ndim(), this->num_params()};
+    std::uint64_t meta_data[3] = {this->rank_, this->ndim_, this->num_params()};
     write_lambda(meta_data, sizeof(std::uint64_t), 3);
     // write rshape
-    write_lambda(this->rshape_.data(), sizeof(std::uint64_t), this->ndim());
+    write_lambda(this->rshape_.data(), sizeof(std::uint64_t), this->ndim_);
     // write parameters
     write_lambda(this->parameters_.data(), sizeof(double), this->num_params());
     // close file
@@ -221,7 +222,7 @@ void candy::Model::load(const std::string & fname, bool lock) {
     }
     FileLock flock(file_stream);
     // lambda read file
-    auto read_lambda = [&file_stream] (void * data, std::size_t elem_size, std::size_t n_elems) {
+    auto read_lambda = [&file_stream](void * data, std::size_t elem_size, std::size_t n_elems) {
         std::size_t success_read = std::fread(data, elem_size, n_elems, file_stream);
         if (success_read < n_elems) {
             FAILURE(std::filesystem::filesystem_error, "Error occurred when reading the file.\n");
@@ -235,21 +236,22 @@ void candy::Model::load(const std::string & fname, bool lock) {
     read_lambda(meta_data, sizeof(std::uint64_t), 3);
     this->rank_ = meta_data[0];
     // read rshape
-    this->rshape_ = intvec(meta_data[1]);
-    read_lambda(this->rshape_.data(), sizeof(std::uint64_t), meta_data[1]);
+    this->ndim_ = meta_data[1];
+    this->rshape_.fill(0);
+    read_lambda(this->rshape_.data(), sizeof(std::uint64_t), this->ndim_);
     // read parameters
-    this->parameters_ = floatvec(meta_data[2]);
+    this->parameters_ = DoubleVec(meta_data[2]);
     read_lambda(this->parameters_.data(), sizeof(double), meta_data[2]);
     // calculate pointers
-    this->param_vectors_ = Vector<double *>(meta_data[1]);
-    ptr_to_subsequence(this->parameters_.data(), this->rshape_, this->param_vectors_.data());
+    this->param_vectors_.fill(nullptr);
+    ptr_to_subsequence(this->parameters_.data(), this->rshape_.data(), this->ndim_, this->param_vectors_.data());
     // close file
     if (lock) {
         flock.unlock();
     }
     std::fclose(file_stream);
 }
-*/
+
 // String representation
 std::string candy::Model::str(void) const {
     std::ostringstream out_stream;

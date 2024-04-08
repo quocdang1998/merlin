@@ -7,7 +7,14 @@
 
 #include "merlin/cuda_interface.hpp"  // __cudevice__, __cuhostdev__
 #include "merlin/exports.hpp"         // MERLIN_EXPORTS
-#include "merlin/vector.hpp"          // merlin::Vector
+#include "merlin/platform.hpp"        // __MERLIN_LINUX__
+#include "merlin/vector.hpp"          // merlin::UIntVec
+
+#if defined(__MERLIN_LINUX__)
+    #include <cmath>  // std::isfinite, std::isnormal
+#elif defined(__MERLIN_WINDOWS__)
+    #include <math.h>  // isfinite, isnormal
+#endif  // __MERLIN_LINUX__
 
 namespace merlin {
 
@@ -21,6 +28,27 @@ MERLIN_EXPORTS std::string get_current_process_id(void);
  *  @details Return datetime in form of ``{year}-{month}-{day}_{hour}:{minute}:{second}``.
  */
 MERLIN_EXPORTS std::string get_time(void);
+
+// Math check normal
+// -----------------
+
+// Check if a value is normal
+__cuhostdev__ inline bool is_normal(double value) noexcept {
+#if defined(__MERLIN_LINUX__) && !defined(__CUDA_ARCH__)
+    return std::isnormal(value);
+#else
+    return isfinite(value) && (value != 0.0);
+#endif  // __MERLIN_LINUX__ && !__CUDA_ARCH__
+}
+
+// Check if a value is finite
+__cuhostdev__ inline bool is_finite(double value) noexcept {
+#if defined(__MERLIN_LINUX__) && !defined(__CUDA_ARCH__)
+    return std::isfinite(value);
+#else
+    return isfinite(value);
+#endif  // __MERLIN_LINUX__ && !__CUDA_ARCH__
+}
 
 // CUDA kernel
 // -----------
@@ -138,7 +166,8 @@ __cuhostdev__ void ptr_to_subsequence(double * original, const std::uint64_t * d
  *  dimension, and the offset with respect to the last element in the sequence.
  */
 __cuhostdev__ std::array<std::uint64_t, 2> index_in_subsequence(std::uint64_t index_full_array,
-                                                                const UIntVec & divider_length) noexcept;
+                                                                const std::uint64_t * divider_length,
+                                                                std::uint64_t num_seq) noexcept;
 
 // Triangular Index
 // ----------------

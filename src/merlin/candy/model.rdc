@@ -6,11 +6,11 @@
 namespace merlin {
 
 // Evaluate result of the model at a given index
-__cuhostdev__ double candy::Model::eval(const intvec & index) const noexcept {
+__cuhostdev__ double candy::Model::eval(const Index & index) const noexcept {
     double result = 0.0;
     for (std::uint64_t r = 0; r < this->rank_; r++) {
         double rank_eval = 1.0;
-        for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+        for (std::uint64_t i_dim = 0; i_dim < this->ndim_; i_dim++) {
             rank_eval *= this->get(i_dim, index[i_dim], r);
         }
         result += rank_eval;
@@ -23,18 +23,13 @@ __cuhostdev__ double candy::Model::eval(const intvec & index) const noexcept {
 // Copy to shared memory by CUDA block
 __cudevice__ void * candy::Model::copy_by_block(candy::Model * dest_ptr, void * parameters_data_ptr,
                                                 std::uint64_t thread_idx, std::uint64_t block_size) const {
-    // shallow copy of grid node, grid shape and grid vectors
-    double * parameters_ptr = reinterpret_cast<double *>(parameters_data_ptr);
-    std::uint64_t * rshape_ptr = reinterpret_cast<std::uint64_t *>(parameters_ptr + this->num_params());
-    double ** param_vectors_ptr = reinterpret_cast<double **>(rshape_ptr + this->ndim());
+    // shallow copy of data pointer
+    double * parameters_data = reinterpret_cast<double *>(parameters_data_ptr);
     if (thread_idx == 0) {
-        dest_ptr->parameters_.data() = parameters_ptr;
+        dest_ptr->parameters_.data() = parameters_data;
         dest_ptr->parameters_.size() = this->num_params();
-        dest_ptr->rshape_.data() = rshape_ptr;
-        dest_ptr->rshape_.size() = this->ndim();
-        dest_ptr->param_vectors_.data() = param_vectors_ptr;
-        dest_ptr->param_vectors_.size() = this->ndim();
         dest_ptr->rank_ = this->rank_;
+        dest_ptr->ndim_ = this->ndim_;
     }
     __syncthreads();
     // copy data of grid nodes and grid shape
@@ -49,25 +44,20 @@ __cudevice__ void * candy::Model::copy_by_block(candy::Model * dest_ptr, void * 
     __syncthreads();
     // re-calculate grid vectors
     if (thread_idx == 0) {
-        ptr_to_subsequence(parameters_ptr, dest_ptr->rshape_, param_vectors_ptr);
+        ptr_to_subsequence(parameters_data, dest_ptr->rshape_.data(), ndim_, dest_ptr->param_vectors_.data());
     }
     __syncthreads();
-    return reinterpret_cast<void *>(param_vectors_ptr + this->ndim());
+    return reinterpret_cast<void *>(parameters_data + num_params);
 }
 
 // Copy to shared memory by CUDA thread
 __cudevice__ void * candy::Model::copy_by_thread(candy::Model * dest_ptr, void * parameters_data_ptr) const {
     // shallow copy of grid node, grid shape and grid vectors
-    double * parameters_ptr = reinterpret_cast<double *>(parameters_data_ptr);
-    std::uint64_t * rshape_ptr = reinterpret_cast<std::uint64_t *>(parameters_ptr + this->num_params());
-    double ** param_vectors_ptr = reinterpret_cast<double **>(rshape_ptr + this->ndim());
-    dest_ptr->parameters_.data() = parameters_ptr;
+    double * parameters_data = reinterpret_cast<double *>(parameters_data_ptr);
+    dest_ptr->parameters_.data() = parameters_data;
     dest_ptr->parameters_.size() = this->num_params();
-    dest_ptr->rshape_.data() = rshape_ptr;
-    dest_ptr->rshape_.size() = this->ndim();
-    dest_ptr->param_vectors_.data() = param_vectors_ptr;
-    dest_ptr->param_vectors_.size() = this->ndim();
     dest_ptr->rank_ = this->rank_;
+    dest_ptr->ndim_ = this->ndim_;
     // copy data of grid nodes and grid shape
     std::uint64_t num_params = this->num_params(), ndim = this->ndim();
     for (std::uint64_t i_param = 0; i_param < num_params; i_param++) {
@@ -77,8 +67,8 @@ __cudevice__ void * candy::Model::copy_by_thread(candy::Model * dest_ptr, void *
         dest_ptr->rshape_[i_dim] = this->rshape_[i_dim];
     }
     // re-calculate grid vectors
-    ptr_to_subsequence(parameters_ptr, dest_ptr->rshape_, param_vectors_ptr);
-    return reinterpret_cast<void *>(param_vectors_ptr + this->ndim());
+    ptr_to_subsequence(parameters_data, dest_ptr->rshape_.data(), ndim, dest_ptr->param_vectors_.data());
+    return reinterpret_cast<void *>(parameters_data + num_params);
 }
 
 #endif  // __NVCC__

@@ -10,7 +10,7 @@
 #include "merlin/logger.hpp"
 #include "merlin/vector.hpp"
 
-double foo(const merlin::floatvec & v) {
+double foo(const merlin::DoubleVec & v) {
     return (2.f*v[0] + v[2])*v[2] + 3.f*v[1];
 }
 
@@ -19,8 +19,7 @@ int main(void) {
     merlin::grid::CartesianGrid cart_gr({{0.1, 0.2, 0.3}, {1.0, 2.0, 3.0, 4.0}, {0.0, 0.25, 0.5}});
     merlin::array::Array value(cart_gr.shape());
     for (std::uint64_t i = 0; i < cart_gr.size(); i++) {
-        merlin::intvec index(merlin::contiguous_to_ndim_idx(i, cart_gr.shape()));
-        value[index] = foo(cart_gr[index]);
+        value[i] = foo(cart_gr[i]);
     }
     MESSAGE("Value: %s\n", value.str().c_str());
 
@@ -50,9 +49,9 @@ int main(void) {
     point_gpu.transfer_data_to_gpu(point_cpu);
 
     // calculate evaluation
-    merlin::floatvec cpu_result(3);
+    merlin::DoubleVec cpu_result(3);
     interp_cpu.evaluate(point_cpu, cpu_result, 8);
-    merlin::floatvec gpu_result(3);
+    merlin::DoubleVec gpu_result(3);
     interp_gpu.evaluate(point_gpu, gpu_result, 32);
     interp_cpu.synchronize();
     MESSAGE("Value evaluated by CPU: %s\n", cpu_result.str().c_str());

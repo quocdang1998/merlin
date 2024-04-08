@@ -86,7 +86,7 @@ __global__ static void eval_intpl_kernel(double * coeff, const grid::CartesianGr
     auto [end_shr_ptr, grid_shr] = cuda::copy_objects(dynamic_shmem, *p_grid);
     std::array<unsigned int, max_dim> cache_method(*p_method);
     // initialization
-    Index loop_index, thread_shape(grid_shr->shape());
+    Index loop_index;
     loop_index.fill(0);
     Point cache, point;
     cache.fill(0.0);
@@ -94,6 +94,7 @@ __global__ static void eval_intpl_kernel(double * coeff, const grid::CartesianGr
     std::uint64_t ndim = p_grid->ndim();
     // parallel calculation for each point
     std::uint64_t grid_size = grid_shr->size();
+    const Index & shape = grid_shr->shape();
     for (std::uint64_t i_point = thread_idx; i_point < n_points; i_point += block_size) {
         // copy point coordinate to cache memory
         for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
@@ -105,15 +106,14 @@ __global__ static void eval_intpl_kernel(double * coeff, const grid::CartesianGr
         // loop on each index and save evaluation by each coefficient to the cache array
         do {
             splint::recursive_interpolate(coeff, grid_size, contiguous_index, loop_index.data(), cache.data(),
-                                          point.data(), last_updated_dim, thread_shape.data(),
-                                          grid_shr->grid_vectors().data(), cache_method, grid_shr->ndim());
-            last_updated_dim = increment_index(loop_index.data(), thread_shape.data(), ndim);
+                                          point.data(), last_updated_dim, shape.data(), grid_shr->grid_vectors().data(),
+                                          cache_method, grid_shr->ndim());
+            last_updated_dim = increment_index(loop_index.data(), shape.data(), ndim);
             contiguous_index++;
         } while (last_updated_dim != -1);
         // perform one last iteration on the last coefficient
         splint::recursive_interpolate(coeff, grid_size, contiguous_index, loop_index.data(), cache.data(), point.data(),
-                                      0, thread_shape.data(), grid_shr->grid_vectors().data(), cache_method,
-                                      grid_shr->ndim());
+                                      0, shape.data(), grid_shr->grid_vectors().data(), cache_method, grid_shr->ndim());
         // save result and reset the cache
         result[i_point] = cache[0];
         cache[0] = 0.0;

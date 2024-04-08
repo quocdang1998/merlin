@@ -25,14 +25,14 @@ list(APPEND MERLIN_SRC_CPP
      array/array.cpp
      array/parcel.cpp
      array/stock.cpp
-     ##candy/optmz/adadelta.cpp
-     ##candy/optmz/adam.cpp
-     ##candy/optmz/adagrad.cpp
-     ##candy/optmz/grad_descent.cpp
-     ##candy/gradient.cpp
-     ##candy/loss.cpp
+     candy/optmz/adadelta.cpp
+     candy/optmz/adam.cpp
+     candy/optmz/adagrad.cpp
+     candy/optmz/grad_descent.cpp
+     candy/gradient.cpp
+     candy/loss.cpp
      candy/model.cpp
-     ##candy/optimizer.cpp
+     candy/optimizer.cpp
      ##candy/trainer.cpp
      cuda/device.cpp
      cuda/event.cpp
@@ -66,8 +66,8 @@ list(APPEND MERLIN_SRC_CPP
 list(APPEND MERLIN_SRC_CU
      array/array.cu
      array/parcel.cu
-     ##candy/model.cu
-     ##candy/optimizer.cu
+     candy/model.cu
+     candy/optimizer.cu
      ##candy/trainer.cu
      cuda/device.cu
      cuda/event.cu
@@ -93,14 +93,14 @@ list(APPEND MERLIN_SRC_GLB
 list(APPEND MERLIN_SRC_RDC
      array/operation.rdc
      array/parcel.rdc
-     ##candy/optmz/adadelta.rdc
-     ##candy/optmz/adagrad.rdc
-     ##candy/optmz/adam.rdc
-     ##candy/optmz/grad_descent.rdc
-     ##candy/gradient.rdc
-     ##candy/loss.rdc
-     ##candy/model.rdc
-     ##candy/optimizer.rdc
+     candy/optmz/adadelta.rdc
+     candy/optmz/adagrad.rdc
+     candy/optmz/adam.rdc
+     candy/optmz/grad_descent.rdc
+     candy/gradient.rdc
+     candy/loss.rdc
+     candy/model.rdc
+     candy/optimizer.rdc
      cuda/device.rdc
      # intpl/cartesian_grid.rdc
      # intpl/lagrange.rdc
