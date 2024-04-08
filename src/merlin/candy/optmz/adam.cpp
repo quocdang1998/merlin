@@ -23,7 +23,7 @@ void candy::optmz::Adam::update_cpu(void * optimizer_algor, candy::Model & model
     if (thread_idx == 0) {
         algor.time_step += 1;
     }
-    #pragma omp barrier
+    _Pragma("omp barrier")
     for (std::uint64_t i_param = thread_idx; i_param < model.num_params(); i_param += n_threads) {
         // calculate first and second moment and save it back
         double first_moment = algor.moments[2 * i_param];
@@ -41,7 +41,7 @@ void candy::optmz::Adam::update_cpu(void * optimizer_algor, candy::Model & model
         correction /= std::sqrt(second_moment) + algor.bias;
         model[i_param] -= correction;
     }
-    #pragma omp barrier
+    _Pragma("omp barrier")
 }
 
 }  // namespace merlin

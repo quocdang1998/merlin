@@ -57,12 +57,7 @@ void wrap_polynomial(py::module & regpl_module) {
     // attributes
     polynomial_pyclass.def(
         "order",
-        [](const regpl::Polynomial & self) {
-            const intvec & order = self.order();
-            std::vector<std::uint64_t> order_cpp(order.cbegin(), order.cend());
-            py::list order_python = py::cast(order_cpp);
-            return order_python;
-        },
+        [](const regpl::Polynomial & self) { return py::cast(self.order()); },
         "Get order per dimension of the polynomial."
     );
     // serialization

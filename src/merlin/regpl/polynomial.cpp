@@ -18,21 +18,27 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Constructor of an empty polynomial from order per dimension
-regpl::Polynomial::Polynomial(const intvec & order) : order_(order), coeff_(prod_elements(order)) {}
+regpl::Polynomial::Polynomial(const Index & order) : order_(order) {
+    Index::const_iterator first_zero_element = std::find(order.begin(), order.end(), 0);
+    this->ndim_ = std::distance(order.begin(), first_zero_element);
+    this->coeff_ = DoubleVec(prod_elements(order.data(), this->ndim_));
+}
 
 // Constructor of a pre-allocated array of coefficients and order per dimension
-regpl::Polynomial::Polynomial(const floatvec & coeff, const intvec & order) :
-coeff_(coeff), order_(order) {
-    if (coeff.size() != prod_elements(order)) {
+regpl::Polynomial::Polynomial(const DoubleVec & coeff, const Index & order) : order_(order) {
+    Index::const_iterator first_zero_element = std::find(order.begin(), order.end(), 0);
+    this->ndim_ = std::distance(order.begin(), first_zero_element);
+    if (coeff.size() != prod_elements(order.data(), this->ndim_)) {
         FAILURE(std::invalid_argument, "Insufficient number of coefficients provided for the given order_per_dim.\n");
     }
+    this->coeff_ = coeff;
 }
 
 // Constructor of a sparse polynomial
-regpl::Polynomial::Polynomial(const floatvec & coeff, const intvec & order, const intvec & term_index) :
-order_(order), coeff_(prod_elements(order)) {
+regpl::Polynomial::Polynomial(const DoubleVec & coeff, const Index & order, const UIntVec & term_index) :
+order_(order) {
     // check argument
-    intvec sorted_idx(term_index.size());
+    UIntVec sorted_idx(term_index.size());
     std::iota(sorted_idx.begin(), sorted_idx.end(), 0);
     auto sort_lambda = [&term_index](const std::uint64_t & i1, const std::uint64_t & i2) {
         return term_index[i1] < term_index[i2];
@@ -46,7 +52,11 @@ order_(order), coeff_(prod_elements(order)) {
     if (coeff.size() != term_index.size()) {
         FAILURE(std::invalid_argument, "Inconsistent number of coefficients and index array.\n");
     }
+    // get ndim
+    Index::const_iterator first_zero_element = std::find(order.begin(), order.end(), 0);
+    this->ndim_ = std::distance(order.begin(), first_zero_element);
     // add to coeff
+    this->coeff_ = DoubleVec(prod_elements(order.data(), this->ndim_));
     for (std::uint64_t i_term = 0; i_term < term_index.size(); i_term++) {
         this->coeff_[term_index[i_term]] = coeff[i_term];
     }
@@ -88,10 +98,10 @@ void regpl::Polynomial::save(const std::string & fname, bool lock) const {
         flock.lock();
     }
     // write ndim and size
-    std::uint64_t meta_data[2] = {this->ndim(), this->size()};
+    std::uint64_t meta_data[2] = {this->ndim_, this->size()};
     write_lambda(meta_data, sizeof(std::uint64_t), 2);
     // write order per dim
-    write_lambda(this->order_.data(), sizeof(std::uint64_t), this->ndim());
+    write_lambda(this->order_.data(), sizeof(std::uint64_t), this->ndim_);
     // write coefficients and coeff index
     write_lambda(this->coeff_.data(), sizeof(double), this->size());
     // close file
@@ -122,11 +132,12 @@ void regpl::Polynomial::load(const std::string & fname, bool lock) {
     // read ndim and size
     std::uint64_t meta_data[2];
     read_lambda(meta_data, sizeof(std::uint64_t), 2);
+    this->ndim_ = meta_data[0];
     // read order per dim
-    this->order_ = intvec(meta_data[0]);
+    this->order_.fill(0);
     read_lambda(this->order_.data(), sizeof(std::uint64_t), meta_data[0]);
     // read coefficients and coeff index
-    this->coeff_ = floatvec(meta_data[1]);
+    this->coeff_ = DoubleVec(meta_data[1]);
     read_lambda(this->coeff_.data(), sizeof(double), meta_data[1]);
     // close file
     if (lock) {
@@ -139,7 +150,9 @@ void regpl::Polynomial::load(const std::string & fname, bool lock) {
 std::string regpl::Polynomial::str(void) const {
     std::ostringstream os;
     os << "<Polynomial(";
-    os << "order=" << this->order_.str() << ", ";
+    UIntVec order_vec;
+    order_vec.assign(const_cast<std::uint64_t *>(this->order_.data()), this->ndim_);
+    os << "order=" << order_vec.str() << ", ";
     os << "coeff=" << this->coeff_.str() << ")>";
     return os.str();
 }

@@ -42,7 +42,7 @@ void candy::Gradient::calc_by_cpu(candy::Model & model, const array::Array & tra
     static std::array<candy::GradientCalc, 2> grad_methods = {candy::rlsquare_grad, candy::absquare_grad};
     unsigned int metric = static_cast<unsigned int>(this->train_metric_);
     grad_methods[metric](model, train_data, this->value_, thread_idx, n_threads, index_mem);
-    #pragma omp barrier
+    _Pragma("omp barrier")
 }
 
 // String representation

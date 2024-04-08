@@ -21,7 +21,7 @@ static void wrap_cartgrid(py::module & grid_module) {
     cartgrid_pyclass.def(
         py::init(
             [](py::list & grid_vectors) {
-                Vector<floatvec> cpp_grid_vector(grid_vectors.size());
+                Vector<DoubleVec> cpp_grid_vector(grid_vectors.size());
                 std::uint64_t i_dim = 0;
                 for (auto it = grid_vectors.begin(); it != grid_vectors.end(); ++it) {
                     cpp_grid_vector[i_dim++] = pyseq_to_vector<double>(it->cast<py::sequence>());
@@ -40,7 +40,7 @@ static void wrap_cartgrid(py::module & grid_module) {
     );
     cartgrid_pyclass.def_property_readonly(
         "shape",
-        [](const grid::CartesianGrid & self) { return vector_to_pylist(self.shape()); },
+        [](const grid::CartesianGrid & self) { return py::cast(self.shape()); },
         "Get shape."
     );
     cartgrid_pyclass.def_property_readonly(

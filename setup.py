@@ -1,6 +1,5 @@
 import os
 import sys
-import glob
 
 # check platform
 if (sys.platform != "linux") and (sys.platform != "win32"):
@@ -15,8 +14,17 @@ from setup_cfg import build_ext, ext_options, copy_dll_libs
 
 #import pybind11
 from pybind11.setup_helpers import Pybind11Extension
+merlin_srclist = [
+    "merlin/wrap_mics.cpp",
+    "merlin/wrap_cuda.cpp",
+    "merlin/wrap_array.cpp",
+    "merlin/wrap_grid.cpp",
+    "merlin/wrap_splint.cpp",
+    "merlin/wrap_candy.cpp",
+    "merlin/wrap_regpl.cpp",
+]
 merlin_extensions = [
-    Pybind11Extension("merlin.__init__", glob.glob(os.path.join("merlin", "*.cpp")), **ext_options)
+    Pybind11Extension("merlin.__init__", merlin_srclist, **ext_options)
 ]
 
 # build extensions and install

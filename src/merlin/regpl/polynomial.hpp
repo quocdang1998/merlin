@@ -7,7 +7,8 @@
 #include "merlin/cuda_interface.hpp"  // __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/regpl/declaration.hpp"  // merlin::regpl::Polynomial
-#include "merlin/vector.hpp"  // merlin::floatvec, merlin::intvec
+#include "merlin/settings.hpp"  // merlin::Index
+#include "merlin/vector.hpp"  // merlin::DoubleVec, merlin::UIntVec
 
 namespace merlin {
 
@@ -21,19 +22,19 @@ class regpl::Polynomial {
     /** @brief Constructor of a full polynomial with zero-filled coefficients from max power per dimension.
      *  @param order Max power per dimension (one-more than highest power).
      */
-    MERLIN_EXPORTS Polynomial(const intvec & order);
+    MERLIN_EXPORTS Polynomial(const Index & order);
     /** @brief Constructor of a full polynomial from array of coefficients and max power per dimension.
      *  @param coeff Coefficient data (flatten in a C-contiguous order), with lower order first.
      *  @param order Max power per dimension (one-more than highest power).
      */
-    MERLIN_EXPORTS Polynomial(const floatvec & coeff, const intvec & order);
+    MERLIN_EXPORTS Polynomial(const DoubleVec & coeff, const Index & order);
     /** @brief Constructor of a sparse polynomial from array of coefficients, max power per dimension and the power
      *  of each term.
      *  @param coeff Coefficient data of each term index.
      *  @param order Max power per dimension (one-more than highest power).
      *  @param term_index Index of terms to assign.
      */
-    MERLIN_EXPORTS Polynomial(const floatvec & coeff, const intvec & order, const intvec & term_index);
+    MERLIN_EXPORTS Polynomial(const DoubleVec & coeff, const Index & order, const UIntVec & term_index);
     /// @}
 
     /// @name Copy and move
@@ -53,29 +54,29 @@ class regpl::Polynomial {
     /** @brief Get number of terms in the polynomial.*/
     __cuhostdev__ constexpr const std::uint64_t & size(void) const noexcept { return this->coeff_.size(); }
     /** @brief Get number of dimension.*/
-    __cuhostdev__ constexpr const std::uint64_t & ndim(void) const noexcept { return this->order_.size(); }
+    __cuhostdev__ constexpr const std::uint64_t & ndim(void) const noexcept { return this->ndim_; }
     /** @brief Get reference to coefficient array of the polynomial.*/
-    __cuhostdev__ constexpr floatvec & coeff(void) noexcept { return this->coeff_; }
+    __cuhostdev__ constexpr DoubleVec & coeff(void) noexcept { return this->coeff_; }
     /** @brief Get constant reference to coefficient array of the polynomial.*/
-    __cuhostdev__ constexpr const floatvec & coeff(void) const noexcept { return this->coeff_; }
+    __cuhostdev__ constexpr const DoubleVec & coeff(void) const noexcept { return this->coeff_; }
     /** @brief Get order per dimension of the polynomial.*/
-    __cuhostdev__ constexpr const intvec & order(void) const noexcept { return this->order_; }
+    __cuhostdev__ constexpr const Index & order(void) const noexcept { return this->order_; }
     /// @}
 
     /// @name Evaluation
     /// @{
     /** @brief Evaluate polynomial value at a given point.
      *  @param point Pointer to coordinates of the point.
-     *  @param buffer Buffer memory for calculation, size of at least ``double[ndim]``,
+     *  @param buffer Buffer memory for calculation.
     */
-    __cuhostdev__ double eval(const double * point, double * buffer) const noexcept;
+    __cuhostdev__ double eval(const Point & point, Point & buffer) const noexcept;
     /// @}
 
     /// @name GPU related features
     /// @{
     /** @brief Calculate the minimum number of bytes to allocate in the memory to store the polynomial and its data.*/
     std::uint64_t cumalloc_size(void) const noexcept {
-        return sizeof(regpl::Polynomial) + this->size() * sizeof(double) + this->ndim() * sizeof(std::uint64_t);
+        return sizeof(regpl::Polynomial) + this->size() * sizeof(double);
     }
     /** @brief Copy the polynomial from CPU to a pre-allocated memory on GPU.
      *  @details Values of vectors should be copied to the memory region that comes right after the copied object.
@@ -137,9 +138,11 @@ class regpl::Polynomial {
 
   protected:
     /** @brief Coefficient data.*/
-    floatvec coeff_;
+    DoubleVec coeff_;
     /** @brief Max power per dimension.*/
-    intvec order_;
+    Index order_;
+    /** @brief Number of dimensions.*/
+    std::uint64_t ndim_ = 0;
 };
 
 }  // namespace merlin

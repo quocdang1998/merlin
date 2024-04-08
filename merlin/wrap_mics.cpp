@@ -46,7 +46,7 @@ static void wrap_env(py::module & merlin_package) {
     env_pyclass.def_static(
         "set_random_seed",
         [](py::sequence & seed_seq) {
-            intvec cpp_seed_seq(pyseq_to_vector<std::uint64_t>(seed_seq));
+            UIntVec cpp_seed_seq(pyseq_to_vector<std::uint64_t>(seed_seq));
             std::seed_seq s(cpp_seed_seq.begin(), cpp_seed_seq.end());
             Environment::random_generator.seed(s);
         },
@@ -61,8 +61,10 @@ static void wrap_utils(py::module & merlin_package) {
     merlin_package.def(
         "contiguous_to_ndim_idx",
         [](std::uint64_t index, py::sequence & shape) {
-            intvec cpp_shape(pyseq_to_vector<std::uint64_t>(shape));
-            return vector_to_pylist(contiguous_to_ndim_idx(index, cpp_shape));
+            UIntVec cpp_shape(pyseq_to_vector<std::uint64_t>(shape));
+            UIntVec nd_index(cpp_shape.size());
+            contiguous_to_ndim_idx(index, cpp_shape.data(), cpp_shape.size(), nd_index.data());
+            return vector_to_pylist(nd_index);
         },
         R"(
         Convert C-contiguous index to n-dimensional index.
@@ -79,7 +81,7 @@ static void wrap_utils(py::module & merlin_package) {
     merlin_package.def(
         "get_random_subset",
         [](std::uint64_t num_points, std::uint64_t i_max, std::uint64_t i_min) {
-            intvec random_subset = get_random_subset(num_points, i_max, i_min);
+            UIntVec random_subset = get_random_subset(num_points, i_max, i_min);
             return vector_to_pylist(random_subset);
         },
         R"(

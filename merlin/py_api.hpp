@@ -5,6 +5,8 @@
 #include <pybind11/pybind11.h>
 namespace py = pybind11;
 
+#include "merlin/logger.hpp"
+#include "merlin/settings.hpp"
 #include "merlin/vector.hpp"
 
 namespace merlin {
@@ -12,7 +14,7 @@ namespace merlin {
 // Conversion Python sequence <-> merlin vector
 // --------------------------------------------
 
-// Convert from Python to C++
+// Convert from Python to C++ vector
 template <typename T, class PySequence>
 Vector<T> pyseq_to_vector(const PySequence & py_seq) {
     Vector<T> cpp_vec(py_seq.size());
@@ -24,7 +26,23 @@ Vector<T> pyseq_to_vector(const PySequence & py_seq) {
     return cpp_vec;
 }
 
-// Convert from C++ to Python
+// Convert from Python to C++ array
+template <typename T, class PySequence>
+std::array<T, max_dim> pyseq_to_array(const PySequence & py_seq) {
+    std::array<T, max_dim> cpp_arr;
+    cpp_arr.fill(T());
+    if (py_seq.size() > max_dim) {
+        FAILURE(std::invalid_argument, "Exceeding maximum ndim (%" PRIu64 ").\n", max_dim);
+    }
+    std::uint64_t idx = 0;
+    for (auto it = py_seq.begin(); it != py_seq.end(); ++it) {
+        py::handle element = *it;
+        cpp_arr[idx++] = element.cast<T>();
+    }
+    return cpp_arr;
+}
+
+// Convert from C++ vector to Python
 template <typename T>
 py::list vector_to_pylist(const Vector<T> & vector) {
     py::list py_list;

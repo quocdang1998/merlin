@@ -32,12 +32,12 @@ static void wrap_nddata(py::module & array_module) {
     );
     nddata_pyclass.def_property_readonly(
         "shape",
-        [](const array::NdData & self) { return vector_to_pylist(self.shape()); },
+        [](const array::NdData & self) { return py::cast(self.shape()); },
         "Get shape vector."
     );
     nddata_pyclass.def_property_readonly(
         "strides",
-        [](const array::NdData & self) { return vector_to_pylist(self.strides()); },
+        [](const array::NdData & self) { return py::cast(self.strides()); },
         "Get stride vector."
     );
     nddata_pyclass.def_property_readonly(
@@ -59,7 +59,7 @@ static void wrap_nddata(py::module & array_module) {
     );
     nddata_pyclass.def(
         "get",
-        [](const array::NdData & self, py::tuple & index) { return self.get(pyseq_to_vector<std::uint64_t>(index)); },
+        [](const array::NdData & self, py::tuple & index) { return self.get(pyseq_to_array<std::uint64_t>(index)); },
         "Get value of element at a n-dim index.",
         py::arg("index")
     );
@@ -72,7 +72,7 @@ static void wrap_nddata(py::module & array_module) {
     nddata_pyclass.def(
         "set",
         [](array::NdData & self, py::tuple & index, double value) {
-            self.set(pyseq_to_vector<std::uint64_t>(index), value);
+            self.set(pyseq_to_array<std::uint64_t>(index), value);
         },
         "Set value of element at a ndim index.",
         py::arg("index"), py::arg("value")
@@ -123,7 +123,7 @@ static void wrap_array_(py::module & array_module) {
                     throw std::runtime_error("Incompatible format: expected a double array.");
                 }
                 std::uint64_t ndim(info.ndim);
-                merlin::intvec shape(info.ndim), strides(info.ndim);
+                merlin::UIntVec shape(info.ndim), strides(info.ndim);
                 for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
                     shape[i_dim] = std::uint64_t(info.shape[i_dim]);
                     strides[i_dim] = std::uint64_t(info.strides[i_dim]);
@@ -250,7 +250,7 @@ static void wrap_empty_constructors(py::module & array_module) {
     array_module.def(
         "empty_array",
         [](py::sequence & shape) {
-            return new array::Array(pyseq_to_vector<std::uint64_t>(shape));
+            return new array::Array(pyseq_to_array<std::uint64_t>(shape));
         },
         R"(
         Construct C-contiguous empty CPU array from shape vector.
@@ -265,7 +265,7 @@ static void wrap_empty_constructors(py::module & array_module) {
     array_module.def(
         "empty_parcel",
         [](py::sequence & shape) {
-            return new array::Parcel(pyseq_to_vector<std::uint64_t>(shape));
+            return new array::Parcel(pyseq_to_array<std::uint64_t>(shape));
         },
         R"(
         Construct C-contiguous empty GPU array from shape vector.
@@ -280,7 +280,7 @@ static void wrap_empty_constructors(py::module & array_module) {
     array_module.def(
         "empty_stock",
         [](const std::string & filename, py::sequence & shape, std::uint64_t offset, bool thread_safe) {
-            return new array::Stock(filename, pyseq_to_vector<std::uint64_t>(shape), offset, thread_safe);
+            return new array::Stock(filename, pyseq_to_array<std::uint64_t>(shape), offset, thread_safe);
         },
         R"(
         Open an empty file for storing data.
