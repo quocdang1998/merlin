@@ -46,8 +46,10 @@ void candy::rmse_cpu(const candy::Model * p_model, const array::Array * p_data, 
     count += thread_count;
     result += thread_rmse;
     Environment::mutex.unlock();
-    _Pragma("omp single")
-    result = std::sqrt(result / count);
+    _Pragma("omp barrier")
+    _Pragma("omp single") {
+        result = std::sqrt(result / count);
+    }
     _Pragma("omp barrier")
 }
 
@@ -84,6 +86,7 @@ void candy::rmae_cpu(const candy::Model * p_model, const array::Array * p_data, 
     count += thread_count;
     result = ((result < thread_rmae) ? thread_rmae : result);
     Environment::mutex.unlock();
+    _Pragma("omp barrier")
 }
 
 }  // namespace merlin

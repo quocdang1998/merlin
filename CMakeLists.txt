@@ -33,7 +33,7 @@ list(APPEND MERLIN_SRC_CPP
      candy/loss.cpp
      candy/model.cpp
      candy/optimizer.cpp
-     ##candy/trainer.cpp
+     candy/trainer.cpp
      cuda/device.cpp
      cuda/event.cpp
      cuda/graph.cpp
@@ -68,7 +68,7 @@ list(APPEND MERLIN_SRC_CU
      array/parcel.cu
      candy/model.cu
      candy/optimizer.cu
-     ##candy/trainer.cu
+     candy/trainer.cu
      cuda/device.cu
      cuda/event.cu
      cuda/graph.cu
@@ -82,7 +82,7 @@ list(APPEND MERLIN_SRC_CU
      splint/interpolator.cu
 )
 list(APPEND MERLIN_SRC_GLB
-     ##candy/trainer.glb
+     candy/trainer.glb
      cuda/device.glb
      # intpl/lagrange.glb
      # intpl/newton.glb

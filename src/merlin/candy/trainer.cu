@@ -48,9 +48,7 @@ candy::Model candy::Trainer::get_model(void) const {
     std::uint64_t ndim = model_gpu.ndim();
     std::uint64_t rank = model_gpu.rank();
     // get rshape
-    intvec model_rshape(ndim);
-    ::cudaMemcpy(model_rshape.data(), model_gpu.rshape().data(), ndim * sizeof(std::uint64_t),
-                 ::cudaMemcpyDeviceToHost);
+    Index model_rshape(model_gpu.rshape());
     // allocate result model
     for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
         model_rshape[i_dim] /= rank;
