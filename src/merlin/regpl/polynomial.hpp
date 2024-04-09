@@ -4,11 +4,11 @@
 
 #include <string>  // std::string
 
-#include "merlin/cuda_interface.hpp"  // __cuhostdev__
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/cuda_interface.hpp"     // __cuhostdev__
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/regpl/declaration.hpp"  // merlin::regpl::Polynomial
-#include "merlin/settings.hpp"  // merlin::Index
-#include "merlin/vector.hpp"  // merlin::DoubleVec, merlin::UIntVec
+#include "merlin/settings.hpp"           // merlin::Index
+#include "merlin/vector.hpp"             // merlin::DoubleVec, merlin::UIntVec
 
 namespace merlin {
 
@@ -68,7 +68,7 @@ class regpl::Polynomial {
     /** @brief Evaluate polynomial value at a given point.
      *  @param point Pointer to coordinates of the point.
      *  @param buffer Buffer memory for calculation.
-    */
+     */
     __cuhostdev__ double eval(const Point & point, Point & buffer) const noexcept;
     /// @}
 
@@ -146,6 +146,5 @@ class regpl::Polynomial {
 };
 
 }  // namespace merlin
-
 
 #endif  // MERLIN_REGPL_POLYNOMIAL_HPP_

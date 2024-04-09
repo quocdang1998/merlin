@@ -64,9 +64,7 @@ class candy::Trainer {
     candy::Trainer & operator=(const candy::Trainer & src) = delete;
     /** @brief Move constructor.*/
     Trainer(candy::Trainer && src) :
-    ndim_(src.ndim_),
-    synch_(std::move(src.synch_)),
-    shared_mem_size_(src.shared_mem_size_) {
+    ndim_(src.ndim_), synch_(std::move(src.synch_)), shared_mem_size_(src.shared_mem_size_) {
         this->p_model_ = std::exchange(src.p_model_, nullptr);
         this->p_data_ = std::exchange(src.p_data_, nullptr);
         this->p_optmz_ = std::exchange(src.p_optmz_, nullptr);

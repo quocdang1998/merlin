@@ -59,8 +59,7 @@ __cudevice__ void * grid::CartesianGrid::copy_by_block(grid::CartesianGrid * des
 }
 
 // Copy to shared memory
-__cudevice__ void * grid::CartesianGrid::copy_by_thread(grid::CartesianGrid * dest_ptr,
-                                                          void * grid_data_ptr) const {
+__cudevice__ void * grid::CartesianGrid::copy_by_thread(grid::CartesianGrid * dest_ptr, void * grid_data_ptr) const {
     // shallow copy of grid node, size and ndim
     double * p_grid_nodes = reinterpret_cast<double *>(grid_data_ptr);
     dest_ptr->grid_nodes_.data() = p_grid_nodes;

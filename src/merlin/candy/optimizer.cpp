@@ -130,7 +130,7 @@ void candy::Optimizer::update_cpu(candy::Model & model, const candy::Gradient & 
         candy::optmz::GradDescent::update_cpu,
         candy::optmz::AdaGrad::update_cpu,
         candy::optmz::Adam::update_cpu,
-        candy::optmz::AdaDelta::update_cpu
+        candy::optmz::AdaDelta::update_cpu,
     };
     void * optimizer_algor = reinterpret_cast<void *>(&this->static_data);
     cpu_updater_func[this->static_data.index()](optimizer_algor, model, grad, thread_idx, n_threads);

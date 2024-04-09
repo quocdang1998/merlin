@@ -17,7 +17,7 @@ __cuhostdev__ static inline std::int64_t leaping_dimension(const std::uint64_t &
     bool not_detected = true;
     for (std::int64_t i_dim = ndim - 1; i_dim >= 0; i_dim--) {
         nd_index = (i_term / cum_prod) % shape[i_dim];
-        leaping_dim = ((nd_index == 0) && not_detected) ? leaping_dim-1 : leaping_dim;
+        leaping_dim = ((nd_index == 0) && not_detected) ? leaping_dim - 1 : leaping_dim;
         not_detected &= (nd_index == 0);
         cum_prod *= shape[i_dim];
     }

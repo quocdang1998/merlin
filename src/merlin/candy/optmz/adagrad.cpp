@@ -30,7 +30,7 @@ void candy::optmz::AdaGrad::update_cpu(void * optimizer_algor, candy::Model & mo
         correction /= std::sqrt(grad_history + algor.bias);
         model[i_param] -= correction;
     }
-    _Pragma("omp barrier")
+    _Pragma("omp barrier");
 }
 
 }  // namespace merlin

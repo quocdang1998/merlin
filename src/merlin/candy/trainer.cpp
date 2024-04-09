@@ -73,7 +73,7 @@ void candy::train_by_cpu(std::future<void> && synch, candy::Model * p_model, arr
                 gradient.calc_by_cpu(*p_model, *p_data, thread_idx, n_threads, index_mem);
                 p_optimizer->update_cpu(*p_model, gradient, thread_idx, n_threads);
             }
-            _Pragma("omp barrier")
+            _Pragma("omp barrier");
             candy::rmse_cpu(p_model, p_data, posteriori_error, normal_count, thread_idx, n_threads, index_mem);
         }
         double rel_err = std::abs(priori_error - posteriori_error) / posteriori_error;
@@ -98,7 +98,7 @@ void candy::train_by_gpu(candy::Model * p_model, array::Parcel * p_data, candy::
 
 // Constructor a trainer on CPU
 candy::Trainer::Trainer(const candy::Model & model, array::Array && data, const candy::Optimizer & optimizer,
-                        ProcessorType processor) : ndim_(model.ndim()) {
+                        ProcessorType processor) {
     // check arguments
     if (model.ndim() != data.ndim()) {
         FAILURE(std::invalid_argument, "Model and train data have inconsistent ndim.\n");
@@ -111,7 +111,8 @@ candy::Trainer::Trainer(const candy::Model & model, array::Array && data, const 
     if (!(optimizer.is_compatible(model))) {
         FAILURE(std::invalid_argument, "Model and Optimizer are incompatible.\n");
     }
-    // copy and allocate data on CPU
+    // copy and allocate data
+    this->ndim_ = model.ndim();
     if (processor == ProcessorType::Cpu) {
         this->p_model_ = new candy::Model(model);
         this->p_data_ = new array::Array(std::forward<array::Array>(data));

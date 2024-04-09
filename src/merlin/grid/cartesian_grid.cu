@@ -10,7 +10,7 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 void * grid::CartesianGrid::copy_to_gpu(grid::CartesianGrid * gpu_ptr, void * grid_data_ptr,
-                                          std::uintptr_t stream_ptr) const {
+                                        std::uintptr_t stream_ptr) const {
     // initialize buffer to store data of the copy before cloning it to GPU
     grid::CartesianGrid copy_on_gpu;
     // copy grid shape, ndim and size

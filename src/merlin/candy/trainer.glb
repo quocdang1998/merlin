@@ -15,7 +15,6 @@ namespace merlin {
 // Utility
 // ---------------------------------------------------------------------------------------------------------------------
 
-
 // Update based on error
 __device__ inline void update_go_on(double & priori_error, double & posteriori_error, const double & threshold,
                                     bool & go_on, bool & local_go_on, const std::uint64_t & thread_idx) {

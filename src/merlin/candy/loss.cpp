@@ -27,7 +27,7 @@ void candy::rmse_cpu(const candy::Model * p_model, const array::Array * p_data, 
         result = 0.0;
         count = 0;
     }
-    _Pragma("omp barrier")
+    _Pragma("omp barrier");
     // summing on all points
     for (std::uint64_t i_point = thread_idx; i_point < p_data->size(); i_point += n_threads) {
         contiguous_to_ndim_idx(i_point, p_data->shape().data(), p_data->ndim(), index_mem.data());
@@ -40,17 +40,15 @@ void candy::rmse_cpu(const candy::Model * p_model, const array::Array * p_data, 
         double rel_err = (x_model - x_data) / x_data;
         thread_rmse += rel_err * rel_err;
     }
-    _Pragma("omp barrier")
+    _Pragma("omp barrier");
     // accumulate
     Environment::mutex.lock();
     count += thread_count;
     result += thread_rmse;
     Environment::mutex.unlock();
-    _Pragma("omp barrier")
-    _Pragma("omp single") {
-        result = std::sqrt(result / count);
-    }
-    _Pragma("omp barrier")
+    _Pragma("omp barrier");
+    _Pragma("omp single") { result = std::sqrt(result / count); }
+    _Pragma("omp barrier");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -67,7 +65,7 @@ void candy::rmae_cpu(const candy::Model * p_model, const array::Array * p_data, 
         result = 0.0;
         count = 0;
     }
-    _Pragma("omp barrier")
+    _Pragma("omp barrier");
     // summing on all points
     for (std::uint64_t i_point = thread_idx; i_point < p_data->size(); i_point += n_threads) {
         contiguous_to_ndim_idx(i_point, p_data->shape().data(), p_data->ndim(), index_mem.data());
@@ -80,13 +78,13 @@ void candy::rmae_cpu(const candy::Model * p_model, const array::Array * p_data, 
         double rel_err = std::abs(x_model - x_data) / x_data;
         thread_rmae = ((thread_rmae < rel_err) ? rel_err : thread_rmae);
     }
-    _Pragma("omp barrier")
+    _Pragma("omp barrier");
     // accumulate
     Environment::mutex.lock();
     count += thread_count;
     result = ((result < thread_rmae) ? thread_rmae : result);
     Environment::mutex.unlock();
-    _Pragma("omp barrier")
+    _Pragma("omp barrier");
 }
 
 }  // namespace merlin

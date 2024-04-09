@@ -3,12 +3,6 @@
 
 #include <array>  // std::array
 
-#if defined(__MERLIN_LINUX__)
-    #include <cmath>  // std::isfinite, std::isnormal
-#elif defined(__MERLIN_WINDOWS__)
-    #include <math.h>  // isfinite, isnormal
-#endif  // __MERLIN_LINUX__
-
 #include "merlin/array/nddata.hpp"  // merlin::array::NdData
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/utils.hpp"         // merlin::index_in_subsequence, merlin::is_normal

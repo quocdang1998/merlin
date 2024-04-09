@@ -52,6 +52,14 @@ py::list vector_to_pylist(const Vector<T> & vector) {
     return py_list;
 }
 
+// Convert from C++ array to Python
+template <typename T>
+py::list array_to_pylist(const std::array<T, max_dim> & array, std::uint64_t size) {
+    Vector<T> assigned_vector;
+    assigned_vector.assign(array.data(), size);
+    return vector_to_pylist(assigned_vector);
+}
+
 // Wrap Libraries
 // --------------
 

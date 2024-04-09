@@ -32,12 +32,12 @@ static void wrap_nddata(py::module & array_module) {
     );
     nddata_pyclass.def_property_readonly(
         "shape",
-        [](const array::NdData & self) { return py::cast(self.shape()); },
+        [](const array::NdData & self) { return array_to_pylist(self.shape(), self.ndim()); },
         "Get shape vector."
     );
     nddata_pyclass.def_property_readonly(
         "strides",
-        [](const array::NdData & self) { return py::cast(self.strides()); },
+        [](const array::NdData & self) { return array_to_pylist(self.strides(), self.ndim()); },
         "Get stride vector."
     );
     nddata_pyclass.def_property_readonly(

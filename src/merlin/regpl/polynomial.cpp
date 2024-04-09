@@ -1,15 +1,15 @@
 // Copyright 2024 quocdang1998
 #include "merlin/regpl/polynomial.hpp"
 
-#include <algorithm>  // std::stable_sort
-#include <cinttypes>  // PRIu64
+#include <algorithm>   // std::stable_sort
+#include <cinttypes>   // PRIu64
 #include <filesystem>  // std::filesystem::filesystem_error
-#include <numeric>  // std::iota
-#include <sstream>  // std::ostringstream
+#include <numeric>     // std::iota
+#include <sstream>     // std::ostringstream
 
 #include "merlin/filelock.hpp"  // merlin::FileLock
-#include "merlin/logger.hpp"  // FAILURE, merlin::cuda_compile_error
-#include "merlin/utils.hpp"  // merlin::prod_elements
+#include "merlin/logger.hpp"    // FAILURE, merlin::cuda_compile_error
+#include "merlin/utils.hpp"     // merlin::prod_elements
 
 namespace merlin {
 
@@ -45,7 +45,7 @@ order_(order) {
     };
     std::stable_sort(sorted_idx.begin(), sorted_idx.end(), sort_lambda);
     for (std::uint64_t i_term = 1; i_term < term_index.size(); i_term++) {
-        if (term_index[sorted_idx[i_term]] == term_index[sorted_idx[i_term-1]]) {
+        if (term_index[sorted_idx[i_term]] == term_index[sorted_idx[i_term - 1]]) {
             FAILURE(std::invalid_argument, "Found duplicated index.\n");
         }
     }
@@ -88,7 +88,7 @@ void regpl::Polynomial::save(const std::string & fname, bool lock) const {
     }
     FileLock flock(file_stream);
     // lambda write file
-    auto write_lambda = [&file_stream] (const void * data, std::size_t elem_size, std::size_t n_elems) {
+    auto write_lambda = [&file_stream](const void * data, std::size_t elem_size, std::size_t n_elems) {
         std::size_t success_written = std::fwrite(data, elem_size, n_elems, file_stream);
         if (success_written < n_elems) {
             FAILURE(std::filesystem::filesystem_error, "Error occurred when writing the file.\n");
@@ -120,7 +120,7 @@ void regpl::Polynomial::load(const std::string & fname, bool lock) {
     }
     FileLock flock(file_stream);
     // lambda read file
-    auto read_lambda = [&file_stream] (void * data, std::size_t elem_size, std::size_t n_elems) {
+    auto read_lambda = [&file_stream](void * data, std::size_t elem_size, std::size_t n_elems) {
         std::size_t success_read = std::fread(data, elem_size, n_elems, file_stream);
         if (success_read < n_elems) {
             FAILURE(std::filesystem::filesystem_error, "Error occurred when reading the file.\n");

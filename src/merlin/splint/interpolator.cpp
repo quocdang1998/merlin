@@ -75,8 +75,9 @@ ndim_(grid.ndim()), shared_mem_size_(grid.sharedmem_size()) {
 void splint::Interpolator::build_coefficients(std::uint64_t n_threads) {
     if (!(this->on_gpu())) {
         std::future<void> & current_sync = std::get<std::future<void>>(this->synchronizer_.synchronizer);
-        std::future<void> new_sync = std::async(std::launch::async, splint::construct_coeff_cpu, std::move(current_sync),
-                                                this->p_coeff_->data(), this->p_grid_, this->p_method_, n_threads);
+        std::future<void> new_sync = std::async(std::launch::async, splint::construct_coeff_cpu,
+                                                std::move(current_sync), this->p_coeff_->data(), this->p_grid_,
+                                                this->p_method_, n_threads);
         this->synchronizer_ = Synchronizer(std::move(new_sync));
     } else {
         cuda::Stream & stream = std::get<cuda::Stream>(this->synchronizer_.synchronizer);

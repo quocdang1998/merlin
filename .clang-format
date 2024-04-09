@@ -1,6 +1,5 @@
 Language:        Cpp
 BasedOnStyle:  LLVM
-AlignAfterOpenBracket: Align
 AlignArrayOfStructures: Right
 AlignConsecutiveAssignments:
   PadOperators:    false
@@ -67,3 +66,7 @@ Standard:        c++20
 RemoveBracesLLVM: false
 PenaltyBreakAssignment: 40
 AllowAllParametersOfDeclarationOnNextLine: false
+AlignAfterOpenBracket: Align  # only in C++
+# Python specific 
+#BinPackArguments: false
+#AlignAfterOpenBracket: BlockIndent
