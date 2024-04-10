@@ -53,6 +53,7 @@ __cuhostdev__ std::uint64_t get_leap(std::uint64_t index, const Index & shape, c
  *  of 4 and break index of 0.
  *  @param shape Shape vector.
  *  @param strides Strides vector.
+ *  @param ndim Number of dimension.
  */
 constexpr std::pair<std::uint64_t, std::int64_t> lcseg_and_brindex(const Index & shape, const Index & strides,
                                                                    std::uint64_t ndim) {
@@ -128,6 +129,7 @@ void fill(array::NdData * target, double fill_value, CopyFunction write_engine);
  *  @tparam CopyFunction Function copy an array to another, having the prototype of
  *  ``void WriteFunction(void * dest, const void * src, std::size_t size_in_bytes)``.
  *  @param target Target array to calculate mean and variance.
+ *  @param copy Name of the function copying data from array to process memory.
  *  @returns Mean and variance of the array.
  */
 template <class CopyFunction, std::uint64_t buffer = 1024>

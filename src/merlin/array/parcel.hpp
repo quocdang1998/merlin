@@ -125,7 +125,7 @@ class array::Parcel : public array::NdData {
                                       std::uint64_t block_size) const;
     /** @brief Copy metadata to a pre-allocated memory region by a single GPU threads.
      *  @param dest_ptr Memory region where the new object resides.
-     *  @param @param data_ptr Pointer to a pre-allocated GPU memory storing other data.
+     *  @param data_ptr Pointer to a pre-allocated GPU memory storing other data.
      */
     __cudevice__ void * copy_by_thread(array::Parcel * dest_ptr, void * data_ptr) const;
 #endif  // __NVCC__

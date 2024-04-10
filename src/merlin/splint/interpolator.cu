@@ -4,8 +4,6 @@
 #include <utility>  // std::move
 
 #include "merlin/array/parcel.hpp"    // merlin::array::Parcel
-#include "merlin/cuda_interface.hpp"  // merlin::cuda_mem_alloc, merlin::cuda_mem_cpy_device_to_host,
-                                      // merlin::cuda_mem_free
 #include "merlin/cuda/memory.hpp"     // merlin::cuda::Memory
 #include "merlin/env.hpp"             // merlin::Environment
 #include "merlin/logger.hpp"          // FAILURE
@@ -53,15 +51,16 @@ void splint::Interpolator::evaluate(const array::Parcel & points, DoubleVec & re
     }
     // get CUDA Stream
     cuda::Stream & stream = std::get<cuda::Stream>(this->synchronizer_.synchronizer);
+    ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr());
     std::uintptr_t current_ctx = stream.get_gpu().push_context();
     // evaluate interpolation
     std::uint64_t bytes_size = result.size() * sizeof(double);
-    void * result_gpu = cuda_mem_alloc(bytes_size, stream.get_stream_ptr());
+    double * result_gpu;
+    ::cudaMallocAsync(&result_gpu, bytes_size, cuda_stream);
     splint::eval_intpl_gpu(this->p_coeff_->data(), this->p_grid_, this->p_method_, points.data(), result.size(),
-                           reinterpret_cast<double *>(result_gpu), n_threads, this->ndim_, this->shared_mem_size_,
-                           &stream);
-    cuda_mem_cpy_device_to_host(result.data(), result_gpu, bytes_size, stream.get_stream_ptr());
-    cuda_mem_free(result_gpu, stream.get_stream_ptr());
+                           result_gpu, n_threads, this->ndim_, this->shared_mem_size_, &stream);
+    ::cudaMemcpyAsync(result.data(), result_gpu, bytes_size, ::cudaMemcpyDeviceToHost, cuda_stream);
+    ::cudaFreeAsync(result_gpu, cuda_stream);
     cuda::Device::pop_context(current_ctx);
 }
 

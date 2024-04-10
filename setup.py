@@ -15,13 +15,14 @@ from setup_cfg import build_ext, ext_options, copy_dll_libs
 #import pybind11
 from pybind11.setup_helpers import Pybind11Extension
 merlin_srclist = [
+    "merlin/main.cpp",
     "merlin/wrap_mics.cpp",
     "merlin/wrap_cuda.cpp",
     "merlin/wrap_array.cpp",
     "merlin/wrap_grid.cpp",
     "merlin/wrap_splint.cpp",
-    "merlin/wrap_candy.cpp",
     "merlin/wrap_regpl.cpp",
+    "merlin/wrap_candy.cpp",
 ]
 merlin_extensions = [
     Pybind11Extension("merlin.__init__", merlin_srclist, **ext_options)

@@ -38,6 +38,14 @@ MERLIN_EXPORTS void normalize(const double * src_vector, double * dest_vector, s
  */
 MERLIN_EXPORTS void dot(const double * vector1, const double * vector2, std::uint64_t size, double & result) noexcept;
 
+// Vector operation
+// ----------------
+
+/** @brief %Vector operation with another vector.
+ *  @details Perform the operation @f$ \boldsymbol{y} = a \boldsymbol{x} + \boldsymbol{y} @f$.
+ */
+MERLIN_EXPORTS void saxpy(double a, const double * x, double * y, std::uint64_t size) noexcept;
+
 // Householder reflection
 // ----------------------
 

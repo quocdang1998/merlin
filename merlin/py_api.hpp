@@ -56,7 +56,7 @@ py::list vector_to_pylist(const Vector<T> & vector) {
 template <typename T>
 py::list array_to_pylist(const std::array<T, max_dim> & array, std::uint64_t size) {
     Vector<T> assigned_vector;
-    assigned_vector.assign(array.data(), size);
+    assigned_vector.assign(const_cast<T*>(array.data()), size);
     return vector_to_pylist(assigned_vector);
 }
 

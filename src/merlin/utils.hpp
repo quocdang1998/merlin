@@ -161,6 +161,7 @@ __cuhostdev__ void ptr_to_subsequence(double * original, const std::uint64_t * d
 /** @brief Get index of sequence and index in that sequence of an index in original array.
  *  @param index_full_array Index in original array.
  *  @param divider_length Size of each subsequence dividing the original array.
+ *  @param num_seq Number of subsequences.
  *  @returns Index of the list, and index of the element in the list.
  *  @note If the index in full array overpass the last element in the sequence, the function will return the number of
  *  dimension, and the offset with respect to the last element in the sequence.

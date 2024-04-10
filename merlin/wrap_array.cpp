@@ -131,7 +131,8 @@ static void wrap_array_(py::module & array_module) {
                 return new merlin::array::Array(reinterpret_cast<double *>(info.ptr), shape, strides, copy);
             }
         ),
-        R"(Construct array from buffer memory (Numpy array, Pandas Array, etc).
+        R"(
+        Construct array from buffer memory (Numpy array, Pandas array, etc).
 
         Parameters
         ----------

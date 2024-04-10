@@ -5,117 +5,57 @@
 #include <cmath>    // std::fma
 
 #include "merlin/avx.hpp"     // merlin::PackedDouble, merlin::use_avx
+#include "merlin/linalg/matrix.hpp"  // merlin::linalg::Matrix
 #include "merlin/logger.hpp"  // WARNING
 
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
+// KernelMatrix
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Load a 4-size block of matrix into AVX memory
+static inline void load_triangular(const linalg::Matrix & total, std::uint64_t start_row, std::uint64_t start_col,
+                                   std::uint64_t size, linalg::KernelMatrix & kernel) {
+    const double * data = &(total.cget(start_row, start_col));
+    for (std::uint64_t i_col = 0; i_col < size; i_col++) {
+        kernel.core[i_col] = PackedDouble<use_avx>(data, i_col);
+        data += total.lead_dim();
+    }
+}
+
+// Solve triangular matrix
+static inline void solve_triangular(const linalg::KernelMatrix & kernel, std::uint64_t size, double * result) {
+    for (std::int64_t i_row = size - 1; i_row >= 0; i_row--) {
+        for (std::int64_t i_col = size - 1; i_col > i_row; i_col--) {
+            result[i_row] -= result[i_col] * kernel.core[i_col][i_row];
+        }
+        result[i_row] /= kernel.core[i_row][i_row];
+    }
+}
+
+// Substract an element from a vector by chunks
+static inline void block_substract(const double * column_vector, std::uint64_t nchunks, double elem, double * result) {
+    PackedDouble<use_avx> chunk_vector, chunk_result;
+    PackedDouble<use_avx> chunk_elem((-1.0) * elem);
+    for (std::uint64_t i_chunk = 0; i_chunk < nchunks; i_chunk++) {
+        chunk_vector = PackedDouble<use_avx>(column_vector);
+        chunk_result = PackedDouble<use_avx>(result);
+        chunk_result.fma(chunk_elem, chunk_vector);
+        chunk_result.store(result);
+        column_vector += 4;
+        result += 4;
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Upper Triangular
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Inverse remainder matrix
-static void triu_one_solve_remainder(const double * triu_matrix, std::uint64_t lda, const double * target,
-                                     double * solution, std::uint64_t remainder) noexcept {
-    PackedDouble<use_avx> clone_target(target, remainder);
-    switch (remainder) {
-        case 0: {
-            break;
-        }
-        case 1: {
-            break;
-        }    
-        case 2: {
-            clone_target[0] = std::fma((-1) * clone_target[1], triu_matrix[lda], clone_target[0]);
-            break;
-        }
-        case 3: {
-            clone_target[1] = std::fma((-1) * clone_target[2], triu_matrix[2 * lda + 1], clone_target[1]);
-            clone_target[0] = std::fma((-1) * clone_target[2], triu_matrix[2 * lda], clone_target[0]);
-            clone_target[0] = std::fma((-1) * clone_target[1], triu_matrix[lda], clone_target[0]);
-            break;
-        }
-    }
-    clone_target.store(solution, remainder);
-}
-
-static void triu_one_solve_block(const double * triu_matrix, std::uint64_t lda, const double * target,
-                                 double * solution) noexcept {
-    
-}
-
 // Solve an upper triangular matrix with ones on diagonal elemets
-void linalg::triu_one_solve(const double * triu_matrix, std::uint64_t lda, const double * target, double * solution,
-                            std::uint64_t size) noexcept {
-    std::uint64_t num_chunks = size / 4, remainder = size % 4;
-    // inverse remainder
-    const double * remainder_matrix = triu_matrix + (num_chunks * 4) * lda + (num_chunks * 4);
-    const double * remainder_target = target + (num_chunks * 4);
-    double * remainder_solution = solution + (num_chunks * 4);
-    triu_one_solve_remainder(remainder_matrix, lda, remainder_target, remainder_solution, remainder);
-    // subtract remainder amount to other column and copy result from target to solution
-    PackedDouble<use_avx> chunk_element, chunk_column, chunk_solution;
-    const double * ptr_target = target;
-    double * ptr_solution = solution;
-    for (std::uint64_t i_chunk = 0; i_chunk < num_chunks; i_chunk++) {
-        // copy values from target
-        chunk_solution = PackedDouble<use_avx>(ptr_target);
-        // subtract by remainder
-        for (std::uint64_t i_elem = 0; i_elem < remainder; i_elem++) {
-            chunk_element = PackedDouble<use_avx>((-1) * remainder_solution[i_elem]);
-            chunk_column = PackedDouble<use_avx>(triu_matrix + (num_chunks * 4 + i_elem) * lda + 4 * i_chunk);
-            chunk_solution.fma(chunk_element, chunk_column);
-        }
-        // write values back to solution
-        chunk_solution.store(ptr_solution);
-        // increment pointer
-        ptr_target += 4;
-        ptr_solution += 4;
-    }
-}
-
-// Solve a 4x4 block upper triangular matrix
-void linalg::__block_triu_no_avx(double * block_start, std::uint64_t lead_dim, double * output) {
-    // copy output
-    std::array<double, 4> solution;
-    for (std::uint64_t i = 0; i < 4; i++) {
-        solution[i] = output[i];
-    }
-    // divide by diagonal
-    std::array<double, 4> diag = {
-        block_start[0],
-        block_start[lead_dim + 1],
-        block_start[2 * lead_dim + 2],
-        block_start[3 * lead_dim + 3]
-    };
-    for (std::uint64_t i = 0; i < 4; i++) {
-        solution[i] /= diag[i];
-    }
-    // solve for each element
-    std::array<double, 4> column, broadcast;
-    for (std::int64_t i_col = 3; i_col > 0; i_col--) {
-        // broadcast i_col-th element from the solution into 4-sized vector
-        for (std::uint64_t j = 0; j < 4; j++) {
-            broadcast[j] = solution[i_col];
-        }
-        // copy i_col-th column from the matrix
-        for (std::uint64_t i_row = 0; i_row < i_col; i_row++) {
-            column[i_row] = block_start[i_col * lead_dim + i_row];
-        }
-        // zero diagonal element on the column
-        column[i_col] = 0;
-        // divide column by diag
-        for (std::uint64_t j = 0; j < 4; j++) {
-            column[j] /= diag[j];
-        }
-        // multiply column by broadcast and subtract the product from the solution
-        for (std::uint64_t j = 0; j < 4; j++) {
-            solution[j] = solution[j] - column[j] * broadcast[j];
-        }
-    }
-    // copy solution back to output
-    for (std::uint64_t i = 0; i < 4; i++) {
-        output[i] = solution[i];
-    }
+void linalg::triu_one_solve(const linalg::Matrix & triu_matrix, double * solution) noexcept {
+    std::uint64_t size = triu_matrix.ncol();
+    std::uint64_t nchunks = size / 4, remainder = size % 4, block_size = nchunks * 4;
 }
 
 }  // namespace merlin

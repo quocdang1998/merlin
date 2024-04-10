@@ -80,6 +80,17 @@ Multi-dimensional array
    merlin.array.Parcel
    merlin.array.Stock
 
+Empty array allocator
+^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.array.empty_array
+   merlin.array.empty_parcel
+   merlin.array.empty_stock
 
 Grid API
 --------
