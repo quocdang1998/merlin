@@ -4,7 +4,7 @@
 #include <array>  // std::array
 #include <cmath>  // std::fma, std::sqrt
 
-#include "merlin/avx.hpp"     // merlin::PackedDouble, merlin::use_avx
+#include "merlin/avx.hpp"     // merlin::AvxDouble, merlin::use_avx
 #include "merlin/logger.hpp"  // WARNING
 
 namespace merlin {
@@ -18,10 +18,10 @@ void linalg::norm(const double * vector, std::uint64_t size, double & result) no
     result = 0.0;
     std::uint64_t num_chunks = size / 4, remainder = size % 4;
     // calculate norm using avx on 4-double chunks
-    PackedDouble<use_avx> chunk_result;
-    PackedDouble<use_avx> clone_data;
+    AvxDouble<use_avx> chunk_result;
+    AvxDouble<use_avx> clone_data;
     for (std::uint64_t i_chunk = 0; i_chunk < num_chunks; i_chunk++) {
-        clone_data = PackedDouble<use_avx>(vector);
+        clone_data = AvxDouble<use_avx>(vector);
         chunk_result.fma(clone_data, clone_data);
         vector += 4;
     }
@@ -42,10 +42,10 @@ void linalg::normalize(const double * src_vector, double * dest_vector, std::uin
     norm = std::sqrt(norm);
     // divide by the norm on 4-double chunks
     std::uint64_t num_chunks = size / 4, remainder = size % 4;
-    PackedDouble<use_avx> chunk_data;
-    PackedDouble<use_avx> chunk_norm(norm);
+    AvxDouble<use_avx> chunk_data;
+    AvxDouble<use_avx> chunk_norm(norm);
     for (std::uint64_t i_chunk = 0; i_chunk < num_chunks; i_chunk++) {
-        chunk_data = PackedDouble<use_avx>(src_vector);
+        chunk_data = AvxDouble<use_avx>(src_vector);
         chunk_data.divide(chunk_norm);
         chunk_data.store(dest_vector);
         src_vector += 4;
@@ -66,11 +66,11 @@ void linalg::dot(const double * vector1, const double * vector2, std::uint64_t s
     result = 0.0;
     std::uint64_t num_chunks = size / 4, remainder = size % 4;
     // calculate dot product using avx on 4-double chunks
-    PackedDouble<use_avx> chunk_result;
-    PackedDouble<use_avx> chunk_vec1, chunk_vec2;
+    AvxDouble<use_avx> chunk_result;
+    AvxDouble<use_avx> chunk_vec1, chunk_vec2;
     for (std::uint64_t i_chunk = 0; i_chunk < num_chunks; i_chunk++) {
-        chunk_vec1 = PackedDouble<use_avx>(vector1);
-        chunk_vec2 = PackedDouble<use_avx>(vector2);
+        chunk_vec1 = AvxDouble<use_avx>(vector1);
+        chunk_vec2 = AvxDouble<use_avx>(vector2);
         chunk_result.fma(chunk_vec1, chunk_vec2);
         vector1 += 4;
         vector2 += 4;
@@ -92,11 +92,11 @@ void linalg::dot(const double * vector1, const double * vector2, std::uint64_t s
 void linalg::saxpy(double a, const double * x, double * y, std::uint64_t size) noexcept {
     std::uint64_t num_chunks = size / 4, remainder = size % 4;
     // performing linear update using avx on 4-double chunks
-    PackedDouble<use_avx> chunk_x, chunk_y;
-    PackedDouble<use_avx> chunk_a(a);
+    AvxDouble<use_avx> chunk_x, chunk_y;
+    AvxDouble<use_avx> chunk_a(a);
     for (std::uint64_t i_chunk = 0; i_chunk < num_chunks; i_chunk++) {
-        chunk_x = PackedDouble<use_avx>(x);
-        chunk_y = PackedDouble<use_avx>(y);
+        chunk_x = AvxDouble<use_avx>(x);
+        chunk_y = AvxDouble<use_avx>(y);
         chunk_y.fma(chunk_a, chunk_x);
         chunk_y.store(y);
         x += 4;
@@ -120,11 +120,11 @@ void linalg::householder(const double * reflector, double * target, std::uint64_
     inner_prod *= -2.0;
     // apply reflection by chunks
     std::uint64_t num_chunks = range / 4, remainder = range % 4;
-    PackedDouble<use_avx> factor(inner_prod);
-    PackedDouble<use_avx> chunk_reflector, chunk_target;
+    AvxDouble<use_avx> factor(inner_prod);
+    AvxDouble<use_avx> chunk_reflector, chunk_target;
     for (std::uint64_t i_chunk = 0; i_chunk < num_chunks; i_chunk++) {
-        chunk_reflector = PackedDouble<use_avx>(reflector);
-        chunk_target = PackedDouble<use_avx>(chunk_target);
+        chunk_reflector = AvxDouble<use_avx>(reflector);
+        chunk_target = AvxDouble<use_avx>(chunk_target);
         chunk_target.fma(factor, chunk_reflector);
         chunk_target.store(target);
         target += 4;

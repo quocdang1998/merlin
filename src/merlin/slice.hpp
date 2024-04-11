@@ -3,8 +3,9 @@
 #define MERLIN_SLICE_HPP_
 
 #include <array>             // std::array
-#include <cstdint>           // std::uint64_t, UINT64_MAX
+#include <cstdint>           // std::uint64_t
 #include <initializer_list>  // std::initializer_list
+#include <limits>            // std::numeric_limits
 #include <string>            // std::string
 
 #include "merlin/cuda_interface.hpp"  // __cuhostdev__
@@ -24,7 +25,8 @@ class Slice {
      *  @param stop Stop position.
      *  @param step Step.
      */
-    __cuhostdev__ Slice(std::uint64_t start = 0, std::uint64_t stop = UINT64_MAX, std::uint64_t step = 1);
+    __cuhostdev__ Slice(std::uint64_t start = 0, std::uint64_t stop = std::numeric_limits<std::uint64_t>::max(),
+                        std::uint64_t step = 1);
     /** @brief Constructor from initializer list.
      *  @param list An initializer list:
      *     - If empty, all elements of the dimension are taken.
@@ -111,7 +113,7 @@ class Slice {
     /** @brief Start index.*/
     std::uint64_t start_ = 0;
     /** @brief Stop index, count from last element.*/
-    std::uint64_t stop_ = UINT64_MAX;
+    std::uint64_t stop_ = std::numeric_limits<std::uint64_t>::max();
     /** @brief Step.*/
     std::uint64_t step_ = 1;
 

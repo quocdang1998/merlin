@@ -8,6 +8,7 @@
 #include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
 
 #if defined(__MERLIN_WINDOWS__)
+    #include <stdio.h>    // ::_fileno
     #include <cstring>    // std::memset
     #include <io.h>       // _get_osfhandle
     #include <windows.h>  // LockFileEx, UnlockFileEx, GetLastError

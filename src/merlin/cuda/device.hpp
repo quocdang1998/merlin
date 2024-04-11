@@ -2,7 +2,8 @@
 #ifndef MERLIN_CUDA_DEVICE_HPP_
 #define MERLIN_CUDA_DEVICE_HPP_
 
-#include <cstdint>  // std::uint64_t, std::uintptr_t, UINT64_MAX
+#include <cstdint>  // std::uint64_t, std::uintptr_t
+#include <limits>   // std::numeric_limits
 #include <string>   // std::string
 
 #include "merlin/cuda/declaration.hpp"   // merlin::cuda::Device
@@ -83,7 +84,8 @@ class cuda::Device {
      *  @return Value of the limit of the current GPU if argument ``size`` is not given, and the value of size
      *  otherwise.
      */
-    MERLIN_EXPORTS static std::uint64_t limit(cuda::DeviceLimit limit, std::uint64_t size = UINT64_MAX);
+    MERLIN_EXPORTS static std::uint64_t limit(cuda::DeviceLimit limit,
+                                              std::uint64_t size = std::numeric_limits<std::uint64_t>::max());
     /** @brief Reset GPU.
      *  @details Destroy all allocations and reset the state of the current GPU.
      */

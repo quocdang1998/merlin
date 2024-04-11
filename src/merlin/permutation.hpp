@@ -2,12 +2,12 @@
 #ifndef MERLIN_PERMUTATION_HPP_
 #define MERLIN_PERMUTATION_HPP_
 
+#include <string>   // std::string
 #include <utility>  // std::swap
-#include <string>  // std::string
 
 #include "merlin/cuda_interface.hpp"  // __cuhostdev__
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/vector.hpp"   // merlin::UIntVec
+#include "merlin/exports.hpp"         // MERLIN_EXPORTS
+#include "merlin/vector.hpp"          // merlin::UIntVec
 
 namespace merlin {
 

@@ -23,7 +23,7 @@ struct ThreadDivider {
             this->numthreads_pertask = 1;
             this->group_idx = thread_idx;
             this->thread_idx_in_group = 0;
-        } else{
+        } else {
             // when number of thread is bigger than number of task
             this->num_groups = num_task;
             std::uint64_t extra_thread = num_threads % num_task;

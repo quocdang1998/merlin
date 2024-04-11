@@ -39,8 +39,53 @@ void candy::create_trainer_gpu_ptr(const candy::Model & cpu_model, const array::
 
 #endif  // __MERLIN_CUDA__
 
+// Performing a copy of the model and the optimizer, and run an experimental session on CPU
+void candy::dryrun_by_cpu(std::future<void> && synch, bool * p_test, const candy::Model * p_model,
+                          const array::Array * p_data, const candy::Optimizer * p_optimizer, double * cpu_grad_mem,
+                          candy::TrainMetric metric, std::uint64_t max_iter, std::uint64_t n_threads) {
+    // finish old job
+    if (synch.valid()) {
+        synch.get();
+    }
+    // copy model and optimizer
+    candy::Model model_clone(*p_model);
+    candy::Optimizer optmz_clone(*p_optimizer);
+    // initialization
+    double priori_error = 0.0;
+    double posteriori_error;
+    std::uint64_t normal_count;
+    bool go_on = true;
+    // create gradient object
+    candy::Gradient gradient(cpu_grad_mem, model_clone.num_params(), metric);
+    // calculate error before training
+    _Pragma("omp parallel num_threads(n_threads)") {
+        Index index_mem;
+        index_mem.fill(0);
+        std::uint64_t thread_idx = ::omp_get_thread_num();
+        candy::rmse_cpu(&model_clone, p_data, posteriori_error, normal_count, thread_idx, n_threads, index_mem);
+    }
+    // do the training loop
+    for (std::uint64_t iter = 0; iter < max_iter; iter++) {
+        priori_error = posteriori_error;
+        _Pragma("omp parallel num_threads(n_threads)") {
+            Index index_mem;
+            index_mem.fill(0);
+            std::uint64_t thread_idx = ::omp_get_thread_num();
+            // gradient descent loop
+            gradient.calc_by_cpu(model_clone, *p_data, thread_idx, n_threads, index_mem);
+            optmz_clone.update_cpu(model_clone, gradient, thread_idx, n_threads);
+            candy::rmse_cpu(&model_clone, p_data, posteriori_error, normal_count, thread_idx, n_threads, index_mem);
+        }
+        if ((!is_normal(posteriori_error)) || (priori_error <= posteriori_error)) {
+            *p_test = false;
+            return;
+        }
+    }
+    *p_test = true;
+}
+
 // Train a model using CPU parallelism
-void candy::train_by_cpu(std::future<void> && synch, candy::Model * p_model, array::Array * p_data,
+void candy::train_by_cpu(std::future<void> && synch, candy::Model * p_model, const array::Array * p_data,
                          candy::Optimizer * p_optimizer, double * cpu_grad_mem, candy::TrainMetric metric,
                          std::uint64_t rep, double threshold, std::uint64_t n_threads) {
     // finish old job
@@ -84,7 +129,7 @@ void candy::train_by_cpu(std::future<void> && synch, candy::Model * p_model, arr
 #ifndef __MERLIN_CUDA__
 
 // Train a model using GPU parallelism
-void candy::train_by_gpu(candy::Model * p_model, array::Parcel * p_data, candy::Optimizer * p_optimizer,
+void candy::train_by_gpu(candy::Model * p_model, const array::Parcel * p_data, candy::Optimizer * p_optimizer,
                          candy::TrainMetric metric, std::uint64_t rep, std::uint64_t n_threads, std::uint64_t ndim,
                          double threshold, std::uint64_t shared_mem_size, cuda::Stream & stream) {
     FAILURE(cuda_compile_error, "Cannot invoke GPU function since merlin is not compiled with CUDA option.\n");
@@ -162,6 +207,21 @@ void candy::Trainer::update(std::uint64_t rep, double threshold, std::uint64_t n
                             n_threads, this->ndim_, threshold, this->shared_mem_size_, stream);
         pop_gpu();
     }
+}
+
+// Run the gradient update algorithm of the CP model for a certain number of iterations
+void candy::Trainer::dry_run(std::uint64_t max_iter, bool * p_test, std::uint64_t n_threads,
+                             candy::TrainMetric metric) {
+    if (this->on_gpu()) {
+        FAILURE(std::runtime_error, "Dry-run is unavailable on GPU.\n");
+    }
+    // launch asynchronously the dry-run on CPU
+    array::Array * p_train_data = static_cast<array::Array *>(this->p_data_);
+    std::future<void> & current_sync = std::get<std::future<void>>(this->synch_.synchronizer);
+    std::future<void> new_sync = std::async(std::launch::async, candy::dryrun_by_cpu, std::move(current_sync), p_test,
+                                            this->p_model_, p_train_data, this->p_optmz_, this->cpu_grad_mem_, metric,
+                                            max_iter, n_threads);
+    this->synch_ = Synchronizer(std::move(new_sync));
 }
 
 // Destructor

@@ -2,22 +2,10 @@
 #ifndef MERLIN_LINALG_TRI_SOLVE_HPP_
 #define MERLIN_LINALG_TRI_SOLVE_HPP_
 
-#include <cstdint>  // std::uint64_t
-
-#include "merlin/avx.hpp"      // merlin::PackedDouble, merlin::use_avx
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/exports.hpp"             // MERLIN_EXPORTS
 #include "merlin/linalg/declaration.hpp"  // merlin::Matrix
 
 namespace merlin::linalg {
-
-// Kernel matrix
-// -------------
-
-/** @brief Kernel of 4x4 matrix.*/
-struct KernelMatrix {
-    /** @brief Core object.*/
-    PackedDouble<use_avx> core[4];
-};
 
 // Upper triangular
 // ----------------
@@ -29,6 +17,14 @@ struct KernelMatrix {
  *  @param solution Pointer to the first element of the vector of solution.
  */
 MERLIN_EXPORTS void triu_one_solve(const linalg::Matrix & triu_matrix, double * solution) noexcept;
+
+/** @brief Solve an upper triangular matrix.
+ *  @details Solve upper triangular matrix. Sub-diagonal elements are ignored, only diagonal and upper-diagonal elements
+ *  are read.
+ *  @param triu_matrix Upper triangular matrix.
+ *  @param solution Pointer to the first element of the vector of solution.
+ */
+MERLIN_EXPORTS void triu_solve(const linalg::Matrix & triu_matrix, double * solution) noexcept;
 
 }  // namespace merlin::linalg
 

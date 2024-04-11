@@ -15,13 +15,16 @@ In case of non-CUDA compilation, ``__host__ __device__`` functions will becomes 
 Preliminary
 -----------
 
+Environment
+^^^^^^^^^^^
+
 .. doxysummary::
    :toctree: generated
 
    merlin::Environment
 
 Type aliasing
--------------
+^^^^^^^^^^^^^
 
 .. doxysummary::
    :toctree: generated
@@ -76,6 +79,15 @@ Enum types
    merlin::cuda::MemcpyKind
    merlin::cuda::NodeType
    merlin::cuda::StreamSetting
+
+Memory management helper
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::cuda::Memory
+   merlin::cuda::copy_objects
 
 Array API
 ---------
@@ -154,29 +166,27 @@ Vector inner product
 .. doxysummary::
    :toctree: generated
 
+   merlin::linalg::saxpy
    merlin::linalg::dot
    merlin::linalg::norm
+   merlin::linalg::normalize
    merlin::linalg::householder
 
-Solving linear system by QR decomposition
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Matrix
+^^^^^^
 
 .. doxysummary::
    :toctree: generated
 
    merlin::linalg::Matrix
 
-.. doxysummary::
-   :toctree: generated
-
-   merlin::linalg::qr_decomposition_cpu
-   merlin::linalg::qr_solve_cpu
+Triangular solver
+^^^^^^^^^^^^^^^^^
 
 .. doxysummary::
    :toctree: generated
 
-   merlin::linalg::qr_decomposition_gpu
-   merlin::linalg::qr_solve_gpu
+   merlin::linalg::triu_one_solve
 
 Canonical decomposition API
 ---------------------------
@@ -202,8 +212,8 @@ Metric error
    merlin::candy::rmse_gpu
    merlin::candy::rmae_gpu
 
-Model training algorithm
-^^^^^^^^^^^^^^^^^^^^^^^^
+Model training algorithms
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxysummary::
    :toctree: generated
@@ -248,6 +258,9 @@ Launch calculation
 Low level API
 -------------
 
+Log printing
+^^^^^^^^^^^^
+
 .. doxysummary::
    :toctree: generated
 
@@ -257,17 +270,43 @@ Low level API
    CUDAOUT
    CUDAERR
    CUHDERR
+   DEBUGLG
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::cuda_compile_error
+   merlin::cuda_runtime_error
+
+IO mutex
+^^^^^^^^
 
 .. doxysummary::
    :toctree: generated
 
    merlin::FileLock
 
+Get system info
+^^^^^^^^^^^^^^^
+
 .. doxysummary::
    :toctree: generated
 
    merlin::get_current_process_id
    merlin::get_time
+
+Vectorization
+^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::AvxFlag
+   merlin::use_avx
+   merlin::AvxDouble
+
+CUDA thread index
+^^^^^^^^^^^^^^^^^
 
 .. doxysummary::
    :toctree: generated
@@ -276,6 +315,9 @@ Low level API
    merlin::size_of_block
    merlin::flatten_block_index
    merlin::flatten_kernel_index
+
+Permutation
+^^^^^^^^^^^
 
 .. doxysummary::
    :toctree: generated

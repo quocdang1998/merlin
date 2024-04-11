@@ -62,6 +62,7 @@ list(APPEND MERLIN_SRC_CPP
      splint/tools.cpp
      ## stat/moment.cpp
      utils.cpp
+     vector.cpp
 )
 list(APPEND MERLIN_SRC_CU
      array/array.cu
@@ -80,6 +81,7 @@ list(APPEND MERLIN_SRC_CU
      regpl/polynomial.cu
      # regpl/regressor.cu
      splint/interpolator.cu
+     vector.cu
 )
 list(APPEND MERLIN_SRC_GLB
      candy/trainer.glb

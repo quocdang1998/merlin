@@ -3,6 +3,8 @@
 
 #include <cuda.h>  // ::cuStreamGetCtx, ::CUcontext, ::CUstream
 
+#include <algorithm>  // std::clamp
+
 #include "merlin/cuda/event.hpp"    // merlin::cuda::Event
 #include "merlin/cuda/graph.hpp"    // merlin::cuda::Graph
 #include "merlin/logger.hpp"        // cuda_runtime_error, FAILURE, WARNING
@@ -25,6 +27,7 @@ cuda::Stream::Stream(cuda::StreamSetting setting, int priority) {
         WARNING("Priority out of range (expected priority in range [%d, %d], got %d), the priority will be clamped.",
                 max_priority, min_priority, priority);
     }
+    priority = std::clamp(priority, min_priority, max_priority);
     // create a stream within the context
     ::cudaStream_t stream;
     ::cudaError_t err_ = ::cudaStreamCreateWithPriority(&stream, static_cast<unsigned int>(setting), priority);

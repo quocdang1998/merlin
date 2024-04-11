@@ -87,7 +87,7 @@ void array::fill(array::NdData * target, double fill_value, CopyFunction write_e
 }
 
 // Calculate mean and variance of an array
-template <class CopyFunction, std::uint64_t buffer = 1024>
+template <class CopyFunction, std::uint64_t buffer>
 requires array::TransferFunction<CopyFunction>
 std::array<double, 2> array::stat(const array::NdData * target, CopyFunction copy) {
     // trivial case: size zero

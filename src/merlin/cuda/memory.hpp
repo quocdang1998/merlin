@@ -55,7 +55,7 @@ class cuda::Memory {
 
     /** @brief Disown the memory.
      *  @details Release the pointer to GPU data, and the internal pointer is set to ``nullptr``. After calling this
-     *  method, GPU pointers contained by the object zill no longer be valid anymore.
+     *  method, GPU pointers contained by the object will no longer be valid anymore.
      */
     void * disown(void) noexcept { return std::exchange(this->gpu_ptr_, nullptr); }
 

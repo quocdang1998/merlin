@@ -26,7 +26,7 @@ void wrap_model(py::module & candy_module) {
         ),
         R"(
         Constructor from train data shape and rank.
-        
+
         Parameters
         ----------
         shape : Sequence[int]
@@ -115,7 +115,7 @@ void wrap_model(py::module & candy_module) {
         [](candy::Model & self, const std::string & fname, bool lock) { self.save(fname, lock); },
         R"(
         Write model into a file.
-        
+
         Parameters
         ----------
         fname : str

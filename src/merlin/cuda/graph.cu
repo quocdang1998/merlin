@@ -300,6 +300,7 @@ void cuda::Graph::export_to_dot(const std::string & filename) {
 void cuda::Graph::execute(const cuda::Stream & stream) {
     ::cudaGraphExec_t exec_graph;
     char log_buffer[256];
+    std::memset(log_buffer, 0, sizeof(log_buffer));
     ::cudaError_t err_ = ::cudaGraphInstantiate(&exec_graph, reinterpret_cast<::cudaGraph_t>(this->graph_ptr_), nullptr,
                                                 log_buffer, sizeof(log_buffer));
     if (err_ != 0) {

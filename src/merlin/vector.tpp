@@ -119,12 +119,12 @@ __cuhostdev__ void Vector<T>::assign(T * ptr_first, T * ptr_last) {
 template <typename T>
 void * Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr, std::uintptr_t stream_ptr) const {
     // copy data
-    cuda_mem_cpy_host_to_device(data_ptr, this->data_, this->size_ * sizeof(T), stream_ptr);
+    vector_cpy_to_gpu(data_ptr, this->data_, this->size_ * sizeof(T), stream_ptr);
     // initialize an object containing metadata and copy it to GPU
     Vector<T> copy_on_gpu;
     copy_on_gpu.data_ = reinterpret_cast<T *>(data_ptr);
     copy_on_gpu.size_ = this->size_;
-    cuda_mem_cpy_host_to_device(gpu_ptr, &copy_on_gpu, sizeof(Vector<T>), stream_ptr);
+    vector_cpy_to_gpu(gpu_ptr, &copy_on_gpu, sizeof(Vector<T>), stream_ptr);
     // nullify data on copy to avoid deallocate memory on CPU
     copy_on_gpu.data_ = nullptr;
     std::uintptr_t ptr_end = reinterpret_cast<std::uintptr_t>(data_ptr) + this->size_ * sizeof(T);
@@ -135,7 +135,7 @@ void * Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr, std::uintptr
 template <typename T>
 void * Vector<T>::copy_from_gpu(T * gpu_ptr, std::uintptr_t stream_ptr) {
     // copy data from GPU
-    cuda_mem_cpy_device_to_host(this->data_, gpu_ptr, this->size_ * sizeof(T), stream_ptr);
+    vector_cpy_from_gpu(this->data_, gpu_ptr, this->size_ * sizeof(T), stream_ptr);
     return reinterpret_cast<void *>(gpu_ptr + this->size_);
 }
 
@@ -177,13 +177,13 @@ __cudevice__ void * Vector<T>::copy_by_thread(Vector<T> * dest_ptr, void * data_
 #endif  // __NVCC__
 
 template <typename T>
-concept Streamable = requires (std::ostream & os, const T & obj) {
-    {os << obj} -> std::same_as<std::ostream &>;
+concept Streamable = requires(std::ostream & os, const T & obj) {
+    { os << obj } -> std::same_as<std::ostream &>;
 };
 
 template <typename T>
-concept Representable = requires (const T & obj) {
-    {obj.str()} -> std::convertible_to<std::string>;
+concept Representable = requires(const T & obj) {
+    { obj.str() } -> std::convertible_to<std::string>;
 };
 
 // String representation for types printdable to std::ostream

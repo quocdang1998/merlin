@@ -46,11 +46,11 @@ class linalg::Matrix {
     /// @{
     /** @brief Get reference to element at a given row and column index.*/
     constexpr double & get(std::uint64_t irow, std::uint64_t icol) noexcept {
-        return *(this->data_ + irow * this->ld_ + icol);
+        return *(this->data_ + irow + this->ld_ * icol);
     }
     /** @brief Get constant reference to element at a given row and column index.*/
     constexpr const double & cget(std::uint64_t irow, std::uint64_t icol) const noexcept {
-        return *(this->data_ + irow * this->ld_ + icol);
+        return *(this->data_ + irow + this->ld_ * icol);
     }
     /// @}
 

@@ -1,17 +1,18 @@
-#include "merlin/filelock.hpp"  // merlin::array::FileLock
-#include "merlin/logger.hpp"
-
+#include <chrono>
 #include <cstdio>
-#include <thread>         // std::this_thread::sleep_for
-#include <chrono>         // std::chrono::seconds
 #include <fstream>
 #include <string>
+#include <thread>
+
+#include "merlin/filelock.hpp"
+#include "merlin/logger.hpp"
 
 int main(int argc, char * argv[]) {
+    using namespace merlin;
 
     if (argc != 2) {
         FAILURE(std::invalid_argument, "Expected exactly 1 argument too run. Enter \"1\" for creating the file, \"2\" "
-                "for reading the file, and anything for append content to the file.");
+                                       "for reading the file, and anything for append content to the file.");
     }
     std::string arg(argv[1]);
     if (arg.compare("1") == 0) {

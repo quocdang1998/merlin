@@ -198,7 +198,7 @@ void cuda::Device::pop_context(std::uintptr_t previous_context) {
 // Get and set GPU limit
 std::uint64_t cuda::Device::limit(cuda::DeviceLimit limit, std::uint64_t size) {
     std::uint64_t result;
-    if (size == UINT64_MAX) {
+    if (size == std::numeric_limits<std::uint64_t>::max()) {
         size_t limit_value;
         ::cudaDeviceGetLimit(&limit_value, static_cast<::cudaLimit>(limit));
         result = static_cast<std::uint64_t>(limit_value);

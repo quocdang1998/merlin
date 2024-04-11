@@ -13,7 +13,7 @@ namespace merlin {
 // Create an empty matrix from shape
 linalg::Matrix::Matrix(const std::array<std::uint64_t, 2> & shape) : shape_(shape) {
     this->ld_ = shape[0];
-    this->data_ = new (std::align_val_t(32)) double[shape[0] * shape[1]];
+    this->data_ = static_cast<double *>(::operator new[](sizeof(double) * shape[0] * shape[1], std::align_val_t(32)));
 }
 
 // String representation
@@ -40,7 +40,7 @@ std::string linalg::Matrix::str(void) const {
 // Default destructor
 linalg::Matrix::~Matrix(void) {
     if (this->data_ != nullptr) {
-        delete[] this->data_;
+        ::operator delete[](this->data_, sizeof(double) * this->shape_[0] * this->shape_[1], std::align_val_t(32));
     }
 }
 

@@ -123,12 +123,12 @@ static void wrap_array_(py::module & array_module) {
                     throw std::runtime_error("Incompatible format: expected a double array.");
                 }
                 std::uint64_t ndim(info.ndim);
-                merlin::UIntVec shape(info.ndim), strides(info.ndim);
+                UIntVec shape(info.ndim), strides(info.ndim);
                 for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
                     shape[i_dim] = std::uint64_t(info.shape[i_dim]);
                     strides[i_dim] = std::uint64_t(info.strides[i_dim]);
                 }
-                return new merlin::array::Array(reinterpret_cast<double *>(info.ptr), shape, strides, copy);
+                return new array::Array(reinterpret_cast<double *>(info.ptr), shape, strides, copy);
             }
         ),
         R"(

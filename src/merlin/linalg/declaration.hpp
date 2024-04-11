@@ -4,6 +4,7 @@
 
 namespace merlin::linalg {
 class Matrix;
+class QRPDecomp;
 }  // namespace merlin::linalg
 
 #endif  // MERLIN_LINALG_DECLARATION_HPP_

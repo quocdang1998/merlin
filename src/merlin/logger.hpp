@@ -84,8 +84,7 @@ MERLINSHARED_EXPORTS void print_stacktrace(int skip = 1);
  */
 #if defined(__MERLIN_DEBUG__)
     #define CASSERT(condition, ERROR_MACRO, exception, fmt, ...)                                                       \
-        if (condition)                                                                                                 \
-            ERROR_MACRO(exception, fmt, ##__VA_ARGS__)
+        if (condition) ERROR_MACRO(exception, fmt, ##__VA_ARGS__)
 #else
     #define CASSERT(condition, ERROR_MACRO, exception, fmt, ...)
 #endif  // __MERLIN_DEBUG__
