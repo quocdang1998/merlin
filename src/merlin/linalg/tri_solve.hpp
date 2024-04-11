@@ -2,22 +2,10 @@
 #ifndef MERLIN_LINALG_TRI_SOLVE_HPP_
 #define MERLIN_LINALG_TRI_SOLVE_HPP_
 
-#include <cstdint>  // std::uint64_t
-
-#include "merlin/avx.hpp"      // merlin::PackedDouble, merlin::use_avx
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
 #include "merlin/linalg/declaration.hpp"  // merlin::Matrix
 
 namespace merlin::linalg {
-
-// Kernel matrix
-// -------------
-
-/** @brief Kernel of 4x4 matrix.*/
-struct KernelMatrix {
-    /** @brief Core object.*/
-    PackedDouble<use_avx> core[4];
-};
 
 // Upper triangular
 // ----------------

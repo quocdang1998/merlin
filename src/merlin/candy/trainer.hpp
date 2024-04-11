@@ -8,7 +8,6 @@
 #include "merlin/cuda/declaration.hpp"   // merlin::cuda::Stream
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/synchronizer.hpp"       // merlin::ProcessorType, merlin::Synchronizer
-#include "merlin/vector.hpp"             // merlin::intvec
 
 namespace merlin {
 

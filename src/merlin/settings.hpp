@@ -31,7 +31,7 @@ requires ConvertibleFromIterator<T, ForwardIterator>
 std::array<T, max_dim> make_array(ForwardIterator begin, ForwardIterator end) {
     std::array<T, max_dim> result_array;
     result_array.fill(T());
-    T * it_arr = result_array.begin();
+    typename std::array<T, max_dim>::iterator it_arr = result_array.begin();
     for (ForwardIterator it = begin; it != end; ++it) {
         *(it_arr++) = *(it);
     }

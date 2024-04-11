@@ -23,6 +23,7 @@ PREDEFINED             = "__cuhost__=__host__" \
                          "__cudevice__=__device__" \
                          "__cuhostdev__=__host__ __device__" \
                          "__NVCC__=1" \
+                         "__DOXYGEN_PARSER__=1" \
                          "MERLIN_EXPORTS=1" \
                          "MERLINSHARED_EXPORTS=1" \
                          "MERLIN_HOSTDEV_EXPORTS=1" \
