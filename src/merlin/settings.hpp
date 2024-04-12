@@ -1,8 +1,8 @@
 #ifndef MERLIN_SETTINGS_HPP_
 #define MERLIN_SETTINGS_HPP_
 
-#include <array>    // std::array
-#include <cstdint>  // std::uint64_t
+#include <array>             // std::array
+#include <cstdint>           // std::uint64_t
 #include <initializer_list>  // std::initializer_list
 
 namespace merlin {
@@ -20,14 +20,14 @@ using Point = std::array<double, max_dim>;
 using DPtrArray = std::array<double *, max_dim>;
 
 /** @brief Convertible from pointer.*/
-template<class T, class ForwardIterator>
+template <class T, class ForwardIterator>
 concept ConvertibleFromIterator = requires(ForwardIterator it) {
-    {*it} -> std::convertible_to<T>;
+    { *it } -> std::convertible_to<T>;
 };
 
 /** @brief Make an array from another container.*/
 template <class T, class ForwardIterator>
-requires ConvertibleFromIterator<T, ForwardIterator>
+    requires ConvertibleFromIterator<T, ForwardIterator>
 std::array<T, max_dim> make_array(ForwardIterator begin, ForwardIterator end) {
     std::array<T, max_dim> result_array;
     result_array.fill(T());
@@ -37,7 +37,6 @@ std::array<T, max_dim> make_array(ForwardIterator begin, ForwardIterator end) {
     }
     return result_array;
 }
-
 
 /** @brief Make an array from incomplet initializer list.*/
 template <class T>

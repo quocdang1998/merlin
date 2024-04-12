@@ -34,6 +34,16 @@ int main(void) {
     // candy::Optimizer opt = candy::create_adadelta(20.0, 0.9, model);
 
     candy::Trainer train(model, std::move(train_data), opt);
+
+    // test dry-run
+    bool test;
+    train.dry_run(100, &test, 4, candy::TrainMetric::RelativeSquare);
+    train.synchronize();
+    if (!test) {
+        FAILURE(std::runtime_error, "Provided optimizer not compatible with the model.\n");
+    }
+
+    // test official update
     train.update(10000, 1e-2, 3, candy::TrainMetric::RelativeSquare);
     train.synchronize();
     MESSAGE("Model eval: %f\n", train.get_model().eval({1,1}));

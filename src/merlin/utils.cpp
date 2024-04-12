@@ -61,7 +61,7 @@ UIntVec get_random_subset(std::uint64_t num_points, std::uint64_t i_max, std::ui
     std::iota(result.begin(), result.end(), i_min);
     std::int64_t largest_val = i_min + num_points;
     // swap with number out of range
-    for (std::int64_t i = i_max-1; i >= largest_val; i--) {
+    for (std::int64_t i = i_max - 1; i >= largest_val; i--) {
         std::uint64_t destination_idx = distribution(Environment::random_generator, param_t(i_min, i));
         if (destination_idx < largest_val) {
             result[destination_idx - i_min] = i;

@@ -2,11 +2,11 @@
 #include "merlin/permutation.hpp"
 
 #include <algorithm>  // std::fill_n, std::shuffle
-#include <numeric>  // std::iota
-#include <sstream>  // std::ostringstream
-#include <vector>   // std::vector
+#include <numeric>    // std::iota
+#include <sstream>    // std::ostringstream
+#include <vector>     // std::vector
 
-#include "merlin/env.hpp"  // merlin::Environment
+#include "merlin/env.hpp"     // merlin::Environment
 #include "merlin/logger.hpp"  // FAILURE
 
 namespace merlin {

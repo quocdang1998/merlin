@@ -3,11 +3,11 @@
 
 #include <utility>  // std::move
 
-#include "merlin/array/parcel.hpp"    // merlin::array::Parcel
-#include "merlin/cuda/memory.hpp"     // merlin::cuda::Memory
-#include "merlin/env.hpp"             // merlin::Environment
-#include "merlin/logger.hpp"          // FAILURE
-#include "merlin/splint/tools.hpp"    // merlin::splint::construct_coeff_gpu
+#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
+#include "merlin/cuda/memory.hpp"   // merlin::cuda::Memory
+#include "merlin/env.hpp"           // merlin::Environment
+#include "merlin/logger.hpp"        // FAILURE
+#include "merlin/splint/tools.hpp"  // merlin::splint::construct_coeff_gpu
 
 namespace merlin {
 

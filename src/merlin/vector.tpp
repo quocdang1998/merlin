@@ -177,13 +177,13 @@ __cudevice__ void * Vector<T>::copy_by_thread(Vector<T> * dest_ptr, void * data_
 #endif  // __NVCC__
 
 template <typename T>
-concept Streamable = requires (std::ostream & os, const T & obj) {
-    {os << obj} -> std::same_as<std::ostream &>;
+concept Streamable = requires(std::ostream & os, const T & obj) {
+    { os << obj } -> std::same_as<std::ostream &>;
 };
 
 template <typename T>
-concept Representable = requires (const T & obj) {
-    {obj.str()} -> std::convertible_to<std::string>;
+concept Representable = requires(const T & obj) {
+    { obj.str() } -> std::convertible_to<std::string>;
 };
 
 // String representation for types printdable to std::ostream

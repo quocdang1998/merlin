@@ -39,11 +39,11 @@ typedef void * native_frame_ptr_t;
 std::string throw_windows_last_error(unsigned long int last_error) {
     if (last_error != 0) {
         char * buffer = nullptr;
-        const unsigned long int format =
-            FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS;
-        unsigned long int size =
-            ::FormatMessageA(format, nullptr, last_error, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                             reinterpret_cast<char *>(&buffer), 0, nullptr);
+        const unsigned long int format = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+                                         FORMAT_MESSAGE_IGNORE_INSERTS;
+        unsigned long int size = ::FormatMessageA(format, nullptr, last_error,
+                                                  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                                                  reinterpret_cast<char *>(&buffer), 0, nullptr);
         return std::string(buffer, size);
     } else {
         return std::string();

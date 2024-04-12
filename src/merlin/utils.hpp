@@ -142,9 +142,10 @@ __cuhostdev__ std::int64_t increment_index(std::uint64_t * index, const std::uin
 /** @brief Decrease an n-dimensional index by one unit.
  *  @param index Multi-dimensional index.
  *  @param shape Shape vector.
+ *  @param ndim Number of dimension.
  *  @return Lowest changed dimension.
  */
-__cuhostdev__ std::int64_t decrement_index(UIntVec & index, const UIntVec & shape);
+__cuhostdev__ std::int64_t decrement_index(std::uint64_t * index, const std::uint64_t * shape, std::uint64_t ndim);
 
 // List Division
 // -------------
@@ -191,7 +192,7 @@ __cuhostdev__ std::array<std::uint64_t, 2> triangular_index(std::uint64_t index)
  *  @param i_min Index of min range.
  */
 MERLIN_EXPORTS UIntVec get_random_subset(std::uint64_t num_points, std::uint64_t i_max,
-                                        std::uint64_t i_min = 0) noexcept;
+                                         std::uint64_t i_min = 0) noexcept;
 
 }  // namespace merlin
 

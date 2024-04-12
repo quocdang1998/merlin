@@ -22,13 +22,18 @@ void create_trainer_gpu_ptr(const candy::Model & cpu_model, const array::Array &
                             array::NdData *& gpu_data, candy::Optimizer *& gpu_optimizer, array::Parcel *& parcel_data,
                             cuda::Stream & stream);
 
+/** @brief Performing a copy of the model and the optimizer, and run an experimental session on CPU.*/
+void dryrun_by_cpu(std::future<void> && synch, bool * p_test, const candy::Model * p_model, const array::Array * p_data,
+                   const candy::Optimizer * p_optimizer, double * cpu_grad_mem, candy::TrainMetric metric,
+                   std::uint64_t max_iter, std::uint64_t n_threads);
+
 /** @brief Train a model using CPU parallelism.*/
-void train_by_cpu(std::future<void> && synch, candy::Model * p_model, array::Array * p_data,
+void train_by_cpu(std::future<void> && synch, candy::Model * p_model, const array::Array * p_data,
                   candy::Optimizer * p_optimizer, double * cpu_grad_mem, candy::TrainMetric metric, std::uint64_t rep,
                   double threshold, std::uint64_t n_threads);
 
 /** @brief Train a model using GPU parallelism.*/
-void train_by_gpu(candy::Model * p_model, array::Parcel * p_data, candy::Optimizer * p_optimizer,
+void train_by_gpu(candy::Model * p_model, const array::Parcel * p_data, candy::Optimizer * p_optimizer,
                   candy::TrainMetric metric, std::uint64_t rep, std::uint64_t n_threads, std::uint64_t ndim,
                   double threshold, std::uint64_t shared_mem_size, cuda::Stream & stream);
 
@@ -86,7 +91,11 @@ class candy::Trainer {
 
     /// @name Get elements and attributes
     /// @{
-    /** @brief Get a copy to the current CP model.*/
+    /** @brief Get a copy to the current CP model.
+     *  @details This function will return a copy of the CP model referenced by the current object. The copy operation
+     *  will not calling any synchronization, and is performed by the current thread. Before calling this function,
+     *  ensure that the object is synchronized to avoid any data race during the copy operation.
+     */
     MERLIN_EXPORTS candy::Model get_model(void) const;
     /** @brief Get pointer to data.*/
     array::NdData * get_data_ptr(void) noexcept { return this->p_data_; }
@@ -104,6 +113,9 @@ class candy::Trainer {
     /// @name Train CP model based on gradient descent
     /// @{
     /** @brief Update CP model according to gradient.
+     *  @details Update CP model for a certain number of iterations, and check if the relative error after the training
+     *  process is smaller than a given threshold. If this is the case, break the training. Otherwise, continue to train
+     *  again and check.
      *  @warning This function will lock the mutex in GPU mode.
      *  @param rep Number of times to repeat the gradient descent update in each step.
      *  @param threshold Threshold to stop the training process.
@@ -112,6 +124,18 @@ class candy::Trainer {
      */
     MERLIN_EXPORTS void update(std::uint64_t rep, double threshold, std::uint64_t n_threads = 1,
                                candy::TrainMetric metric = candy::TrainMetric::RelativeSquare);
+    /** @brief Run the gradient update algorithm of the CP model for a certain number of iterations.
+     *  @details Create a copy of the current model and execute the gradient descent algorithm on that copy for a
+     *  certain iterations. If obtained error after an iteration is higher than the value before it, or the error is a
+     *  non-finite value, the function will return ``false``. If error keep deceasing until the last iteration, it will
+     *  return ``true``.
+     *  @param max_iter Max number of iterations.
+     *  @param p_test Pointer indicating if the dry-run test is passed or not.
+     *  @param n_threads Number of parallel threads for training the model.
+     *  @param metric Training metric for the model.
+     */
+    MERLIN_EXPORTS void dry_run(std::uint64_t max_iter, bool * p_test, std::uint64_t n_threads = 1,
+                                candy::TrainMetric metric = candy::TrainMetric::RelativeSquare);
     /// @}
 
     /// @name Synchronization

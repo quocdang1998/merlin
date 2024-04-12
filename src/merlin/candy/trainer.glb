@@ -29,7 +29,8 @@ __device__ inline void update_go_on(double & priori_error, double & posteriori_e
     local_go_on = go_on;
 }
 
-__global__ static void train_kernel(candy::Model * p_model, array::Parcel * p_data, candy::Optimizer * p_optmz,
+// training kernel
+__global__ static void train_kernel(candy::Model * p_model, const array::Parcel * p_data, candy::Optimizer * p_optmz,
                                     candy::TrainMetric metric, std::uint64_t rep, double threshold) {
     // get thread index and number of threads
     std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
@@ -72,7 +73,7 @@ __global__ static void train_kernel(candy::Model * p_model, array::Parcel * p_da
 }
 
 // Train a model using GPU parallelism
-void candy::train_by_gpu(candy::Model * p_model, array::Parcel * p_data, candy::Optimizer * p_optimizer,
+void candy::train_by_gpu(candy::Model * p_model, const array::Parcel * p_data, candy::Optimizer * p_optimizer,
                          candy::TrainMetric metric, std::uint64_t rep, std::uint64_t n_threads, std::uint64_t ndim,
                          double threshold, std::uint64_t shared_mem_size, cuda::Stream & stream) {
     // launch the calculation asynchronously on GPU

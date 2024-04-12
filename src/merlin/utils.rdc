@@ -67,16 +67,13 @@ __cuhostdev__ std::int64_t increment_index(std::uint64_t * index, const std::uin
         index[i_dim] = (keep_decresing) ? 0 : index[i_dim] + 1;
         not_dim_break = (i_dim != 0);
     } while (keep_decresing && not_dim_break);
-    return (keep_decresing) ? i_dim-1 : i_dim;
+    return (keep_decresing) ? i_dim - 1 : i_dim;
 }
 
 // Increment of n-dim index
-__cuhostdev__ std::int64_t decrement_index(UIntVec & index, const UIntVec & shape) {
-    // check size of 2 vectors
-    CASSERT(!is_same_size(index, shape), CUHDERR, std::invalid_argument,
-            "Size of index (%" PRIu64 ") and size of shape (%" PRIu64 ") are not equal.\n", index.size(), shape.size());
+__cuhostdev__ std::int64_t decrement_index(std::uint64_t * index, const std::uint64_t * shape, std::uint64_t ndim) {
     // decresing index
-    std::int64_t i_dim = index.size();
+    std::int64_t i_dim = ndim;
     bool keep_decresing, not_dim_break;
     do {
         i_dim--;
@@ -84,7 +81,7 @@ __cuhostdev__ std::int64_t decrement_index(UIntVec & index, const UIntVec & shap
         index[i_dim] = (keep_decresing) ? shape[i_dim] - 1 : index[i_dim] - 1;
         not_dim_break = (i_dim != 0);
     } while (keep_decresing && not_dim_break);
-    return (keep_decresing) ? i_dim-1 : i_dim;
+    return (keep_decresing) ? i_dim - 1 : i_dim;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
