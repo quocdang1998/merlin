@@ -5,7 +5,7 @@
 #include <algorithm>  // std::copy, std::fill_n, std::min, std::max
 #include <sstream>    // std::ostringstream
 
-#include "merlin/logger.hpp"  // WARNING, FAILURE
+#include "merlin/logger.hpp"  // merlin::Fatal, merlin::Warning
 #include "merlin/utils.hpp"   // merlin::inner_prod, merlin::prod_elements
 
 namespace merlin {
@@ -20,11 +20,11 @@ requires array::TransferFunction<CopyFunction>
 void array::copy(array::NdData * dest, const array::NdData * src, CopyFunction copy) {
     // check if shape vector are the same
     if (src->ndim() != dest->ndim()) {
-        FAILURE(std::invalid_argument, "Cannot copy array of different ndim (%u to %u).\n", src->ndim(), dest->ndim());
+        Fatal<std::invalid_argument>("Cannot copy array of different ndim (%u to %u).\n", src->ndim(), dest->ndim());
     }
     std::uint64_t ndim = src->ndim();
     if (!(dest->shape() == src->shape())) {
-        FAILURE(std::invalid_argument, "Expected shape of source equals shape of destination.\n");
+        Fatal<std::invalid_argument>("Expected shape of source equals shape of destination.\n");
     }
     // trivial case: size zero
     if (ndim == 0) {
@@ -92,7 +92,7 @@ requires array::TransferFunction<CopyFunction>
 std::array<double, 2> array::stat(const array::NdData * target, CopyFunction copy) {
     // trivial case: size zero
     if (target->ndim() == 0) {
-        WARNING("Zero-elements array do not have mean nor variance, return 0.\n");
+        Warning("Zero-elements array do not have mean nor variance, return 0.\n");
         return {0.0, 0.0};
     }
     // allocate a buffer and fill it with data
@@ -132,7 +132,7 @@ std::array<double, 2> array::stat(const array::NdData * target, CopyFunction cop
 template <class NdArray>
 std::string array::print(const NdArray * target, const std::string & nametype, bool first_call) {
     if (target->data() == nullptr) {
-        FAILURE(std::runtime_error, "Cannot access elements of non-initialized array.\n");
+        Fatal<std::runtime_error>("Cannot access elements of non-initialized array.\n");
     }
     std::ostringstream os;
     // trivial case

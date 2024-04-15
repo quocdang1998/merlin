@@ -13,7 +13,7 @@
                                        // merlin::array::copy, merlin::array::fill, merlin::array::print
 #include "merlin/array/parcel.hpp"     // merlin::array::Parcel
 #include "merlin/array/stock.hpp"      // merlin::array::Stock
-#include "merlin/logger.hpp"           // FAILURE
+#include "merlin/logger.hpp"           // merlin::Fatal
 #include "merlin/utils.hpp"            // merlin::inner_prod
 
 namespace merlin {
@@ -28,7 +28,7 @@ namespace merlin {
 double * array::allocate_memory(std::uint64_t size) {
     double * result = new double[size];
     if (result == nullptr) {
-        FAILURE(std::runtime_error, "Cannot allocate memory.\n");
+        Fatal<std::runtime_error>("Cannot allocate memory.\n");
     }
     return result;
 }
@@ -50,7 +50,7 @@ static inline void read_from_file(void * dest, std::FILE * file, const void * sr
     std::fseek(file, reinterpret_cast<std::uintptr_t>(src), SEEK_SET);
     std::uint64_t count = bytes / sizeof(double);
     if (std::fread(dest, sizeof(double), count, file) != count) {
-        FAILURE(std::ios_base::failure, "Read file error.\n");
+        Fatal<std::ios_base::failure>("Read file error.\n");
     }
 }
 
@@ -204,7 +204,7 @@ std::array<double, 2> array::Array::get_mean_variance(void) const { return array
 // Copy data from GPU array
 #ifndef __MERLIN_CUDA__
 void array::Array::clone_data_from_gpu(const array::Parcel & src, const cuda::Stream & stream) {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
+    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
 }
 #endif  // __MERLIN_CUDA__
 

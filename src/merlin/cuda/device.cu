@@ -8,7 +8,7 @@
 #include "cuda.h"  // ::CUcontext, ::cuCtxGetCurrent, ::cuCtxPopCurrent, ::cuCtxPushCurrent, ::cuDeviceGetName
 
 #include "merlin/env.hpp"     // merlin::Environment
-#include "merlin/logger.hpp"  // DEBUGLG, WARNING, FAILURE, cuda_runtime_error
+#include "merlin/logger.hpp"  // merlin::DebugLog, merlin::Warning, merlin::Fatal, merlin::cuda_runtime_error
 
 namespace merlin {
 
@@ -42,7 +42,7 @@ static int convert_SM_version_to_core(int major, int minor) {
     };
     int SM = (major << 4) + minor;
     if (num_gpu_arch_cores_per_SM.find(SM) == num_gpu_arch_cores_per_SM.end()) {
-        FAILURE(cuda_runtime_error, "Cannot detect SM number in the map \"num_gpu_arch_cores_per_SM\".\n");
+        Fatal<cuda_runtime_error>("Cannot detect SM number in the map \"num_gpu_arch_cores_per_SM\".\n");
     }
     return num_gpu_arch_cores_per_SM[SM];
 }
@@ -53,7 +53,7 @@ static inline std::uintptr_t get_current_context(void) {
     ::CUcontext current_ctx;
     ::cudaError_t err_ = static_cast<::cudaError_t>(::cuCtxGetCurrent(&current_ctx));
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Get current context failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Get current context failed with message \"%s\".\n", ::cudaGetErrorString(err_));
     }
     // a dummy context initialized (return nullptr)
     return reinterpret_cast<std::uintptr_t>(current_ctx);
@@ -66,7 +66,7 @@ static inline std::uintptr_t get_current_context(void) {
 // Print limit of device
 void cuda::Device::print_specification(void) const {
     if (this->id_ == -1) {
-        WARNING("Device initialized without a valid id (id = %d).\n", this->id_);
+        Warning("Device initialized without a valid id (id = %d).\n", this->id_);
     }
     ::cudaDeviceProp prop;
     ::cudaGetDeviceProperties(&prop, this->id_);
@@ -118,33 +118,33 @@ bool cuda::Device::test_gpu(void) const {
     // set device (also change the current context)
     err_ = ::cudaSetDevice(this->id_);
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "cudaSetDevice for id = %d failed with message \"%s\".\n", this->id_,
+        Fatal<cuda_runtime_error>("cudaSetDevice for id = %d failed with message \"%s\".\n", this->id_,
                 ::cudaGetErrorName(err_));
     }
     // malloc
     err_ = ::cudaMalloc(&gpu_int, 3 * sizeof(int));
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "cudaMalloc failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("cudaMalloc failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // copy to gpu
     err_ = ::cudaMemcpy(gpu_int, cpu_int, 3 * sizeof(int), cudaMemcpyHostToDevice);
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "cudaMemcpyHostToDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("cudaMemcpyHostToDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // launch kernel
     cuda::add_integers_on_gpu(gpu_int, gpu_int + 1, gpu_int + 2);
     err_ = ::cudaGetLastError();
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Launch kernel failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("Launch kernel failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // copy to cpu
     err_ = ::cudaMemcpy(cpu_int, gpu_int, 3 * sizeof(int), cudaMemcpyDeviceToHost);
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "cudaMemcpyDeviceToHost failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("cudaMemcpyDeviceToHost failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // check result
     if (cpu_int[2] != reference) {
-        WARNING("Expected result of adding %d and %d on GPU ID %d is %d, got %d.\n", cpu_int[0], cpu_int[1], this->id_,
+        Warning("Expected result of adding %d and %d on GPU ID %d is %d, got %d.\n", cpu_int[0], cpu_int[1], this->id_,
                 reference, cpu_int[2]);
         return false;
     }
@@ -156,25 +156,25 @@ void cuda::Device::set_as_current(void) const {
     // set GPU to current context
     ::cudaError_t err_ = ::cudaSetDevice(this->id_);
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "cudaSetDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("cudaSetDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
 }
 
 // Push the primary context associated to the GPU to the context stack
 std::uintptr_t cuda::Device::push_context(void) const {
-    DEBUGLG("Environment::mutex is locked.\n");
+    DebugLog("Environment::mutex is locked.\n");
     Environment::mutex.lock();
     std::uintptr_t current_context = get_current_context();
     ::cudaError_t err_;
     if (current_context != 0) {
         err_ = static_cast<::cudaError_t>(::cuCtxPushCurrent(reinterpret_cast<::CUcontext>(current_context)));
         if (err_ != 0) {
-            FAILURE(cuda_runtime_error, "cuCtxPushCurrent failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+            Fatal<cuda_runtime_error>("cuCtxPushCurrent failed with message \"%s\".\n", ::cudaGetErrorName(err_));
         }
     }
     err_ = ::cudaSetDevice(this->id_);
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "cudaSetDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("cudaSetDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     return current_context;
 }
@@ -185,14 +185,14 @@ void cuda::Device::pop_context(std::uintptr_t previous_context) {
         ::CUcontext ctx;
         ::cudaError_t err_ = static_cast<::cudaError_t>(::cuCtxPopCurrent(&ctx));
         if (err_ != 0) {
-            FAILURE(cuda_runtime_error, "cuCtxPopCurrent failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+            Fatal<cuda_runtime_error>("cuCtxPopCurrent failed with message \"%s\".\n", ::cudaGetErrorName(err_));
         }
         if (previous_context != reinterpret_cast<std::uintptr_t>(ctx)) {
-            FAILURE(std::invalid_argument, "Wrong context provided.\n");
+            Fatal<std::invalid_argument>("Wrong context provided.\n");
         }
     }
     Environment::mutex.unlock();
-    DEBUGLG("Environment::mutex is unlocked.\n");
+    DebugLog("Environment::mutex is unlocked.\n");
 }
 
 // Get and set GPU limit
@@ -206,7 +206,7 @@ std::uint64_t cuda::Device::limit(cuda::DeviceLimit limit, std::uint64_t size) {
         size_t limit_value = static_cast<size_t>(size);
         ::cudaError_t err_ = ::cudaDeviceSetLimit(static_cast<::cudaLimit>(limit), limit_value);
         if (err_ != 0) {
-            FAILURE(cuda_runtime_error, "cudaDeviceSetLimit failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+            Fatal<cuda_runtime_error>("cudaDeviceSetLimit failed with message \"%s\".\n", ::cudaGetErrorName(err_));
         }
         result = size;
     }
@@ -220,7 +220,7 @@ void cuda::Device::reset_all(void) { ::cudaDeviceReset(); }
 void cuda::Device::synchronize(void) {
     ::cudaError_t err_ = ::cudaDeviceSynchronize();
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "cudaDeviceSynchronize failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("cudaDeviceSynchronize failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
 }
 
@@ -252,7 +252,7 @@ bool cuda::test_all_gpu(void) {
         cuda::Device gpu(i);
         result = result && gpu.test_gpu();
         if (!result) {
-            WARNING("\rCheck on device %d has failed.\n", i);
+            Warning("\rCheck on device %d has failed.\n", i);
         } else {
             std::printf("\r");
         }

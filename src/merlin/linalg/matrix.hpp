@@ -6,7 +6,6 @@
 #include <cstdint>  // std::uint64_t
 #include <string>   // std::string
 
-#include "merlin/cuda_interface.hpp"      // __cuhostdev__
 #include "merlin/exports.hpp"             // MERLIN_EXPORTS
 #include "merlin/linalg/declaration.hpp"  // merlin::linalg::Matrix
 
@@ -23,9 +22,10 @@ class linalg::Matrix {
     /** @brief Default constructor.*/
     MERLIN_EXPORTS Matrix(void) = default;
     /** @brief Create an empty matrix from shape.
-     *  @param shape Shape vector ``[nrow, ncol]``.
+     *  @param nrow Number of rows.
+     *  @param ncol Number of columns.
      */
-    MERLIN_EXPORTS Matrix(const std::array<std::uint64_t, 2> & shape);
+    MERLIN_EXPORTS Matrix(std::uint64_t nrow, std::uint64_t ncol);
     /// @}
 
     /// @name Get attributes

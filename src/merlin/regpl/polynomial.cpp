@@ -8,7 +8,7 @@
 #include <sstream>     // std::ostringstream
 
 #include "merlin/filelock.hpp"  // merlin::FileLock
-#include "merlin/logger.hpp"    // FAILURE, merlin::cuda_compile_error
+#include "merlin/logger.hpp"    // merlin::Fatal, merlin::cuda_compile_error
 #include "merlin/utils.hpp"     // merlin::prod_elements
 
 namespace merlin {
@@ -29,7 +29,7 @@ regpl::Polynomial::Polynomial(const DoubleVec & coeff, const Index & order) : or
     Index::const_iterator first_zero_element = std::find(order.begin(), order.end(), 0);
     this->ndim_ = std::distance(order.begin(), first_zero_element);
     if (coeff.size() != prod_elements(order.data(), this->ndim_)) {
-        FAILURE(std::invalid_argument, "Insufficient number of coefficients provided for the given order_per_dim.\n");
+        Fatal<std::invalid_argument>("Insufficient number of coefficients provided for the given order_per_dim.\n");
     }
     this->coeff_ = coeff;
 }
@@ -46,11 +46,11 @@ order_(order) {
     std::stable_sort(sorted_idx.begin(), sorted_idx.end(), sort_lambda);
     for (std::uint64_t i_term = 1; i_term < term_index.size(); i_term++) {
         if (term_index[sorted_idx[i_term]] == term_index[sorted_idx[i_term - 1]]) {
-            FAILURE(std::invalid_argument, "Found duplicated index.\n");
+            Fatal<std::invalid_argument>("Found duplicated index.\n");
         }
     }
     if (coeff.size() != term_index.size()) {
-        FAILURE(std::invalid_argument, "Inconsistent number of coefficients and index array.\n");
+        Fatal<std::invalid_argument>("Inconsistent number of coefficients and index array.\n");
     }
     // get ndim
     Index::const_iterator first_zero_element = std::find(order.begin(), order.end(), 0);
@@ -67,13 +67,13 @@ order_(order) {
 // Copy data to a pre-allocated memory
 void * regpl::Polynomial::copy_to_gpu(regpl::Polynomial * gpu_ptr, void * coeff_data_ptr,
                                       std::uintptr_t stream_ptr) const {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
+    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
     return nullptr;
 }
 
 // Copy data from GPU to CPU
 void * regpl::Polynomial::copy_from_gpu(double * data_from_gpu, std::uintptr_t stream_ptr) noexcept {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
+    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
     return nullptr;
 }
 
@@ -84,14 +84,14 @@ void regpl::Polynomial::save(const std::string & fname, bool lock) const {
     // open file
     std::FILE * file_stream = std::fopen(fname.c_str(), "wb");
     if (file_stream == nullptr) {
-        FAILURE(std::filesystem::filesystem_error, "Cannot create file %s\n", fname.c_str());
+        Fatal<std::filesystem::filesystem_error>("Cannot create file %s\n", fname.c_str());
     }
     FileLock flock(file_stream);
     // lambda write file
     auto write_lambda = [&file_stream](const void * data, std::size_t elem_size, std::size_t n_elems) {
         std::size_t success_written = std::fwrite(data, elem_size, n_elems, file_stream);
         if (success_written < n_elems) {
-            FAILURE(std::filesystem::filesystem_error, "Error occurred when writing the file.\n");
+            Fatal<std::filesystem::filesystem_error>("Error occurred when writing the file.\n");
         }
     };
     if (lock) {
@@ -116,14 +116,14 @@ void regpl::Polynomial::load(const std::string & fname, bool lock) {
     // open file
     std::FILE * file_stream = std::fopen(fname.c_str(), "rb");
     if (file_stream == nullptr) {
-        FAILURE(std::filesystem::filesystem_error, "Cannot read file %s\n", fname.c_str());
+        Fatal<std::filesystem::filesystem_error>("Cannot read file %s\n", fname.c_str());
     }
     FileLock flock(file_stream);
     // lambda read file
     auto read_lambda = [&file_stream](void * data, std::size_t elem_size, std::size_t n_elems) {
         std::size_t success_read = std::fread(data, elem_size, n_elems, file_stream);
         if (success_read < n_elems) {
-            FAILURE(std::filesystem::filesystem_error, "Error occurred when reading the file.\n");
+            Fatal<std::filesystem::filesystem_error>("Error occurred when reading the file.\n");
         }
     };
     if (lock) {

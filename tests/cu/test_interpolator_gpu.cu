@@ -2,7 +2,6 @@
 #include "merlin/array/parcel.hpp"
 #include "merlin/cuda/stream.hpp"
 #include "merlin/cuda/memory.hpp"
-#include "merlin/cuda_interface.hpp"
 #include "merlin/env.hpp"
 #include "merlin/grid/cartesian_grid.hpp"
 #include "merlin/splint/interpolator.hpp"
@@ -23,7 +22,7 @@ int main(void) {
     for (std::uint64_t i = 0; i < cart_gr.size(); i++) {
         value[i] = foo(cart_gr[i]);
     }
-    MESSAGE("Value: %s\n", value.str().c_str());
+    Message("Value: %s\n", value.str().c_str());
 
     // calculate Newton coefficients (CPU)
     Vector<splint::Method> methods = {
@@ -40,9 +39,9 @@ int main(void) {
     interp_cpu.build_coefficients(8);
     interp_gpu.build_coefficients(32);
     interp_cpu.synchronize();
-    MESSAGE("Coefficients calculated by CPU: %s\n", interp_cpu.get_coeff().str().c_str());
+    Message("Coefficients calculated by CPU: %s\n", interp_cpu.get_coeff().str().c_str());
     interp_gpu.synchronize();
-    MESSAGE("Coefficients calculated by GPU: %s\n", interp_gpu.get_coeff().str().c_str());
+    Message("Coefficients calculated by GPU: %s\n", interp_gpu.get_coeff().str().c_str());
 
     // initialize point
     double point_coordinates_data[9] = {0.0, 2.0, 1.0, 1.0, 1.0, 1.2, 0.5, 0.25, 2.4};
@@ -56,7 +55,7 @@ int main(void) {
     DoubleVec gpu_result(3);
     interp_gpu.evaluate(point_gpu, gpu_result, 32);
     interp_cpu.synchronize();
-    MESSAGE("Value evaluated by CPU: %s\n", cpu_result.str().c_str());
+    Message("Value evaluated by CPU: %s\n", cpu_result.str().c_str());
     interp_gpu.synchronize();
-    MESSAGE("Value evaluated by GPU: %s\n", gpu_result.str().c_str());
+    Message("Value evaluated by GPU: %s\n", gpu_result.str().c_str());
 }

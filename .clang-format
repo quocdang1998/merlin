@@ -50,11 +50,13 @@ IndentCaseLabels:    true
 InsertBraces:    true
 InsertNewlineAtEOF: true
 IndentPPDirectives: BeforeHash
+IndentRequiresClause: false
 IndentWrappedFunctionNames: true
 KeepEmptyLinesAtTheStartOfBlocks: false
 PackConstructorInitializers: NextLine
 PointerAlignment: Middle
 ReferenceAlignment: Middle
+RequiresClausePosition: OwnLine
 SpaceAfterCStyleCast: true
 SpaceBeforeCaseColon: true
 SpaceAroundPointerQualifiers: Both

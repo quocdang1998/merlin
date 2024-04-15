@@ -1,20 +1,12 @@
 // Copyright 2023 quocdang1998
 #include "py_api.hpp"
 
-#include <map>  // std::map
-
 #include "merlin/array/array.hpp"          // merlin::array::Array
 #include "merlin/grid/cartesian_grid.hpp"  // merlin::grid::CartesianGrid
 #include "merlin/splint/interpolator.hpp"  // merlin::splint::Interpolator
 #include "merlin/splint/tools.hpp"         // merlin::splint::Method
 
 namespace merlin {
-
-// wrap ProcessorType
-static const std::map<std::string, ProcessorType> proctype_map = {
-    {"cpu", ProcessorType::Cpu},
-    {"gpu", ProcessorType::Gpu}
-};
 
 // Wrap merlin::splint::Method enum
 static void wrap_method(py::module & splint_module) {

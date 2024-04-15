@@ -41,6 +41,16 @@ Type aliasing
    merlin::Point
    merlin::DPtrArray
 
+Grid API
+^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::grid::CartesianGrid
+   merlin::grid::RegularGrid
+
+
 GPU with CUDA
 -------------
 
@@ -89,6 +99,7 @@ Memory management helper
    merlin::cuda::Memory
    merlin::cuda::copy_objects
 
+
 Array API
 ---------
 
@@ -113,15 +124,6 @@ Array manipulation
    merlin::array::fill
    merlin::array::stat
    merlin::array::print
-
-Grid API
---------
-
-.. doxysummary::
-   :toctree: generated
-
-   merlin::grid::CartesianGrid
-   merlin::grid::RegularGrid
 
 
 Interpolator API
@@ -157,11 +159,12 @@ Regression API
    merlin::regpl::Polynomial
    merlin::regpl::Regressor
 
+
 Linear algebra API
 ------------------
 
-Vector inner product
-^^^^^^^^^^^^^^^^^^^^
+Vector-vector operations
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxysummary::
    :toctree: generated
@@ -187,6 +190,15 @@ Triangular solver
    :toctree: generated
 
    merlin::linalg::triu_one_solve
+   merlin::linalg::triu_solve
+
+QR decomposition
+^^^^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::linalg::QRPDecomp
 
 Canonical decomposition API
 ---------------------------
@@ -264,13 +276,13 @@ Log printing
 .. doxysummary::
    :toctree: generated
 
-   MESSAGE
-   WARNING
-   FAILURE
-   CUDAOUT
-   CUDAERR
-   CUHDERR
-   DEBUGLG
+   merlin::Message
+   merlin::Warning
+   merlin::Fatal
+   merlin::CudaOut
+   merlin::DeviceError
+   merlin::HostDevError
+   merlin::DebugLog
 
 .. doxysummary::
    :toctree: generated

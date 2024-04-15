@@ -47,6 +47,9 @@ void candy::Gradient::calc_by_cpu(candy::Model & model, const array::Array & tra
 
 // String representation
 std::string candy::Gradient::str(void) const {
+    if (this->value_.data() == nullptr) {
+        return std::string("<Invalid Gradient>");
+    }
     std::ostringstream out_stream;
     out_stream << "<Gradient(value=<";
     out_stream << this->value_.str();

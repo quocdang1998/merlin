@@ -6,9 +6,9 @@
 #include <limits>   // std::numeric_limits
 #include <string>   // std::string
 
+#include "merlin/config.hpp"             // __cuhostdev__
 #include "merlin/cuda/declaration.hpp"   // merlin::cuda::Device
 #include "merlin/cuda/enum_wrapper.hpp"  // merlin::cuda::DeviceLimit
-#include "merlin/cuda_interface.hpp"     // __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 
 namespace merlin {
@@ -121,6 +121,29 @@ class cuda::Device {
   protected:
     /** @brief ID of device.*/
     int id_ = -1;
+};
+
+class cuda::CtxGuard {
+  public:
+    /// @name Constructor
+    /// @{
+    /** @brief Default constructor.*/
+    CtxGuard(void) = default;
+    /** @brief Contructor from cuda::Device.*/
+    CtxGuard(const cuda::Device & gpu) { this->context_ptr_ = gpu.push_context(); }
+    /// @}
+
+    /// @name Destructor
+    /** @brief Default destructor.*/
+    inline ~CtxGuard(void) {
+        if (this->context_ptr_ != 0) {
+            cuda::Device::pop_context(this->context_ptr_);
+        }
+    }
+
+  protected:
+    /** @brief Pointer to the context guarded.*/
+    std::uintptr_t context_ptr_ = 0;
 };
 
 namespace cuda {

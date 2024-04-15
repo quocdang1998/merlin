@@ -5,13 +5,12 @@
 #include <sstream>  // std::ostringstream
 #include <utility>  // std::move
 
-#include "merlin/array/array.hpp"     // merlin::array::Array
-#include "merlin/array/parcel.hpp"    // merlin::array::Parcel
-#include "merlin/cuda/device.hpp"     // merlin::cuda::Device
-#include "merlin/cuda_interface.hpp"  // merlin::cuda_mem_free
-#include "merlin/env.hpp"             // merlin::Environment
-#include "merlin/logger.hpp"          // FAILURE, merlin::cuda_compile_error
-#include "merlin/splint/tools.hpp"    // merlin::splint::construct_coeff_cpu, merlin::splint::construct_coeff_gpu
+#include "merlin/array/array.hpp"   // merlin::array::Array
+#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
+#include "merlin/cuda/device.hpp"   // merlin::cuda::Device
+#include "merlin/env.hpp"           // merlin::Environment
+#include "merlin/logger.hpp"        // merlin::Fatal, merlin::cuda_compile_error
+#include "merlin/splint/tools.hpp"  // merlin::splint::construct_coeff_cpu, merlin::splint::construct_coeff_gpu
 
 #define push_gpu(gpu) std::uintptr_t current_ctx = gpu.push_context()
 #define pop_gpu() cuda::Device::pop_context(current_ctx)
@@ -28,7 +27,12 @@ namespace merlin {
 void splint::create_intpl_gpuptr(const grid::CartesianGrid & cpu_grid, const Vector<splint::Method> & cpu_methods,
                                  grid::CartesianGrid *& gpu_pgrid, std::array<unsigned int, max_dim> *& gpu_pmethods,
                                  std::uintptr_t stream_ptr) {
-    FAILURE(cuda_compile_error, "Cannot invoke GPU function since merlin is not compiled with CUDA option.\n");
+    Fatal<cuda_compile_error>("Cannot invoke GPU function since merlin is not compiled with CUDA option.\n");
+}
+
+// Deallocate memory on the global memory space of the current GPU.
+void splint::cuda_mem_free(void * ptr, std::uint64_t stream_ptr) {
+    Fatal<cuda_compile_error>("Compile the library with CUDA option to enable memory deallocation on GPU.\n");
 }
 
 #endif  // __MERLIN_CUDA__
@@ -43,10 +47,10 @@ splint::Interpolator::Interpolator(const grid::CartesianGrid & grid, const array
 ndim_(grid.ndim()), shared_mem_size_(grid.sharedmem_size()) {
     // check shape
     if (grid.shape() != values.shape()) {
-        FAILURE(std::invalid_argument, "Grid and data have different shape.\n");
+        Fatal<std::invalid_argument>("Grid and data have different shape.\n");
     }
     if (grid.ndim() != method.size()) {
-        FAILURE(std::invalid_argument, "Grid and method vector have different shape.\n");
+        Fatal<std::invalid_argument>("Grid and method vector have different shape.\n");
     }
     // initialize pointers
     if (processor == ProcessorType::Cpu) {
@@ -92,20 +96,20 @@ void splint::Interpolator::build_coefficients(std::uint64_t n_threads) {
 void splint::Interpolator::evaluate(const array::Array & points, DoubleVec & result, std::uint64_t n_threads) {
     // check if interpolator is on CPU
     if (this->on_gpu()) {
-        FAILURE(std::invalid_argument, "Interpolator is initialized on GPU.\n");
+        Fatal<std::invalid_argument>("Interpolator is initialized on GPU.\n");
     }
     // check points array
     if (points.ndim() != 2) {
-        FAILURE(std::invalid_argument, "Expected array of coordinates a 2D table.\n");
+        Fatal<std::invalid_argument>("Expected array of coordinates a 2D table.\n");
     }
     if (!points.is_c_contiguous()) {
-        FAILURE(std::invalid_argument, "Expected array of coordinates to be C-contiguous.\n");
+        Fatal<std::invalid_argument>("Expected array of coordinates to be C-contiguous.\n");
     }
     if (points.shape()[1] != this->ndim_) {
-        FAILURE(std::invalid_argument, "Array of coordinates and interpolator have different dimension.\n");
+        Fatal<std::invalid_argument>("Array of coordinates and interpolator have different dimension.\n");
     }
     if (points.shape()[0] != result.size()) {
-        FAILURE(std::invalid_argument, "Size of result array must be equal to the number of points.\n");
+        Fatal<std::invalid_argument>("Size of result array must be equal to the number of points.\n");
     }
     // evaluate interpolation
     std::future<void> & current_sync = std::get<std::future<void>>(this->synchronizer_.synchronizer);

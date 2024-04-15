@@ -8,7 +8,6 @@
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/candy/model.hpp"  // merlin::candy::Model
 #include "merlin/env.hpp"          // merlin::Environment
-#include "merlin/logger.hpp"       // FAILURE
 #include "merlin/utils.hpp"        // merlin::contiguous_to_ndim_idx, merlin::is_normal, merlin::is_finite
 
 namespace merlin {

@@ -1,10 +1,10 @@
 #include <cinttypes>
 
+#include "merlin/config.hpp"
 #include "merlin/cuda/device.hpp"
 #include "merlin/cuda/memory.hpp"
 #include "merlin/grid/cartesian_grid.hpp"
 #include "merlin/logger.hpp"
-#include "merlin/settings.hpp"
 #include "merlin/utils.hpp"
 
 using namespace merlin;
@@ -13,7 +13,7 @@ __global__ void print_grid_from_shared_mem(grid::CartesianGrid * grid_ptr) {
     std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
     extern __shared__ grid::CartesianGrid share_ptr[];
     grid_ptr->copy_by_block(share_ptr, share_ptr+1, thread_idx, block_size);
-    CUDAOUT("Cartesian Grid on GPU (shared mem):\n");
+    CudaOut("Cartesian Grid on GPU (shared mem):\n");
     for (int i = 0; i < share_ptr->ndim(); i++) {
         std::printf("Vector %d:", i);
         for (int j = 0; j < share_ptr->shape()[i]; j++) {
@@ -21,11 +21,11 @@ __global__ void print_grid_from_shared_mem(grid::CartesianGrid * grid_ptr) {
         }
         std::printf("\n");
     }
-    CUDAOUT("Cartesian Grid size on GPU (shared mem): %" PRIu64 "\n", share_ptr->size());
+    CudaOut("Cartesian Grid size on GPU (shared mem): %" PRIu64 "\n", share_ptr->size());
 }
 
 __global__ void print_grid(grid::CartesianGrid * grid_ptr) {
-    CUDAOUT("Cartesian Grid on GPU (ndim = %u):\n", unsigned(grid_ptr->ndim()));
+    CudaOut("Cartesian Grid on GPU (ndim = %u):\n", unsigned(grid_ptr->ndim()));
     for (int i = 0; i < grid_ptr->ndim(); i++) {
         std::printf("Vector %d:", i);
         for (int j = 0; j < grid_ptr->shape()[i]; j++) {

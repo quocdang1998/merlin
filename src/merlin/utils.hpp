@@ -5,16 +5,16 @@
 #include <array>   // std::array
 #include <string>  // std::string
 
-#include "merlin/cuda_interface.hpp"  // __cudevice__, __cuhostdev__
-#include "merlin/exports.hpp"         // MERLIN_EXPORTS
-#include "merlin/platform.hpp"        // __MERLIN_LINUX__
-#include "merlin/vector.hpp"          // merlin::UIntVec
+#include "merlin/config.hpp"    // __cudevice__, __cuhostdev__
+#include "merlin/exports.hpp"   // MERLIN_EXPORTS
+#include "merlin/platform.hpp"  // __MERLIN_LINUX__
+#include "merlin/vector.hpp"    // merlin::UIntVec
 
 #if defined(__MERLIN_LINUX__)
     #include <cmath>  // std::isfinite, std::isnormal
 #elif defined(__MERLIN_WINDOWS__)
     #include <math.h>  // isfinite, isnormal
-#endif  // __MERLIN_LINUX__
+#endif                 // __MERLIN_LINUX__
 
 namespace merlin {
 
@@ -118,9 +118,11 @@ __cuhostdev__ std::uint64_t inner_prod(const std::uint64_t * v1, const std::uint
 /** @brief Convert n-dimensional index to C-contiguous index.
  *  @param index Multi-dimensional index.
  *  @param shape Shape vector.
+ *  @param ndim Number of dimension.
  *  @return C-contiguous index as an ``std::uint64_t``.
  */
-__cuhostdev__ std::uint64_t ndim_to_contiguous_idx(const UIntVec & index, const UIntVec & shape);
+__cuhostdev__ std::uint64_t ndim_to_contiguous_idx(const std::uint64_t * index, const std::uint64_t * shape,
+                                                   std::uint64_t ndim);
 
 /** @brief Convert C-contiguous index to n-dimensional index and save data to a pre-allocated memory.
  *  @param index C-contiguous index.

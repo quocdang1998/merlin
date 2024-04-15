@@ -22,6 +22,13 @@ void create_intpl_gpuptr(const grid::CartesianGrid & cpu_grid, const Vector<spli
                          grid::CartesianGrid *& gpu_pgrid, std::array<unsigned int, max_dim> *& gpu_pmethods,
                          std::uintptr_t stream_ptr);
 
+/** @brief Deallocate memory on the global memory space of the current GPU.
+ *  @details CUDA de-allocation wrapper for the Python interface.
+ *  @param ptr Pointer to the memory region to deallocate.
+ *  @param stream_ptr CUDA stream performing the deallocation.
+ */
+void cuda_mem_free(void * ptr, std::uint64_t stream_ptr);
+
 }  // namespace splint
 
 /** @brief Interpolation on a multi-dimensional data.

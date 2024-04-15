@@ -42,8 +42,8 @@ int main(void) {
     for (std::uint64_t i = 0; i < cart_gr.size(); i++) {
         value.set(i, foo(cart_gr[i]));
     }
-    MESSAGE("Grid: %s\n", cart_gr.str().c_str());
-    MESSAGE("Values: %s\n", value.str().c_str());
+    Message("Grid: %s\n", cart_gr.str().c_str());
+    Message("Values: %s\n", value.str().c_str());
 
     // calculate Lagrange coefficients
     array::Array coeff(value);
@@ -55,12 +55,12 @@ int main(void) {
     splint::Interpolator interp(cart_gr, coeff, methods, ProcessorType::Cpu);
     interp.build_coefficients(10);
     interp.synchronize();
-    MESSAGE("Interpolation coefficients: %s\n", interp.get_coeff().str().c_str());
+    Message("Interpolation coefficients: %s\n", interp.get_coeff().str().c_str());
 
     // interpolation
     std::uint64_t npoints = 16;
     array::Array points = point_generator(npoints, cart_gr);
-    MESSAGE("Function values:");
+    Message("Function values:");
     for (std::uint64_t i_point = 0; i_point < npoints; i_point++) {
         std::printf(" %f", foo(DoubleVec(points.data() + 3 * i_point, 3)));
     }
@@ -68,6 +68,6 @@ int main(void) {
     DoubleVec eval_values(npoints);
     interp.evaluate(points, eval_values, 32);
     interp.synchronize();
-    MESSAGE("Evaluated values: %s.\n", eval_values.str().c_str());
+    Message("Evaluated values: %s.\n", eval_values.str().c_str());
     interp.synchronize();
 }

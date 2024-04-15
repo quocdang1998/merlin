@@ -3,7 +3,7 @@
 #define MERLIN_REGPL_CORE_HPP_
 
 #include "merlin/array/declaration.hpp"  // merlin::array::NdData
-#include "merlin/cuda_interface.hpp"  // __cuhostdev__
+#include "merlin/config.hpp"          // __cuhostdev__
 #include "merlin/grid/declaration.hpp"  // merlin::grid::CartesianGrid, grid::RegularGrid
 #include "merlin/linalg/declaration.hpp"  // merlin::linalg::Matrix
 #include "merlin/regpl/declaration.hpp"  // merlin::regpl::Polynomial

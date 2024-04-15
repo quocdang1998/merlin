@@ -8,7 +8,7 @@
 #include <vector>     // std::vector
 
 #include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides
-#include "merlin/logger.hpp"           // FAILURE
+#include "merlin/logger.hpp"           // merlin::Fatal, merlin::Warning
 
 namespace merlin {
 
@@ -43,10 +43,10 @@ void array::NdData::create_sub_array(array::NdData & sub_array, const SliceArray
 // Member initialization for C++ interface
 array::NdData::NdData(double * data, const UIntVec & shape, const UIntVec & strides) : data_(data) {
     if (shape.size() > max_dim) {
-        FAILURE(std::invalid_argument, "Exceeding maximum ndim (%" PRIu64 ").\n", max_dim);
+        Fatal<std::invalid_argument>("Exceeding maximum ndim (%" PRIu64 ").\n", max_dim);
     }
     if (!is_same_size(shape, strides)) {
-        FAILURE(std::invalid_argument, "Shape and strides vectors must have the same size.\n");
+        Fatal<std::invalid_argument>("Shape and strides vectors must have the same size.\n");
     }
     this->ndim_ = shape.size();
     this->shape_.fill(0);
@@ -82,19 +82,19 @@ bool array::NdData::is_c_contiguous(void) const {
 // Reshape
 void array::NdData::reshape(const UIntVec & new_shape) {
     if (this->ndim_ != 1) {
-        FAILURE(std::invalid_argument, "Cannot reshape array of n-dim bigger than 1.\n");
+        Fatal<std::invalid_argument>("Cannot reshape array of n-dim bigger than 1.\n");
     }
     if (new_shape.size() > max_dim) {
-        FAILURE(std::invalid_argument, "Exceeding maximum ndim (%" PRIu64 ").\n", max_dim);
+        Fatal<std::invalid_argument>("Exceeding maximum ndim (%" PRIu64 ").\n", max_dim);
     }
     std::uint64_t new_size = 1;
     for (std::uint64_t i_dim = 0; i_dim < new_shape.size(); i_dim++) {
         new_size *= new_shape[i_dim];
     }
     if (new_size != this->size_) {
-        FAILURE(std::invalid_argument,
-                "Cannot reshape to an array with different size (current size %" PRIu64 ", new size %" PRIu64 ").\n",
-                this->shape_[0], new_size);
+        Fatal<std::invalid_argument>("Cannot reshape to an array with different size (current size %" PRIu64
+                                     ", new size %" PRIu64 ").\n",
+                                     this->shape_[0], new_size);
     }
     std::copy(new_shape.begin(), new_shape.end(), this->shape_.begin());
     this->ndim_ = new_shape.size();
@@ -104,7 +104,7 @@ void array::NdData::reshape(const UIntVec & new_shape) {
 // Collapse dimension from felt (or right)
 void array::NdData::remove_dim(std::uint64_t i_dim) {
     if (this->shape_[i_dim] != 1) {
-        WARNING("Cannot remove dimension with size differ than 1.\n");
+        Warning("Cannot remove dimension with size differ than 1.\n");
         return;
     }
     std::copy(this->shape_.begin() + i_dim + 1, this->shape_.begin() + this->ndim_, this->shape_.begin() + i_dim);

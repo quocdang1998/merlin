@@ -1,4 +1,0 @@
-CUHDERR
-=======
-
-.. doxygendefine:: CUHDERR

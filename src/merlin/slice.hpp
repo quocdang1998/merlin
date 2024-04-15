@@ -8,9 +8,8 @@
 #include <limits>            // std::numeric_limits
 #include <string>            // std::string
 
-#include "merlin/cuda_interface.hpp"  // __cuhostdev__
-#include "merlin/exports.hpp"         // MERLIN_EXPORTS
-#include "merlin/settings.hpp"        // merlin::max_dim
+#include "merlin/config.hpp"   // __cuhostdev__, merlin::max_dim
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS
 
 namespace merlin {
 

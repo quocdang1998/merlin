@@ -4,7 +4,7 @@
 
 #include "merlin/candy/declaration.hpp"        // merlin::candy::Gradient, merlin::candy::Model
 #include "merlin/candy/optmz/declaration.hpp"  // merlin::candy::optmz::GradDescent
-#include "merlin/cuda_interface.hpp"           // __cuhostdev__, __cudevice__
+#include "merlin/config.hpp"                   // __cudevice__
 #include "merlin/exports.hpp"                  // MERLIN_EXPORTS
 
 namespace merlin {

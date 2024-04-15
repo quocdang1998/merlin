@@ -416,6 +416,11 @@ html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(
     color: var(--type);
 }
 
+/* property */
+dl.py.property {
+    display: block !important;
+}
+
 /* pybind11 overloaded function */
 .py .method > dd > ol.arabic > li > p {
     width: fit-content;

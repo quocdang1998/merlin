@@ -1,11 +1,11 @@
 #include <cinttypes>
 
 #include "merlin/candy/model.hpp"
+#include "merlin/config.hpp"
 #include "merlin/cuda/device.hpp"
 #include "merlin/cuda/memory.hpp"
 #include "merlin/cuda/stream.hpp"
 #include "merlin/logger.hpp"
-#include "merlin/settings.hpp"
 #include "merlin/vector.hpp"
 
 using namespace merlin;
@@ -13,7 +13,7 @@ using namespace merlin;
 __global__ void print_model_shr(candy::Model * model_ptr) {
     extern __shared__ candy::Model share_ptr[];
     auto [_, __] = cuda::copy_objects(share_ptr, *model_ptr);
-    CUDAOUT("Candecomp Model on GPU (rank = %" PRIu64 "):\n", share_ptr->rank());
+    CudaOut("Candecomp Model on GPU (rank = %" PRIu64 "):\n", share_ptr->rank());
     for (int i = 0; i < share_ptr->ndim(); i++) {
         std::printf("Vector %d:", i);
         for (int j = 0; j < share_ptr->rshape()[i]; j++) {
@@ -23,11 +23,11 @@ __global__ void print_model_shr(candy::Model * model_ptr) {
     }
     Index index;
     index.fill(0);
-    CUDAOUT("Model get: %f.\n", share_ptr->get(0,0,0));
+    CudaOut("Model get: %f.\n", share_ptr->get(0,0,0));
 }
 
 __global__ void print_model(candy::Model * model_ptr) {
-    CUDAOUT("Candecomp Model on GPU (rank = %" PRIu64 "):\n", model_ptr->rank());
+    CudaOut("Candecomp Model on GPU (rank = %" PRIu64 "):\n", model_ptr->rank());
     for (int i = 0; i < model_ptr->ndim(); i++) {
         std::printf("Vector %d:", i);
         for (int j = 0; j < model_ptr->rshape()[i]; j++) {
@@ -37,7 +37,7 @@ __global__ void print_model(candy::Model * model_ptr) {
     }
     Index index;
     index.fill(0);
-    CUDAOUT("Model eval: %f.\n", model_ptr->eval(index));
+    CudaOut("Model eval: %f.\n", model_ptr->eval(index));
     model_ptr->get(1, 2, 1) = 1.70;
 }
 
@@ -49,7 +49,7 @@ int main(void) {
             {2.0, 1.0, 2.4, 1.2, 2.7, 1.6}
         },
         2);
-    MESSAGE("Model: %s\n", model.str().c_str());
+    Message("Model: %s\n", model.str().c_str());
 
     // Copy model on GPU
     cuda::Memory mem(0, model);
@@ -66,5 +66,5 @@ int main(void) {
         },
         2);
     model_cpu.copy_from_gpu(reinterpret_cast<double *>(gpu_model + 1));
-    MESSAGE("Model copied from GPU: %s\n", model_cpu.str().c_str());
+    Message("Model copied from GPU: %s\n", model_cpu.str().c_str());
 }

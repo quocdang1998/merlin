@@ -4,7 +4,7 @@
 #include <cinttypes>  // PRIu64
 #include <cmath>      // std::ceil
 
-#include "merlin/logger.hpp"  // CUHDERR
+#include "merlin/logger.hpp"  // merlin::HostDevError
 
 namespace merlin {
 
@@ -15,11 +15,11 @@ namespace merlin {
 // Check validity of input values
 __cuhostdev__ void Slice::check_validity(void) const {
     if (this->step_ == 0) {
-        CUHDERR(std::invalid_argument, "Slice step cannot be zero.\n");
+        HostDevError<std::invalid_argument>("Slice step cannot be zero.\n");
     }
     if (this->stop_ < this->start_) {
-        CUHDERR(std::invalid_argument, "Stop index %" PRIu64 " must be greater than start index %" PRIu64 ".\n",
-                this->stop_, this->start_);
+        HostDevError<std::invalid_argument>("Stop index %" PRIu64 " must be greater than start index %" PRIu64 ".\n",
+                                            this->stop_, this->start_);
     }
 }
 
@@ -55,8 +55,8 @@ __cuhostdev__ Slice::Slice(std::initializer_list<std::uint64_t> list) {
             break;
         }
         default : {
-            CUHDERR(std::invalid_argument, "Expected intializer list with size at most 3, got %u.\n",
-                    static_cast<unsigned int>(list.size()));
+            HostDevError<std::invalid_argument>("Expected intializer list with size at most 3, got %u.\n",
+                                                static_cast<unsigned int>(list.size()));
             break;
         }
     }
@@ -65,12 +65,12 @@ __cuhostdev__ Slice::Slice(std::initializer_list<std::uint64_t> list) {
 __cuhostdev__ std::array<std::uint64_t, 3> Slice::slice_on(std::uint64_t shape, std::uint64_t stride) const {
     // check range
     if (this->start_ >= shape) {
-        CUHDERR(std::invalid_argument, "Expected start index smaller than %" PRIu64 ", got %" PRIu64 ".\n", shape,
-                this->start_);
+        HostDevError<std::invalid_argument>("Expected start index smaller than %" PRIu64 ", got %" PRIu64 ".\n", shape,
+                                            this->start_);
     }
     if ((this->stop_ > shape) && (this->stop_ != std::numeric_limits<std::uint64_t>::max())) {
-        CUHDERR(std::invalid_argument, "Expected stop index smaller or equal to %" PRIu64 ", got %" PRIu64 ".\n", shape,
-                this->stop_);
+        HostDevError<std::invalid_argument>("Expected stop index smaller or equal to %" PRIu64 ", got %" PRIu64 ".\n",
+                                            shape, this->stop_);
     }
     // shrink the stop if out of range
     std::uint64_t stop = (this->stop_ == std::numeric_limits<std::uint64_t>::max()) ? shape : this->stop_;

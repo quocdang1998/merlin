@@ -5,59 +5,52 @@
 #include "merlin/array/parcel.hpp"     // merlin::array::Parcel
 #include "merlin/candy/model.hpp"      // merlin::candy::Model
 #include "merlin/candy/optimizer.hpp"  // merlin::candy::Optimizer
+#include "merlin/cuda/device.hpp"      // merlin::cuda::CtxGuard
 #include "merlin/cuda/memory.hpp"      // merlin::cuda::Memory
 #include "merlin/cuda/stream.hpp"      // merlin::cuda::Stream
+#include "merlin/logger.hpp"           // merlin::Fatal
 
 namespace merlin {
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Utility
-// ---------------------------------------------------------------------------------------------------------------------
-
-// Allocate memory on GPU for the trainer
-void candy::create_trainer_gpu_ptr(const candy::Model & cpu_model, const array::Array & cpu_data,
-                                   const candy::Optimizer & cpu_optimizer, candy::Model *& gpu_model,
-                                   array::NdData *& gpu_data, candy::Optimizer *& gpu_optimizer,
-                                   array::Parcel *& parcel_data, cuda::Stream & stream) {
-    // create Parcel object
-    parcel_data = new array::Parcel(cpu_data.shape(), stream);
-    parcel_data->transfer_data_to_gpu(cpu_data, stream);
-    // copy objects to GPU
-    cuda::Memory gpu_mem(stream.get_stream_ptr(), cpu_model, *parcel_data, cpu_optimizer);
-    gpu_model = gpu_mem.get<0>();
-    gpu_data = gpu_mem.get<1>();
-    gpu_optimizer = gpu_mem.get<2>();
-    gpu_mem.disown();
-}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Trainer
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Get a copy to the current CP model
-candy::Model candy::Trainer::get_model(void) const {
-    // CPU direct dereference
+// Update CP model according to gradient on GPU
+void candy::Trainer::update_gpu(const array::Parcel & data, std::uint64_t rep, double threshold,
+                                std::uint64_t n_threads, candy::TrainMetric metric) {
+    // check if trainer is on GPU
     if (!(this->on_gpu())) {
-        return candy::Model(*(this->p_model_));
+        Fatal<std::invalid_argument>("The current object is allocated on CPU.\n");
     }
-    // GPU dereference
-    char * model_buffer = new char[sizeof(candy::Model)];
-    ::cudaMemcpy(model_buffer, this->p_model_, sizeof(candy::Model), ::cudaMemcpyDeviceToHost);
-    candy::Model & model_gpu = *(reinterpret_cast<candy::Model *>(model_buffer));
-    // get ndim and rank
-    std::uint64_t ndim = model_gpu.ndim();
-    std::uint64_t rank = model_gpu.rank();
-    // get rshape
-    Index model_rshape(model_gpu.rshape());
-    // allocate result model
-    for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
-        model_rshape[i_dim] /= rank;
+    // calculate shared memory
+    std::uint64_t shared_mem = this->model_.sharedmem_size() + this->optmz_.sharedmem_size() + data.sharedmem_size();
+    shared_mem += sizeof(double) * this->model_.num_params();
+    // copy memory to GPU and launch kernel
+    cuda::Stream & stream = std::get<cuda::Stream>(this->synch_.synchronizer);
+    cuda::CtxGuard guard(stream.get_gpu());
+    cuda::Memory mem(stream.get_stream_ptr(), this->model_, data, this->optmz_);
+    candy::train_by_gpu(mem.get<0>(), mem.get<1>(), mem.get<2>(), metric, rep, n_threads, threshold, shared_mem,
+                        stream);
+    this->model_.copy_from_gpu(reinterpret_cast<double *>(mem.get<0>() + 1), stream.get_stream_ptr());
+}
+
+// Get the RMSE and RMAE error with respect to a given dataset by GPU
+void candy::Trainer::error_gpu(const array::Parcel & data, double & rmse, double & rmae, std::uint64_t n_threads) {
+    // check if trainer is on GPU
+    if (!(this->on_gpu())) {
+        Fatal<std::invalid_argument>("The current object is allocated on CPU.\n");
     }
-    candy::Model result(model_rshape, rank);
-    // copy data to result model
-    result.copy_from_gpu(reinterpret_cast<double *>(this->p_model_ + 1));
-    delete[] model_buffer;
-    return result;
+    // calculate shared memory
+    std::uint64_t shared_mem = this->model_.sharedmem_size() + data.sharedmem_size();
+    // copy memory to GPU and launch kernel
+    cuda::Stream & stream = std::get<cuda::Stream>(this->synch_.synchronizer);
+    ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr());
+    cuda::CtxGuard guard(stream.get_gpu());
+    cuda::Memory mem(stream.get_stream_ptr(), this->model_, data, rmse, rmae);
+    candy::error_by_gpu(mem.get<0>(), mem.get<1>(), mem.get<2>(), mem.get<3>(), n_threads, shared_mem, stream);
+    ::cudaMemcpyAsync(&rmse, mem.get<2>(), sizeof(double), ::cudaMemcpyDeviceToHost, cuda_stream);
+    ::cudaMemcpyAsync(&rmae, mem.get<3>(), sizeof(double), ::cudaMemcpyDeviceToHost, cuda_stream);
 }
 
 }  // namespace merlin

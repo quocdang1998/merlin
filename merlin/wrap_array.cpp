@@ -141,13 +141,16 @@ static void wrap_array_(py::module & array_module) {
         copy :
             If ``True``, copy data from the buffer to a new C-contiguous array. otherwise, directly assign the array
             to the pointer of the buffer.)",
-        py::arg("buffer"), py::arg("copy") = false
+        py::arg("buffer"), py::arg("copy") = false,
+        py::keep_alive<1,2>()
     );
     // conversion to Numpy
     array_pyclass.def_buffer(
         [](array::Array & self) {
+            UIntVec py_shape(const_cast<std::uint64_t *>(self.shape().data()), self.ndim());
+            UIntVec py_strides(const_cast<std::uint64_t *>(self.strides().data()), self.ndim());
             return py::buffer_info(self.data(), sizeof(double), py::format_descriptor<double>::format(), self.ndim(),
-                                   self.shape(), self.strides());
+                                   py_shape, py_strides);
         }
     );
     // copy data from GPU

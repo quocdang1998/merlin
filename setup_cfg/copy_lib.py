@@ -12,10 +12,10 @@ def copy_dll_libs():
     py_src_dir = os.path.join(os.path.abspath(os.path.join(__file__, "../..")),
                               "merlin")
     if sys.platform == "win32":
-        merlinshared_lib = "merlinshared.dll"
+        merlinshared_lib = "merlinenv.dll"
         merlin_lib = "merlin.dll"
     elif sys.platform == "linux":
-        merlinshared_lib = "libmerlinshared.so"
+        merlinshared_lib = "libmerlinenv.so"
         merlin_lib = "libmerlin.so"
     merlinshared_src = os.path.join(MERLIN_BIN_DIR, merlinshared_lib)
     merlinshared_dst = os.path.join(py_src_dir, merlinshared_lib)

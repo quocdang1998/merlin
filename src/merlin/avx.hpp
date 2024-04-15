@@ -9,26 +9,9 @@
     #include <immintrin.h>
 #endif  // __AVX__
 
+#include "merlin/config.hpp"  // merlin::AvxFlag, merlin::use_avx
+
 namespace merlin {
-
-/** @brief AVX use flags.*/
-enum class AvxFlag {
-    /** @brief Compilation without AVX optimization.*/
-    NoAvx,
-    /** @brief Compilation using AVX and FMA optimization.*/
-    AvxOn,
-};
-
-#ifdef __AVX__
-inline constexpr AvxFlag use_avx = AvxFlag::AvxOn;
-#else
-inline constexpr AvxFlag use_avx = AvxFlag::NoAvx;
-#endif  // __AVX__
-
-#ifdef __DOXYGEN_PARSER__
-/** @brief Flag indicate if AVX is enabled during the compilation.*/
-static AvxFlag use_avx;
-#endif  // __DOXYGEN_PARSER__
 
 /** @brief Class representing a packed-4 double.
  *  @tparam UseAvx Use AVX for arithmetics operations.
@@ -73,14 +56,18 @@ struct AvxDouble {
 
     /// @name Arithmetic operations
     /// @{
+    /** @brief Multiplication.
+     *  @details Perform element-wise multiplication of 2 vectors and save the result to the current object.
+     */
+    void mult(const AvxDouble<UseAvx> & a);
     /** @brief Fused add multiplication.
      *  @details Perform element-wise multiplication of 2 vectors and add the result to the current object.
      */
-    void fma(const AvxDouble<AvxFlag::NoAvx> & a, const AvxDouble<AvxFlag::NoAvx> & b);
+    void fma(const AvxDouble<UseAvx> & a, const AvxDouble<UseAvx> & b);
     /** @brief Division.
      *  @details Perform element-wise division of 2 vectors and store the result to the current object.
      */
-    void divide(const AvxDouble<AvxFlag::NoAvx> & a);
+    void divide(const AvxDouble<UseAvx> & a);
     /// @}
 
     /// @name Store
@@ -126,6 +113,12 @@ struct AvxDouble<AvxFlag::NoAvx> {
     // Get constant reference to element at an index
     inline const double & operator[](std::uint64_t index) const { return this->core[index]; }
 
+    // Multiplication
+    void mult(const AvxDouble<AvxFlag::NoAvx> & a) {
+        for (std::uint64_t i = 0; i < 4; i++) {
+            this->core[i] = a.core[i] * this->core[i];
+        }
+    }
     // Fused add multiplication
     inline void fma(const AvxDouble<AvxFlag::NoAvx> & a, const AvxDouble<AvxFlag::NoAvx> & b) {
         for (std::uint64_t i = 0; i < 4; i++) {
@@ -168,11 +161,8 @@ struct AvxDouble<AvxFlag::AvxOn> {
     // Constructor from pointer to data and number of elements to copy
     inline AvxDouble(const double * data, std::uint64_t n) {
         static const ::__m256i masks[5] = {
-            ::_mm256_set_epi64x(0, 0, 0, 0),
-            ::_mm256_set_epi64x(-1, 0, 0, 0),
-            ::_mm256_set_epi64x(-1, -1, 0, 0),
-            ::_mm256_set_epi64x(-1, -1, -1, 0),
-            ::_mm256_set_epi64x(-1, -1, -1, -1),
+            ::_mm256_set_epi64x(0, 0, 0, 0),    ::_mm256_set_epi64x(-1, 0, 0, 0),    ::_mm256_set_epi64x(-1, -1, 0, 0),
+            ::_mm256_set_epi64x(-1, -1, -1, 0), ::_mm256_set_epi64x(-1, -1, -1, -1),
         };
         this->core = ::_mm256_maskload_pd(data, masks[n]);
     }
@@ -188,25 +178,22 @@ struct AvxDouble<AvxFlag::AvxOn> {
         return *(reinterpret_cast<const double *>(&(this->core)) + index);
     }
 
+    // Multiplication
+    void mult(const AvxDouble<AvxFlag::AvxOn> & a) { this->core = ::_mm256_mul_pd(a.core, this->core); }
     // Fused add multiplication
     inline void fma(const AvxDouble<AvxFlag::AvxOn> & a, const AvxDouble<AvxFlag::AvxOn> & b) {
         this->core = ::_mm256_fmadd_pd(a.core, b.core, this->core);
     }
     // Division
-    inline void divide(const AvxDouble<AvxFlag::AvxOn> & a) {
-        this->core = ::_mm256_div_pd(this->core, a.core);
-    }
+    inline void divide(const AvxDouble<AvxFlag::AvxOn> & a) { this->core = ::_mm256_div_pd(this->core, a.core); }
 
     // Write values back to memory
     inline void store(double * dest) { ::_mm256_storeu_pd(dest, this->core); }
     // Write some values back to memory
     inline void store(double * dest, std::uint64_t n) {
         static const ::__m256i masks[5] = {
-            ::_mm256_set_epi64x(0, 0, 0, 0),
-            ::_mm256_set_epi64x(-1, 0, 0, 0),
-            ::_mm256_set_epi64x(-1, -1, 0, 0),
-            ::_mm256_set_epi64x(-1, -1, -1, 0),
-            ::_mm256_set_epi64x(-1, -1, -1, -1),
+            ::_mm256_set_epi64x(0, 0, 0, 0),    ::_mm256_set_epi64x(-1, 0, 0, 0),    ::_mm256_set_epi64x(-1, -1, 0, 0),
+            ::_mm256_set_epi64x(-1, -1, -1, 0), ::_mm256_set_epi64x(-1, -1, -1, -1),
         };
         ::_mm256_maskstore_pd(dest, masks[n], this->core);
     }

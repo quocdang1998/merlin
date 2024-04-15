@@ -6,7 +6,7 @@
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
 #include "merlin/cuda/memory.hpp"   // merlin::cuda::Memory
 #include "merlin/env.hpp"           // merlin::Environment
-#include "merlin/logger.hpp"        // FAILURE
+#include "merlin/logger.hpp"        // merlin::Fatal
 #include "merlin/splint/tools.hpp"  // merlin::splint::construct_coeff_gpu
 
 namespace merlin {
@@ -30,24 +30,33 @@ void splint::create_intpl_gpuptr(const grid::CartesianGrid & cpu_grid, const Vec
     gpu_mem.disown();
 }
 
+// Deallocate memory on the global memory space of the current GPU.
+void splint::cuda_mem_free(void * ptr, std::uint64_t stream_ptr) {
+    ::cudaFreeAsync(ptr, reinterpret_cast<::cudaStream_t>(stream_ptr));
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Interpolator
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Interpolate by GPU
 void splint::Interpolator::evaluate(const array::Parcel & points, DoubleVec & result, std::uint64_t n_threads) {
     // check if interpolator is on CPU
     if (!this->on_gpu()) {
-        FAILURE(std::invalid_argument, "Interpolator is initialized on CPU.\n");
+        Fatal<std::invalid_argument>("Interpolator is initialized on CPU.\n");
     }
     // check points array
     if (points.ndim() != 2) {
-        FAILURE(std::invalid_argument, "Expected array of coordinates a 2D table.\n");
+        Fatal<std::invalid_argument>("Expected array of coordinates a 2D table.\n");
     }
     if (!points.is_c_contiguous()) {
-        FAILURE(std::invalid_argument, "Expected array of coordinates to be C-contiguous.\n");
+        Fatal<std::invalid_argument>("Expected array of coordinates to be C-contiguous.\n");
     }
     if (points.shape()[1] != this->ndim_) {
-        FAILURE(std::invalid_argument, "Array of coordinates and interpolator have different dimension.\n");
+        Fatal<std::invalid_argument>("Array of coordinates and interpolator have different dimension.\n");
     }
     if (points.shape()[0] != result.size()) {
-        FAILURE(std::invalid_argument, "Size of result array must be equal to the number of points.\n");
+        Fatal<std::invalid_argument>("Size of result array must be equal to the number of points.\n");
     }
     // get CUDA Stream
     cuda::Stream & stream = std::get<cuda::Stream>(this->synchronizer_.synchronizer);

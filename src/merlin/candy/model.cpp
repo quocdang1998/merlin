@@ -11,7 +11,7 @@
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/env.hpp"          // merlin::Environment
 #include "merlin/filelock.hpp"     // merlin::FileLock
-#include "merlin/logger.hpp"       // FAILURE
+#include "merlin/logger.hpp"       // merlin::Fatal
 #include "merlin/slice.hpp"        // merlin::SliceArray
 #include "merlin/utils.hpp"        // merlin::ptr_to_subsequence
 
@@ -25,7 +25,7 @@ namespace merlin {
 candy::Model::Model(const Index & shape, std::uint64_t rank) : rshape_(shape), rank_(rank) {
     // check rank
     if (rank == 0) {
-        FAILURE(std::invalid_argument, "Cannot initialize a canonical model with rank zero.\n");
+        Fatal<std::invalid_argument>("Cannot initialize a canonical model with rank zero.\n");
     }
     // get ndim
     Index::const_iterator first_zero_element = std::find(shape.begin(), shape.end(), 0);
@@ -46,17 +46,17 @@ candy::Model::Model(const Vector<DoubleVec> & param_vectors, std::uint64_t rank)
 ndim_(param_vectors.size()), rank_(rank) {
     // check rank
     if (rank == 0) {
-        FAILURE(std::invalid_argument, "Cannot initialize a canonical model with rank zero.\n");
+        Fatal<std::invalid_argument>("Cannot initialize a canonical model with rank zero.\n");
     }
     // calculate rshape and number of parameters
     if (param_vectors.size() > max_dim) {
-        FAILURE(std::invalid_argument, "Exceeding max dimension.\n");
+        Fatal<std::invalid_argument>("Exceeding max dimension.\n");
     }
     std::uint64_t num_params = 0;
     this->rshape_.fill(0);
     for (std::uint64_t i_dim = 0; i_dim < this->ndim_; i_dim++) {
         if (param_vectors[i_dim].size() % rank != 0) {
-            FAILURE(std::invalid_argument, "Size of all canonical model vectors must be divisible by the rank.\n");
+            Fatal<std::invalid_argument>("Size of all canonical model vectors must be divisible by the rank.\n");
         }
         this->rshape_[i_dim] = param_vectors[i_dim].size();
         num_params += this->rshape_[i_dim];
@@ -92,11 +92,11 @@ candy::Model & candy::Model::operator=(const candy::Model & src) {
 void candy::Model::initialize(const array::Array & train_data) {
     // check shape
     if (this->ndim_ != train_data.ndim()) {
-        FAILURE(std::invalid_argument, "Expected train data having the same ndim as the model.\n");
+        Fatal<std::invalid_argument>("Expected train data having the same ndim as the model.\n");
     }
     for (std::uint64_t i_dim = 0; i_dim < this->ndim_; i_dim++) {
         if (train_data.shape()[i_dim] * this->rank_ != this->rshape_[i_dim]) {
-            FAILURE(std::invalid_argument, "Incoherent shape of data and model.\n");
+            Fatal<std::invalid_argument>("Incoherent shape of data and model.\n");
         }
     }
     // initialize model parameters
@@ -131,14 +131,14 @@ void candy::Model::initialize(const array::Array & train_data) {
 void candy::Model::initialize(const candy::Model & rank_1_model, double rtol) {
     // check argument
     if (rank_1_model.rank_ != 1) {
-        FAILURE(std::invalid_argument, "Model provided is not rank-1.\n");
+        Fatal<std::invalid_argument>("Model provided is not rank-1.\n");
     }
     if (this->ndim() != rank_1_model.ndim()) {
-        FAILURE(std::invalid_argument, "Expected rank-1 model having the same ndim as the current model.\n");
+        Fatal<std::invalid_argument>("Expected rank-1 model having the same ndim as the current model.\n");
     }
     for (std::uint64_t i_dim = 0; i_dim < this->ndim_; i_dim++) {
         if (rank_1_model.rshape_[i_dim] * this->rank_ != this->rshape_[i_dim]) {
-            FAILURE(std::invalid_argument, "Incoherent shape of 2 models.\n");
+            Fatal<std::invalid_argument>("Incoherent shape of 2 models.\n");
         }
     }
     // calculate min and max in relative for each rank
@@ -163,13 +163,13 @@ void candy::Model::initialize(const candy::Model & rank_1_model, double rtol) {
 
 // Copy data to a pre-allocated memory
 void * candy::Model::copy_to_gpu(candy::Model * gpu_ptr, void * grid_vector_data_ptr, std::uintptr_t stream_ptr) const {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
+    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
     return nullptr;
 }
 
 // Copy data from GPU to CPU
 void * candy::Model::copy_from_gpu(double * data_from_gpu, std::uintptr_t stream_ptr) noexcept {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
+    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
     return nullptr;
 }
 
@@ -186,14 +186,14 @@ void candy::Model::save(const std::string & fname, bool lock) const {
     // open file
     std::FILE * file_stream = std::fopen(fname.c_str(), "wb");
     if (file_stream == nullptr) {
-        FAILURE(std::filesystem::filesystem_error, "Cannot create file %s\n", fname.c_str());
+        Fatal<std::filesystem::filesystem_error>("Cannot create file %s\n", fname.c_str());
     }
     FileLock flock(file_stream);
     // lambda write file
     auto write_lambda = [&file_stream](const void * data, std::size_t elem_size, std::size_t n_elems) {
         std::size_t success_written = std::fwrite(data, elem_size, n_elems, file_stream);
         if (success_written < n_elems) {
-            FAILURE(std::filesystem::filesystem_error, "Error occurred when writing the file.\n");
+            Fatal<std::filesystem::filesystem_error>("Error occurred when writing the file.\n");
         }
     };
     if (lock) {
@@ -218,14 +218,14 @@ void candy::Model::load(const std::string & fname, bool lock) {
     // open file
     std::FILE * file_stream = std::fopen(fname.c_str(), "rb");
     if (file_stream == nullptr) {
-        FAILURE(std::filesystem::filesystem_error, "Cannot read file %s\n", fname.c_str());
+        Fatal<std::filesystem::filesystem_error>("Cannot read file %s\n", fname.c_str());
     }
     FileLock flock(file_stream);
     // lambda read file
     auto read_lambda = [&file_stream](void * data, std::size_t elem_size, std::size_t n_elems) {
         std::size_t success_read = std::fread(data, elem_size, n_elems, file_stream);
         if (success_read < n_elems) {
-            FAILURE(std::filesystem::filesystem_error, "Error occurred when reading the file.\n");
+            Fatal<std::filesystem::filesystem_error>("Error occurred when reading the file.\n");
         }
     };
     if (lock) {

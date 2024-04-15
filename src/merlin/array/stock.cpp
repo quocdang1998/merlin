@@ -9,7 +9,7 @@
 #include "merlin/array/array.hpp"      // merlin::array::Array
 #include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::get_leap,
                                        // merlin::array::copy, merlin::array::fill, merlin::array::print
-#include "merlin/logger.hpp"           // WARNING, FAILURE
+#include "merlin/logger.hpp"           // merlin::Fatal
 #include "merlin/platform.hpp"         // __MERLIN_LINUX__, __MERLIN_WINDOWS__
 #include "merlin/utils.hpp"            // merlin::get_current_process_id, merlin::get_time
 
@@ -36,7 +36,7 @@ static inline void read_from_file(void * dest, std::FILE * file, const void * sr
     std::fseek(file, reinterpret_cast<std::uintptr_t>(src), SEEK_SET);
     std::uint64_t count = bytes / sizeof(double);
     if (std::fread(dest, sizeof(double), count, file) != count) {
-        FAILURE(std::ios_base::failure, "Read file error.\n");
+        Fatal<std::ios_base::failure>("Read file error.\n");
     }
 }
 
@@ -45,7 +45,7 @@ static inline void write_to_file(std::FILE * file, void * dest, const void * src
     std::fseek(file, reinterpret_cast<std::uintptr_t>(dest), SEEK_SET);
     std::uint64_t count = bytes / sizeof(double);
     if (std::fwrite(src, sizeof(double), bytes / sizeof(double), file) != count) {
-        FAILURE(std::ios_base::failure, "Write file error.\n");
+        Fatal<std::ios_base::failure>("Write file error.\n");
     }
 }
 
@@ -72,10 +72,10 @@ std::uint64_t array::Stock::read_metadata(void) {
     SHARED_LOCK_THREADSAFE();
     std::fseek(this->file_ptr_, this->offset_, SEEK_SET);
     if (std::fread(&(this->ndim_), sizeof(std::uint64_t), 1, this->file_ptr_) != 1) {
-        FAILURE(std::ios_base::failure, "Read file error.\n");
+        Fatal<std::ios_base::failure>("Read file error.\n");
     }
     if (std::fread(this->shape_.data(), sizeof(std::uint64_t), this->ndim_, this->file_ptr_) != this->ndim_) {
-        FAILURE(std::ios_base::failure, "Read file error.\n");
+        Fatal<std::ios_base::failure>("Read file error.\n");
     }
     std::uint64_t cursor = std::ftell(this->file_ptr_);
     UNLOCK_THREADSAFE();
@@ -88,8 +88,8 @@ std::uint64_t array::Stock::read_metadata(void) {
     std::uint64_t expected_size = this->offset_ + (1 + this->ndim_) * sizeof(std::uint64_t);
     expected_size += this->size() * sizeof(double);
     if (file_size < expected_size) {
-        FAILURE(std::filesystem::filesystem_error, "Expected filesize of at least %" PRIu64 ", got %" PRIu64 ".\n",
-                expected_size, file_size);
+        Fatal<std::filesystem::filesystem_error>("Expected filesize of at least %" PRIu64 ", got %" PRIu64 ".\n",
+                                                 expected_size, file_size);
     }
     return cursor;
 }
@@ -101,10 +101,10 @@ std::uint64_t array::Stock::write_metadata(void) {
     EXCLUSIVE_LOCK_THREADSAFE();
     std::fseek(this->file_ptr_, this->offset_, SEEK_SET);
     if (std::fwrite(&ndim, sizeof(std::uint64_t), 1, this->file_ptr_) != 1) {
-        FAILURE(std::ios_base::failure, "Write file error.\n");
+        Fatal<std::ios_base::failure>("Write file error.\n");
     }
     if (std::fwrite(this->shape_.data(), sizeof(std::uint64_t), ndim, this->file_ptr_) != ndim) {
-        FAILURE(std::ios_base::failure, "Write file error.\n");
+        Fatal<std::ios_base::failure>("Write file error.\n");
     }
     std::uint64_t cursor = std::ftell(this->file_ptr_);
     UNLOCK_THREADSAFE();
@@ -147,8 +147,8 @@ filename_(filename), offset_(offset), thread_safe_(thread_safe) {
     // check if file exists
     bool file_exist = check_file_exist(filename.c_str());
     if (!file_exist) {
-        FAILURE(std::filesystem::filesystem_error, "Cannot find file \"%s\", please make sure that the file exists.\n",
-                filename.c_str());
+        Fatal<std::filesystem::filesystem_error>("Cannot find file \"%s\", please make sure that the file exists.\n",
+                                                 filename.c_str());
     }
     // open file
     this->file_ptr_ = std::fopen(filename.c_str(), "rb+");
@@ -207,7 +207,7 @@ void array::Stock::fill(double value) {
 // Calculate mean and variance of all non-zero and finite elements
 std::array<double, 2> array::Stock::get_mean_variance(void) const {
     auto read_func = std::bind(read_from_file, std::placeholders::_1, this->file_ptr_, std::placeholders::_2,
-                                std::placeholders::_3);
+                               std::placeholders::_3);
     return array::stat(this, read_func);
 }
 
@@ -228,7 +228,7 @@ array::Stock::~Stock(void) {
     if (this->release && (this->file_ptr_ != nullptr)) {
         int err_ = std::fclose(this->file_ptr_);
         if (err_ != 0) {
-            FAILURE(std::ios_base::failure, "Cannot close file \"%s\".\n", this->filename_.c_str());
+            Fatal<std::ios_base::failure>("Cannot close file \"%s\".\n", this->filename_.c_str());
         }
     }
 }

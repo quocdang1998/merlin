@@ -3,14 +3,14 @@
 #define MERLIN_CUDA_MEMORY_TPP_
 
 #include <algorithm>    // std::reverse
+#include <concepts>     // std::convertible_to, std::same_as
 #include <cstddef>      // std::size_t
 #include <type_traits>  // std::remove_pointer_t, std::is_trivially_copyable
 #include <utility>      // std::make_pair
-#include <concepts>     // std::convertible_to, std::same_as
 
 #include <cuda.h>  // ::cuCtxGetDevice
 
-#include "merlin/logger.hpp"  // FAILURE
+#include "merlin/logger.hpp"  // merlin::Fatal, merlin::cuda_runtime_error
 #include "merlin/utils.hpp"   // merlin::flatten_thread_index, merlin::size_of_block
 
 namespace merlin {
@@ -20,19 +20,19 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 template <typename T>
-concept HasCuMallocSize = requires (const T & obj) {
-    {obj.cumalloc_size()} -> std::convertible_to<std::uint64_t>;
+concept HasCuMallocSize = requires(const T & obj) {
+    { obj.cumalloc_size() } -> std::convertible_to<std::uint64_t>;
 };
 
 template <typename T>
-concept HasCopyToGpu = requires (const T & obj, T * gpu_data, void * pointed_data, std::uintptr_t stream_ptr) {
-    {obj.copy_to_gpu(gpu_data, pointed_data, stream_ptr)} -> std::same_as<void *>;
+concept HasCopyToGpu = requires(const T & obj, T * gpu_data, void * pointed_data, std::uintptr_t stream_ptr) {
+    { obj.copy_to_gpu(gpu_data, pointed_data, stream_ptr) } -> std::same_as<void *>;
 };
 
 template <typename T>
-concept HasCopyByBlock = requires (const T & obj, T * dest_ptr, void * data_ptr, std::uint64_t thread_idx,
-                                   std::uint64_t block_size) {
-    {obj.copy_by_block(dest_ptr, data_ptr, thread_idx, block_size)} -> std::same_as<void *>;
+concept HasCopyByBlock = requires(const T & obj, T * dest_ptr, void * data_ptr, std::uint64_t thread_idx,
+                                  std::uint64_t block_size) {
+    { obj.copy_by_block(dest_ptr, data_ptr, thread_idx, block_size) } -> std::same_as<void *>;
 };
 
 // Total malloc size
@@ -102,7 +102,7 @@ cuda::Memory<Args...>::Memory(std::uintptr_t stream_ptr, const Args &... args) {
     ::cudaError_t err_ = ::cudaMallocAsync(&(this->gpu_ptr_), this->total_malloc_size_,
                                            reinterpret_cast<::cudaStream_t>(stream_ptr));
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Alloc data failed with message \"%s\"\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Alloc data failed with message \"%s\"\n", ::cudaGetErrorString(err_));
     }
     // storing source pointers
     this->type_ptr_ = std::make_tuple<Args *...>(const_cast<Args *>(&(args))...);

@@ -21,21 +21,32 @@ int main (void) {
     // double data[6] = {2.5, 3.0, 3.5, 4.45, 5.34, 6.07};
     UIntVec data_dims = {2, 3}, data_strides = {data_dims[1] * sizeof(double), sizeof(double)};
     array::Array train_data(data, data_dims, data_strides);
-    MESSAGE("Data: %s\n", train_data.str().c_str());
+    Message("Data: %s\n", train_data.str().c_str());
+
+    // copy data to GPU
+    array::Parcel gpu_data(train_data.shape());
+    gpu_data.transfer_data_to_gpu(train_data);
 
     // initialize model
     candy::Model model({{1.0, 0.5, 2.1, 0.25}, {2.0, 1.0, 2.4, 1.2, 2.7, 1.6}}, 2);
-    MESSAGE("Model before trained: %s\n", model.str().c_str());
+    Message("Model before trained: %s\n", model.str().c_str());
 
     // initialize optimizer
     candy::Optimizer opt = candy::create_grad_descent(0.1);
 
     // create trainer
-    candy::Trainer train(model, std::move(train_data), opt, ProcessorType::Gpu);
-    train.update(10, 1e-1, 5, candy::TrainMetric::RelativeSquare);
-    train.synchronize();
+    std::uint64_t rep = 10;
+    double threshold = 1e-5;
+    candy::Trainer train_gpu(model, opt, ProcessorType::Gpu);
+    train_gpu.update_gpu(gpu_data, rep, threshold, 16, candy::TrainMetric::RelativeSquare);
+    candy::Trainer train_cpu(model, opt, ProcessorType::Cpu);
+    train_cpu.update_cpu(train_data, rep, threshold, 3, candy::TrainMetric::RelativeSquare);
+
+    // synchronize
+    train_gpu.synchronize();
+    train_cpu.synchronize();
 
     // copy back to CPU
-    candy::Model trained_model = train.get_model();
-    MESSAGE("Model eval: %f\n", trained_model.eval({1,1}));
+    Message("Model after trained (GPU): %s\n", train_gpu.model().str().c_str());
+    Message("Model after trained (CPU): %s\n", train_cpu.model().str().c_str());
 }

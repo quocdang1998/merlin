@@ -4,6 +4,8 @@
 #include <new>      // std::align_val_t
 #include <sstream>  // std::ostringstream
 
+#include "merlin/logger.hpp"  // merlin::Fatal
+
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -11,9 +13,12 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Create an empty matrix from shape
-linalg::Matrix::Matrix(const std::array<std::uint64_t, 2> & shape) : shape_(shape) {
-    this->ld_ = shape[0];
-    this->data_ = static_cast<double *>(::operator new[](sizeof(double) * shape[0] * shape[1], std::align_val_t(32)));
+linalg::Matrix::Matrix(std::uint64_t nrow, std::uint64_t ncol) : shape_({nrow, ncol}) {
+    if ((nrow == 0) || (ncol == 0)) {
+        Fatal<std::invalid_argument>("Number of rows or number of columns equals 0.\n");
+    }
+    this->ld_ = nrow;
+    this->data_ = static_cast<double *>(::operator new[](sizeof(double) * nrow * ncol, std::align_val_t(32)));
 }
 
 // String representation

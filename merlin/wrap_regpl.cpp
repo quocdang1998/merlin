@@ -57,7 +57,7 @@ void wrap_polynomial(py::module & regpl_module) {
     // attributes
     polynomial_pyclass.def(
         "order",
-        [](const regpl::Polynomial & self) { return py::cast(self.order()); },
+        [](const regpl::Polynomial & self) { return array_to_pylist(self.order(), self.ndim()); },
         "Get order per dimension of the polynomial."
     );
     // serialization

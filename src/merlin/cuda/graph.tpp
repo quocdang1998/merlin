@@ -2,7 +2,7 @@
 #ifndef MERLIN_CUDA_GRAPH_TPP_
 #define MERLIN_CUDA_GRAPH_TPP_
 
-#include "merlin/logger.hpp"  // FAILURE
+#include "merlin/logger.hpp"  // merlin::Fatal, merlin::cuda_compile_error, merlin::cuda_runtime_error
 
 namespace merlin {
 
@@ -16,7 +16,7 @@ template <typename Function, typename... Args>
 cuda::GraphNode cuda::Graph::add_kernel_node(Function * kernel, std::uint64_t n_blocks, std::uint64_t n_threads,
                                              std::uint64_t shared_mem, const Vector<cuda::GraphNode> & deps,
                                              Args &&... args) {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for graph management.\n");
+    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA for graph management.\n");
     return cuda::GraphNode();
 }
 #elif defined(__NVCC__)
@@ -43,8 +43,7 @@ cuda::GraphNode cuda::Graph::add_kernel_node(Function * kernel, std::uint64_t n_
     ::cudaError_t err_ = ::cudaGraphAddKernelNode(&graph_node, reinterpret_cast<::cudaGraph_t>(this->graph_ptr_),
                                                   dependancies.data(), dependancies.size(), &kernel_param);
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Add kernel node to graph failed with message \"%s\".\n",
-                ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Add kernel node to graph failed with message \"%s\".\n", ::cudaGetErrorString(err_));
     }
     return cuda::GraphNode(reinterpret_cast<std::uintptr_t>(graph_node));
 }

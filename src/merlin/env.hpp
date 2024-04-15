@@ -7,17 +7,25 @@
 #include <mutex>    // std::mutex
 #include <random>   // std::mt19937_64
 
-#include "merlin/exports.hpp"  // MERLINSHARED_EXPORTS
+#include "merlin/exports.hpp"  // MERLINENV_EXPORTS
 
 namespace merlin {
 
 /** @brief Execution environment of merlin.*/
-class MERLINSHARED_EXPORTS Environment {
+class MERLINENV_EXPORTS Environment {
   public:
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
     Environment(void);
+    /// @}
+
+    /// @name Output redirection
+    /// @{
+    /** @brief Check if ``stdout`` is redirected into a file.*/
+    static bool cout_terminal;
+    /** @brief Check if ``stderr`` is redirected into a file.*/
+    static bool cerr_terminal;
     /// @}
 
     /// @name Shared variables
@@ -48,7 +56,7 @@ class MERLINSHARED_EXPORTS Environment {
 };
 
 /** @brief Default environment.*/
-MERLINSHARED_EXPORTS extern Environment default_environment;
+MERLINENV_EXPORTS extern Environment default_environment;
 
 /** @brief Initialize the default CUDA context.*/
 void initialize_cuda_context(void);

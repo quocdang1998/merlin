@@ -1,24 +1,40 @@
 // Copyright quocdang1998
 #include "merlin/env.hpp"
 
-#include <cstdio>
+#include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
 
-#include "merlin/logger.hpp"  // FAILURE
+#if defined(__MERLIN_WINDOWS__)
+    #include <io.h>     // ::_isatty
+    #include <stdio.h>  // ::_fileno
+#elif defined(__MERLIN_LINUX__)
+    #include <unistd.h>  // ::fileno, ::isatty
+#endif
 
 namespace merlin {
 
 // Default constructor
 Environment::Environment(void) {
+    // increase number of instances
     Environment::num_instances++;
     if (Environment::is_initialized) {
         return;
     }
+    // get redirection
+#if defined(__MERLIN_WINDOWS__)
+    Environment::cout_terminal = ::_isatty(::_fileno(stdout));
+    Environment::cerr_terminal = ::_isatty(::_fileno(stderr));
+#elif defined(__MERLIN_LINUX__)
+    Environment::cout_terminal = ::isatty(::fileno(stdout));
+    Environment::cerr_terminal = ::isatty(::fileno(stderr));
+#endif
+    // initialize CUDA context
     initialize_cuda_context();
     Environment::is_initialized = true;
 }
 
 // Destructor
 Environment::~Environment(void) {
+    // decrease number of instances
     Environment::num_instances--;
     if (Environment::num_instances == 0) {
         alarm_cuda_error();
@@ -28,6 +44,12 @@ Environment::~Environment(void) {
 // ---------------------------------------------------------------------------------------------------------------------
 // Class bounded properties
 // ---------------------------------------------------------------------------------------------------------------------
+
+// Check if ``stdout`` is redirected into a file
+bool Environment::cout_terminal;
+
+// Check if ``stderr`` is redirected into a file
+bool Environment::cerr_terminal;
 
 // Check if environment is initialized
 bool Environment::is_initialized = false;

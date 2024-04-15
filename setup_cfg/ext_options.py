@@ -53,7 +53,7 @@ def get_extension_options():
     ext_options["libraries"] = ["merlin"]
     if MERLIN_CUDA:
         ext_options["libraries"] += ["merlincuda"]
-    ext_options["libraries"] += ["merlinrdc", "merlinshared"]
+    ext_options["libraries"] += ["merlinrdc", "merlinenv"]
     if MERLIN_CUDA:
         ext_options["libraries"] += ["cudart_static", "cudadevrt", "cuda"]
     if MERLIN_DEBUG and (sys.platform == "win32"):

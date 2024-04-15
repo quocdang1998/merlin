@@ -1,4 +1,0 @@
-MESSAGE
-=======
-
-.. doxygendefine:: MESSAGE

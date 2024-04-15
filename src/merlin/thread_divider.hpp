@@ -4,7 +4,7 @@
 
 #include <cstdint>  // std::uint64_t
 
-#include "merlin/cuda_interface.hpp"  // __cuhostdev__
+#include "merlin/config.hpp"  // __cuhostdev__
 
 namespace merlin {
 

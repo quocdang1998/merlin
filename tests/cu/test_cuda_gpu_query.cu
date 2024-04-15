@@ -21,27 +21,27 @@ void str_callback(::cudaStream_t stream, ::cudaError_t status, void * data) {
 }
 
 __global__ void print_array(double * array) {
-    CUDAOUT("Print array element (dynamic graph): %f.\n", array[flatten_kernel_index()]);
+    CudaOut("Print array element (dynamic graph): %f.\n", array[flatten_kernel_index()]);
 }
 
 
 void graph_callback(void * data) {
-    MESSAGE("Graph callback function for dynamic graph.\n");
+    Message("Graph callback function for dynamic graph.\n");
 }
 
 int main(void) {
     // print GPU specifications
-    MESSAGE("Test 1 : GPU specification\n");
+    Message("Test 1 : GPU specification\n");
     cuda::print_gpus_spec();
 
     // get GPU limits
-    MESSAGE("Test 2 : GPU limits\n");
+    Message("Test 2 : GPU limits\n");
     std::uint64_t stack_size = cuda::Device::limit(cuda::DeviceLimit::StackSize);
     std::printf("Stack size: %" PRIu64 ".\n", stack_size);
     cuda::test_all_gpu();
 
     // static graph with callback
-    MESSAGE("Test 3 : Static CUDA Graph\n");
+    Message("Test 3 : Static CUDA Graph\n");
     cuda::Stream s(cuda::StreamSetting::NonBlocking);
     std::printf("Default stream: %s.\n", s.str().c_str());
     int data = 1;
@@ -54,7 +54,7 @@ int main(void) {
     s.synchronize();
 
     // dynamic graph with callback
-    MESSAGE("Test 4 : Dynamic CUDA Graph\n");
+    Message("Test 4 : Dynamic CUDA Graph\n");
     cuda::Event ev(cuda::EventCategory::BlockingSync | cuda::EventCategory::DisableTiming);
     cuda::Graph dynamic_graph(0);
     auto [mem_alloc_node, data_ptr_void] = dynamic_graph.add_mem_alloc_node(4*sizeof(double),

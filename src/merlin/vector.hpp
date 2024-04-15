@@ -7,8 +7,8 @@
 #include <initializer_list>  // std::initializer_list
 #include <string>            // std::string
 
-#include "merlin/cuda_interface.hpp"  // __cuhostdev__, __cudevice__
-#include "merlin/exports.hpp"         // MERLIN_EXPORTS
+#include "merlin/config.hpp"   // __cuhostdev__, __cudevice__
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS
 
 namespace merlin {
 
@@ -167,9 +167,9 @@ class Vector {
     /// @name Operator
     /// @{
     /** @brief Identical comparison operator.*/
-    friend __cuhostdev__ bool operator==<>(const Vector<T> & vec_1, const Vector<T> & vec_2) noexcept;
+    friend __cuhostdev__ bool operator== <>(const Vector<T> & vec_1, const Vector<T> & vec_2) noexcept;
     /** @brief Different comparison operator.*/
-    friend __cuhostdev__ bool operator!=<>(const Vector<T> & vec_1, const Vector<T> & vec_2) noexcept;
+    friend __cuhostdev__ bool operator!= <>(const Vector<T> & vec_1, const Vector<T> & vec_2) noexcept;
     /** @brief Check if 2 vectors have the same size.*/
     friend __cuhostdev__ constexpr bool is_same_size(const Vector<T> & vec_1, const Vector<T> & vec_2) noexcept {
         return vec_1.size_ == vec_2.size_;

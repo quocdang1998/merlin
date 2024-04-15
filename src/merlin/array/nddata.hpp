@@ -7,9 +7,8 @@
 #include <string>   // std::string
 
 #include "merlin/array/declaration.hpp"  // merlin::array::NdData
-#include "merlin/cuda_interface.hpp"     // __cuhost__, __cuhostdev__
+#include "merlin/config.hpp"             // __cuhostdev__, merlin::Index
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
-#include "merlin/settings.hpp"           // merlin::Index
 #include "merlin/slice.hpp"              // merlin::SliceArray
 #include "merlin/vector.hpp"             // merlin::UIntVec
 

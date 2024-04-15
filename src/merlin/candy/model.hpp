@@ -8,9 +8,8 @@
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array
 #include "merlin/candy/declaration.hpp"  // merlin::candy::Model
-#include "merlin/cuda_interface.hpp"     // __cuhostdev__
+#include "merlin/config.hpp"             // __cudevice__, __cuhostdev__, merlin::DPtrArray, merlin::Index
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
-#include "merlin/settings.hpp"           // merlin::DPtrArray, merlin::Index
 #include "merlin/vector.hpp"             // merlin::DoubleVec, merlin::Vector
 
 namespace merlin {

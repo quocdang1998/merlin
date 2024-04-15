@@ -19,11 +19,11 @@ int main(void) {
     UIntVec dims = {3, 2};
     UIntVec strides = {2*(dims[1] * sizeof(double)), sizeof(double)};
     array::Array Ar(A, dims, strides, false);
-    MESSAGE("CPU array: %s\n", Ar.str().c_str());
+    Message("CPU array: %s\n", Ar.str().c_str());
     {
         array::Stock Stk("temp.txt", Ar.shape());
         Stk.record_data_to_file(Ar);
-        MESSAGE("Stock array: %s\n", Stk.str().c_str());
+        Message("Stock array: %s\n", Stk.str().c_str());
     }
 
     std::mutex m;
@@ -33,7 +33,7 @@ int main(void) {
         array::Array Ar_read(S.shape());
         Ar_read.extract_data_from_file(S);
         m.lock();
-        MESSAGE("From thread %d: %s\n", omp_get_thread_num(), Ar_read.str().c_str());
+        Message("From thread %d: %s\n", omp_get_thread_num(), Ar_read.str().c_str());
         m.unlock();
     }
 

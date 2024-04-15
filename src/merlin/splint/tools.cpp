@@ -7,7 +7,6 @@
 
 #include "merlin/cuda/stream.hpp"            // merlin::cuda::Stream
 #include "merlin/logger.hpp"                 // FAILURE
-#include "merlin/settings.hpp"               // merlin::Index, merlin::Point
 #include "merlin/splint/intpl/lagrange.hpp"  // merlin::splint::intpl::construct_lagrange
 #include "merlin/splint/intpl/linear.hpp"    // merlin::splint::intpl::construct_linear
 #include "merlin/splint/intpl/newton.hpp"    // merlin::splint::intpl::construction_newton

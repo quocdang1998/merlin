@@ -1,11 +1,19 @@
-#ifndef MERLIN_SETTINGS_HPP_
-#define MERLIN_SETTINGS_HPP_
+#ifndef MERLIN_CONFIG_HPP_
+#define MERLIN_CONFIG_HPP_
 
 #include <array>             // std::array
 #include <cstdint>           // std::uint64_t
 #include <initializer_list>  // std::initializer_list
 
 namespace merlin {
+
+// Print buffer
+// ------------
+
+inline constexpr std::uint64_t printf_buffer = 1024;
+
+// Array with known max number of size
+// -----------------------------------
 
 /** @brief Max number of dimensions.*/
 inline constexpr const std::uint64_t max_dim = 16;
@@ -27,7 +35,7 @@ concept ConvertibleFromIterator = requires(ForwardIterator it) {
 
 /** @brief Make an array from another container.*/
 template <class T, class ForwardIterator>
-    requires ConvertibleFromIterator<T, ForwardIterator>
+requires ConvertibleFromIterator<T, ForwardIterator>
 std::array<T, max_dim> make_array(ForwardIterator begin, ForwardIterator end) {
     std::array<T, max_dim> result_array;
     result_array.fill(T());
@@ -44,6 +52,40 @@ std::array<T, max_dim> make_array(std::initializer_list<T> list) {
     return make_array<T>(list.begin(), list.end());
 }
 
+// CUDA interface
+// --------------
+
+// CUDA decorator expansion when not compiling with nvcc
+#ifdef __NVCC__
+    #define __cudevice__ __device__
+    #define __cuhostdev__ __host__ __device__
+#else
+    #define __cudevice__ static_assert(false, "Cannot compile pure device function with compiling with CUDA.\n");
+    #define __cuhostdev__
+#endif
+
+// Advanced vectorization
+// ----------------------
+
+/** @brief AVX use flags.*/
+enum class AvxFlag {
+    /** @brief Compilation without AVX optimization.*/
+    NoAvx,
+    /** @brief Compilation using AVX and FMA optimization.*/
+    AvxOn,
+};
+
+#ifdef __AVX__
+inline constexpr AvxFlag use_avx = AvxFlag::AvxOn;
+#else
+inline constexpr AvxFlag use_avx = AvxFlag::NoAvx;
+#endif  // __AVX__
+
+#ifdef __DOXYGEN_PARSER__
+/** @brief Flag indicate if AVX is enabled during the compilation.*/
+static AvxFlag use_avx;
+#endif  // __DOXYGEN_PARSER__
+
 }  // namespace merlin
 
-#endif  // MERLIN_SETTINGS_HPP_
+#endif  // MERLIN_CONFIG_HPP_

@@ -2,116 +2,34 @@
 #ifndef MERLIN_LOGGER_HPP_
 #define MERLIN_LOGGER_HPP_
 
-#include <cstdarg>       // std::va_list, va_start, va_end
-#include <cstdio>        // std::printf, std::vsnprintf
-#include <filesystem>    // std::filesystem::filesystem_error
-#include <stdexcept>     // std::runtime_error
-#include <string>        // std::string
-#include <system_error>  // std::error_code
-#include <type_traits>   // std::is_same
+#include <cinttypes>        // PRIdLEAST32
+#include <cstdio>           // std::snprintf
+#include <filesystem>       // std::filesystem::filesystem_error
+#include <iostream>         // std::cout, std::clog
+#include <source_location>  // std::source_location
+#include <stdexcept>        // std::runtime_error
+#include <syncstream>       // std::osyncstream
+#include <utility>          // std::forward
 
-#ifdef __NVCC__
-    #include "cuda.h"  // CUresult, cuGetErrorName
-#endif                 // __NVCC__
-
-#include "merlin/exports.hpp"   // MERLINSHARED_EXPORTS
-#include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
-
-#if defined(__MERLIN_WINDOWS__)
-    #define __FUNCNAME__ __FUNCSIG__
-#elif defined(__MERLIN_LINUX__)
-    #define __FUNCNAME__ __PRETTY_FUNCTION__
-#endif
+#include "merlin/config.hpp"    // merlin::printf_buffer, __cudevice__, __cuhostdev__
+#include "merlin/exports.hpp"   // MERLIN_EXPORTS
 
 // Stack tracing
 // -------------
 
 namespace merlin {
 /** @brief Print the stacktrace at the crash moment.*/
-MERLINSHARED_EXPORTS void print_stacktrace(int skip = 1);
-}  // namespace merlin
+MERLIN_EXPORTS void print_stacktrace(int skip = 1);
 
-// Log MESSAGE, WARNING and FAILURE for CPU
-// ----------------------------------------
 
-/** @brief Print message to the standard output.
- *  @details Example:
- *  @code {.cpp}
- *  MESSAGE("A message with a value %f.\n", 0.5);
- *  @endcode
- *  @param fmt Formatted string (same syntax as ``std::printf``).
- */
-#define MESSAGE(fmt, ...) std::fprintf(stdout, "\033[1;34m[MESSAGE]\033[0m [%s] " fmt, __FUNCNAME__, ##__VA_ARGS__)
-/** @brief Print warning to the standard error.
- *  @details Example:
- *  @code {.cpp}
- *  int x = 2;
- *  WARNING("A warning with a value %d.\n", x);
- *  @endcode
- *  @param fmt Formatted string (same syntax as ``std::printf``).
- */
-#define WARNING(fmt, ...) std::fprintf(stderr, "\033[1;33m[WARNING]\033[0m [%s] " fmt, __FUNCNAME__, ##__VA_ARGS__)
-/** @brief Print error message and throw an instance of type exception.
- *  @details Example:
- *  @code {.cpp}
- *  FAILURE(std::runtime_error, "A runtime error message.\n");
- *  @endcode
- *  @note The use of this macro is recommended over C++ exception throwing, because some compiler/debugger may be
- *  unable to display automatically the error message.
- *  @param exception Name of the exception class (like ``std::runtime_error``, ``std::invalid_argument``, etc).
- *  @param fmt Formatted string (same syntax as ``std::printf``).
- */
-#define FAILURE(exception, fmt, ...) ::merlin::__throw_error<exception>(__FUNCNAME__, fmt, ##__VA_ARGS__)
-/** @brief Message that is printed only in debug mode.
- *  @details Example:
- *  @code {.cpp}
- *  DEBUGLG("A message with a value %f.\n", 0.5);
- *  @endcode
- *  @param fmt Formatted string (same syntax as ``std::printf``).
- */
-#if defined(__MERLIN_DEBUG__)
-    #define DEBUGLG(fmt, ...)                                                                                          \
-        std::fprintf(stdout, "\033[1;32m[DEBUGLG]\033[0m [%s] " fmt, __FUNCNAME__, ##__VA_ARGS__);                     \
-        print_stacktrace(2)
-#else
-    #define DEBUGLG(fmt, ...)
-#endif  // __MERLIN_DEBUG__
-/** @brief Perform a check only in debug mode.
- *  @details Example:
- *  @code {.cpp}
- *  CASSERT(i < j, FAILURE, std::runtime_error, "A runtime error message.\n");
- *  @endcode
- */
-#if defined(__MERLIN_DEBUG__)
-    #define CASSERT(condition, ERROR_MACRO, exception, fmt, ...)                                                       \
-        if (condition) ERROR_MACRO(exception, fmt, ##__VA_ARGS__)
-#else
-    #define CASSERT(condition, ERROR_MACRO, exception, fmt, ...)
-#endif  // __MERLIN_DEBUG__
+// Get error message from Windows and Unix
+// ---------------------------------------
 
-namespace merlin {
+/** @brief Get error message from Windows or Linux.*/
+MERLIN_EXPORTS std::string throw_sys_last_error(unsigned long int last_error = static_cast<unsigned long int>(-1));
 
-// print log for FAILURE + throw exception
-template <class Exception = std::runtime_error>
-void __throw_error(const char * func_name, const char * fmt, ...) {
-    // save formatted string to a buffer
-    char buffer[1024];
-    std::va_list args;
-    va_start(args, fmt);
-    std::vsnprintf(buffer, sizeof(buffer), fmt, args);
-    va_end(args);
-    // print exception message and throw an exception object
-    std::fprintf(stderr, "\033[1;31m[FAILURE]\033[0m [%s] %s", func_name, buffer);
-#if defined(__MERLIN_DEBUG__)
-    print_stacktrace(2);  // print_stacktrace function
-#endif                    // __MERLIN_DEBUG__
-    if constexpr (std::is_same<Exception, std::filesystem::filesystem_error>::value) {
-        throw std::filesystem::filesystem_error(const_cast<char *>(buffer),
-                                                std::error_code(1, std::iostream_category()));
-    } else {
-        throw Exception(const_cast<char *>(buffer));
-    }
-}
+// Custom exceptions
+// -----------------
 
 /** @brief Exception class to be thrown when compiling without CUDA option.*/
 class cuda_compile_error : public std::runtime_error {
@@ -134,70 +52,267 @@ class not_implemented_error : public std::runtime_error {
     const char * what() const noexcept { return std::runtime_error::what(); }
 };
 
-}  // namespace merlin
+// Log Message, Warning and Fatal for CPU
+// --------------------------------------
 
-// Get error message from Windows and Unix
-// ---------------------------------------
+/** @brief Wrapper around format string and current source location.*/
+struct FmtString {
+  public:
+    consteval FmtString(const char * data, std::source_location location = std::source_location::current()) :
+    str(data), loc(location) {}
+    const char * str;
+    std::source_location loc;
+};
 
-namespace merlin {
-#if defined(__MERLIN_WINDOWS__)
-// Get error from Windows API
-MERLINSHARED_EXPORTS std::string throw_windows_last_error(unsigned long int last_error);
-#elif defined(__MERLIN_LINUX__)
-// Get error from Linux
-MERLINSHARED_EXPORTS std::string throw_linux_last_error(void);
-#endif
-}  // namespace merlin
+/** @brief Get length of a string.*/
+constexpr int len(const char * str) {
+    int length = 0;
+    while (*(str++) != '\0') {
+        ++length;
+    }
+    return length;
+}
 
-// Log CUDAOUT for GPU
-// -------------------
+/** @brief Concatenate 2 strings.*/
+constexpr void cat_str(char * dest_end, const char * src) {
+    do {
+        *(dest_end++) = *src;
+    } while (*(src++) != '\0');
+}
 
-#ifdef __NVCC__
-    /** @brief Print message to the standard output (for usage inside a GPU function).
-     *  @details Example:
-     *  @code {.cu}
-     *  __global__ void dummy_gpu_function {
-     *      CUDAOUT("Hello World from thread %d block %d.\n", threadIdx.x, blockIdx.x);
-     *  }
-     *  @endcode
-     *  @note This macro is only available when option ``MERLIN_CUDA`` is ``ON``.
-     *  @param fmt Formatted string (same syntax as ``std::printf``).
-     */
-    #define CUDAOUT(fmt, ...) std::printf("\033[1;36m[CUDAOUT]\033[0m [%s] " fmt, __FUNCNAME__, ##__VA_ARGS__)
+/** @brief Get filename from absolute path.*/
+constexpr const char * get_fname(const char * abs_path) {
+    const char * fname = abs_path;
+    for (; *abs_path != '\0'; abs_path++) {
+        if ((*abs_path == '/') || (*abs_path == '\\')) {
+            fname = abs_path + 1;
+        }
+    }
+    return fname;
+}
 
-    /** @brief Print error message (for usage inside a GPU function) and terminate GPU kernel.
-     *  @details Example:
-     *  @code {.cu}
-     *  __global__ void errorred_gpu_function {
-     *      CUDAERR("Error from thread %d block %d.\n", threadIdx.x, blockIdx.x);
-     *  }
-     *  @endcode
-     *  @note This macro is only available when option ``MERLIN_CUDA`` is ``ON``.
-     *  @param fmt Formatted string (same syntax as ``std::printf``).
-     */
-    #define CUDAERR(fmt, ...)                                                                                          \
-        std::printf("\033[1;35m[CUDAERR]\033[0m [%s] " fmt, __FUNCNAME__, ##__VA_ARGS__);                              \
-        asm("trap;")
+/** @brief Print message to the standard output.
+ *  @details Example:
+ *  @code {.cpp}
+ *  // use case 1: single output
+ *  Message("A message with a value ", 0.5, ".\n");
+ *  // use case 2: multiple output
+ *  Message m("A printf ");
+ *  m << "that takes " << "extra arguments. ";
+ *  m << "And this message will not be mixed even in multi-threading.";
+ *  @endcode
+ */
+struct Message {
+  public:
+    /** @brief Constructor list of objects.*/
+    template <typename... Args>
+    Message(FmtString fmt, Args &&... args) {
+        char srcinfo_buffer[printf_buffer];
+        std::snprintf(srcinfo_buffer, printf_buffer, "message [%s] in %s l.%" PRIdLEAST32 " : ", fmt.loc.function_name(),
+                     get_fname(fmt.loc.file_name()), fmt.loc.line());
+        char log_buffer[printf_buffer];
+        if constexpr (sizeof...(args) > 0) {
+            std::snprintf(log_buffer, printf_buffer, fmt.str, std::forward<Args>(args)...);
+        } else {
+            std::snprintf(log_buffer, printf_buffer, "%s", fmt.str);
+        }
+        this->stream << srcinfo_buffer << log_buffer;
+    }
+    /** @brief Stream operator.*/
+    template <typename T>
+    Message & operator<<(T && obj) {
+        this->stream << obj;
+        return *this;
+    }
+    /** @brief Force print out content to the output stream.*/
+    void emit(void) { this->stream.emit(); }
+
+  private:
+    std::osyncstream stream{std::cout};
+};
+
+/** @brief Print warning to the standard error.
+ *  @details Example:
+ *  @code {.cpp}
+ *  // use case 1: single output
+ *  Warning("A warning with a value ", 0.5, ".\n");
+ *  // use case 2: multiple output
+ *  Warning m("A warning ");
+ *  m << "that takes " << "extra arguments. ";
+ *  m << "And this warning will not be mixed even in multi-threading.";
+ *  @endcode
+ *  @param fmt Formatted string (same syntax as ``std::printf``).
+ */
+struct Warning {
+  public:
+    /** @brief Constructor list of objects.*/
+    template <typename... Args>
+    Warning(FmtString fmt, Args &&... args) {
+        char srcinfo_buffer[printf_buffer];
+        std::snprintf(srcinfo_buffer, printf_buffer, "warning [%s] in %s l.%" PRIdLEAST32 " : ", fmt.loc.function_name(),
+                     get_fname(fmt.loc.file_name()), fmt.loc.line());
+        char log_buffer[printf_buffer];
+        if constexpr (sizeof...(args) > 0) {
+            std::snprintf(log_buffer, printf_buffer, fmt.str, std::forward<Args>(args)...);
+        } else {
+            std::snprintf(log_buffer, printf_buffer, "%s", fmt.str);
+        }
+        this->stream << srcinfo_buffer << log_buffer;
+    }
+    /** @brief Stream operator.*/
+    template <typename T>
+    Warning & operator<<(T && obj) {
+        this->stream << obj;
+        return *this;
+    }
+    /** @brief Force print out content to the output stream.*/
+    void emit(void) { this->stream.emit(); }
+
+  private:
+    std::osyncstream stream{std::clog};
+};
+
+/** @brief Message that is printed only in debug mode.
+ *  @details Example:
+ *  @code {.cpp}
+ *  DebugLog("A message with a value %f.\n", 0.5);
+ *  @endcode
+ */
+template <typename... Args>
+struct DebugLog {
+  public:
+    /** @brief Constructor list of objects.*/
+    DebugLog(FmtString fmt, Args &&... args) {
+#if defined(__MERLIN_DEBUG__)
+        char srcinfo_buffer[printf_buffer];
+        std::snprintf(srcinfo_buffer, printf_buffer, "debug [%s] in %s l.%" PRIdLEAST32 " : ", fmt.loc.function_name(),
+                     get_fname(fmt.loc.file_name()), fmt.loc.line());
+        char log_buffer[printf_buffer];
+        if constexpr (sizeof...(args) > 0) {
+            std::snprintf(log_buffer, printf_buffer, fmt.str, std::forward<Args>(args)...);
+        } else {
+            std::snprintf(log_buffer, printf_buffer, "%s", fmt.str);
+        }
+        std::fprintf(stdout, "%s%s", srcinfo_buffer, log_buffer);
+        print_stacktrace(2);
+#endif  // __MERLIN_DEBUG__
+    }
+};
+
+/** @brief Print error message and throw an instance of type exception.
+ *  @details Example:
+ *  @code {.cpp}
+ *  Fatal<std::runtime_error>(std::runtime_error, "A runtime error message.\n");
+ *  @endcode
+ *  @note The use of this macro is recommended over C++ exception throwing, because some compiler/debugger may be
+ *  unable to display automatically the error message.
+ *  @tparam exception Name of the exception class (like ``std::runtime_error``, ``std::invalid_argument``, etc).
+ *  @param fmt Formatted string (same syntax as ``std::printf``).
+ *  @param args Other arguments.
+ */
+template <class Exception>
+struct Fatal {
+  public:
+    /** @brief Constructor from formatted string.*/
+    template <typename... Args>
+    Fatal(FmtString fmt, Args &&... args) {
+        char srcinfo_buffer[printf_buffer];
+        std::snprintf(srcinfo_buffer, printf_buffer, "fatal [%s] in %s l.%" PRIdLEAST32 " : ", fmt.loc.function_name(),
+                     get_fname(fmt.loc.file_name()), fmt.loc.line());
+        char error_buffer[printf_buffer];
+        if constexpr (sizeof...(args) > 0) {
+            std::snprintf(error_buffer, printf_buffer, fmt.str, std::forward<Args>(args)...);
+        } else {
+            std::snprintf(error_buffer, printf_buffer, "%s", fmt.str);
+        }
+        std::fprintf(stderr, "%s%s", srcinfo_buffer, error_buffer);
+#if defined(__MERLIN_DEBUG__)
+        print_stacktrace(2);
+#endif  // __MERLIN_DEBUG__
+        if constexpr (std::is_same<Exception, std::filesystem::filesystem_error>::value) {
+            throw std::filesystem::filesystem_error(error_buffer, std::error_code(1, std::iostream_category()));
+        } else {
+            throw Exception(error_buffer);
+        }
+    }
+};
+
+// Log CudaOut, CudaDeviceError and CudaHostDevError for GPU
+// ---------------------------------------------------------
+
+#if defined(__NVCC__)
+
+/** @brief Print message to the standard output (for usage inside a GPU function).
+ *  @details Example:
+ *  @code {.cu}
+ *  __global__ void dummy_gpu_function {
+ *      CudaOut("Hello World from thread %d block %d.\n", threadIdx.x, blockIdx.x);
+ *  }
+ *  @endcode
+ *  @note This macro is only available when option ``MERLIN_CUDA`` is ``ON``.
+ *  @param fmt Formatted string (same syntax as ``std::printf``).
+ *  @param args Other arguments.
+ */
+struct CudaOut {
+    /** @brief Constructor from formatted string.*/
+    template <typename... Args>
+    __cudevice__ CudaOut(FmtString fmt, Args &&... args) {
+        char buffer[printf_buffer] = "cudaout [%s] in %s l.%u : ";
+        cat_str(buffer + len(buffer), fmt.str);
+        std::printf(buffer, fmt.loc.function_name(), get_fname(fmt.loc.file_name()), unsigned(fmt.loc.line()),
+                    std::forward<Args>(args)...);
+    }
+};
+
+/** @brief Print error message (for usage inside a GPU function) and terminate GPU kernel.
+ *  @details Example:
+ *  @code {.cu}
+ *  __global__ void errorred_gpu_function {
+ *      DeviceError("Error from thread %d block %d.\n", threadIdx.x, blockIdx.x);
+ *  }
+ *  @endcode
+ *  @note This macro is only available when option ``MERLIN_CUDA`` is ``ON``.
+ *  @param fmt Formatted string (same syntax as ``std::printf``).
+ *  @param args Other arguments.
+ */
+struct DeviceError {
+    /** @brief Constructor from formatted string.*/
+    template <typename... Args>
+    __cudevice__ DeviceError(FmtString fmt, Args &&... args) {
+        char buffer[printf_buffer] = "cudaerror [%s] in %s l.%u : ";
+        cat_str(buffer + len(buffer), fmt.str);
+        std::printf(buffer, fmt.loc.function_name(), get_fname(fmt.loc.file_name()), unsigned(fmt.loc.line()),
+                    std::forward<Args>(args)...);
+        asm("trap;");
+    }
+};
+
+/** @brief Print error message and terminate CUDA host-device function.
+ *  @details Example:
+ *  @code {.cu}
+ *  __host__ __device__ void errorred_function {
+ *      HostDevError("Error.\n");
+ *  }
+ *  @endcode
+ *  @tparam exception Name of the exception class (like ``std::runtime_error``, ``std::invalid_argument``, etc).
+ *  @param fmt Formatted string (same syntax as ``std::printf``).
+ *  @param args Other arguments.
+ */
+template <class Exception>
+struct HostDevError {
+    /** @brief Constructor from formatted string.*/
+    template <typename... Args>
+    __cuhostdev__ HostDevError(FmtString fmt, Args &&... args) {
+    #if defined(__CUDA_ARCH__)
+        DeviceError(std::forward<FmtString>(fmt), std::forward<Args>(args)...);
+    #else
+        Fatal<Exception>(std::forward<FmtString>(fmt), std::forward<Args>(args)...);
+    #endif  // __CUDA_ARCH__
+    }
+};
+
 #endif  // __NVCC__
 
-// Log CUHDERR for host-device error
-// ---------------------------------
-
-#ifdef __CUDA_ARCH__
-    #define CUHDERR(exception, fmt, ...) CUDAERR(fmt, ##__VA_ARGS__)
-#else
-    /** @brief Print error message and terminate CUDA host-device function.
-     *  @details Example:
-     *  @code {.cu}
-     *  __host__ __device__ void errorred_function {
-     *      CUDAERR("Error.\n");
-     *  }
-     *  @endcode
-     *  @param exception Name of the exception class (like ``std::runtime_error``, ``std::invalid_argument``, etc) to be
-     *  thrown in case of ``__host__`` function.
-     *  @param fmt Formatted string (same syntax as ``std::printf``).
-     */
-    #define CUHDERR(exception, fmt, ...) FAILURE(exception, fmt, ##__VA_ARGS__)
-#endif  // __CUDA_ARCH__
+}  // namespace merlin
 
 #endif  // MERLIN_LOGGER_HPP_

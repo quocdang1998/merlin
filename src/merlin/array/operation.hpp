@@ -2,14 +2,13 @@
 #ifndef MERLIN_ARRAY_OPERATION_HPP_
 #define MERLIN_ARRAY_OPERATION_HPP_
 
-#include <cstdint>   // std::uint64_t
-#include <string>    // std::string
-#include <utility>   // std::pair
+#include <cstdint>  // std::uint64_t
+#include <string>   // std::string
+#include <utility>  // std::pair
 
-#include "merlin/array/nddata.hpp"    // merlin::array::NdData
-#include "merlin/cuda_interface.hpp"  // __cuhostdev__
-#include "merlin/exports.hpp"         // MERLIN_EXPORTS
-#include "merlin/settings.hpp"        // merlin::Index
+#include "merlin/array/nddata.hpp"  // merlin::array::NdData
+#include "merlin/config.hpp"        // __cuhostdev__, merlin::Index
+#include "merlin/exports.hpp"       // MERLIN_EXPORTS
 
 namespace merlin::array {
 
@@ -83,12 +82,12 @@ MERLIN_EXPORTS void calc_mean_variance(const double * data, std::uint64_t size, 
 /** @brief Combine mean and variance of 2 subsets.
  *  @details Means (@f$ m_1, m_2 @f$) and second moments (@f$ V_1, V_2 @f$) of 2 subsets (@f$ N_1, N_2 @f$) can be
  *  calculated by:
- *  
+ *
  *  @f[ m = \frac{m_1 N_1 + m_2 N_2}{N_1 + N_2} @f]
  *  @f[ V = V_1 + V_2 + \frac{N_1 N_2}{N_1 + N_2} (m_1 - m_2)^2 @f]
  */
 MERLIN_EXPORTS void combine_stas(double & mean, double & second_moment, std::uint64_t & normal_count,
-                                const double & partial_mean, const double & partial_var, std::uint64_t partial_size);
+                                 const double & partial_mean, const double & partial_var, std::uint64_t partial_size);
 
 // Actions on NdData
 // -----------------
@@ -96,7 +95,7 @@ MERLIN_EXPORTS void combine_stas(double & mean, double & second_moment, std::uin
 /** @brief Function copy an array to another, having the prototype of
  *  ``TransferFunction(void * dest, const void * src, std::size_t size_in_bytes)``.*/
 template <typename Function>
-concept TransferFunction = requires (Function & func, void * dest, const void * src, std::size_t size) {
+concept TransferFunction = requires(Function & func, void * dest, const void * src, std::size_t size) {
     { func(dest, src, size) };
 };
 
@@ -143,7 +142,6 @@ std::array<double, 2> stat(const array::NdData * target, CopyFunction copy);
  */
 template <class NdArray>
 std::string print(const NdArray * target, const std::string & nametype, bool first_call);
-
 
 }  // namespace merlin::array
 

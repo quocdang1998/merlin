@@ -7,8 +7,8 @@
 #include <tuple>    // std::tuple
 #include <utility>  // std::exchange
 
+#include "merlin/config.hpp"            // __cudevice__
 #include "merlin/cuda/declaration.hpp"  // merlin::cuda::Memory
-#include "merlin/cuda_interface.hpp"    // __cudevice__
 
 // CUDA nvcc guard
 #ifndef __NVCC__

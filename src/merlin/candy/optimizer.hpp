@@ -9,7 +9,7 @@
 #include "merlin/candy/optmz/adagrad.hpp"       // merlin::candy::optmz::AdaGrad
 #include "merlin/candy/optmz/adam.hpp"          // merlin::candy::optmz::Adam
 #include "merlin/candy/optmz/grad_descent.hpp"  // merlin::candy::optmz::GradDescent
-#include "merlin/cuda_interface.hpp"            // __cudevice__
+#include "merlin/config.hpp"                    // __cudevice__
 #include "merlin/exports.hpp"                   // MERLIN_EXPORTS
 
 namespace merlin {
@@ -33,13 +33,13 @@ struct candy::Optimizer {
     /// @name Copy and move
     /// @{
     /** @brief Copy constructor.*/
-    Optimizer(const candy::Optimizer & src);
+    MERLIN_EXPORTS Optimizer(const candy::Optimizer & src);
     /** @brief Copy assignment.*/
-    candy::Optimizer & operator=(const candy::Optimizer & src);
+    MERLIN_EXPORTS candy::Optimizer & operator=(const candy::Optimizer & src);
     /** @brief Move constructor.*/
-    Optimizer(candy::Optimizer && src);
+    MERLIN_EXPORTS Optimizer(candy::Optimizer && src);
     /** @brief Move assignment.*/
-    candy::Optimizer & operator=(candy::Optimizer && src);
+    MERLIN_EXPORTS candy::Optimizer & operator=(candy::Optimizer && src);
     /// @}
 
     /// @name Check compatibility with a model

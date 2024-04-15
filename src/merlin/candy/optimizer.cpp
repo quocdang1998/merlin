@@ -7,7 +7,7 @@
 #include <utility>      // std::exchange
 
 #include "merlin/candy/model.hpp"  // merlin::candy::Model
-#include "merlin/logger.hpp"       // FAILURE, cuda_compile_error
+#include "merlin/logger.hpp"       // merlin::Fatal, merlin::cuda_compile_error
 
 namespace merlin {
 
@@ -84,15 +84,16 @@ candy::Optimizer & candy::Optimizer::operator=(const candy::Optimizer & src) {
 }
 
 // Move constructor
-candy::Optimizer::Optimizer(candy::Optimizer && src) : static_data(src.static_data), dynamic_size(src.dynamic_size) {
+candy::Optimizer::Optimizer(candy::Optimizer && src) :
+static_data(std::move(src.static_data)), dynamic_size(std::move(src.dynamic_size)) {
     // exchange pointer
     this->dynamic_data = std::exchange(src.dynamic_data, nullptr);
 }
 
 // Move assignment
 candy::Optimizer & candy::Optimizer::operator=(candy::Optimizer && src) {
-    this->static_data = src.static_data;
-    this->dynamic_size = src.dynamic_size;
+    this->static_data = std::move(src.static_data);
+    this->dynamic_size = std::move(src.dynamic_size);
     // exchange pointer
     this->dynamic_data = std::exchange(src.dynamic_data, nullptr);
     return *this;
@@ -141,7 +142,7 @@ void candy::Optimizer::update_cpu(candy::Model & model, const candy::Gradient & 
 // Copy the optimizer from CPU to a pre-allocated memory on GPU
 void * candy::Optimizer::copy_to_gpu(candy::Optimizer * gpu_ptr, void * dynamic_data_ptr,
                                      std::uintptr_t stream_ptr) const {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
+    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
     return nullptr;
 }
 

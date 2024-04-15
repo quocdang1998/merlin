@@ -6,11 +6,10 @@
 #include <future>       // std::future
 #include <type_traits>  // std::add_pointer
 
+#include "merlin/config.hpp"               // __cuhostdev__, merlin::max_dim
 #include "merlin/cuda/declaration.hpp"     // merlin::cuda::Stream
-#include "merlin/cuda_interface.hpp"       // __cuhostdev__
 #include "merlin/exports.hpp"              // MERLIN_EXPORTS
 #include "merlin/grid/cartesian_grid.hpp"  // merlin::grid::CartesianGrid
-#include "merlin/settings.hpp"             // merlin::max_dim
 #include "merlin/vector.hpp"               // merlin::Vector
 
 namespace merlin::splint {

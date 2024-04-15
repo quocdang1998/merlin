@@ -11,8 +11,8 @@ int main(int argc, char * argv[]) {
     using namespace merlin;
 
     if (argc != 2) {
-        FAILURE(std::invalid_argument, "Expected exactly 1 argument too run. Enter \"1\" for creating the file, \"2\" "
-                                       "for reading the file, and anything for append content to the file.");
+        Fatal<std::invalid_argument>("Expected exactly 1 argument too run. Enter \"1\" for creating the file, \"2\" "
+                                     "for reading the file, and anything for append content to the file.");
     }
     std::string arg(argv[1]);
     if (arg.compare("1") == 0) {
@@ -35,17 +35,17 @@ int main(int argc, char * argv[]) {
         flock.lock();
     }
     if (fp == NULL) {
-        FAILURE(std::runtime_error, "Cannot open file.\n");
+        Fatal<std::runtime_error>("Cannot open file.\n");
     }
     std::this_thread::sleep_for(std::chrono::seconds(10));
     if (arg.compare("2") == 0) {
         int written_char = std::fwrite("abcdefg\n", sizeof(char), 8, fp);
         std::fflush(fp);
-        MESSAGE("Written character: %d.\n", written_char);
+        Message("Written character: %d.\n", written_char);
     }
     flock.unlock();
     std::fclose(fp);
     std::chrono::time_point<std::chrono::high_resolution_clock> stop = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = stop - start;
-    MESSAGE("Elapsed time: %.4f.\n", duration.count());
+    Message("Elapsed time: %.4f.\n", duration.count());
 }

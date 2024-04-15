@@ -6,9 +6,9 @@
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Parcel
 #include "merlin/array/nddata.hpp"       // merlin::array::NdData
+#include "merlin/config.hpp"             // __cudevice__, __cuhostdev__
 #include "merlin/cuda/device.hpp"        // merlin::cuda::Device
 #include "merlin/cuda/stream.hpp"        // merlin::cuda::Stream
-#include "merlin/cuda_interface.hpp"     // __cudevice__, __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 
 namespace merlin {

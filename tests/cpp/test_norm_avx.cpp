@@ -1,49 +1,33 @@
 #include "merlin/linalg/dot.hpp"
+#include "merlin/logger.hpp"
+#include "merlin/vector.hpp"
 
-#include <vector>
-#include <iostream>
-#include <iomanip>
-#include <chrono>
-#include <random>
-
-void generate(std::vector<double> & v, unsigned long seed) {
-    std::mt19937 gen{seed};
-    std::uniform_real_distribution<> dist{-1.0, 1.0};
-    for (int i = 0; i < v.size(); i++) {
-        v[i] = dist(gen);
-    }
-}
+using namespace merlin;
 
 int main(void) {
-    using namespace merlin;
+    // data
+    DoubleVec a = {2.1, 1.2, 5.7, 2.8, 6.3, 8.7, 3.3, 5.9, 8.8, 1.5, 3.8, 1.7, 5.5, 6.8, 8.8, 9.4, 6.3, 3.8, 6.4};
+    Message("a = %s\n", a.str(", ").c_str());
+    DoubleVec b = {9.3, 3. , 2.2, 0.7, 6.3, 4.5, 8.1, 5.7, 6.2, 6.8, 4.2, 5. , 9.4, 8. , 9.4, 9.7, 4.5, 3.1, 8.8};
+    Message("b = %s\n", b.str(", ").c_str());
 
-    // initialize
-    std::vector<double> a(5250), b(5250);
-    generate(a, 1);
-    generate(b, 2);
-    std::chrono::time_point<std::chrono::high_resolution_clock> start, end;
-    double result1, result2;
-    linalg::norm(a.data(), a.size(), result1);
-    std::cout << "Initializing : " << result1 << "\n";
+    // norm
+    double norm_a;
+    linalg::norm(a.data(), a.size(), norm_a);
+    Message("Norm of a: %f (expected: 641.66)\n", norm_a);
 
-    // calculation time using regular O3 optimization
-    start = std::chrono::high_resolution_clock::now();
-    // linalg::norm(a.data(), a.size(), result1);
-    linalg::dot(a.data(), b.data(), a.size(), result1);
-    end = std::chrono::high_resolution_clock::now();
-    std::cout << std::setw(25) << "Baseline Elapsed Time: " << std::setw(8)
-              << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()
-              << " ns, result " << std::setprecision(18) << result1 << std::endl;
+    // dot
+    double dot_ab;
+    linalg::dot(a.data(), b.data(), a.size(), dot_ab);
+    Message("Dot product of a and b: %f (expected: 642.50)\n", dot_ab);
 
-    // calculation time using AVX
-    start = std::chrono::high_resolution_clock::now();
-    // linalg::norm(a.data(), a.size(), result2);
-    linalg::dot(a.data(), b.data(), a.size(), result2);
-    end = std::chrono::high_resolution_clock::now();
-    std::cout << std::setw(25) << "AVX2-FMA Elapsed Time: " << std::setw(8)
-              << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()
-              << " ns, result " << std::setprecision(18) << result2 << std::endl;
-
-    // check identical result
-    std::cout << "  Is identical: " << std::boolalpha << (result1 == result2) << std::endl;
+    // saxpy
+    double c = 1.4;
+    linalg::saxpy(c, b.data(), a.data(), a.size());
+    Message("a <- 1.4 * b + a: %s\n", a.str(", ").c_str());
+    DoubleVec saxpy = {
+        15.12,  5.4 ,  8.78,  3.78, 15.12, 15.  , 14.64, 13.88, 17.48, 11.02,  9.68,  8.7 , 18.66, 18.  , 21.96, 22.98,
+        12.6 ,  8.14, 18.72,
+    };
+    Message("Expected: %s\n", saxpy.str().c_str());
 }

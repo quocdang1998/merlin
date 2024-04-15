@@ -2,11 +2,15 @@
 #ifndef MERLIN_PY_API_HPP_
 #define MERLIN_PY_API_HPP_
 
+#include <map>     // std::map
+#include <string>  // std::string
+
 #include <pybind11/pybind11.h>
 namespace py = pybind11;
 
+#include "merlin/config.hpp"
 #include "merlin/logger.hpp"
-#include "merlin/settings.hpp"
+#include "merlin/synchronizer.hpp"
 #include "merlin/vector.hpp"
 
 namespace merlin {
@@ -32,7 +36,7 @@ std::array<T, max_dim> pyseq_to_array(const PySequence & py_seq) {
     std::array<T, max_dim> cpp_arr;
     cpp_arr.fill(T());
     if (py_seq.size() > max_dim) {
-        FAILURE(std::invalid_argument, "Exceeding maximum ndim (%" PRIu64 ").\n", max_dim);
+        Fatal<std::invalid_argument>("Exceeding maximum ndim (%" PRIu64 ").\n", max_dim);
     }
     std::uint64_t idx = 0;
     for (auto it = py_seq.begin(); it != py_seq.end(); ++it) {
@@ -59,6 +63,15 @@ py::list array_to_pylist(const std::array<T, max_dim> & array, std::uint64_t siz
     assigned_vector.assign(const_cast<T*>(array.data()), size);
     return vector_to_pylist(assigned_vector);
 }
+
+// Wrap common enum
+// ----------------
+
+// wrap ProcessorType
+static const std::map<std::string, ProcessorType> proctype_map = {
+    {"cpu", ProcessorType::Cpu},
+    {"gpu", ProcessorType::Gpu}
+};
 
 // Wrap Libraries
 // --------------

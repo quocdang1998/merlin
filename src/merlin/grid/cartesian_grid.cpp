@@ -10,7 +10,7 @@
 #include <vector>     // std::vector
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/logger.hpp"       // FAILURE
+#include "merlin/logger.hpp"       // merlin::Fatal, merlin::Warning, merlin::cuda_compile_error
 #include "merlin/utils.hpp"        // merlin::ptr_to_subsequence, merlin::prod_elements
 
 namespace merlin {
@@ -54,7 +54,7 @@ grid::CartesianGrid::CartesianGrid(const Vector<DoubleVec> & grid_vectors) : ndi
         // check for duplicate element
         const DoubleVec & grid_vector = grid_vectors[i_dim];
         if (has_duplicated_element(std::vector<double>(grid_vector.begin(), grid_vector.end()))) {
-            FAILURE(std::invalid_argument, "Found duplicated elements.\n");
+            Fatal<std::invalid_argument>("Found duplicated elements.\n");
         }
         // get total number of grid nodes
         num_nodes += grid_vector.size();
@@ -72,7 +72,7 @@ grid::CartesianGrid::CartesianGrid(const Vector<DoubleVec> & grid_vectors) : ndi
                 this->grid_nodes_[node_idx++] = node;
             }
         } else {
-            WARNING("Input nodes are not sorted in increasing order, sorting the nodes...\n");
+            Warning("Input nodes are not sorted in increasing order, sorting the nodes...\n");
             std::vector<double> sorted_nodes(grid_vector.begin(), grid_vector.end());
             std::stable_sort(sorted_nodes.begin(), sorted_nodes.end());
             for (double & node : sorted_nodes) {
@@ -135,9 +135,9 @@ grid::CartesianGrid & grid::CartesianGrid::operator=(const grid::CartesianGrid &
 #ifndef __MERLIN_CUDA__
 
 // Copy data to a pre-allocated memory
-void * grid::CartesianGrid::copy_to_gpu(grid::CartesianGrid * gpu_ptr, void * grid_vector_data_ptr,
+void * grid::CartesianGrid::copy_to_gpu(grid::CartesianGrid * gpu_ptr, void * grid_data_ptr,
                                         std::uintptr_t stream_ptr) const {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
+    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
     return nullptr;
 }
 

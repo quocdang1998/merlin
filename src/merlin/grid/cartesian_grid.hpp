@@ -8,10 +8,9 @@
 #include <string>            // std::string
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array
-#include "merlin/cuda_interface.hpp"     // __cuhostdev__
+#include "merlin/config.hpp"             // __cuhostdev__, merlin::DPtrArray, merlin::Index, merlin::max_dim
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/grid/declaration.hpp"   // merlin::grid::CartesianGrid
-#include "merlin/settings.hpp"           // merlin::DPtrArray, merlin::Index, merlin::max_dim
 #include "merlin/slice.hpp"              // merlin::SliceArray
 #include "merlin/vector.hpp"             // merlin::DoubleVec
 

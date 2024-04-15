@@ -1,4 +1,0 @@
-DEBUGLG
-=======
-
-.. doxygendefine:: DEBUGLG

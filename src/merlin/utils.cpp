@@ -8,7 +8,7 @@
 #include <sstream>    // std::ostringstream
 
 #include "merlin/env.hpp"       // merlin::Environment
-#include "merlin/logger.hpp"    // CASSERT
+#include "merlin/logger.hpp"    // merlin::Fatal
 #include "merlin/platform.hpp"  // __MERLIN_WINDOWS__, __MERLIN_LINUX__
 
 #if defined(__MERLIN_WINDOWS__)
@@ -52,7 +52,7 @@ std::string get_time(void) {
 UIntVec get_random_subset(std::uint64_t num_points, std::uint64_t i_max, std::uint64_t i_min) noexcept {
     // check num_points
     if (num_points > i_max - i_min) {
-        FAILURE(std::invalid_argument, "Number of points exceeding range.\n");
+        Fatal<std::invalid_argument>("Number of points exceeding range.\n");
     }
     // calculate range index
     std::uniform_int_distribution<std::uint64_t> distribution;

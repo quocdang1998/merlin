@@ -1,7 +1,7 @@
 // Copyright 2022 quocdang1998
 #include "merlin/cuda/device.hpp"
 
-#include "merlin/logger.hpp"  // CUHDERR
+#include "merlin/logger.hpp"  // merlin::Fatal, merlin::HostDevError, merlin::cuda_runtime_error
 
 namespace merlin {
 
@@ -14,11 +14,11 @@ __cuhostdev__ cuda::Device::Device(int id) {
 #ifdef __MERLIN_CUDA__
     int limit = cuda::Device::get_num_gpu();
     if ((id < 0) || (id >= limit)) {
-        CUHDERR(cuda_runtime_error, "Invalid ID of GPU (expected value between 0 and less than %d).\n", limit);
+        HostDevError<cuda_runtime_error>("Invalid ID of GPU (expected value between 0 and less than %d).\n", limit);
     }
     this->id_ = id;
 #else
-    FAILURE(cuda_compile_error, "Enable option MERLIN_CUDA at compilation to use this feature.\n");
+    Fatal<cuda_compile_error>("Enable option MERLIN_CUDA at compilation to use this feature.\n");
 #endif  // __MERLIN_CUDA__
 }
 
@@ -29,7 +29,7 @@ __cuhostdev__ cuda::Device cuda::Device::get_current_gpu(void) {
     ::cudaGetDevice(&current_device);
     return cuda::Device(current_device);
 #else
-    FAILURE(cuda_compile_error, "Enable option MERLIN_CUDA at compilation to use this feature.\n");
+    Fatal<cuda_compile_error>("Enable option MERLIN_CUDA at compilation to use this feature.\n");
     return 0;
 #endif  // __MERLIN_CUDA__
 }
@@ -41,7 +41,7 @@ __cuhostdev__ std::uint64_t cuda::Device::get_num_gpu(void) {
     ::cudaGetDeviceCount(&count);
     return count;
 #else
-    FAILURE(cuda_compile_error, "Enable option MERLIN_CUDA at compilation to use this feature.\n");
+    Fatal<cuda_compile_error>("Enable option MERLIN_CUDA at compilation to use this feature.\n");
     return 0;
 #endif  // __MERLIN_CUDA__
 }

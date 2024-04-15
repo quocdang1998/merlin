@@ -5,9 +5,9 @@
 #include <string>   // std::string
 #include <utility>  // std::swap
 
-#include "merlin/cuda_interface.hpp"  // __cuhostdev__
-#include "merlin/exports.hpp"         // MERLIN_EXPORTS
-#include "merlin/vector.hpp"          // merlin::UIntVec
+#include "merlin/config.hpp"   // __cuhostdev__
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/vector.hpp"   // merlin::IntVec
 
 namespace merlin {
 
@@ -18,7 +18,7 @@ class Permutation {
     /// @{
     /** @brief Default constructor.*/
     Permutation(void) = default;
-    /** @brief Constructor of a random permutation given its range.*/
+    /** @brief Constructor of an identity permutation given its range.*/
     MERLIN_EXPORTS Permutation(std::uint64_t range);
     /** @brief Constructor from permutation index.*/
     MERLIN_EXPORTS Permutation(const UIntVec & index);
@@ -66,6 +66,79 @@ class Permutation {
             *(dest + this->index_[i]) = *(src + i);
         }
     }
+    /** @brief Permute a range inplace without copying.
+     *  @tparam Iterator Iterator of the array container.
+     *  @param dest Iterator to the first element of the array container to perform the permutation.
+     */
+    template <typename Iterator>
+    __cuhostdev__ constexpr void inplace_permute(Iterator dest) {
+        for (std::uint64_t i = 0; i < this->size(); i++) {
+            // skip to the next non-processed item
+            if (this->index_[i] < 0) {
+                continue;
+            }
+            // swapping elemental cycles for non-processed element
+            std::int64_t current_position = static_cast<std::int64_t>(i);
+            std::int64_t target = this->index_[current_position];
+            while (target != i) {
+                target = this->index_[current_position];
+                std::swap(*(dest + i), *(dest + target));
+                this->index_[current_position] = -1 - this->index_[current_position];
+                current_position = target;
+            }
+            // mark last current position as swapped before moving on
+            this->index_[current_position] = -1 - this->index_[current_position];
+        }
+        // reset the index array back to original value
+        for (std::uint64_t i = 0; i < this->size(); i++) {
+            this->index_[i] = -1 - this->index_[i];
+        }
+    }
+    /// @}
+
+    /// @name Inversion
+    /// @{
+    /** @brief Calculate the inverse permutation.*/
+    MERLIN_EXPORTS Permutation inv(void) const;
+    /** @brief Inverse the permutation of a range and copy into another.
+     *  @tparam InputIterator Iterator of the source container.
+     *  @tparam OutputIterator Iterator of the destination container.
+     *  @param src Iterator to the first element of the source container.
+     *  @param dest Iterator to the first element of the destination container.
+     */
+    template <typename InputIterator, typename OutputIterator>
+    __cuhostdev__ constexpr void inv_permute(InputIterator src, OutputIterator dest) const {
+        for (std::uint64_t i = 0; i < this->size(); i++) {
+            *(dest + i) = *(src + this->index_[i]);
+        }
+    }
+    /** @brief Inverse the permutation of a range inplace without copying.
+     *  @tparam Iterator Iterator of the array container.
+     *  @param dest Iterator to the first element of the array container to perform the permutation.
+     */
+    template <typename Iterator>
+    __cuhostdev__ constexpr void inplace_inv_permute(Iterator dest) {
+        for (std::uint64_t i = 0; i < this->size(); i++) {
+            // skip to the next non-processed item
+            if (this->index_[i] < 0) {
+                continue;
+            }
+            // swapping elemental cycles for non-processed element
+            std::int64_t current_position = static_cast<std::int64_t>(i);
+            while (this->index_[current_position] != i) {
+                const std::int64_t target = this->index_[current_position];
+                std::swap(*(dest + current_position), *(dest + target));
+                this->index_[current_position] = -1 - this->index_[current_position];
+                current_position = target;
+            }
+            // mark last current position as swapped before moving on
+            this->index_[current_position] = -1 - this->index_[current_position];
+        }
+        // reset the index array back to original value
+        for (std::uint64_t i = 0; i < this->size(); i++) {
+            this->index_[i] = -1 - this->index_[i];
+        }
+    }
     /// @}
 
     /// @name Representation
@@ -82,7 +155,7 @@ class Permutation {
 
   protected:
     /** @brief Permutation index.*/
-    mutable Vector<std::int64_t> index_;
+    IntVec index_;
 };
 
 }  // namespace merlin

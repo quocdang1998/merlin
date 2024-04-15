@@ -5,7 +5,6 @@
 
 #include "merlin/avx.hpp"            // merlin::AvxDouble, merlin::use_avx
 #include "merlin/linalg/matrix.hpp"  // merlin::linalg::Matrix
-#include "merlin/logger.hpp"         // WARNING
 
 namespace merlin {
 

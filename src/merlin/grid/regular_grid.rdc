@@ -15,4 +15,32 @@ __cuhostdev__ void grid::RegularGrid::get(std::uint64_t index, double * point_da
     }
 }
 
+#ifdef __NVCC__
+
+// Copy to shared memory
+__cudevice__ void * grid::RegularGrid::copy_by_block(grid::RegularGrid * dest_ptr, void * grid_data_ptr,
+                                                     std::uint64_t thread_idx, std::uint64_t block_size) const {
+    // shallow copy of grid data
+    if (thread_idx == 0) {
+        dest_ptr->grid_data_.data() = const_cast<double *>(this->grid_data_.data());
+        dest_ptr->grid_data_.size() = this->grid_data_.size();
+        dest_ptr->ndim_ = this->ndim_;
+        dest_ptr->num_points_ = this->num_points_;
+    }
+    __syncthreads();
+    return grid_data_ptr;
+}
+
+// Copy to shared memory
+__cudevice__ void * grid::RegularGrid::copy_by_thread(grid::RegularGrid * dest_ptr, void * grid_data_ptr) const {
+    // shallow copy of grid data
+    dest_ptr->grid_data_.data() = const_cast<double *>(this->grid_data_.data());
+    dest_ptr->grid_data_.size() = this->grid_data_.size();
+    dest_ptr->ndim_ = this->ndim_;
+    dest_ptr->num_points_ = this->num_points_;
+    return grid_data_ptr;
+}
+
+#endif  // __NVCC__
+
 }  // namespace merlin

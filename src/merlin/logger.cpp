@@ -3,6 +3,8 @@
 
 #include <algorithm>  // std::copy
 
+#include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
+
 #if defined(__MERLIN_WINDOWS__)
     #include <windows.h>  // ::FormatMessageA, ::GetCurrentProcess
     #ifdef __MERLIN_DEBUG__
@@ -10,7 +12,7 @@
         #include <cstdlib>    // std::calloc
         #include <cstring>    // std::strlen
         #include <dbghelp.h>  // ::CaptureStackBackTrace, ::SymInitialize, ::SymFromAddr, ::SYMBOL_INFO
-    #endif                    // __MERLIN_DEBUG__
+    #endif
 #elif defined(__MERLIN_LINUX__)
     #include <errno.h>   // errno
     #include <string.h>  // ::strerror
@@ -18,25 +20,25 @@
         #include <cxxabi.h>    // ::abi::__cxa_demangle
         #include <dlfcn.h>     // ::Dl_info, ::dladdr
         #include <execinfo.h>  // ::backtrace
-    #endif                     // __MERLIN_DEBUG__
+    #endif
 #endif
-
-// Max depth of the stacktrace
-#define STACK_TRACE_BUFFER_SIZE 128
 
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Get error message and print stacktrace
+// Stack Tracing
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Pointer to frame
-typedef void * native_frame_ptr_t;
+using native_frame_ptr_t = void *;
+
+// Max depth of the stacktrace
+inline constexpr std::uint64_t stacktrace_buffer = 128;
 
 #if defined(__MERLIN_WINDOWS__)
 
 // Get error from Windows API
-std::string throw_windows_last_error(unsigned long int last_error) {
+std::string throw_sys_last_error(unsigned long int last_error) {
     if (last_error != 0) {
         char * buffer = nullptr;
         const unsigned long int format = FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
@@ -57,8 +59,8 @@ void print_stacktrace(int skip) {
     native_frame_ptr_t process = ::GetCurrentProcess();
     ::SymInitialize(process, nullptr, true);
     // capture address of the functions in the stacktrace
-    native_frame_ptr_t buffer[STACK_TRACE_BUFFER_SIZE];
-    unsigned int frames = ::CaptureStackBackTrace(skip, STACK_TRACE_BUFFER_SIZE, buffer, nullptr);
+    native_frame_ptr_t buffer[stacktrace_buffer];
+    unsigned int frames = ::CaptureStackBackTrace(skip, stacktrace_buffer, buffer, nullptr);
     ::SYMBOL_INFO * symbol = static_cast<::SYMBOL_INFO *>(std::calloc(sizeof(::SYMBOL_INFO) + 256 * sizeof(char), 1));
     symbol->MaxNameLen = 255;
     symbol->SizeOfStruct = sizeof(::SYMBOL_INFO);
@@ -79,7 +81,7 @@ void print_stacktrace(int skip) {
 #elif defined(__MERLIN_LINUX__)
 
 // Get error from Linux
-std::string throw_linux_last_error(void) {
+std::string throw_sys_last_error(unsigned long int last_error) {
     if (errno != 0) {
         char * buffer = ::strerror(errno);
         return std::string(buffer);
@@ -92,8 +94,8 @@ std::string throw_linux_last_error(void) {
 void print_stacktrace(int skip) {
     #ifdef __MERLIN_DEBUG__
     // get number of frame in the stack
-    native_frame_ptr_t buffer[STACK_TRACE_BUFFER_SIZE];
-    int frames_count = ::backtrace(const_cast<void **>(buffer), STACK_TRACE_BUFFER_SIZE);
+    native_frame_ptr_t buffer[stacktrace_buffer];
+    int frames_count = ::backtrace(const_cast<void **>(buffer), stacktrace_buffer);
     std::copy(buffer + skip, buffer + frames_count, buffer);
     frames_count -= skip;
     if (frames_count && buffer[frames_count - 1] == nullptr) {

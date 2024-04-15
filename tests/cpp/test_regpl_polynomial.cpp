@@ -16,17 +16,17 @@ int main(void) {
     coeff_vec.assign(coeff_simplified, 6);
     UIntVec coef_idx = {9, 3, 11, 7, 16, 13};
     regpl::Polynomial p(coeff_vec, make_array<std::uint64_t>({2, 3, 3}), coef_idx);
-    MESSAGE("Polynomial: %s\n", p.str().c_str());
+    Message("Polynomial: %s\n", p.str().c_str());
 
     Point buffer;
     Point point = make_array<double>({1.8, 0.7, 1.5});
     DoubleVec point_vector;
     point_vector.assign(point.data(), 3);
-    MESSAGE("Evaluation at point %s is %f\n", point_vector.str().c_str(), p.eval(point, buffer));
-    MESSAGE("Reference  of point %s is %f\n", point_vector.str().c_str(), reference(point.data()));
+    Message("Evaluation at point %s is %f\n", point_vector.str().c_str(), p.eval(point, buffer));
+    Message("Reference  of point %s is %f\n", point_vector.str().c_str(), reference(point.data()));
 
     p.save("polynom.txt", true);
     regpl::Polynomial p_read;
     p_read.load("polynom.txt");
-    MESSAGE("Read polynomial: %s\n", p_read.str().c_str());
+    Message("Read polynomial: %s\n", p_read.str().c_str());
 }

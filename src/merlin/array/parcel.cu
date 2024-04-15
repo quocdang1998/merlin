@@ -8,7 +8,7 @@
 #include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::get_leap,
                                        // merlin::array::copy, merlin::array::fill
 #include "merlin/env.hpp"              // merlin::Environment
-#include "merlin/logger.hpp"           // FAILURE
+#include "merlin/logger.hpp"           // merlin::Fatal
 #include "merlin/utils.hpp"            // merlin::inner_prod
 
 namespace merlin {
@@ -35,7 +35,7 @@ array::Parcel::Parcel(const Index & shape, const cuda::Stream & stream) : array:
     ::cudaError_t err_ = ::cudaMallocAsync(&(this->data_), sizeof(double) * this->size(),
                                            reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr()));
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("Memory allocation failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // set device and context
     this->device_ = cuda::Device::get_current_gpu();
@@ -51,7 +51,7 @@ array::Parcel::Parcel(const array::Parcel & src) : array::NdData(src) {
     this->release = true;
     ::cudaError_t err_ = ::cudaMalloc(&(this->data_), sizeof(double) * this->size());
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("Memory allocation failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // create copy function and copy data to GPU
     if (this->device_ != src.device_) {
@@ -78,7 +78,7 @@ array::Parcel & array::Parcel::operator=(const array::Parcel & src) {
     this->release = true;
     cudaError_t err_ = ::cudaMalloc(&(this->data_), sizeof(double) * this->size());
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Memory allocation failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("Memory allocation failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
     // create copy function and copy data to GPU
     if (this->device_ != src.device_) {

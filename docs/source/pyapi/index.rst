@@ -6,8 +6,11 @@ Python API
    \setcounter{codelanguage}{0}
 
 
-Environment
+Preliminary
 -----------
+
+Environment
+^^^^^^^^^^^
 
 .. autosummary::
    :toctree: generated
@@ -16,9 +19,8 @@ Environment
 
    merlin.Environment
 
-
 Utility
--------
+^^^^^^^
 
 .. autosummary::
    :toctree: generated
@@ -27,6 +29,7 @@ Utility
 
    merlin.contiguous_to_ndim_idx
    merlin.get_random_subset
+
 
 GPU with CUDA
 -------------
@@ -58,16 +61,6 @@ CUDA Stream and Event
 Array API
 ---------
 
-Hidden base class
-^^^^^^^^^^^^^^^^^
-
-.. autosummary::
-   :toctree: generated
-   :nosignatures:
-   :template: pyclass.rst
-
-   merlin.array.NdData
-
 Multi-dimensional array
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -76,6 +69,7 @@ Multi-dimensional array
    :nosignatures:
    :template: pyclass.rst
 
+   merlin.array.NdData
    merlin.array.Array
    merlin.array.Parcel
    merlin.array.Stock
@@ -92,8 +86,12 @@ Empty array allocator
    merlin.array.empty_parcel
    merlin.array.empty_stock
 
-Grid API
---------
+
+Interpolation
+-------------
+
+Grid
+^^^^
 
 .. autosummary::
    :toctree: generated
@@ -101,3 +99,53 @@ Grid API
    :template: pyclass.rst
 
    merlin.grid.CartesianGrid
+
+Interpolator
+^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.splint.Method
+   merlin.splint.Interpolator
+
+
+Candy API
+---------
+
+CP Model
+^^^^^^^^
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.candy.Model
+   merlin.candy.load_model
+   merlin.candy.Gradient
+
+Optimization algorithms
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.candy.Optimizer
+   merlin.candy.create_grad_descent
+   merlin.candy.create_adagrad
+   merlin.candy.create_adam
+
+Asynchronous fitting
+^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.candy.Trainer

@@ -40,7 +40,7 @@ static void wrap_cartgrid(py::module & grid_module) {
     );
     cartgrid_pyclass.def_property_readonly(
         "shape",
-        [](const grid::CartesianGrid & self) { return py::cast(self.shape()); },
+        [](const grid::CartesianGrid & self) { return array_to_pylist(self.shape(), self.ndim()); },
         "Get shape."
     );
     cartgrid_pyclass.def_property_readonly(

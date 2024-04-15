@@ -8,7 +8,7 @@
 #include "merlin/array/parcel.hpp"     // merlin::array::Parcel
 #include "merlin/cuda/device.hpp"      // merlin::cuda::Device
 #include "merlin/env.hpp"              // merlin::Environment
-#include "merlin/logger.hpp"           // FAILURE
+#include "merlin/logger.hpp"           // merlin::Fatal
 
 namespace merlin {
 
@@ -21,8 +21,8 @@ double * array::allocate_memory(std::uint64_t size) {
     double * result = nullptr;
     ::cudaError_t err_ = ::cudaMallocHost(&result, sizeof(double) * size);
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Allocate non-pageable memory failed with message \"%s\".\n",
-                ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Allocate non-pageable memory failed with message \"%s\".\n",
+                                  ::cudaGetErrorString(err_));
     }
     return result;
 }
@@ -32,7 +32,7 @@ void array::cuda_pin_memory(double * ptr, std::uint64_t mem_size) {
     ::cudaError_t err_ = ::cudaHostRegister(ptr, mem_size, cudaHostRegisterDefault);
     if ((err_ != 0) && (err_ != 712)) {
         // note: 712 = memory already page locked
-        FAILURE(cuda_runtime_error, "Pin pageable memory failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Pin pageable memory failed with message \"%s\".\n", ::cudaGetErrorString(err_));
     }
 }
 
@@ -40,7 +40,7 @@ void array::cuda_pin_memory(double * ptr, std::uint64_t mem_size) {
 void array::free_memory(double * ptr) {
     ::cudaError_t err_ = ::cudaFreeHost(ptr);
     if (err_ != 0) {
-        FAILURE(cuda_runtime_error, "Free non-pageable memory failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("Free non-pageable memory failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
 }
 
@@ -52,8 +52,8 @@ void array::free_memory(double * ptr) {
 void array::Array::clone_data_from_gpu(const array::Parcel & src, const cuda::Stream & stream) {
     // check GPU of stream
     if (src.device() != stream.get_gpu()) {
-        FAILURE(cuda_runtime_error, "Cannot copy from GPU array (%d) with stream pointing to another GPU (%d).\n",
-                src.device(), stream.get_gpu());
+        Fatal<cuda_runtime_error>("Cannot copy from GPU array (%d) with stream pointing to another GPU (%d).\n",
+                                  src.device(), stream.get_gpu());
     }
     // cast stream
     ::cudaStream_t copy_stream = reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr());

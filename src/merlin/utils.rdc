@@ -32,13 +32,10 @@ __cuhostdev__ std::uint64_t inner_prod(const std::uint64_t * v1, const std::uint
 }
 
 // Convert n-dimensional index to C-contiguous index
-__cuhostdev__ std::uint64_t ndim_to_contiguous_idx(const UIntVec & index, const UIntVec & shape) {
-    // check size of 2 vectors
-    CASSERT(!is_same_size(index, shape), CUHDERR, std::invalid_argument,
-            "Size of index (%" PRIu64 ") and size of shape (%" PRIu64 ") are not equal.\n", index.size(), shape.size());
-    // calculate contiguous index
+__cuhostdev__ std::uint64_t ndim_to_contiguous_idx(const std::uint64_t * index, const std::uint64_t * shape,
+                                                   std::uint64_t ndim) {
     std::uint64_t c_index = 0, cum_prod = 1;
-    for (std::int64_t i = index.size() - 1; i >= 0; i--) {
+    for (std::int64_t i = ndim - 1; i >= 0; i--) {
         c_index += index[i] * cum_prod;
         cum_prod *= shape[i];
     }
