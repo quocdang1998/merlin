@@ -1,6 +1,7 @@
 // Copyright 2024 quocdang1998
 #include "merlin/regpl/vandermonde.hpp"
 
+#include <cstring>  // std::memcpy
 #include <numeric>  // std::iota
 
 #include <omp.h>  // ::omp_get_thread_num
@@ -87,18 +88,15 @@ order_(order), term_idx_(prod_elements(order.data(), grid.ndim())) {
 }
 
 // Solve for the coefficients given the data
-regpl::Polynomial regpl::Vandermonde::solve(DoubleVec & values_to_fit) const {
-    // check argument
-    if (values_to_fit.size() != this->solver_.nrow()) {
-        Fatal<std::invalid_argument>(
-            "Data must have the same number of points as the grid used to construct the Vandermonde matrix.\n");
-    }
+void regpl::Vandermonde::solve(const double * values_to_fit, regpl::Polynomial & result) const {
+    // copy data from problem to solution
+    DoubleVec solution(this->num_coeff());
+    std::memcpy(solution.data(), values_to_fit, solution.size() * sizeof(double));
     // solve for the coefficients
-    this->solver_.solve(values_to_fit.data());
+    this->solver_.solve(solution.data());
     // construct the result polynomial
-    DoubleVec coeff;
-    coeff.assign(values_to_fit.data(), this->term_idx_.size());
-    return regpl::Polynomial(coeff, this->order_, this->term_idx_);
+    result = regpl::Polynomial(this->order_);
+    result.set(solution.data(), this->term_idx_);
 }
 
 }  // namespace merlin

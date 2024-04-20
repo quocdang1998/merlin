@@ -342,6 +342,29 @@ void wrap_optimizer(py::module & candy_module) {
             Bias.)",
         py::arg("learning_rate"), py::arg("beta_m"), py::arg("beta_v"), py::arg("model"), py::arg("bias") = 1e-8
     );
+    // create adadelta
+    candy_module.def(
+        "create_adadelta",
+        [](double learning_rate, double decay_constant, const candy::Model & model, double bias) {
+            return new candy::Optimizer(candy::create_adadelta(learning_rate, decay_constant, model, bias));
+        },
+        R"(
+        Create an optimizer with AdaDelta algorithm.
+
+        See also :cpp:class:`merlin::candy::optmz::AdaDelta`.
+
+        Parameters
+        ----------
+        learning_rate : float
+            Learning rate.
+        decay_constant : float
+            Decay constant.
+        model : merlin.candy.Model
+            Model to fit.
+        bias : float, default=1e-8
+            Bias.)",
+        py::arg("learning_rate"), py::arg("decay_constant"), py::arg("model"), py::arg("bias") = 1e-8
+    );
 }
 
 // Wrap merlin::candy::Trainer class
@@ -357,8 +380,9 @@ void wrap_trainer(py::module & candy_module) {
     // constructor
     trainer_pyclass.def(
         py::init(
-            [](const candy::Model & model, const candy::Optimizer & optimizer, const std::string & processor) {
-                return new candy::Trainer(model, optimizer, proctype_map.at(processor));
+            [](const std::string & name, const candy::Model & model, const candy::Optimizer & optimizer,
+               Synchronizer & synch) {
+                return new candy::Trainer(name, model, optimizer, synch);
             }
         ),
         R"(
@@ -366,13 +390,16 @@ void wrap_trainer(py::module & candy_module) {
 
         Parameters
         ----------
+        name : str
+            Name of the trainer.
         model : merlin.candy.Model
             Model to train.
         optimizer : merlin.candy.Optimizer
             Optimizer training the model.
-        processor : str, default="cpu"
-            Processor to train the model.)",
-        py::arg("model"), py::arg("optimizer"), py::arg("processor") = "cpu"
+        synch : merlin.Synchronizer
+            Asynchronous stream to register the training process. Destroying the synchronizer before the Trainer results
+            in undefined behavior.)",
+        py::arg("name"), py::arg("model"), py::arg("optimizer"), py::arg("synch"), py::keep_alive<1,5>()
     );
     // attributes
     trainer_pyclass.def_property_readonly(
@@ -387,12 +414,18 @@ void wrap_trainer(py::module & candy_module) {
         "Get the current optimizer.",
         py::keep_alive<0, 1>()
     );
+    // change optimizer
+    trainer_pyclass.def(
+        "change_optmz",
+        [](candy::Trainer & self, candy::Optimizer * p_new_optmz) { self.change_optmz(std::move(*p_new_optmz)); },
+        "Change optimizer."
+    );
     // train model
     trainer_pyclass.def(
         "update_cpu",
         [](candy::Trainer & self, const array::Array & data, std::uint64_t rep, double threshold,
            std::uint64_t n_threads, const std::string & metric) {
-            self.update_cpu(data, rep, threshold, n_threads, trainmetric_map.at(metric));
+            self.update(data, rep, threshold, n_threads, trainmetric_map.at(metric));
         },
         R"(
         Update CP model according to gradient on CPU.
@@ -419,7 +452,7 @@ void wrap_trainer(py::module & candy_module) {
         "update_gpu",
         [](candy::Trainer & self, const array::Parcel & data, std::uint64_t rep, double threshold,
            std::uint64_t n_threads, const std::string & metric) {
-            self.update_gpu(data, rep, threshold, n_threads, trainmetric_map.at(metric));
+            self.update(data, rep, threshold, n_threads, trainmetric_map.at(metric));
         },
         R"(
         Update CP model according to gradient on GPU.
@@ -443,11 +476,154 @@ void wrap_trainer(py::module & candy_module) {
         py::arg("data"), py::arg("rep"), py::arg("threshold"), py::arg("n_threads") = 32,
         py::arg("metric") = "relsquare"
     );
-    // synchronization
+    // calculate error
     trainer_pyclass.def(
-        "synchronize",
-        [](candy::Trainer & self) { return self.synchronize(); },
-        "Force the current CPU to wait until all asynchronous tasks have finished."
+        "error_cpu",
+        [](candy::Trainer & self, const array::Array & data, std::uint64_t n_threads) {
+            double * errors = new double[2];
+            self.get_error(data, errors[0], errors[1], n_threads);
+            return make_wrapper_array<double>(errors, 2);
+        },
+        R"(
+        Asynchronous calculate error.
+
+        Get the RMSE and RMAE error with respect to a given dataset by CPU.
+
+        Parameters
+        ----------
+        data : merlin.array.Array
+            Data to train the model.
+        n_threads : int, default=1
+            Number of parallel threads for training the model.
+        )",
+        py::arg("data"), py::arg("n_threads") = 1
+    );
+    trainer_pyclass.def(
+        "error_gpu",
+        [](candy::Trainer & self, const array::Parcel & data, std::uint64_t n_threads) {
+            double * errors = new double[2];
+            self.get_error(data, errors[0], errors[1], n_threads);
+            return make_wrapper_array<double>(errors, 2);
+        },
+        R"(
+        Asynchronous calculate error.
+
+        Get the RMSE and RMAE error with respect to a given dataset by GPU.
+
+        Parameters
+        ----------
+        data : merlin.array.Parcel
+            Data to train the model.
+        n_threads : int, default=32
+            Number of parallel threads for training the model.
+        )",
+        py::arg("data"), py::arg("n_threads") = 32
+    );
+    // dry run
+    trainer_pyclass.def(
+        "dry_run_cpu",
+        [](candy::Trainer & self, const array::Array & data, std::uint64_t max_iter, std::uint64_t n_threads,
+           const std::string & metric) {
+            DoubleVec error(max_iter);
+            UIntVec count(1);
+            self.dry_run(data, error, count[0], max_iter, n_threads, trainmetric_map.at(metric));
+            double * error_data = std::exchange(error.data(), nullptr);
+            std::uint64_t * count_data = std::exchange(count.data(), nullptr);
+            return std::make_pair(make_wrapper_array<double>(error_data, error.size()),
+                                  make_wrapper_array<std::uint64_t>(count_data, 1));
+        },
+        R"(
+        Dry-run using CPU parallelism.
+
+        Perform gradient descent algorithm asynchronously for a given number of iterations without updating the model.
+        The iterative process will stop when the RMSE after updated is bigger than before.
+
+        Parameters
+        ----------
+        data : merlin.array.Array
+            Data to train the model.
+        max_iter: int, default=100
+            Max number of iterations of the dry-run.
+        n_threads : int, default=1
+            Number of parallel threads for calculating the gradient.
+        metric : str, default="relsquare"
+            Training metric for the model.
+        Returns
+        -------
+        error : np.array
+            Vector storing error per iteration.
+        count : np.array
+            Array of size 1, storing the number of iterations performed before breaking the dry run.
+        )",
+        py::arg("data"), py::arg("max_iter") = 100, py::arg("n_threads") = 1, py::arg("metric") = "relsquare"
+    );
+    trainer_pyclass.def(
+        "dry_run_gpu",
+        [](candy::Trainer & self, const array::Parcel & data, std::uint64_t max_iter, std::uint64_t n_threads,
+           const std::string & metric) {
+            DoubleVec error(max_iter);
+            UIntVec count(1);
+            self.dry_run(data, error, count[0], max_iter, n_threads, trainmetric_map.at(metric));
+            double * error_data = std::exchange(error.data(), nullptr);
+            std::uint64_t * count_data = std::exchange(count.data(), nullptr);
+            return std::make_pair(make_wrapper_array<double>(error_data, error.size()),
+                                  make_wrapper_array<std::uint64_t>(count_data, 1));
+        },
+        R"(
+        Dry-run using GPU parallelism.
+
+        Perform gradient descent algorithm asynchronously for a given number of iterations without updating the model.
+        The iterative process will stop when the RMSE after updated is bigger than before.
+
+        Parameters
+        ----------
+        data : merlin.array.Parcel
+            Data to train the model.
+        max_iter: int, default=100
+            Max number of iterations of the dry-run.
+        n_threads : int, default=32
+            Number of parallel threads for calculating the gradient.
+        metric : str, default="relsquare"
+            Training metric for the model.
+        Returns
+        -------
+        error : np.array
+            Vector storing error per iteration.
+        count : np.array
+            Array of size 1, storing the number of iterations performed before breaking the dry run.
+        )",
+        py::arg("data"), py::arg("max_iter") = 100, py::arg("n_threads") = 32, py::arg("metric") = "relsquare"
+    );
+    // reconstruct
+    trainer_pyclass.def(
+        "reconstruct_cpu",
+        [](candy::Trainer & self, array::Array & dest, std::uint64_t n_threads) { self.reconstruct(dest, n_threads); },
+        R"(
+        Reconstruct a whole multi-dimensional data from the model using CPU parallelism. 
+
+        Parameters
+        ----------
+        dest : merlin.array.Array
+            Array to write result.
+        n_threads : int, default=1
+            Number of parallel threads for training the model.
+        )",
+        py::arg("dest"), py::arg("n_threads") = 1
+    );
+    trainer_pyclass.def(
+        "reconstruct_gpu",
+        [](candy::Trainer & self, array::Parcel & dest, std::uint64_t n_threads) { self.reconstruct(dest, n_threads); },
+        R"(
+        Reconstruct a whole multi-dimensional data from the model using GPU parallelism. 
+
+        Parameters
+        ----------
+        dest : merlin.array.Parcel
+            Array to write result.
+        n_threads : int, default=32
+            Number of parallel threads for training the model.
+        )",
+        py::arg("dest"), py::arg("n_threads") = 32
     );
 }
 

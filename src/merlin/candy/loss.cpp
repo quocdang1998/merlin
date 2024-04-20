@@ -3,8 +3,6 @@
 
 #include <cmath>  // std::abs, std::sqrt, std::isnormal
 
-#include <omp.h>  // #pragma omp
-
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/candy/model.hpp"  // merlin::candy::Model
 #include "merlin/env.hpp"          // merlin::Environment

@@ -11,16 +11,17 @@
 
 namespace merlin {
 
-/** @brief %Optimizer by adaptive learning rate method.
+/** @brief %Optimizer by adaptive delta method.
  *  @details Each parameter will be updated by the formula:
  *  @f[ s_{t+1} = \rho s_t + (1 - \rho) {\left(\frac{\partial L}{\partial p}\right)_{t}}^2 @f]
- *  @f[ p_{t+1} = p_t - \sqrt{\frac{\Delta_t + \varepsilon}{s_{t+1} + \varepsilon}} \left( \frac{\partial L}{\partial p}
+ *  @f[ g_{t+1} = \sqrt{\frac{\Delta_t + \varepsilon}{s_{t+1} + \varepsilon}} \left( \frac{\partial L}{\partial p}
  *  \right)_{t} @f]
- *  @f[ \Delta_{t+1} = \rho \Delta_t + (1 - \rho) {\left( p_{t+1} - p_t \right)_{t}}^2 @f]
+ *  @f[ p_{t+1} = p_t - \eta g_{t+1} @f]
+ *  @f[ \Delta_{t+1} = \rho \Delta_t + (1 - \rho) {g_{t+1}}^2 @f]
  *
- *  , in which @f$ t @f$ is update instance,  @f$ p @f$ is value of parameter, @f$ \rho @f$ is a constant controlling
- *  the decay of the previous parameter update, @f$ \varepsilon @f$ is the correction factor (bias), and @f$ L @f$ is
- *  the loss function.
+ *  , in which @f$ t @f$ is update instance,  @f$ p @f$ is value of parameter, @f$ \eta @f$ is the learning rate, @f$
+ *  \rho @f$ is a constant controlling the decay of the previous parameter update, @f$ \varepsilon @f$ is the correction
+ *  factor (bias), and @f$ L @f$ is the loss function.
  */
 struct candy::optmz::AdaDelta {
     /// @name Constructor
@@ -39,6 +40,9 @@ struct candy::optmz::AdaDelta {
 
     /// @name Update model by gradient
     /// @{
+    /** @brief Update model parameters.*/
+    __cuhostdev__ static void update(void * optimizer_algor, candy::Model & model, std::uint64_t i_param,
+                                     double gradient, std::uint64_t step) noexcept;
     /** @brief Update model inside a CPU parallel region.*/
     MERLIN_EXPORTS static void update_cpu(void * optimizer_algor, candy::Model & model, const candy::Gradient & grad,
                                           std::uint64_t thread_idx, std::uint64_t n_threads) noexcept;

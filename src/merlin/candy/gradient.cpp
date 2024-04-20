@@ -4,8 +4,6 @@
 #include <array>    // std::array
 #include <sstream>  // std::ostringstream
 
-#include <omp.h>  // #pragma omp
-
 #include "merlin/array/array.hpp"  // merlin::array::Array
 
 namespace merlin {

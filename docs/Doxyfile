@@ -10,7 +10,8 @@ INPUT                  = ../src/merlin/
 FILE_PATTERNS          = *.hpp
 RECURSIVE              = YES
 EXCLUDE                =
-EXCLUDE_PATTERNS       =
+EXCLUDE_PATTERNS       = ../src/merlin/intpl/*
+INCLUDE_PATH           = ../src/
 GENERATE_HTML          = NO
 GENERATE_LATEX         = NO
 GENERATE_XML           = YES
@@ -19,8 +20,9 @@ XML_PROGRAMLISTING     = YES
 ENABLE_PREPROCESSING   = YES
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
-PREDEFINED             = "__cuhost__=__host__" \
-                         "__cudevice__=__device__" \
+SEARCH_INCLUDES        = YES
+FULL_PATH_NAMES        = YES
+PREDEFINED             = "__cudevice__=__device__" \
                          "__cuhostdev__=__host__ __device__" \
                          "__NVCC__=1" \
                          "__DOXYGEN_PARSER__=1" \

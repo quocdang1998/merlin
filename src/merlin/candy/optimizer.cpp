@@ -123,6 +123,21 @@ bool candy::Optimizer::is_compatible(const candy::Model & model) const {
 }
 
 // Update model inside a CPU parallel region
+void candy::Optimizer::update_cpu(candy::Model & model, std::uint64_t i_param, double gradient,
+                                  std::uint64_t step) noexcept {
+    using Updater = std::add_pointer<void(void *, candy::Model &, std::uint64_t, double,
+                                               std::uint64_t) noexcept>::type;
+    static std::array<Updater, 4> updater_func = {
+        candy::optmz::GradDescent::update,
+        candy::optmz::AdaGrad::update,
+        candy::optmz::Adam::update,
+        candy::optmz::AdaDelta::update,
+    };
+    void * optimizer_algor = reinterpret_cast<void *>(&this->static_data);
+    updater_func[this->static_data.index()](optimizer_algor, model, i_param, gradient, step);
+}
+
+// Update model inside a CPU parallel region
 void candy::Optimizer::update_cpu(candy::Model & model, const candy::Gradient & grad, std::uint64_t thread_idx,
                                   std::uint64_t n_threads) noexcept {
     using UpdaterByCpu = std::add_pointer<void(void *, candy::Model &, const candy::Gradient &, std::uint64_t,
@@ -159,8 +174,32 @@ candy::Optimizer::~Optimizer(void) {
 // Create
 // ---------------------------------------------------------------------------------------------------------------------
 
+// Check for positive learning rate
+static inline void check_learning_rate(double learning_rate) {
+    if (learning_rate < 0) {
+        Fatal<std::invalid_argument>("Learning rate must be positive.\n");
+    }
+}
+
+// Check for positive bias
+static inline void check_bias(double bias) {
+    if (bias < 0) {
+        Fatal<std::invalid_argument>("Bias must be positive.\n");
+    }
+}
+
+// Check for weight
+static inline void check_weight(double weight) {
+    if (weight * (weight - 1.0) > 0) {
+        Fatal<std::invalid_argument>("Weight value must be in range [0.0, 1.0].\n");
+    }
+}
+
 // Create an optimizer with gradient descent algorithm
 candy::Optimizer candy::create_grad_descent(double learning_rate) {
+    // check argument
+    check_learning_rate(learning_rate);
+    // construct optimizer
     candy::Optimizer opt;
     opt.static_data = candy::OptmzStatic(std::in_place_type<candy::optmz::GradDescent>,
                                          candy::optmz::GradDescent(learning_rate));
@@ -169,6 +208,10 @@ candy::Optimizer candy::create_grad_descent(double learning_rate) {
 
 // Create an optimizer with adagrad algorithm
 candy::Optimizer candy::create_adagrad(double learning_rate, const candy::Model & model, double bias) {
+    // check argument
+    check_learning_rate(learning_rate);
+    check_bias(bias);
+    // construct optimizer
     candy::Optimizer opt;
     std::uint64_t num_params = model.num_params();
     opt.dynamic_size = sizeof(double) * num_params;
@@ -182,6 +225,12 @@ candy::Optimizer candy::create_adagrad(double learning_rate, const candy::Model 
 // Create an optimizer with adam algorithm
 candy::Optimizer candy::create_adam(double learning_rate, double beta_m, double beta_v, const candy::Model & model,
                                     double bias) {
+    // check argument
+    check_learning_rate(learning_rate);
+    check_bias(bias);
+    check_weight(beta_m);
+    check_weight(beta_v);
+    // construct optimizer
     candy::Optimizer opt;
     std::uint64_t num_params = model.num_params();
     opt.dynamic_size = 2 * sizeof(double) * num_params;
@@ -195,6 +244,11 @@ candy::Optimizer candy::create_adam(double learning_rate, double beta_m, double 
 // Create an optimizer with adadelta algorithm
 candy::Optimizer candy::create_adadelta(double learning_rate, double decay_constant, const candy::Model & model,
                                         double bias) {
+    // check argument
+    check_learning_rate(learning_rate);
+    check_bias(bias);
+    check_weight(decay_constant);
+    // construct optimizer
     candy::Optimizer opt;
     std::uint64_t num_params = model.num_params();
     opt.dynamic_size = 2 * sizeof(double) * num_params;

@@ -2,6 +2,7 @@
 #include "py_api.hpp"
 
 #include "merlin/array/array.hpp"          // merlin::array::Array
+#include "merlin/array/parcel.hpp"         // merlin::array::Parcel
 #include "merlin/grid/cartesian_grid.hpp"  // merlin::grid::CartesianGrid
 #include "merlin/splint/interpolator.hpp"  // merlin::splint::Interpolator
 #include "merlin/splint/tools.hpp"         // merlin::splint::Method
@@ -35,13 +36,13 @@ static void wrap_interpolator(py::module & splint_module) {
     interpolator_pyclass.def(
         py::init(
             [](const grid::CartesianGrid & grid, const array::Array & values, py::list & method,
-               const std::string & processor) {
+               Synchronizer & synchronizer) {
                 Vector<splint::Method> cpp_method(pyseq_to_vector<splint::Method>(method));
-                return new splint::Interpolator(grid, values, cpp_method, proctype_map.at(processor));
+                return new splint::Interpolator(grid, values, cpp_method.data(), synchronizer);
             }
         ),
         "Construct from an array of values.",
-        py::arg("grid"), py::arg("values"), py::arg("method"), py::arg("processor") = "cpu"
+        py::arg("grid"), py::arg("values"), py::arg("method"), py::arg("synchronizer")
     );
     // attributes
     interpolator_pyclass.def_property_readonly(
@@ -58,25 +59,26 @@ static void wrap_interpolator(py::module & splint_module) {
     );
     // evaluate interpolation
     interpolator_pyclass.def(
-        "evaluate",
+        "evaluate_cpu",
         [](splint::Interpolator & self, const array::Array & points, std::uint64_t n_threads) {
-            Index eval_shape;
-            eval_shape.fill(0);
-            eval_shape[0] = points.shape()[0];
-            array::Array * p_eval_values = new array::Array(eval_shape);
-            DoubleVec eval_values;
-            eval_values.assign(p_eval_values->data(), p_eval_values->size());
+            DoubleVec eval_values(points.shape()[0]);
             self.evaluate(points, eval_values, n_threads);
-            return p_eval_values;
+            double * data = std::exchange(eval_values.data(), nullptr);
+            return make_wrapper_array<double>(data, eval_values.size());
         },
         "Evaluate interpolation by CPU.",
         py::arg("points"), py::arg("n_threads") = 1
     );
-    // synchronization
     interpolator_pyclass.def(
-        "synchronize",
-        [](splint::Interpolator & self) { return self.synchronize(); },
-        "Force the current CPU to wait until all asynchronous tasks have finished."
+        "evaluate_gpu",
+        [](splint::Interpolator & self, const array::Parcel & points, std::uint64_t n_threads) {
+            DoubleVec eval_values(points.shape()[0]);
+            self.evaluate(points, eval_values, n_threads);
+            double * data = std::exchange(eval_values.data(), nullptr);
+            return make_wrapper_array<double>(data, eval_values.size());
+        },
+        "Evaluate interpolation by GPU.",
+        py::arg("points"), py::arg("n_threads") = 32
     );
     // representation
     interpolator_pyclass.def(

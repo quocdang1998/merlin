@@ -7,6 +7,7 @@
 #include "merlin/splint/interpolator.hpp"
 #include "merlin/env.hpp"
 #include "merlin/logger.hpp"
+#include "merlin/synchronizer.hpp"
 #include "merlin/utils.hpp"
 #include "merlin/vector.hpp"
 
@@ -42,32 +43,33 @@ int main(void) {
     for (std::uint64_t i = 0; i < cart_gr.size(); i++) {
         value.set(i, foo(cart_gr[i]));
     }
-    Message("Grid: %s\n", cart_gr.str().c_str());
-    Message("Values: %s\n", value.str().c_str());
+    Message("Grid: ") << cart_gr.str() << "\n";
+    Message("Values: ") << value.str() << "\n";
 
-    // calculate Lagrange coefficients
+    // calculate interpolation coefficients
     array::Array coeff(value);
     Vector<splint::Method> methods = {
         splint::Method::Lagrange,
         splint::Method::Newton,
         splint::Method::Newton
     };
-    splint::Interpolator interp(cart_gr, coeff, methods, ProcessorType::Cpu);
+    Synchronizer synch_stream(ProcessorType::Cpu);
+    splint::Interpolator interp(cart_gr, coeff, methods.data(), synch_stream);
     interp.build_coefficients(10);
-    interp.synchronize();
-    Message("Interpolation coefficients: %s\n", interp.get_coeff().str().c_str());
+    synch_stream.synchronize();
+    Message("Interpolation coefficients: ") << interp.get_coeff().str() << "\n";
 
     // interpolation
     std::uint64_t npoints = 16;
     array::Array points = point_generator(npoints, cart_gr);
-    Message("Function values:");
+    Message out_stream("Function values:");
     for (std::uint64_t i_point = 0; i_point < npoints; i_point++) {
-        std::printf(" %f", foo(DoubleVec(points.data() + 3 * i_point, 3)));
+        out_stream << " " << foo(DoubleVec(points.data() + 3 * i_point, 3));
     }
-    std::printf("\n");
+    out_stream << "\n";
+    out_stream.emit();
     DoubleVec eval_values(npoints);
     interp.evaluate(points, eval_values, 32);
-    interp.synchronize();
-    Message("Evaluated values: %s.\n", eval_values.str().c_str());
-    interp.synchronize();
+    synch_stream.synchronize();
+    Message("Evaluated values: ") << eval_values.str() << ".\n";
 }

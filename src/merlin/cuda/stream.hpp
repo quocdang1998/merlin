@@ -2,29 +2,50 @@
 #ifndef MERLIN_CUDA_STREAM_HPP_
 #define MERLIN_CUDA_STREAM_HPP_
 
-#include <cstddef>  // nullptr
-#include <cstdint>  // std::uintptr_t
-#include <string>   // std::string
-#include <utility>  // std::exchange
+#include <cstddef>      // nullptr
+#include <cstdint>      // std::uintptr_t
+#include <string>       // std::string
+#include <tuple>        // std::apply, std::tuple
+#include <type_traits>  // std::add_pointer
+#include <utility>      // std::exchange
 
 #include "merlin/cuda/declaration.hpp"   // merlin::cuda::Event
 #include "merlin/cuda/device.hpp"        // merlin::cuda::Device
 #include "merlin/cuda/enum_wrapper.hpp"  // merlin::cuda::StreamSetting, merlin::cuda::EventWaitFlag
-
-namespace merlin::cuda {}  // namespace merlin::cuda
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
 
 namespace merlin {
+
+namespace cuda {
+
+/** @brief Typename of CPU callback function.*/
+#ifdef __NVCC__
+using StreamCallback = ::cudaStreamCallback_t;
+#else
+using StreamCallback = std::add_pointer<void(std::uintptr_t, int, void *)>::type;
+#endif  // __NVCC__
+
+/** @brief Wrapper callback around a function.*/
+#ifdef __NVCC__
+template <typename Function, typename... Args>
+void cuda_callback_wrapper(::cudaStream_t stream, ::cudaError_t status, void * data) {
+    std::uintptr_t * data_ptr = reinterpret_cast<std::uintptr_t *>(data);
+    Function * p_callback = reinterpret_cast<Function *>(data_ptr[0]);
+    std::tuple<Args&&...> * p_args = reinterpret_cast<std::tuple<Args&&...> *>(data_ptr[1]);
+    std::apply(std::forward<Function>(*p_callback), std::forward<std::tuple<Args&&...>>(*p_args));
+    delete[] data_ptr;
+    delete p_args;
+}
+#endif  // __NVCC__
+
+/** @brief Wrapper of the function adding CUDA callback to stream.*/
+MERLIN_EXPORTS void cuda_stream_add_callback(std::uintptr_t stream, cuda::StreamCallback func, void * arg);
+
+}  // namespace cuda
 
 /** @brief CUDA stream of tasks.*/
 class cuda::Stream {
   public:
-#ifdef __NVCC__
-    /** @brief Type of CPU callback function.*/
-    typedef cudaStreamCallback_t CudaStreamCallback;
-#else
-    typedef void (*CudaStreamCallback)(std::uintptr_t, int, void *);
-#endif  // __NVCC__
-
     /// @name Constructor
     /// @{
     /** @brief Default constructor (the null stream).*/
@@ -84,27 +105,37 @@ class cuda::Stream {
 
     /// @name Operations
     /// @{
-    /** @brief Launch CPU function with a certain arguments.
-     *  @param func Function to be launched, prototype ``void func(void *)``.
-     *  @param arg Argument to be provided to the function.
+#ifdef __NVCC__
+    /** @brief Append a CPU function to the stream.
+     *  @details This function will be launched after the stream has finished its previous tasks.
+     *  @param callback Function to be launched.
+     *  @param args Argument list to be provided to the function.
      *  @details Example:
      *  @code {.cu}
-     *  // arguments
-     *  void str_callback(::cudaStream_t stream, ::cudaError_t status, void * data) {
-     *      int & a = *(static_cast<int *>(data));
-     *      std::printf("Callback argument: %d\n", a);
+     *  // function declaration
+     *  void stream_callback(const std::string & a, int b) {
+     *      std::printf("Stream callback arguments: \"%s\" and %d\n", a.c_str(), b);
      *  }
-     *  int data = 1;
      *
-     *  // use
+     *  // usage
+     *  int b = 1;
      *  merlin::cuda::Stream s();
-     *  s.add_callback(str_callback, &data);
+     *  s.add_callback(str_callback, "a dummy message!", b);
      *
-     *  // result
-     *  Callback argument: 1
+     *  // stdout result:
+     *  // Stream callback arguments: "a dummy message!" and 1
      *  @endcode
      */
-    MERLIN_EXPORTS void add_callback(cuda::Stream::CudaStreamCallback func, void * arg) const;
+    template <typename Function, typename... Args>
+    void add_callback(Function & callback, Args &&... args) {
+        Function * p_callback = &callback;
+        std::tuple<Args&&...> * p_args = new std::tuple<Args&&...>(std::forward_as_tuple(std::forward<Args>(args)...));
+        std::uintptr_t * data = new std::uintptr_t[2];
+        data[0] = reinterpret_cast<std::uintptr_t>(p_callback);
+        data[1] = reinterpret_cast<std::uintptr_t>(p_args);
+        cuda::cuda_stream_add_callback(this->stream_, cuda_callback_wrapper<Function, Args...>, data);
+    }
+#endif  // __NVCC__
     /** @brief Record (register) an event on CUDA stream.
      *  @param event CUDA event to be recorded.
      */

@@ -91,13 +91,8 @@ candy::Model & candy::Model::operator=(const candy::Model & src) {
 // Initialize values of model based on train data
 void candy::Model::initialize(const array::Array & train_data) {
     // check shape
-    if (this->ndim_ != train_data.ndim()) {
-        Fatal<std::invalid_argument>("Expected train data having the same ndim as the model.\n");
-    }
-    for (std::uint64_t i_dim = 0; i_dim < this->ndim_; i_dim++) {
-        if (train_data.shape()[i_dim] * this->rank_ != this->rshape_[i_dim]) {
-            Fatal<std::invalid_argument>("Incoherent shape of data and model.\n");
-        }
+    if (!this->check_compatible_shape(train_data.shape())) {
+        Fatal<std::invalid_argument>("Incompatible shape between data and model.\n");
     }
     // initialize model parameters
     for (std::uint64_t i_dim = 0; i_dim < this->ndim_; i_dim++) {
@@ -111,10 +106,19 @@ void candy::Model::initialize(const array::Array & train_data) {
             auto [mean, variance] = p_subset_data->get_mean_variance();
             delete p_subset_data;
             double stdeviation = std::sqrt(variance);
+            // zero mean and variance
+            if ((mean == 0.0) && (stdeviation == 0.0)) {
+                for (std::uint64_t r = 0; r < this->rank_; r++) {
+                    this->get(i_dim, i_division, r) = 0.0;
+                }
+                continue;
+            }
             // calculate mean <- (mean/rank)^(1/ndim) and stdeviation <- stdeviation * new_mean / old_mean
-            stdeviation /= mean;
-            mean = std::pow(mean / this->rank_, 1.f / this->ndim());
-            stdeviation *= mean;
+            if (mean != 0.0) {
+                stdeviation /= mean;
+                mean = std::pow(mean / this->rank_, 1.f / this->ndim());
+                stdeviation *= mean;
+            }
             std::normal_distribution<double> generator(mean, stdeviation);
             // initialize by random
             for (std::uint64_t r = 0; r < this->rank_; r++) {
@@ -179,6 +183,16 @@ void * candy::Model::copy_from_gpu(double * data_from_gpu, std::uintptr_t stream
 bool candy::Model::check_negative(void) const noexcept {
     return std::all_of(this->parameters_.cbegin(), this->parameters_.cend(),
                        [](const double & value) { return value >= 0; });
+}
+
+// Check if a given data shape is compatible with the current model
+bool candy::Model::check_compatible_shape(const Index & shape) const noexcept {
+    std::pair<Index::const_iterator, Index::const_iterator> iter = std::mismatch(
+        this->rshape_.cbegin(), this->rshape_.cend(), shape.cbegin(),
+        [this](const std::uint64_t & rshape, const std::uint64_t & shape) {
+            return rshape == shape * this->rank_;
+        });
+    return iter.first == this->rshape_.end();
 }
 
 // Write model into a file

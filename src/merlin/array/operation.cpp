@@ -27,6 +27,10 @@ void array::calc_mean_variance(const double * data, std::uint64_t size, double &
             normal_count += 1;
         }
     }
+    // if no element is normal, mean = 0 and second_moment = 0
+    if (normal_count == 0) {
+        return;
+    }
     mean /= normal_count;
     // second pass: calculate variance
     for (std::uint64_t i = 0; i < size; i++) {
@@ -40,6 +44,9 @@ void array::calc_mean_variance(const double * data, std::uint64_t size, double &
 void array::combine_stas(double & mean, double & second_moment, std::uint64_t & normal_count,
                          const double & partial_mean, const double & partial_var, std::uint64_t partial_size) {
     std::uint64_t total_count = normal_count + partial_size;
+    if (total_count == 0) {
+        return;
+    }
     double total_mean = ((mean * normal_count) + (partial_mean * partial_size)) / total_count;
     second_moment += partial_var;
     second_moment += (normal_count * partial_size * (mean - partial_mean) * (mean - partial_mean)) / total_count;

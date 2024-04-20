@@ -1,16 +1,15 @@
-""" Copy dynamic linked library from the C++ interface to the Python source
+"""Copy dynamic linked library from the C++ interface to the Python source
 directory."""
 
 import os
 import sys
-
 from shutil import copyfile
 
 from .config import *
 
+
 def copy_dll_libs():
-    py_src_dir = os.path.join(os.path.abspath(os.path.join(__file__, "../..")),
-                              "merlin")
+    py_src_dir = os.path.join(os.path.abspath(os.path.join(__file__, "../..")), "merlin")
     if sys.platform == "win32":
         merlinshared_lib = "merlinenv.dll"
         merlin_lib = "merlin.dll"

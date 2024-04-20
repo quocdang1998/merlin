@@ -1,10 +1,6 @@
 // Copyright 2022 quocdang1998
 #include "merlin/splint/intpl/newton.hpp"
 
-#include <omp.h>  // #pragma omp, omp_get_num_threads
-
-#include "merlin/logger.hpp"
-
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -18,7 +14,7 @@ __cuhostdev__ void splint::intpl::construction_newton(double * coeff, const doub
                                                       const std::uint64_t & n_threads) noexcept {
     for (std::uint64_t jump = 1; jump < shape; jump++) {
         std::int64_t last_node = shape - 1 - jump;
-        for (std::uint64_t i_node = 0; i_node <= last_node; i_node++) {
+        for (std::int64_t i_node = 0; i_node <= last_node; i_node++) {
             // calculate 1 / (node[j] - node[j+i])
             double solvent = grid_nodes[i_node] - grid_nodes[i_node + jump];
             solvent = 1.f / solvent;

@@ -1,9 +1,8 @@
 Developer Guide
 ===============
 
-C++ sources
------------
-
+Repository hierarchy
+--------------------
 
 Source files of C++ API are placed in folder ``src/merlin``. Each file extension
 corresponds to a specific role as described in the image below.
@@ -33,6 +32,7 @@ For more specific information, consult the sections below:
    macro
    style
 
+
 Cautions
 --------
 
@@ -53,4 +53,3 @@ Some cautions when developing the package:
    :hidden:
 
    mutex
-

@@ -1,3 +1,10 @@
 [build-system]
-requires = ["setuptools>30", "packaging>=21.0", "wheel", "pybind11", "numpy>1.19"]
+requires = ["setuptools>50", "packaging>=21.0", "wheel", "pybind11", "numpy>1.19"]
 build-backend = "setuptools.build_meta"
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "I001"]
+ignore-init-module-imports = true
+
+[tool.ruff]
+line-length = 120

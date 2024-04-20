@@ -2,10 +2,13 @@
 #ifndef MERLIN_PY_API_HPP_
 #define MERLIN_PY_API_HPP_
 
-#include <map>     // std::map
-#include <string>  // std::string
+#include <cinttypes>  // PRIu64
+#include <map>        // std::map
+#include <string>     // std::string
 
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/numpy.h>
 namespace py = pybind11;
 
 #include "merlin/config.hpp"
@@ -64,14 +67,23 @@ py::list array_to_pylist(const std::array<T, max_dim> & array, std::uint64_t siz
     return vector_to_pylist(assigned_vector);
 }
 
-// Wrap common enum
-// ----------------
+// Wrap l-value reference by a NumPy array
+// ---------------------------------------
 
-// wrap ProcessorType
-static const std::map<std::string, ProcessorType> proctype_map = {
-    {"cpu", ProcessorType::Cpu},
-    {"gpu", ProcessorType::Gpu}
-};
+// Create capsule
+template <typename T>
+py::capsule make_capsule(T * p_ref, std::uint64_t size) {
+    if (size == 1) {
+        return py::capsule(p_ref, [](void * data) { delete reinterpret_cast<T *>(data); });
+    }
+    return py::capsule(p_ref, [](void * data) { delete[] reinterpret_cast<T *>(data); });
+}
+
+// Create NumPy array wrapping the reference
+template <typename T>
+py::array_t<T> make_wrapper_array(T * p_ref, std::uint64_t size) {
+    return py::array_t<T>({size}, {sizeof(T)}, p_ref, make_capsule<T>(p_ref, size));
+}
 
 // Wrap Libraries
 // --------------

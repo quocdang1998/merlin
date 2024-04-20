@@ -1,0 +1,33 @@
+// html : 12/16
+// latex : 10/16
+digraph DynamicCompilation {
+    node [fontname="Fira Code SemiBold", fontsize="16", shape=record, style=filled, labelloc=c]
+
+    subgraph SourceFiles {
+        node [color=lightskyblue1, label="*.cpp"] cpp;
+        node [color=lightskyblue1, label="*.cu"] cu;
+        {rank = same; cpp; cu;}
+    }
+
+    subgraph Object {
+        node [color=steelblue1, label="*.o or *.obj"] obj;
+        node [color=dodgerblue, label="libmerlinenv"] libmerlinenv;
+        node [color=dodgerblue, label="libmerlinrdc"] libmerlinrdc;
+        node [color=dodgerblue, label="libmerlincuda"] libmerlincuda;
+        node [color=cornflowerblue	, label="device code object"] device_code;
+    }
+
+    subgraph Lib {
+        node [color=dodgerblue, label="libmerlin"] libmerlin;
+    }
+
+    cpp -> obj [color=dimgrey];
+    cu -> obj [color=dimgrey];
+    obj -> device_code [color=darkblue];
+    libmerlinrdc -> device_code [color=darkblue];
+    obj -> libmerlin [color=royalblue4];
+    device_code -> libmerlin [color=royalblue4];
+    libmerlinrdc -> libmerlin [color=royalblue4];
+    libmerlinenv -> libmerlin [color=royalblue4];
+    libmerlincuda -> libmerlin [color=royalblue4, style=dashed];
+}

@@ -50,6 +50,15 @@ Grid API
    merlin::grid::CartesianGrid
    merlin::grid::RegularGrid
 
+Asynchronous launch
+^^^^^^^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::ProcessorType
+   merlin::Synchronizer
+
 
 GPU with CUDA
 -------------
@@ -153,10 +162,21 @@ Low-level API
 Regression API
 --------------
 
+Polynomial
+^^^^^^^^^^
+
 .. doxysummary::
    :toctree: generated
 
    merlin::regpl::Polynomial
+
+Constructor and Evaluator
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::regpl::Vandermonde
    merlin::regpl::Regressor
 
 
@@ -259,6 +279,15 @@ Adaptive estimates of lower-order moments
    merlin::candy::optmz::Adam
    merlin::candy::create_adam
 
+Adaptive delta
+''''''''''''''
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::candy::optmz::AdaDelta
+   merlin::candy::create_adadelta
+
 Launch calculation
 ^^^^^^^^^^^^^^^^^^
 
@@ -281,7 +310,6 @@ Log printing
    merlin::Fatal
    merlin::CudaOut
    merlin::DeviceError
-   merlin::HostDevError
    merlin::DebugLog
 
 .. doxysummary::

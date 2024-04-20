@@ -18,18 +18,26 @@ enum class ProcessorType : unsigned int {
     Gpu = 1
 };
 
-/** @brief Synchronizer of CPU or GPU asynchronous tasks.*/
+/** @brief %Synchronizer of CPU or GPU asynchronous tasks.*/
 struct Synchronizer {
     /// @name Constructor
     /// @{
-    /** @brief Default constructor.*/
-    Synchronizer(void) = default;
+    /** @brief Constructor from processor type.*/
+    Synchronizer(ProcessorType proc_type = ProcessorType::Cpu) {
+        if (proc_type == ProcessorType::Cpu) {
+            this->core = std::variant<std::future<void>, cuda::Stream>(std::in_place_type<std::future<void>>,
+                                                                       std::future<void>());
+        } else {
+            this->core = std::variant<std::future<void>, cuda::Stream>(std::in_place_type<cuda::Stream>,
+                                                                       cuda::Stream(cuda::StreamSetting::NonBlocking));
+        }
+    }
     /** @brief Constructor from CPU synchronizer.*/
     Synchronizer(std::future<void> && cpu_sync) :
-    synchronizer(std::in_place_type<std::future<void>>, std::forward<std::future<void>>(cpu_sync)) {}
+    core(std::in_place_type<std::future<void>>, std::forward<std::future<void>>(cpu_sync)) {}
     /** @brief Constructor from GPU synchronizer.*/
     Synchronizer(cuda::Stream && gpu_sync) :
-    synchronizer(std::in_place_type<cuda::Stream>, std::forward<cuda::Stream>(gpu_sync)) {}
+    core(std::in_place_type<cuda::Stream>, std::forward<cuda::Stream>(gpu_sync)) {}
     /// @}
 
     /// Copy and move
@@ -46,17 +54,18 @@ struct Synchronizer {
 
     /// @name Action
     /// @{
+    /** @brief Halt the current thread until the asynchronous action registered on the synchronizer finished.*/
     void synchronize(void) {
-        switch (this->synchronizer.index()) {
+        switch (this->core.index()) {
             case 0 : {
-                std::future<void> & cpu_sync = std::get<std::future<void>>(this->synchronizer);
+                std::future<void> & cpu_sync = std::get<std::future<void>>(this->core);
                 if (cpu_sync.valid()) {
                     cpu_sync.get();
                 }
                 break;
             }
             case 1 : {
-                std::get<cuda::Stream>(this->synchronizer).synchronize();
+                std::get<cuda::Stream>(this->core).synchronize();
                 break;
             }
         }
@@ -65,8 +74,8 @@ struct Synchronizer {
 
     /// @name Attributes
     /// @{
-    /** @brief Synchronizer.*/
-    std::variant<std::future<void>, cuda::Stream> synchronizer;
+    /** @brief %Synchronizer core.*/
+    std::variant<std::future<void>, cuda::Stream> core;
     /// @}
 
     /// @name Destructor

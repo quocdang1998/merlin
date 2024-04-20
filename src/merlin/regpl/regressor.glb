@@ -1,10 +1,10 @@
 // Copyright 2024 quocdang1998
 #include "merlin/regpl/regressor.hpp"
 
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
+#include <algorithm>  // std::copy_n
+
 #include "merlin/cuda/memory.hpp"  // merlin::cuda::copy_objects
-#include "merlin/regpl/polynomial.hpp"  // merlin::regpl::Polynomial
-#include "merlin/utils.hpp"  // merlin::flatten_thread_index, merlin::size_of_block
+#include "merlin/utils.hpp"        // merlin::flatten_thread_index, merlin::size_of_block
 
 namespace merlin {
 
@@ -12,34 +12,33 @@ namespace merlin {
 // Utility
 // ---------------------------------------------------------------------------------------------------------------------
 
-__global__ static void eval_kernel(const regpl::Polynomial * p_poly, const double * p_data, double * p_result,
+__global__ static void eval_kernel(const regpl::Polynomial * p_poly, const double * point_data, double * p_result,
                                    std::uint64_t n_points) {
     // copy data to shared memory
     extern __shared__ char shared_mem[];
     auto [remaining, p_poly_shr] = cuda::copy_objects(shared_mem, *p_poly);
     std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
-    // parallel calculation
-    std::uint64_t ndim = p_poly_shr->ndim();
-    double * buffer = reinterpret_cast<double *>(remaining) + thread_idx * ndim;
     // initialize buffer
-    for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
-        buffer[i_dim] = 0.0;
-    }
+    Point buffer;
+    buffer.fill(0.0);
+    Point coordinates;
+    coordinates.fill(0.0);
+    std::uint64_t ndim = p_poly_shr->ndim();
     // evaluate for each point
     for (std::uint64_t i_point = thread_idx; i_point < n_points; i_point += block_size) {
-        double eval_value = p_poly_shr->eval(p_data + i_point * ndim, buffer);
-        p_result[i_point] = eval_value;
+        const double * point = point_data + i_point * ndim;
+        std::copy_n(point, ndim, coordinates.begin());
+        p_result[i_point] = p_poly->eval(coordinates, buffer);
     }
     __syncthreads();
 }
 
 // Evaluate regression by GPU
-void regpl::eval_by_gpu(const regpl::Polynomial * p_poly, const double * p_data, double * p_result,
-                        std::uint64_t n_points, std::uint64_t ndim, std::uint64_t shared_mem_size,
-                        std::uint64_t n_threads, const cuda::Stream & stream) noexcept {
+void regpl::eval_by_gpu(const regpl::Polynomial * p_poly, const double * point_data, double * p_result,
+                        std::uint64_t n_points, std::uint64_t shared_mem_size, std::uint64_t n_threads,
+                        const cuda::Stream & stream) noexcept {
     ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr());
-    shared_mem_size += sizeof(double) * ndim * n_threads;
-    eval_kernel<<<1, n_threads, shared_mem_size, cuda_stream>>>(p_poly, p_data, p_result, n_points);
+    eval_kernel<<<1, n_threads, shared_mem_size, cuda_stream>>>(p_poly, point_data, p_result, n_points);
 }
 
 }  // namespace merlin

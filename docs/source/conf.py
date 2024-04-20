@@ -13,6 +13,8 @@
 import os
 import sys
 sys.path.append(os.path.abspath('../..'))
+import merlin
+
 
 # -- Project information -----------------------------------------------------
 
@@ -21,7 +23,7 @@ copyright = '2022, Nguyen Dinh Quoc Dang'
 author = 'Nguyen Dinh Quoc Dang'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.1'
+release = merlin.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -54,6 +56,7 @@ autosectionlabel_prefix_document = True
 # Doxygen generated XML files
 breathe_projects = {"merlin": os.path.abspath("./xml")}
 breathe_default_project = "merlin"
+breathe_show_include = True
 doxygen_xml = [breathe_projects[breathe_default_project]]
 
 # Sphinx-panel settings
@@ -62,6 +65,7 @@ sd_fontawesome_latex = False
 # Citation
 bibtex_bibfiles = [os.path.abspath('./citations.bib')]
 bibtex_default_style = 'unsrt'
+
 
 # -- Pygments style ----------------------------------------------------------
 
@@ -117,6 +121,7 @@ epub_exclude_files = [f.replace('/', '\\') if 'win32' in sys.platform else f
                       for f in latex_additional_files]
 epub_css_files = ['myepub.css']
 epub_show_urls = 'no'
+
 
 # -- Options for the C++ domain ----------------------------------------------
 

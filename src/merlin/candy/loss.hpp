@@ -38,8 +38,8 @@ MERLIN_EXPORTS void rmse_cpu(const candy::Model * p_model, const array::Array * 
 
 #ifdef __NVCC__
 
-/** @brief CUDA function calculating relative mean square error with GPU parallelism.
- *  @details Calculate:
+/** @brief Calculate relative mean square error with GPU parallelism.
+ *  @details CUDA device function calculates:
  *  @f[ \sqrt{ \frac{1}{N} \left[ \sum_{\text{data}} \left( \frac{x_{\text{model}} - x_{\text{data}}}{x_{\text{data}}}
  *  \right)^2 \right] } @f]
  *
@@ -83,8 +83,8 @@ MERLIN_EXPORTS void rmae_cpu(const candy::Model * p_model, const array::Array * 
 
 #ifdef __NVCC__
 
-/** @brief CUDA function calculating relative max absolute error with GPU parallelism.
- *  @details Calculate:
+/** @brief Calculate relative max absolute error with GPU parallelism.
+ *  @details CUDA device function calculates:
  *  @f[ \max_{\text{data}} \left[ \frac{\left| x_{\text{model}} - x_{\text{data}} \right|}{x_{\text{data}}} \right] @f]
  *
  *  in which @f$ N @f$ is the number of non-zero elements in the data, @f$ x_{\text{model}} @f$ is the value predicted

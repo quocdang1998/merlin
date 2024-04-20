@@ -96,6 +96,28 @@ __cudevice__ constexpr std::uint64_t flatten_kernel_index(void) {
 
 #endif  // __NVCC__
 
+// Bit flip
+// --------
+
+constexpr std::uint64_t flip_endianess(std::uint64_t value) {
+    return ((value & 0xFFULL) << 56) | ((value & 0xFF00ULL) << 40) | ((value & 0xFF0000ULL) << 24) |
+           ((value & 0xFF000000ULL) << 8) | ((value & 0xFF00000000ULL) >> 8) | ((value & 0xFF0000000000ULL) >> 24) |
+           ((value & 0xFF000000000000ULL) >> 40) | ((value & 0xFF00000000000000ULL) >> 56);
+}
+
+inline double flip_endianess(double value) {
+    std::uint64_t * p_int_value = reinterpret_cast<std::uint64_t *>(&value);
+    std::uint64_t flipped_int = flip_endianess(*p_int_value);
+    double * flipped_real = reinterpret_cast<double *>(&flipped_int);
+    return *flipped_real;
+}
+
+inline void flip_range(std::uint64_t * range, std::uint64_t length) {
+    for (std::uint64_t i = 0; i < length; i++) {
+        range[i] = flip_endianess(range[i]);
+    }
+}
+
 // Multi-dimensional Index
 // -----------------------
 

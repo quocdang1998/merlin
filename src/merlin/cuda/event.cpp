@@ -3,7 +3,7 @@
 
 #include <sstream>  // std::ostringstream
 
-#include "merlin/logger.hpp"  // cuda_compile_error, FAILURE
+#include "merlin/logger.hpp"  // merlin::Fatal, merlin::cuda_compile_error
 
 namespace merlin {
 
@@ -25,22 +25,22 @@ cuda::Event::Event(unsigned int category) {}
 
 // Query the status of works
 bool cuda::Event::is_complete(void) const {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for event management.\n");
+    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA for event management.\n");
     return false;
 }
 
 // Check valid GPU and context
 void cuda::Event::check_cuda_context(void) const {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for event management.\n");
+    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA for event management.\n");
 }
 
 // Synchronize the event
 void cuda::Event::synchronize(void) const {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for event management.\n");
+    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA for event management.\n");
 }
 
 float cuda::operator-(const cuda::Event & ev_1, const cuda::Event & ev_2) {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for event management.\n");
+    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA for event management.\n");
     return 0.0;
 }
 

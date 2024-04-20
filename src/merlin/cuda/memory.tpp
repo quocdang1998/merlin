@@ -8,8 +8,6 @@
 #include <type_traits>  // std::remove_pointer_t, std::is_trivially_copyable
 #include <utility>      // std::make_pair
 
-#include <cuda.h>  // ::cuCtxGetDevice
-
 #include "merlin/logger.hpp"  // merlin::Fatal, merlin::cuda_runtime_error
 #include "merlin/utils.hpp"   // merlin::flatten_thread_index, merlin::size_of_block
 

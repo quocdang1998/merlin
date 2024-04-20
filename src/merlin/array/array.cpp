@@ -1,13 +1,13 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/array.hpp"
 
-#include <cinttypes>   // PRIu64
-#include <cstdio>      // std::fread, std::fseek
-#include <cstring>     // std::memcpy
-#include <functional>  // std::bind, std::placeholders
-#include <ios>         // std::ios_base::failure
-#include <mutex>       // std::mutex
-#include <utility>     // std::forward
+#include <cinttypes>     // PRIu64
+#include <cstdio>        // std::fread, std::fseek
+#include <cstring>       // std::memcpy
+#include <functional>    // std::bind, std::placeholders
+#include <ios>           // std::ios_base::failure
+#include <shared_mutex>  // std::shared_lock
+#include <utility>       // std::forward
 
 #include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::get_leap,
                                        // merlin::array::copy, merlin::array::fill, merlin::array::print
@@ -46,11 +46,15 @@ void array::free_memory(double * ptr) { delete[] ptr; }
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Read an array from file
-static inline void read_from_file(void * dest, std::FILE * file, const void * src, std::uint64_t bytes) {
+static inline void read_from_file(void * dest, std::FILE * file, const void * src, std::uint64_t bytes,
+                                  bool same_endianess) {
     std::fseek(file, reinterpret_cast<std::uintptr_t>(src), SEEK_SET);
     std::uint64_t count = bytes / sizeof(double);
     if (std::fread(dest, sizeof(double), count, file) != count) {
         Fatal<std::ios_base::failure>("Read file error.\n");
+    }
+    if (!same_endianess) {
+        flip_range(reinterpret_cast<std::uint64_t *>(dest), count);
     }
 }
 
@@ -211,14 +215,10 @@ void array::Array::clone_data_from_gpu(const array::Parcel & src, const cuda::St
 // Export data to a file
 void array::Array::extract_data_from_file(const array::Stock & src) {
     auto read_func = std::bind(read_from_file, std::placeholders::_1, src.get_file_ptr(), std::placeholders::_2,
-                               std::placeholders::_3);
-    if (src.is_thread_safe()) {
-        src.get_file_lock().lock();
-    }
+                               std::placeholders::_3, src.is_same_endianess());
+    std::shared_lock<FileLock> lock = ((src.is_thread_safe()) ? std::shared_lock<FileLock>(src.get_file_lock())
+                                                              : std::shared_lock<FileLock>());
     array::copy(this, &src, read_func);
-    if (src.is_thread_safe()) {
-        src.get_file_lock().unlock();
-    }
 }
 
 // String representation

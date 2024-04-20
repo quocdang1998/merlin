@@ -51,6 +51,9 @@ struct candy::Optimizer {
     /// @name Update model by gradient
     /// @{
     /** @brief Update model inside a CPU parallel region.*/
+    MERLIN_EXPORTS void update_cpu(candy::Model & model, std::uint64_t i_param, double gradient,
+                                   std::uint64_t step) noexcept;
+    /** @brief Update model inside a CPU parallel region.*/
     MERLIN_EXPORTS void update_cpu(candy::Model & model, const candy::Gradient & grad, std::uint64_t thread_idx,
                                    std::uint64_t n_threads) noexcept;
 #ifdef __NVCC__

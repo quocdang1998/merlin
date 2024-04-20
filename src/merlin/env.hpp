@@ -40,14 +40,6 @@ class MERLINENV_EXPORTS Environment {
     static std::mt19937_64 random_generator;
     /// @}
 
-    /// @name CUDA context
-    /// @{
-    /** @brief Default CUDA kernel block size.
-     *  @details Should be multiple of 32.
-     */
-    static std::uint64_t default_block_size;
-    /// @}
-
     /// @name Destructor
     /// @{
     /** @brief Destructor.*/

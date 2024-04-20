@@ -3,8 +3,6 @@
 
 #include <cmath>  // std::sqrt
 
-#include <omp.h>  // #pragma omp
-
 #include "merlin/candy/gradient.hpp"   // merlin::candy::Gradient
 #include "merlin/candy/model.hpp"      // merlin::candy::Model
 #include "merlin/candy/optimizer.hpp"  // merlin::candy::OptmzStatic

@@ -1,9 +1,14 @@
 // Copyright 2024 quocdang1998
 #include "py_api.hpp"
 
-#include "merlin/array/array.hpp"       // merlin::array::Array
-#include "merlin/regpl/polynomial.hpp"  // merlin::regpl::Polynomial
-#include "merlin/regpl/regressor.hpp"   // merlin::regpl::Regressor
+#include <optional>  // std::optional
+
+#include "merlin/array/array.hpp"          // merlin::array::Array
+#include "merlin/array/parcel.hpp"         // merlin::array::Parcel
+#include "merlin/grid/cartesian_grid.hpp"  // merlin::grid::CartesianGrid
+#include "merlin/regpl/polynomial.hpp"     // merlin::regpl::Polynomial
+#include "merlin/regpl/regressor.hpp"      // merlin::regpl::Regressor
+#include "merlin/regpl/vandermonde.hpp"    // merlin::regpl::Vandermonde
 
 namespace merlin {
 
@@ -19,16 +24,6 @@ void wrap_polynomial(py::module & regpl_module) {
         )"
     );
     // constructor
-    /*polynomial_pyclass.def(
-        py::init(
-            [](py::list & order_per_dim) {
-                std::vector<std::uint64_t> order_per_dim_cpp = order_per_dim.cast<std::vector<std::uint64_t>>();
-                return new regpl::Polynomial(intvec(order_per_dim_cpp.data(), order_per_dim_cpp.size()));
-            }
-        ),
-        "Constructor of an empty polynomial from order per dimension.",
-        py::arg("order_per_dim")
-    );*/
     polynomial_pyclass.def(
         py::init(
             [](const array::Array & coeffs) {
@@ -42,18 +37,6 @@ void wrap_polynomial(py::module & regpl_module) {
         "Constructor from coefficients array.",
         py::arg("coeffs")
     );
-    /*polynomial_pyclass.def(
-        py::init(
-            [](py::list & coeff_array, py::list & order_per_dim, py::list & term_index) {
-                floatvec cpp_coeff = pylist_to_fvec(coeff_array);
-                intvec cpp_order = pylist_to_ivec(order_per_dim);
-                intvec cpp_term = pylist_to_ivec(term_index);
-                return new regpl::Polynomial(cpp_coeff, cpp_order, cpp_term);
-            }
-        ),
-        "Constructor of a sparse polynomial from coefficients.",
-        py::arg("coeff_array"), py::arg("order_per_dim"), py::arg("term_index")
-    );*/
     // attributes
     polynomial_pyclass.def(
         "order",
@@ -82,8 +65,85 @@ void wrap_polynomial(py::module & regpl_module) {
         "__repr__",
         [](const regpl::Polynomial & self) { return self.str(); }
     );
+    // empty polynomial
+    regpl_module.def(
+        "new_polynom",
+        [](py::sequence & order, std::optional<py::sequence> & coeff, std::optional<py::sequence> & term_idx) {
+            regpl::Polynomial * poly = new regpl::Polynomial(pyseq_to_array<std::uint64_t>(order));
+            if (coeff.has_value() && term_idx.has_value()) {
+                poly->set(pyseq_to_vector<double>(coeff.value()).data(),
+                          pyseq_to_vector<std::uint64_t>(term_idx.value()));
+            }
+            return poly;
+        },
+        R"(
+        Create a sparse polynomial.
+
+        A sparse polynomial is a polynomial of which most of the coefficients are zeros.
+
+        Parameters
+        ----------
+        order : Sequence[int]
+            Max polynomial order per dimension.
+        coeff : Sequence[float], default=None
+            Coefficient data of each term index.
+        term_idx : Sequence[int], default=None
+            Index of terms to assign (in C-contiguous order).)",
+        py::arg("order"), py::arg("coeff") = py::none(), py::arg("term_idx") = py::none()
+    );
 }
-/*
+
+// Wrap merlin::regpl::Vandermonde class
+void wrap_vandermonde(py::module & regpl_module) {
+    auto vandermonde_pyclass = py::class_<regpl::Vandermonde>(
+        regpl_module,
+        "Vandermonde",
+        R"(
+        Vandermonde matrix of a polynomial and a grid.
+
+        Wrapper of :cpp:class:`merlin::regpl::Vandermonde`.
+        )"
+    );
+    // solve for polynomial
+    vandermonde_pyclass.def(
+        "solve",
+        [] (regpl::Vandermonde & self, array::Array & flatten_data) {
+            if (flatten_data.ndim() != 1) {
+                Fatal<std::invalid_argument>("Input data must be a vector.\n");
+            }
+            if (!(flatten_data.is_c_contiguous())) {
+                Fatal<std::invalid_argument>("Input vector must be contiguous.\n");
+            }
+            if (flatten_data.shape()[0] != self.num_points()) {
+                Fatal<std::invalid_argument>("Inconsistent size between the input grid and the data provided.\n");
+            }
+            regpl::Polynomial * result = new regpl::Polynomial();
+            self.solve(flatten_data.data(), *result);
+            return result;
+        },
+        py::arg("flatten_data")
+    );
+    // constructors
+    regpl_module.def(
+        "create_vandermonde",
+        [] (py::sequence & order, const grid::CartesianGrid & grid, std::uint64_t n_threads) {
+            return new regpl::Vandermonde(pyseq_to_array<std::uint64_t>(order), grid, n_threads);
+        },
+        R"(
+        Constructor from a full polynomial and Cartesian grid.
+
+        Parameters
+        ----------
+        order : Sequence[int]
+            Max polynomial order per dimension.
+        grid : merlin.grid.CartesianGrid
+            Cartesian grid of points.
+        n_threads : int, default=1
+            Number of threads to perform the calculation.)",
+        py::arg("order"), py::arg("grid"), py::arg("n_threads") = 1
+    );
+}
+
 // Wrap merlin::regpl::Regressor class
 void wrap_regressor(py::module & regpl_module) {
     auto regressor_pyclass = py::class_<regpl::Regressor>(
@@ -97,44 +157,46 @@ void wrap_regressor(py::module & regpl_module) {
     );
     // constructors
     regressor_pyclass.def(
-        py::init([]() { return new regpl::Regressor(); }),
-        "Default constructor."
-    );
-    regressor_pyclass.def(
         py::init(
-            [](const regpl::Polynomial & polynom, const std::string & proc_type) {
-                return new regpl::Regressor(polynom, proctype_map.at(proc_type));
+            [](regpl::Polynomial & polynom, Synchronizer & synchronizer) {
+                return new regpl::Regressor(std::move(polynom), synchronizer);
             }
         ),
         "Constructor from polynomial object.",
-        py::arg("polynom"), py::arg("proc_type") = "cpu"
+        py::arg("polynom"), py::arg("synchronizer")
     );
     // evaluate
     regressor_pyclass.def(
-        "evaluate",
+        "evaluate_cpu",
         [](regpl::Regressor & self, const array::Array & points, std::uint64_t n_threads) {
-            intvec eval_values_shape = {points.shape()[0]};
-            array::Array * eval_values = new array::Array(eval_values_shape);
-            self.evaluate(points, eval_values->data(), n_threads);
-            return eval_values;
+            DoubleVec result(points.shape()[0]);
+            self.evaluate(points, result, n_threads);
+            double * data = std::exchange(result.data(), nullptr);
+            return make_wrapper_array<double>(data, result.size());
         },
         "Evaluate regression by CPU parallelism.",
         py::arg("points"), py::arg("n_threads") = 1
     );
-    // synchronize
     regressor_pyclass.def(
-        "synchronize",
-        [](regpl::Regressor & self) { self.synchronize(); },
-        "Force the current CPU to wait until all asynchronous tasks have finished."
+        "evaluate_gpu",
+        [](regpl::Regressor & self, const array::Parcel & points, std::uint64_t n_threads) {
+            DoubleVec result(points.shape()[0]);
+            self.evaluate(points, result, n_threads);
+            double * data = std::exchange(result.data(), nullptr);
+            return make_wrapper_array<double>(data, result.size());
+        },
+        "Evaluate regression by GPU parallelism.",
+        py::arg("points"), py::arg("n_threads") = 32
     );
 }
-*/
+
 void wrap_regpl(py::module & merlin_package) {
     // add regpl submodule
     py::module regpl_module = merlin_package.def_submodule("regpl", "Multi-dimensional polynomial regression API.");
     // add classes
     wrap_polynomial(regpl_module);
-    // wrap_regressor(regpl_module);
+    wrap_regressor(regpl_module);
+    wrap_vandermonde(regpl_module);
 }
 
 }  // namespace merlin

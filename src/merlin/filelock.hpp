@@ -75,9 +75,13 @@ class FileLock {
     /// @name Unlock
     /// @{
     /** @brief Unlock the file.
-     *  @details Unlock both exclusive lock and shared lock imposed on the file by the current process.
+     *  @details Unlock exclusive lock imposed on the file by the current process.
      */
     MERLIN_EXPORTS void unlock(void);
+    /** @brief Unlock the file.
+     *  @details Unlock shared lock imposed on the file by the current process.
+     */
+    void unlock_shared(void) { this->unlock(); }
     /// @}
 
     /// @name Representation

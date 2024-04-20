@@ -1,8 +1,6 @@
 // Copyright 2023 quocdang1998
 #include "merlin/candy/optmz/grad_descent.hpp"
 
-#include <omp.h>  // #pragma omp
-
 #include "merlin/candy/gradient.hpp"   // merlin::candy::Gradient
 #include "merlin/candy/model.hpp"      // merlin::candy::Model
 #include "merlin/candy/optimizer.hpp"  // merlin::candy::OptmzStatic

@@ -13,7 +13,7 @@ namespace merlin {
 
 // Destroy current CUDA graph instance
 void cuda::Graph::destroy_graph(void) {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for graph management.\n");
+    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA for graph management.\n");
 }
 
 // Constructor
@@ -39,7 +39,7 @@ cuda::Graph & cuda::Graph::operator=(cuda::Graph && src) {
 
 // Execute a graph
 void cuda::Graph::execute(const cuda::Stream & stream) {
-    FAILURE(cuda_compile_error, "Compile merlin with CUDA by enabling option MERLIN_CUDA for graph management.\n");
+    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA for graph management.\n");
 }
 
 // Destructor

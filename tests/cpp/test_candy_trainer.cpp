@@ -11,6 +11,7 @@
 #include "merlin/candy/optimizer.hpp"
 #include "merlin/candy/trainer.hpp"
 #include "merlin/logger.hpp"
+#include "merlin/synchronizer.hpp"
 #include "merlin/utils.hpp"
 #include "merlin/vector.hpp"
 
@@ -26,22 +27,29 @@ int main(void) {
     candy::Model model({{1.0, 0.5, 1.6, 2.7}, {2.0, 1.0, 2.4, 1.2, 4.6, 3.5}}, 2);
     Message("Model before trained: %s\n", model.str().c_str());
 
-    candy::Optimizer opt = candy::create_grad_descent(0.1);
+    // candy::Optimizer opt = candy::create_grad_descent(0.5);
     // candy::Optimizer opt = candy::create_adam(0.3, 0.9, 0.99, model);
-    // candy::Optimizer opt = candy::create_adadelta(20.0, 0.9, model);
+    candy::Optimizer opt = candy::create_adadelta(1, 0.9999, model);
 
-    candy::Trainer train(model, opt);
+    Synchronizer cpu_synch(ProcessorType::Cpu);
+    candy::Trainer train("FooTrainer", model, opt, cpu_synch);
 
     // test dry-run
-    /*bool test;
-    train.dry_run(100, &test, 4, candy::TrainMetric::RelativeSquare);
-    train.synchronize();
+    std::uint64_t max_iter = 50;
+    DoubleVec error_by_step(max_iter);
+    std::uint64_t real_iter;
+    train.dry_run(train_data, error_by_step, real_iter, max_iter);
+    cpu_synch.synchronize();
+    bool test = real_iter == max_iter;
     if (!test) {
-        FAILURE(std::runtime_error, "Provided optimizer not compatible with the model.\n");
-    }*/
+        Fatal<std::runtime_error>("Provided optimizer not compatible with the model.\n");
+    }
 
     // test official update
-    train.update_cpu(train_data, 10000, 1e-2, 3, candy::TrainMetric::RelativeSquare);
-    train.synchronize();
-    Message("Model eval: %f\n", train.model().eval({1,1}));
+    train.update(train_data, 10, 1e-2, 3, candy::TrainMetric::RelativeSquare);
+    array::Array reconstructed_data(train_data.shape());
+    train.reconstruct(reconstructed_data, 4);
+    cpu_synch.synchronize();
+    Message("Model after trained: %s\n", train.model().str().c_str());
+    Message("Reconstructed: %s\n", reconstructed_data.str().c_str());
 }

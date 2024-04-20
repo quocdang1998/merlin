@@ -10,8 +10,9 @@
 #include "merlin/cuda/memory.hpp"
 #include "merlin/cuda/stream.hpp"
 #include "merlin/logger.hpp"
-#include "merlin/vector.hpp"
+#include "merlin/synchronizer.hpp"
 #include "merlin/utils.hpp"
+#include "merlin/vector.hpp"
 
 using namespace merlin;
 
@@ -32,19 +33,34 @@ int main (void) {
     Message("Model before trained: %s\n", model.str().c_str());
 
     // initialize optimizer
-    candy::Optimizer opt = candy::create_grad_descent(0.1);
+    candy::Optimizer opt = candy::create_grad_descent(0.2);
 
     // create trainer
     std::uint64_t rep = 10;
     double threshold = 1e-5;
-    candy::Trainer train_gpu(model, opt, ProcessorType::Gpu);
-    train_gpu.update_gpu(gpu_data, rep, threshold, 16, candy::TrainMetric::RelativeSquare);
-    candy::Trainer train_cpu(model, opt, ProcessorType::Cpu);
-    train_cpu.update_cpu(train_data, rep, threshold, 3, candy::TrainMetric::RelativeSquare);
+    Synchronizer gpu_sync(ProcessorType::Gpu);
+    candy::Trainer train_gpu("GpuTrainer", model, opt, gpu_sync);
+    Synchronizer cpu_sync(ProcessorType::Cpu);
+    candy::Trainer train_cpu("CpuTrainer", model, opt, cpu_sync);
+    
+    // GPU dryrun
+    std::uint64_t max_iter = 50;
+    DoubleVec error_by_step(max_iter);
+    std::uint64_t real_iter;
+    train_gpu.dry_run(gpu_data, error_by_step, real_iter, max_iter);
+    gpu_sync.synchronize();
+    bool test = real_iter == max_iter;
+    if (!test) {
+        Fatal<std::runtime_error>("Provided optimizer not compatible with the model.\n");
+    }
+
+    // launch update
+    train_gpu.update(gpu_data, rep, threshold, 16, candy::TrainMetric::RelativeSquare);
+    train_cpu.update(train_data, rep, threshold, 3, candy::TrainMetric::RelativeSquare);
 
     // synchronize
-    train_gpu.synchronize();
-    train_cpu.synchronize();
+    gpu_sync.synchronize();
+    cpu_sync.synchronize();
 
     // copy back to CPU
     Message("Model after trained (GPU): %s\n", train_gpu.model().str().c_str());

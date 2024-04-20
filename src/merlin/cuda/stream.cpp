@@ -9,6 +9,15 @@
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Utils
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Wrapper of the function adding CUDA callback to stream
+void cuda::cuda_stream_add_callback(std::uintptr_t stream, cuda::StreamCallback func, void * arg) {
+    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA for stream management.\n");
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Stream
 // ---------------------------------------------------------------------------------------------------------------------
 
@@ -62,11 +71,6 @@ void cuda::Stream::check_cuda_context(void) const {
     Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA for stream management.\n");
 }
 
-// Add callback to stream
-void cuda::Stream::add_callback(cuda::Stream::CudaStreamCallback func, void * arg) const {
-    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA for stream management.\n");
-}
-
 // Record event on a stream
 void cuda::Stream::record_event(const cuda::Event & event) const {
     Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA for stream management.\n");
@@ -83,6 +87,10 @@ void cuda::Stream::synchronize(void) const {
 
 // Destructor
 cuda::Stream::~Stream(void) {}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Stream capturing
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Capturing stream for CUDA graph
 void cuda::begin_capture_stream(const cuda::Stream & stream, StreamCaptureMode mode) {

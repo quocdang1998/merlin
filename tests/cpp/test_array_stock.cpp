@@ -21,20 +21,18 @@ int main(void) {
     array::Array Ar(A, dims, strides, false);
     Message("CPU array: %s\n", Ar.str().c_str());
     {
-        array::Stock Stk("temp.txt", Ar.shape());
+        array::Stock Stk("temp.txt", Ar.shape(), 0, true);
         Stk.record_data_to_file(Ar);
         Message("Stock array: %s\n", Stk.str().c_str());
     }
 
     std::mutex m;
-    #pragma omp parallel for
-    for (int i = 0; i < 10; i++) {
-        array::Stock S("temp.txt");
+    _Pragma("omp parallel for") for (int i = 0; i < 10; i++) {
+        array::Stock S("temp.txt", 0, true);
         array::Array Ar_read(S.shape());
         Ar_read.extract_data_from_file(S);
         m.lock();
         Message("From thread %d: %s\n", omp_get_thread_num(), Ar_read.str().c_str());
         m.unlock();
     }
-
 }

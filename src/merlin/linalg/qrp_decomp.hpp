@@ -24,6 +24,18 @@ class linalg::QRPDecomp {
     MERLIN_EXPORTS QRPDecomp(std::uint64_t nrow, std::uint64_t ncol);
     /// @}
 
+    /// @name Copy and move
+    /// @{
+    /** @brief Copy constructor.*/
+    QRPDecomp(const linalg::QRPDecomp & src) = default;
+    /** @brief Copy assignment.*/
+    linalg::QRPDecomp & operator=(const linalg::QRPDecomp & src) = default;
+    /** @brief Move constructor.*/
+    QRPDecomp(linalg::QRPDecomp && src) = default;
+    /** @brief Move assignment.*/
+    linalg::QRPDecomp & operator=(linalg::QRPDecomp && src) = default;
+    /// @}
+
     /// @name Get attributes
     /// @{
     /** @brief Get reference to the core matrix.*/
@@ -34,6 +46,10 @@ class linalg::QRPDecomp {
     constexpr const std::uint64_t & nrow(void) const noexcept { return this->core_.nrow(); }
     /** @brief Get number of columns.*/
     constexpr const std::uint64_t & ncol(void) const noexcept { return this->core_.ncol(); }
+    /** @brief Get reference to the diagonal matrix.*/
+    constexpr DoubleVec & diag(void) noexcept { return this->diag_; }
+    /** @brief Get constant reference to the diagonal matrix.*/
+    constexpr const DoubleVec & diag(void) const noexcept { return this->diag_; }
     /** @brief Flag indicating if the current instance is initialized and decomposed.*/
     bool is_decomposed = false;
     /// @}
@@ -65,8 +81,6 @@ class linalg::QRPDecomp {
     DoubleVec diag_;
     /** @brief Permutation matrix.*/
     Permutation permut_;
-
-  private:
 };
 
 }  // namespace merlin

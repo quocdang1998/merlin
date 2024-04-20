@@ -2,16 +2,20 @@
 #ifndef MERLIN_REGPL_VANDERMONDE_HPP_
 #define MERLIN_REGPL_VANDERMONDE_HPP_
 
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/grid/declaration.hpp"  // merlin::grid::CartesianGrid, merlin::grid::RegularGrid
-#include "merlin/config.hpp"    // merlin::Index
+#include <vector>  // std::vector
+
+#include "merlin/config.hpp"             // merlin::Index
+#include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/grid/declaration.hpp"   // merlin::grid::CartesianGrid, merlin::grid::RegularGrid
 #include "merlin/linalg/qrp_decomp.hpp"  // merlin::linalg::QRPDecomp
 #include "merlin/regpl/declaration.hpp"  // merlin::regpl::Polynomial, merlin::regpl::Vandermonde
-#include "merlin/vector.hpp"  // merlin::UIntVec
+#include "merlin/vector.hpp"             // merlin::UIntVec
 
 namespace merlin {
 
-/** @brief Vandermonde matrix of a polynomial and a grid.*/
+/** @brief Vandermonde matrix of a polynomial and a grid.
+ *  @details Asynchronously solve for a polynomial regression.
+ */
 class regpl::Vandermonde {
   public:
     /// @name Constructors
@@ -32,10 +36,21 @@ class regpl::Vandermonde {
     MERLIN_EXPORTS Vandermonde(const Index & order, const grid::RegularGrid & grid, std::uint64_t n_threads = 1);
     /// @}
 
+    /// @name Get attributes
+    /// @{
+    /** @brief Get number of terms in the result polynomial.*/
+    __cuhostdev__ constexpr std::uint64_t num_coeff(void) const noexcept { return this->term_idx_.size(); }
+    /** @brief Get number of points in the entry grid.*/
+    __cuhostdev__ constexpr std::uint64_t num_points(void) const noexcept { return this->solver_.nrow(); }
+    /// @}
+
     /// @name Solve for coefficients
     /// @{
-    /** @brief Solve for the coefficients given the data.*/
-    MERLIN_EXPORTS regpl::Polynomial solve(DoubleVec & values_to_fit) const;
+    /** @brief Solve for the coefficients given the data.
+     *  @param values_to_fit Pointer to data to fir for the coefficients.
+     *  @param result Resulted polynomial.
+     */
+    MERLIN_EXPORTS void solve(const double * values_to_fit, regpl::Polynomial & result) const;
     /// @}
 
     /// @name Destructor

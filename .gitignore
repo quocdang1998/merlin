@@ -18,6 +18,7 @@ merlin/*.dll
 # Ignore folder starts with .
 .*
 !/.clang-format
+!/.cmake-format.yaml
 !/.gitignore
 !.gitattributes
 

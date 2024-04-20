@@ -268,8 +268,8 @@ static void wrap_empty_constructors(py::module & array_module) {
     // empty GPU array
     array_module.def(
         "empty_parcel",
-        [](py::sequence & shape) {
-            return new array::Parcel(pyseq_to_array<std::uint64_t>(shape));
+        [](py::sequence & shape, const cuda::Stream & stream) {
+            return new array::Parcel(pyseq_to_array<std::uint64_t>(shape), stream);
         },
         R"(
         Construct C-contiguous empty GPU array from shape vector.
@@ -277,8 +277,10 @@ static void wrap_empty_constructors(py::module & array_module) {
         Parameters
         ----------
         shape : Sequence[int]
-            Shape of n-dimensional array.)",
-        py::arg("shape")
+            Shape of n-dimensional array.
+        stream : merlin.cuda.Stream
+            Asynchronous stream for asynchronous memory allocation.)",
+        py::arg("shape"), py::arg("stream") = cuda::Stream()
     );
     // empty out-of-core array
     array_module.def(

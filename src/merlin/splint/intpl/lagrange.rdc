@@ -21,7 +21,7 @@ __cuhostdev__ void splint::intpl::construct_lagrange(double * coeff, const doubl
         // inverse the solvent
         solvent = 1.f / solvent;
         // multiply each sub-array by solvent
-        for (std::int64_t i_coeff = thread_idx; i_coeff < element_size; i_coeff += n_threads) {
+        for (std::uint64_t i_coeff = thread_idx; i_coeff < element_size; i_coeff += n_threads) {
             coeff[i_node * element_size + i_coeff] *= solvent;
         }
     }

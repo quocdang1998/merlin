@@ -6,6 +6,7 @@
 #include "merlin/grid/cartesian_grid.hpp"
 #include "merlin/splint/interpolator.hpp"
 #include "merlin/splint/tools.hpp"
+#include "merlin/synchronizer.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/vector.hpp"
 
@@ -32,15 +33,17 @@ int main(void) {
     };
 
     // initialize interpolator
-    splint::Interpolator interp_cpu(cart_gr, value, methods, ProcessorType::Cpu);
-    splint::Interpolator interp_gpu(cart_gr, value, methods, ProcessorType::Gpu);
+    Synchronizer cpu_sync(ProcessorType::Cpu);
+    splint::Interpolator interp_cpu(cart_gr, value, methods.data(), cpu_sync);
+    Synchronizer gpu_sync(ProcessorType::Gpu);
+    splint::Interpolator interp_gpu(cart_gr, value, methods.data(), gpu_sync);
 
     // calculate coefficients
     interp_cpu.build_coefficients(8);
     interp_gpu.build_coefficients(32);
-    interp_cpu.synchronize();
+    cpu_sync.synchronize();
     Message("Coefficients calculated by CPU: %s\n", interp_cpu.get_coeff().str().c_str());
-    interp_gpu.synchronize();
+    gpu_sync.synchronize();
     Message("Coefficients calculated by GPU: %s\n", interp_gpu.get_coeff().str().c_str());
 
     // initialize point
@@ -54,8 +57,8 @@ int main(void) {
     interp_cpu.evaluate(point_cpu, cpu_result, 8);
     DoubleVec gpu_result(3);
     interp_gpu.evaluate(point_gpu, gpu_result, 32);
-    interp_cpu.synchronize();
+    cpu_sync.synchronize();
     Message("Value evaluated by CPU: %s\n", cpu_result.str().c_str());
-    interp_gpu.synchronize();
+    gpu_sync.synchronize();
     Message("Value evaluated by GPU: %s\n", gpu_result.str().c_str());
 }

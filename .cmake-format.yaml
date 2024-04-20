@@ -1,0 +1,13 @@
+format:
+  disable: false
+  line_width: 120
+  tab_size: 4
+  use_tabchars: false
+  fractional_tab_policy: use-space
+  max_subgroups_hwrap: 6
+  max_lines_hwrap: 2
+  line_ending: auto
+  command_case: lower
+  keyword_case: upper
+  always_wrap: []
+  enable_sort: true

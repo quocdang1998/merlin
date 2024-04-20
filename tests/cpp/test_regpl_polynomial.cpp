@@ -12,10 +12,9 @@ int main(void) {
     using namespace merlin;
 
     double coeff_simplified[] = {1.3, 2.4, 3.8, -6.2, -1.8, -3.5};
-    DoubleVec coeff_vec;
-    coeff_vec.assign(coeff_simplified, 6);
     UIntVec coef_idx = {9, 3, 11, 7, 16, 13};
-    regpl::Polynomial p(coeff_vec, make_array<std::uint64_t>({2, 3, 3}), coef_idx);
+    regpl::Polynomial p(make_array<std::uint64_t>({2, 3, 3}));
+    p.set(coeff_simplified, coef_idx);
     Message("Polynomial: %s\n", p.str().c_str());
 
     Point buffer;

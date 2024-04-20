@@ -40,5 +40,4 @@ int main(void) {
     Message("Result          : %s\n", Ar_copy.str().c_str());
 
     auto [m, v] = Ar.get_mean_variance();
-    Message("Mean-variance   : %f %f\n", m, v);
 }

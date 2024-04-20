@@ -6,13 +6,14 @@ System requirements
 
 Prior to compiling the package, make sure that you have already installed these prerequisites:
 
--  C++ compiler: GNU ``g++>=11.2.0`` on **Linux** or Visual Studio 2022 ``cl.exe`` on **Windows**, with OpenMP enabled.
+-  C++ compiler: GNU ``g++>=11.2.0`` on **Linux** or Visual Studio 2022 ``cl>=19.39`` on **Windows**, with OpenMP
+   enabled.
 
 -  Cmake: ``cmake>=3.25.0``
 
 -  Build-tool: GNU ``make`` on **Linux** or ``ninja`` on **Windows** (Ninja extenstion of MSVC).
 
--  CUDA ``nvcc>=12.1`` (optional, required if GPU parallelization option is ``ON``).
+-  CUDA ``nvcc>=12.1`` (optional, but required if GPU parallelization option is ``ON``).
 
 .. _setup_script_build_dependancies:
 
@@ -29,7 +30,7 @@ To compile the Python interface by using the ``setup.py`` script, ensure the ins
 
 .. code-block:: sh
 
-      pip install -U pybind11 numpy
+   pip install -U pybind11 numpy
 
 To compile the documentation, install the following packages:
 
@@ -38,10 +39,10 @@ To compile the documentation, install the following packages:
 -  |Sphinx|_ + extensions (|sphinx_rtd_theme|_, |sphinx_design|_, |sphinxcontrib-bibtex|_, |breathe|_ and
    |sphinx_doxysummary|_)
 
-   .. code-block:: sh
+.. code-block:: sh
 
-      pip install -U sphinx_rtd_theme sphinx_design breathe sphinx_doxysummary
-      pip install -U Sphinx
+   pip install -U sphinx_rtd_theme sphinx_design breathe sphinx_doxysummary
+   pip install -U Sphinx
 
 .. |Doxygen| replace:: ``Doxygen>=1.8.5``
 .. _Doxygen: https://doxygen.nl/download.html
@@ -89,8 +90,8 @@ application:
 It is possible to compile the package from terminal (cmd or Powershell). However, users are responsible for ensuring the
 correct configuration of environment variables before the compilation process, based on location and version of Visual
 Studio installed on their machines (see also `Building on the command line
-<https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170#path_and_environment>`_
-and `Developper command prompt
+<https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170#path_and_environment>`_ and
+`Developper command prompt
 <https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170#developer_command_prompt_shortcuts>`_).
 
 .. code-block:: powershell
@@ -102,17 +103,15 @@ and `Developper command prompt
 To customize the settings of the compilation of the library (e.g. compiling without CUDA), checkout
 :ref:`installation:CMake build options`.
 
-After the compilation step, executables, libraries and C++ header files can be
-installed using CMake command (note that in the example below, current working
-directory is the one containing ``cmake_install.cmake``, i.e. ``build``):
+After the compilation step, executables, libraries and C++ header files can be installed using CMake command (note that
+in the example below, current working directory is the one containing ``cmake_install.cmake``, i.e. ``build``):
 
 .. code-block:: sh
 
    cmake --install . --prefix="/path/to/install/folder"
    # or cmake --install . --prefix='C:\path\to\install folder' on Windows
 
-After the installation, environment variables must be set so compiler can find
-the package:
+After the installation, environment variables must be set so compiler can find the package:
 
 .. tab-set-code::
 
@@ -121,7 +120,7 @@ the package:
       # suppose the package installed in "/path/to/install/folder"
       PATH=/path/to/install/folder/bin:$PATH
       CPATH=/path/to/install/folder/include:$PATH
-      LD_LIBRARY_PATH=/path/to/install/folder:$LD_LIBRARY_PATH
+      LD_LIBRARY_PATH=/path/to/install/folder/lib:$LD_LIBRARY_PATH
 
    .. code-block:: powershell
 
@@ -132,13 +131,22 @@ the package:
 
    .. code-block:: cmake
 
+      find_package(OpenMP)      # required when compiling static Merlin library
+      include(FindCUDAToolkit)  # required when compiling static Merlin library AND using CUDA
       # suppose the package installed in "/path/to/install/folder"
-      find_package(libmerlin REQUIRED PATHS "/path/to/install/folder/lib/cmake")
+      find_package(merlin REQUIRED PATHS "/path/to/install/folder/lib/cmake")
+      if(libmerlin_FOUND)
+          message(STATUS "Found libmerlin cmake package")
+      endif()
+      # linking to custom executable
+      add_executable(my_exe ${MY_SOURCE_LIST})
+      set_property(TARGET my_exe PROPERTY INTERPROCEDURAL_OPTIMIZATION ON)  # required!
+      # these steps are required when using CUDA
+      set_property(TARGET my_exe PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+      get_property(MERLIN_CUDA_ARCH TARGET merlin::libmerlin PROPERTY CUDA_ARCHITECTURES)
+      set_property(TARGET my_exe PROPERTY CUDA_ARCHITECTURES ${MERLIN_CUDA_ARCH})
+      target_link_libraries(executable PUBLIC merlin::libmerlin)
 
-.. note::
-
-   When compiling C++/CUDA source linking to ``libmerlin`` with CUDA option, ensure that the macro ``__MERLIN_CUDA__`` is
-   defined.
 
 Python package
 ^^^^^^^^^^^^^^
@@ -146,8 +154,8 @@ Python package
 The Python interface is a wrapper around the C++/CUDA library. Therefore, prior to compiling the Python interface,
 verify that **the C++/CUDA interface has been successfully compiled**.
 
-When compiling the Python module "inplace" (compiled extensions are copied to the source directory),
-:ref:`build dependancies <setup_script_build_dependancies>` must be installed. Next, run the setup script with:
+When compiling the Python module "inplace" (compiled extensions are copied to the source directory), :ref:`build
+dependancies <setup_script_build_dependancies>` must be installed. Next, run the setup script with:
 
 .. code-block:: sh
 
@@ -155,7 +163,7 @@ When compiling the Python module "inplace" (compiled extensions are copied to th
 
 The package can also be installed using ``pip``. If ``setuptools>=30``, the necessary build dependencies are
 automatically installed during execution (in accordance with `PEP 517 <https://peps.python.org/pep-0517/>`_). Therefore
-users are relieved from the obligation of manual pre-installation of these dependencies.
+users are relieved from the obligation of manual pre-installation of the dependencies.
 
 .. code-block:: sh
 
@@ -202,12 +210,20 @@ Options for customizing the compilation of C++/CUDA interface:
    :Value: ``ON``, ``OFF``
    :Default: ``OFF``
 
+.. envvar:: MERLIN_EXT
+
+   Build C++ extensions to Merlin library.
+
+   :Type: ``STRING``
+   :Value: ``""``, ``"spgrid"``
+   :Default: ``""``
+
 Build documentation
 -------------------
 
-The C++/CUDA documentation is generated by Doxygen and organized as XML files in the directory ``docs/source/xml``. Next,
-``Sphinx`` conbines the C++/CUDA documentation and Python docstrings with RST files and creates a unified output, which
-can be in the form of HTML or PDF.
+The C++/CUDA documentation is generated by Doxygen and organized as XML files in the directory ``docs/source/xml``.
+Next, ``Sphinx`` conbines the C++/CUDA documentation and Python docstrings with RST files and creates a unified output,
+which can be in the form of HTML or PDF.
 
 .. code-block:: sh
 

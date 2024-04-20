@@ -3,7 +3,10 @@
 
 // Wrap main module
 PYBIND11_MODULE(merlin, merlin_package) {
+    // metadata
     merlin_package.doc() = "Python interface of Merlin library.";
+    merlin_package.attr("__version__") = merlin::version;
+    // wrap library
     merlin::wrap_mics(merlin_package);
     merlin::wrap_cuda(merlin_package);
     merlin::wrap_array(merlin_package);

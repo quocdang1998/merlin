@@ -7,7 +7,7 @@
 
 #if defined(__MERLIN_WINDOWS__)
     #include <windows.h>  // ::FormatMessageA, ::GetCurrentProcess
-    #ifdef __MERLIN_DEBUG__
+    #ifndef NDEBUG
         #include <cstdint>    // std::uint64_t
         #include <cstdlib>    // std::calloc
         #include <cstring>    // std::strlen
@@ -16,7 +16,7 @@
 #elif defined(__MERLIN_LINUX__)
     #include <errno.h>   // errno
     #include <string.h>  // ::strerror
-    #ifdef __MERLIN_DEBUG__
+    #ifndef NDEBUG
         #include <cxxabi.h>    // ::abi::__cxa_demangle
         #include <dlfcn.h>     // ::Dl_info, ::dladdr
         #include <execinfo.h>  // ::backtrace
@@ -54,7 +54,7 @@ std::string throw_sys_last_error(unsigned long int last_error) {
 
 // Print stacktrace
 void print_stacktrace(int skip) {
-    #ifdef __MERLIN_DEBUG__
+    #ifndef NDEBUG
     // get current process
     native_frame_ptr_t process = ::GetCurrentProcess();
     ::SymInitialize(process, nullptr, true);
@@ -75,7 +75,7 @@ void print_stacktrace(int skip) {
         }
     }
     std::free(symbol);
-    #endif  // __MERLIN_DEBUG__
+    #endif
 }
 
 #elif defined(__MERLIN_LINUX__)
@@ -92,7 +92,7 @@ std::string throw_sys_last_error(unsigned long int last_error) {
 
 // Print stacktrace
 void print_stacktrace(int skip) {
-    #ifdef __MERLIN_DEBUG__
+    #ifndef NDEBUG
     // get number of frame in the stack
     native_frame_ptr_t buffer[stacktrace_buffer];
     int frames_count = ::backtrace(const_cast<void **>(buffer), stacktrace_buffer);
@@ -122,7 +122,7 @@ void print_stacktrace(int skip) {
             std::fprintf(stderr, "    %p\n", buffer[i]);
         }
     }
-    #endif  // __MERLIN_DEBUG__
+    #endif
 }
 
 #endif

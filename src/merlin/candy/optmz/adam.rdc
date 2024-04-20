@@ -13,6 +13,28 @@ namespace merlin {
 // Adam
 // ---------------------------------------------------------------------------------------------------------------------
 
+// Update model parameters
+__cuhostdev__ void candy::optmz::Adam::update(void * optimizer_algor, candy::Model & model, std::uint64_t i_param,
+                                              double gradient, std::uint64_t step) noexcept {
+    candy::OptmzStatic & union_algor = *(reinterpret_cast<candy::OptmzStatic *>(optimizer_algor));
+    candy::optmz::Adam & algor = std::get<candy::optmz::Adam>(union_algor);
+    // calculate first and second moment and save it back
+    double first_moment = algor.moments[2 * i_param];
+    double second_moment = algor.moments[2 * i_param + 1];
+    first_moment *= algor.beta_m;
+    first_moment += (1.0 - algor.beta_m) * gradient;
+    algor.moments[2 * i_param] = first_moment;
+    second_moment *= algor.beta_v;
+    second_moment += (1.0 - algor.beta_v) * gradient * gradient;
+    algor.moments[2 * i_param + 1] = second_moment;
+    // update parameters
+    first_moment /= 1.0 - std::pow(algor.beta_m, step);
+    second_moment /= 1.0 - std::pow(algor.beta_v, step);
+    double correction = algor.learning_rate * first_moment;
+    correction /= std::sqrt(second_moment) + algor.bias;
+    model[i_param] -= correction;
+}
+
 #ifdef __NVCC__
 
 // Update model inside a GPU parallel region

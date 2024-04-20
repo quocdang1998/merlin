@@ -13,6 +13,21 @@ namespace merlin {
 // AdaGrad
 // ---------------------------------------------------------------------------------------------------------------------
 
+// Update model parameters
+__cuhostdev__ void candy::optmz::AdaGrad::update(void * optimizer_algor, candy::Model & model, std::uint64_t i_param,
+                                                 double gradient, std::uint64_t step) noexcept {
+    candy::OptmzStatic & union_algor = *(reinterpret_cast<candy::OptmzStatic *>(optimizer_algor));
+    candy::optmz::AdaGrad & algor = std::get<candy::optmz::AdaGrad>(union_algor);
+    // copy gradient history to thread register and copy it back
+    double grad_history = algor.grad_history[i_param];
+    grad_history += gradient * gradient;
+    algor.grad_history[i_param] = grad_history;
+    // update parameter
+    double correction = algor.learning_rate * gradient;
+    correction /= std::sqrt(grad_history + algor.bias);
+    model[i_param] -= correction;
+}
+
 #ifdef __NVCC__
 
 // Update model inside a GPU parallel region

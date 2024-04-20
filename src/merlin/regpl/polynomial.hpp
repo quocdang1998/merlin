@@ -27,13 +27,6 @@ class regpl::Polynomial {
      *  @param order Max power per dimension (one-more than highest power).
      */
     MERLIN_EXPORTS Polynomial(const DoubleVec & coeff, const Index & order);
-    /** @brief Constructor of a sparse polynomial from array of coefficients, max power per dimension and the power
-     *  of each term.
-     *  @param coeff Coefficient data of each term index.
-     *  @param order Max power per dimension (one-more than highest power).
-     *  @param term_index Index of terms to assign.
-     */
-    MERLIN_EXPORTS Polynomial(const DoubleVec & coeff, const Index & order, const UIntVec & term_index);
     /// @}
 
     /// @name Copy and move
@@ -60,6 +53,15 @@ class regpl::Polynomial {
     __cuhostdev__ constexpr const DoubleVec & coeff(void) const noexcept { return this->coeff_; }
     /** @brief Get order per dimension of the polynomial.*/
     __cuhostdev__ constexpr const Index & order(void) const noexcept { return this->order_; }
+    /// @}
+
+    /// @name Set coefficients
+    /// @{
+    /** @brief Set coefficients in case of a sparse polynomial.
+     *  @param coeff Coefficient data of each term index.
+     *  @param term_index Index of terms to assign.
+     */
+    MERLIN_EXPORTS void set(double * coeff, const UIntVec & term_index);
     /// @}
 
     /// @name Evaluation

@@ -6,8 +6,9 @@ import numpy as np
 
 from .config import *
 
+
 def get_extension_options():
-    # options for building Cython extension
+    # options for building extension
     module_dir = os.path.abspath(os.path.join(__file__, "../.."))
     ext_options = dict()
 
@@ -28,13 +29,13 @@ def get_extension_options():
 
     # extra compile arguments
     if sys.platform == "linux":
-        ext_options["extra_compile_args"] = ["-std=c++20",
-                                             "-Wno-unused-but-set-variable"]
+        ext_options["extra_compile_args"] = ["-std=c++20", "-Wno-unused-but-set-variable"]
+        ext_options["extra_compile_args"] += ["-fopenmp", "-flto=auto", "-fno-fat-lto-objects"]
     elif sys.platform == "win32":
-        ext_options["extra_compile_args"] = ["-std:c++20",
-                                             "/wd4251", "/wd4551"]
+        ext_options["extra_compile_args"] = ["/std:c++20", "/wd4251", "/wd4551"]
+        ext_options["extra_compile_args"] += ["-openmp:llvm"]
 
-    # dependancies
+    # dependencies
     depends = glob.glob(os.path.join(module_dir, "setup_cfg", "*.py"))
     if sys.platform == "linux":
         depends += glob.glob(os.path.join(module_dir, "build", "libmerlin*"))
@@ -45,11 +46,14 @@ def get_extension_options():
     ext_options["depends"] = depends
 
     # extra link options
-    if sys.platform == "win32":
-        ext_options["extra_link_args"] = ["/NODEFAULTLIB:LIBCMT.lib",
-                                          "/IGNORE:4286"]
+    if sys.platform == "linux":
+        ext_options["extra_link_args"] = ["-flto=auto", "-fno-fat-lto-objects"]
+    elif sys.platform == "win32":
+        ext_options["extra_link_args"] = ["/NODEFAULTLIB:LIBCMT.lib", "/IGNORE:4286"]
+        if MERLIN_DEBUG:
+            ext_options["extra_link_args"] += ["/NODEFAULTLIB:MSVCRT.lib"]
 
-    # link librairies
+    # link libraries
     ext_options["libraries"] = ["merlin"]
     if MERLIN_CUDA:
         ext_options["libraries"] += ["merlincuda"]
@@ -62,13 +66,30 @@ def get_extension_options():
     # library directory
     ext_options["library_dirs"] = [os.path.join(module_dir, "build")]
     if MERLIN_CUDA:
-        ext_options["library_dirs"] += [CUDALIB]
+        ext_options["library_dirs"] += CUDADIR
 
     # runtime library
-    if (sys.platform == "linux"):
+    if sys.platform == "linux":
         rt_dir = "${ORIGIN}"
         ext_options["runtime_library_dirs"] = [rt_dir]
         if MERLIN_CUDA:
-            ext_options["runtime_library_dirs"] += [CUDALIB]
+            ext_options["runtime_library_dirs"] += CUDADIR
+
+    # CUDA device linker arguments
+    if MERLIN_CUDA:
+        ext_options["cuda"] = True
+        ext_options["nvcc_executable"] = NVCC
+        ext_options["cuda_arch"] = CUDA_ARCHITECHTURE
+        ext_options["cuda_linkdir"] = CUDADIR + [MERLIN_BIN_DIR]
+        ext_options["lib_cudart"] = CUDART
+        ext_options["lib_cudadevrt"] = CUDADEVRT
+        ext_options["lib_cudadriver"] = CUDADRIVER
+        ext_options["libs_device_linker"] = CUDA_STANDARD_LIBRARIES.strip().split()
+        if sys.platform == "linux":
+            ext_options["libs_device_linker"] += ["libmerlinrdc.a", "libmerlincuda.a"]
+        elif sys.platform == "win32":
+            ext_options["libs_device_linker"] += ["merlinrdc.lib", "merlincuda.lib", "merlin.lib"]
+    else:
+        ext_options["cuda"] = False
 
     return ext_options

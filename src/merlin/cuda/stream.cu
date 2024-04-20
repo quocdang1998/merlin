@@ -1,8 +1,6 @@
 // Copyright 2022 quocdang1998
 #include "merlin/cuda/stream.hpp"
 
-#include <cuda.h>  // ::cuStreamGetCtx, ::CUcontext, ::CUstream
-
 #include <algorithm>  // std::clamp
 
 #include "merlin/cuda/event.hpp"  // merlin::cuda::Event
@@ -10,6 +8,18 @@
 #include "merlin/logger.hpp"      // merlin::Fatal, merlin::Warning, merlin::cuda_runtime_error
 
 namespace merlin {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Utils
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Wrapper of the function adding CUDA callback to stream
+void cuda::cuda_stream_add_callback(std::uintptr_t stream, cuda::StreamCallback func, void * arg) {
+    ::cudaError_t err_ = ::cudaStreamAddCallback(reinterpret_cast<::cudaStream_t>(stream), func, arg, 0);
+    if (err_ != 0) {
+        Fatal<cuda_runtime_error>("Add callback to stream failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+    }
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Stream
@@ -93,14 +103,6 @@ void cuda::Stream::check_cuda_context(void) const {
     }
 }
 
-// Add callback to stream
-void cuda::Stream::add_callback(cuda::Stream::CudaStreamCallback func, void * arg) const {
-    ::cudaError_t err_ = ::cudaStreamAddCallback(reinterpret_cast<::cudaStream_t>(this->stream_), func, arg, 0);
-    if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Add callback to stream failed with message \"%s\".\n", ::cudaGetErrorString(err_));
-    }
-}
-
 // Record event on a stream
 void cuda::Stream::record_event(const cuda::Event & event) const {
     this->check_cuda_context();
@@ -139,6 +141,10 @@ cuda::Stream::~Stream(void) {
         }
     }
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Stream capturing
+// ---------------------------------------------------------------------------------------------------------------------
 
 // Capturing stream for CUDA graph
 void cuda::begin_capture_stream(const cuda::Stream & stream, StreamCaptureMode mode) {

@@ -8,25 +8,25 @@ Welcome to Merlin's documentation!
 
    \chapter{Introduction}
 
-Merlin is a C++ / `CUDA <https://docs.nvidia.com/cuda/index.html>`_ library for processing and interpolation of
-multi-parameterized cross sections resulting from lattice calculations in the two-step approach
-:cite:p:`galia2020dynamic`. The library also supports a Python interface facilitated by
-`Pybind11 <https://pybind11.readthedocs.io/en/stable/>`_.
+Merlin is a C++20 / `CUDA <https://docs.nvidia.com/cuda/index.html>`_ library for compressing and interpolating
+few-group homogenized cross sections from lattice calculations in the two-step approach :cite:p:`galia2020dynamic`. The
+library also supports a Python interface facilitated by `Pybind11 <https://pybind11.readthedocs.io/en/stable/>`_.
 
 Major features include:
 
--  **Multidimensional array**: supports multidimensional array of double precision on CPU, GPU (CUDA) and out-of-core.
+-  **Multidimensional array**: support multidimensional array of double precision on CPU, GPU (CUDA) and out-of-core.
 
--  **Polynomial interpolation**: interpolate a dataset over a multidimensional Cartesian grid and hierarchical grids
-   :cite:p:`garcke2006sparse` by Lagrange :cite:p:`berrut2004barycentric` and Newton method
-   :cite:p:`neidinger2019multivariate`. Mixed interpolation method (linear interpolation on some specific axes) are
-   also supported.
+-  **CUDA RAII classes**: wrap CUDA functions in class constructors and destructors to avoid resource leakage.
 
--  **Tensor decomposition**: decompose multidimensional array to sum of tensor products of one-dimensional vectors by
-   gradient approach :cite:p:`acar2011scalable`.
+-  **Multi-variate interpolation**: interpolate data over a multidimensional Cartesian grids by linear or polynomial
+   interpolation.
 
--  **Parallelism**: accelerate the calculation of coefficients and evaluation of the interpolation by transporting the
-   workload to GPUs.
+-  **Polynomial regression**: model a data using monomials.
+
+-  **Tensor decomposition**: decompose multidimensional array into sum of tensor products of one-dimensional vectors by
+   the gradient-based CANDECOMP-PARAFAC method :cite:p:`acar2011scalable`.
+
+-  **Parallelism**: reduce calculation time by exploiting the multithread of CPU with OpenMP and GPU with CUDA kernels.
 
 .. raw:: html
 
@@ -40,33 +40,47 @@ Major features include:
       :shadow: md
       :text-align: center
 
-      To install Merlin, follow the :doc:`installation`.
+      Follow the :doc:`installation` section to install the library.
+
+   .. grid-item-card:: User guide
+      :shadow: md
+      :text-align: center
+
+      A short guide on how to use Merlin is introduced in :doc:`userguide` section.
 
    .. grid-item-card:: C++ API
       :shadow: md
       :text-align: center
 
-      To see the code documentation, see the :doc:`capi/index`.
+      All C++ classes and functions are summarized in :doc:`capi/index` section.
 
    .. grid-item-card:: Python API
       :shadow: md
       :text-align: center
 
-      To see the code documentation, see the :doc:`pyapi/index`.
+      Python interface is documented in the :doc:`pyapi/index` section.
 
    .. grid-item-card:: Developer guide
       :shadow: md
       :text-align: center
 
-      To extend the code for personal use, see the :doc:`developer/index`.
+      To extend the code for personal use, refer to the :doc:`developer/index` section.
+
+   .. grid-item-card:: License
+      :shadow: md
+      :text-align: center
+
+      The MIT License applies to this project, see :doc:`license`.
 
 .. toctree::
    :maxdepth: 1
    :hidden:
 
    installation
+   userguide
    capi/index
    pyapi/index
    developer/index
+   license
 
 .. bibliography::

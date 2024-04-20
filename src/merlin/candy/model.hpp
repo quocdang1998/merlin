@@ -84,8 +84,8 @@ class candy::Model {
      *  @details Initialize values randomly with normal distribution @f$ \mathcal{N}(\mu, \sigma) \setminus
      *  \{\mathbb{R}^-\} @f$. The mean value @f$ \mu = \frac{1}{r} \sqrt[n]{M} @f$, in which @f$ r @f$ is the rank,
      *  @f$ n @f$ is the number of dimension, and @f$ M @f$ is the mean value of the hyper-slice at index corresponding
-     *  to parameter. The standard deviation @f$ \sigma @f$ the standard deviation of the hyper-slice corrected in
-     *  corresponding with the mean.
+     *  to parameter. The value @f$ \sigma @f$ is the standard deviation of the hyper-slice corrected in corresponding
+     *  with the mean.
      *  @param train_data Data to train the model.
      */
     MERLIN_EXPORTS void initialize(const array::Array & train_data);
@@ -103,12 +103,14 @@ class candy::Model {
     __cuhostdev__ double eval(const Index & index) const noexcept;
     /// @}
 
-    /// @name Check negative value
+    /// @name Check
     /// @{
     /** @brief Check if these is a negative parameter in the model.
      *  @return Return ``false`` if these is a negative parameter in the model.
      */
     MERLIN_EXPORTS bool check_negative(void) const noexcept;
+    /** @brief Check if a given data shape is compatible with the current model.*/
+    MERLIN_EXPORTS bool check_compatible_shape(const Index & shape) const noexcept;
     /// @}
 
     /// @name GPU related features

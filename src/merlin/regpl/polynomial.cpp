@@ -34,9 +34,8 @@ regpl::Polynomial::Polynomial(const DoubleVec & coeff, const Index & order) : or
     this->coeff_ = coeff;
 }
 
-// Constructor of a sparse polynomial
-regpl::Polynomial::Polynomial(const DoubleVec & coeff, const Index & order, const UIntVec & term_index) :
-order_(order) {
+// Set coefficients in case of a sparse polynomial
+void regpl::Polynomial::set(double * coeff, const UIntVec & term_index) {
     // check argument
     UIntVec sorted_idx(term_index.size());
     std::iota(sorted_idx.begin(), sorted_idx.end(), 0);
@@ -48,15 +47,11 @@ order_(order) {
         if (term_index[sorted_idx[i_term]] == term_index[sorted_idx[i_term - 1]]) {
             Fatal<std::invalid_argument>("Found duplicated index.\n");
         }
+        if (term_index[i_term] >= this->size()) {
+            Fatal<std::invalid_argument>("Invalid index (index bigger than number of coefficients).\n");
+        }
     }
-    if (coeff.size() != term_index.size()) {
-        Fatal<std::invalid_argument>("Inconsistent number of coefficients and index array.\n");
-    }
-    // get ndim
-    Index::const_iterator first_zero_element = std::find(order.begin(), order.end(), 0);
-    this->ndim_ = std::distance(order.begin(), first_zero_element);
     // add to coeff
-    this->coeff_ = DoubleVec(prod_elements(order.data(), this->ndim_));
     for (std::uint64_t i_term = 0; i_term < term_index.size(); i_term++) {
         this->coeff_[term_index[i_term]] = coeff[i_term];
     }

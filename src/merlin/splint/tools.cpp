@@ -3,10 +3,10 @@
 
 #include <array>  // std::array
 
-#include <omp.h>  // #pragma omp
+#include <omp.h>  // ::omp_get_thread_num
 
 #include "merlin/cuda/stream.hpp"            // merlin::cuda::Stream
-#include "merlin/logger.hpp"                 // FAILURE
+#include "merlin/logger.hpp"                 // merlin::Fatal, merlin::cuda_compile_error
 #include "merlin/splint/intpl/lagrange.hpp"  // merlin::splint::intpl::construct_lagrange
 #include "merlin/splint/intpl/linear.hpp"    // merlin::splint::intpl::construct_linear
 #include "merlin/splint/intpl/newton.hpp"    // merlin::splint::intpl::construction_newton
@@ -65,7 +65,7 @@ void splint::construct_coeff_cpu(std::future<void> && current_job, double * coef
 void splint::construct_coeff_gpu(double * coeff, const grid::CartesianGrid * p_grid,
                                  const std::array<unsigned int, max_dim> * p_method, std::uint64_t n_threads,
                                  std::uint64_t shared_mem_size, const cuda::Stream * stream_ptr) noexcept {
-    FAILURE(cuda_compile_error, "The library is not compiled with CUDA.\n");
+    Fatal<cuda_compile_error>("The library is not compiled with CUDA.\n");
 }
 
 #endif  // __MERLIN_CUDA__
@@ -121,7 +121,7 @@ void splint::eval_intpl_gpu(double * coeff, const grid::CartesianGrid * p_grid,
                             const std::array<unsigned int, max_dim> * p_method, double * points, std::uint64_t n_points,
                             double * result, std::uint64_t n_threads, std::uint64_t ndim, std::uint64_t shared_mem_size,
                             const cuda::Stream * stream_ptr) noexcept {
-    FAILURE(cuda_compile_error, "The library is not compiled with CUDA.\n");
+    Fatal<cuda_compile_error>("The library is not compiled with CUDA.\n");
 }
 
 #endif  // __MERLIN_CUDA__

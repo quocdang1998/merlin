@@ -1,3 +1,5 @@
+// html : 12/16
+// latex : 10/16
 digraph CudaCompilation {
     node [fontname="Fira Code SemiBold", fontsize="16", shape=record, style=filled, labelloc=c]
     subgraph SourceFiles {
@@ -9,16 +11,20 @@ digraph CudaCompilation {
     subgraph Object {
         node [color=steelblue1, label="*.o or *.obj"] obj1;
         node [color=steelblue1, label="*.o or *.obj"] obj2;
+        node [color=cornflowerblue	, label="device code object"] device_code;
     }
 
     subgraph Lib {
+        node [color=dodgerblue, label="libmerlinrdc"] libmerlinrdc;
         node [color=dodgerblue, label="libmerlincuda"] libmerlincuda;
-        node [color=dodgerblue, label="libmerlinglobal"] libmerlinglobal;
     }
 
     rdc -> obj1 [color=dimgrey];
     glb -> obj2 [color=dimgrey];
-    obj1 -> libmerlincuda [color=royalblue4];
-    obj2 -> libmerlinglobal [color=royalblue4];
-    libmerlincuda -> libmerlinglobal [color=royalblue4];
+    obj1 -> libmerlinrdc [color=royalblue4];
+    libmerlinrdc -> device_code [color=royalblue4];
+    obj2 -> device_code [color=royalblue4];
+    libmerlinrdc -> libmerlincuda [color=royalblue4];
+    obj2 -> libmerlincuda [color=royalblue4];
+    device_code -> libmerlincuda [color=royalblue4];
 }

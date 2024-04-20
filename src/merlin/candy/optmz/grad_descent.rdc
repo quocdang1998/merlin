@@ -11,6 +11,15 @@ namespace merlin {
 // GradDescent
 // ---------------------------------------------------------------------------------------------------------------------
 
+// Update model parameters
+__cuhostdev__ void candy::optmz::GradDescent::update(void * optimizer_algor, candy::Model & model,
+                                                     std::uint64_t i_param, double gradient,
+                                                     std::uint64_t step) noexcept {
+    candy::OptmzStatic & union_algor = *(reinterpret_cast<candy::OptmzStatic *>(optimizer_algor));
+    candy::optmz::GradDescent & algor = std::get<candy::optmz::GradDescent>(union_algor);
+    model[i_param] -= algor.learning_rate * gradient;
+}
+
 #ifdef __NVCC__
 
 // Update model inside a GPU parallel region

@@ -193,11 +193,13 @@
 \makeatother
 
 % Guide box
+\newlength{\sdcardwidth}
+\setlength{\sdcardwidth}{0.33\textwidth-6\fboxsep}
 \newenvironment{sphinxclasssd-card}{%
     \vspace{\baselineskip}%
     \begin{tikzpicture} [remember picture, baseline]
-        \node [rectangle, rounded corners, fill = guidebox, anchor = center, outer sep = 0, inner sep = 0] \bgroup%
-            \begin{minipage}{0.333\textwidth-2\fboxsep-4\fboxrule}%
+        \node [rectangle, rounded corners, fill = guidebox, anchor = north, outer sep = 0, inner sep = 0, align = center] \bgroup%
+            \begin{minipage}[t][7\baselineskip]{\sdcardwidth}%
 }{%
             \end{minipage}%
         \egroup;%
@@ -205,7 +207,7 @@
 }
 \newenvironment{sphinxclasssd-card-title}{%
     \begin{tikzpicture} [remember picture, baseline]
-        \node [rectangle, rounded corners, fill = guideboxtitle, minimum height = 2\baselineskip, anchor = center, outer sep = 0, inner sep = 0] \bgroup%
+        \node (B) [rectangle, rounded corners, fill = guideboxtitle, minimum height = 2\baselineskip, anchor = north, outer sep = 0, inner sep = 0, align = center] \bgroup%
             \begin{minipage}{\textwidth}%
             \color{white}\bfseries\centering%
 }{%
@@ -300,4 +302,3 @@
     \item[{\sigwrapbox{{\color{codedefault}#1}}}]%
 }
 \makeatother
-

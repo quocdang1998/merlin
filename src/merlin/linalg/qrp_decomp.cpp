@@ -33,6 +33,10 @@ void linalg::QRPDecomp::decompose(std::uint64_t nthreads) {
     if (this->core_.data() == nullptr) {
         Fatal<std::invalid_argument>("Cannot decompose a non-initialized matrix.\n");
     }
+    // check if the current object is decomposed
+    if (this->is_decomposed) {
+        Fatal<std::runtime_error>("The current object is already decomposed.\n");
+    }
     // calculate norm of each vector and save it into the diagonal vector
     std::uint64_t nchunks = this->nrow() / 4, remainder = this->nrow() % 4;
     _Pragma("omp parallel num_threads(nthreads)") {
@@ -56,6 +60,7 @@ void linalg::QRPDecomp::decompose(std::uint64_t nthreads) {
         reflector[0] += this->diag_[i_col];
         this->diag_[i_col] *= -1.0;
         std::uint64_t sub_nchunks = (this->nrow() - i_col) / 4, sub_remainder = (this->nrow() - i_col) % 4;
+        std::uint64_t sub_nchunks_1 = (this->nrow() - i_col - 1) / 4, sub_remainder_1 = (this->nrow() - i_col - 1) % 4;
         linalg::avx_normalize(reflector, reflector, sub_nchunks, sub_remainder);
         // apply Householder reflection to other columns and recalculate the norm
         _Pragma("omp parallel num_threads(nthreads)") {
@@ -65,7 +70,9 @@ void linalg::QRPDecomp::decompose(std::uint64_t nthreads) {
                 double * target = &(this->core_.get(i_col, j_col));
                 linalg::avx_householder(reflector, target, sub_nchunks, sub_remainder);
                 // recalculating the norm
-                this->diag_[j_col] = std::sqrt((this->diag_[j_col] + target[0]) * (this->diag_[j_col] - target[0]));
+                // this->diag_[j_col] = std::sqrt((this->diag_[j_col] + target[0]) * (this->diag_[j_col] - target[0]));
+                linalg::avx_norm(target + 1, sub_nchunks_1, sub_remainder_1, this->diag_[j_col]);
+                this->diag_[j_col] = std::sqrt(this->diag_[j_col]);
                 // update i_col-th row
                 target[0] /= this->diag_[i_col];
             }

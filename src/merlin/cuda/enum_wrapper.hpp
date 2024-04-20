@@ -22,7 +22,7 @@ enum class DeviceLimit : unsigned int {
 enum EventCategory : unsigned int {
     /** Default event.*/
     Default = 0x00,
-    /** %Event meant to be synchronize with CPU (process on CPU blocked until the event occurs).*/
+    /** %Event meant to be synchronized with CPU (process on CPU is blocked until the event occurs).*/
     BlockingSync = 0x01,
     /** %Event not recording time data.*/
     DisableTiming = 0x02,
@@ -34,7 +34,7 @@ enum EventCategory : unsigned int {
 enum class EventWaitFlag : unsigned int {
     /** Default event creation flag on stream.*/
     Default = 0x00,
-    /** Event is captured in the graph as an external event node when performing stream capture.*/
+    /** %Event is captured in the graph as an external event node when performing stream capture.*/
     External = 0x01
 };
 
@@ -56,9 +56,9 @@ enum class MemcpyKind : unsigned int {
 enum class NodeType : unsigned int {
     /** @brief Kernel node.*/
     Kernel = 0x00,
-    /** @brief Memory copy node.*/
+    /** @brief %Memory copy node.*/
     Memcpy = 0x01,
-    /** @brief Memory set node.*/
+    /** @brief %Memory set node.*/
     Memset = 0x02,
     /** @brief Host node.*/
     Host = 0x03,
@@ -74,9 +74,9 @@ enum class NodeType : unsigned int {
     ExtSemaphoreSignal = 0x08,
     /** @brief External semaphore wait node.*/
     ExtSemaphoreWait = 0x09,
-    /** @brief Memory allocation node.*/
+    /** @brief %Memory allocation node.*/
     MemAlloc = 0x0a,
-    /** @brief Memory free node.*/
+    /** @brief %Memory free node.*/
     MemFree = 0x0b
 };
 

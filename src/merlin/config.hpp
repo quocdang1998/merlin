@@ -7,10 +7,16 @@
 
 namespace merlin {
 
+// Package version
+// ---------------
+
+inline const char * version = "1.0.0";
+
 // Print buffer
 // ------------
 
-inline constexpr std::uint64_t printf_buffer = 1024;
+/** @brief Size of printf buffer (default = 10kB).*/
+inline constexpr std::uint64_t printf_buffer = 10240;
 
 // Array with known max number of size
 // -----------------------------------
@@ -60,7 +66,7 @@ std::array<T, max_dim> make_array(std::initializer_list<T> list) {
     #define __cudevice__ __device__
     #define __cuhostdev__ __host__ __device__
 #else
-    #define __cudevice__ static_assert(false, "Cannot compile pure device function with compiling with CUDA.\n");
+    #define __cudevice__ static_assert(false, "Cannot compile pure device function without CUDA.\n");
     #define __cuhostdev__
 #endif
 

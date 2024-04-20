@@ -30,6 +30,16 @@ Utility
    merlin.contiguous_to_ndim_idx
    merlin.get_random_subset
 
+Synchronizer
+^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.Synchronizer
+
 
 GPU with CUDA
 -------------
@@ -112,6 +122,42 @@ Interpolator
    merlin.splint.Interpolator
 
 
+Regression
+----------
+
+Polynomial
+^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.regpl.Polynomial
+   merlin.regpl.new_polynom
+
+Training algorithm
+^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.regpl.Vandermonde
+   merlin.regpl.create_vandermonde
+
+Regressor
+^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.regpl.Regressor
+
+
 Candy API
 ---------
 
@@ -139,6 +185,7 @@ Optimization algorithms
    merlin.candy.create_grad_descent
    merlin.candy.create_adagrad
    merlin.candy.create_adam
+   merlin.candy.create_adadelta
 
 Asynchronous fitting
 ^^^^^^^^^^^^^^^^^^^^

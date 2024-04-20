@@ -4,8 +4,9 @@
 #include <cstdint>  // std::uint64_t
 #include <random>   // std::seed_seq
 
-#include "merlin/env.hpp"    // merlin::Environment
-#include "merlin/utils.hpp"  // merlin::contiguous_to_ndim_idx, merlin::get_random_subset
+#include "merlin/env.hpp"           // merlin::Environment
+#include "merlin/synchronizer.hpp"  // merlin::Synchronizer
+#include "merlin/utils.hpp"         // merlin::contiguous_to_ndim_idx, merlin::get_random_subset
 
 namespace merlin {
 
@@ -100,9 +101,60 @@ static void wrap_utils(py::module & merlin_package) {
     );
 }
 
+// wrap ProcessorType
+static const std::map<std::string, ProcessorType> proctype_map = {
+    {"cpu", ProcessorType::Cpu},
+    {"gpu", ProcessorType::Gpu}
+};
+
+// Wrap synchronizer
+static void wrap_synchronizer(py::module & merlin_package) {
+    auto synchronizer_pyclass = py::class_<Synchronizer>(
+        merlin_package,
+        "Synchronizer",
+        R"(
+        Synchronizer of CPU or GPU asynchronous tasks.
+
+        Wrapper of :cpp:class:`merlin::Synchronizer`.
+        )"
+    );
+    // constructors
+    synchronizer_pyclass.def(
+        py::init([](const std::string & proctype) { return new Synchronizer(proctype_map.at(proctype)); }),
+        R"(
+        Constructor from processor type.
+
+        Parameters
+        ----------
+        proctype : str, default="cpu"
+            Type of processor on which the synchronizer act.)",
+        py::arg("proctype") = "cpu"
+    );
+    // synchronize
+    synchronizer_pyclass.def(
+        "synchronize",
+        [](Synchronizer & self) { self.synchronize(); },
+        "Halt the current thread until the asynchronous action registered on the synchronizer finished."
+    );
+    // get CUDA stream
+    synchronizer_pyclass.def(
+        "get_gpu_core",
+        [](Synchronizer & self) {
+            cuda::Stream * stream_ptr = std::get_if<cuda::Stream>(&(self.core));
+            if (stream_ptr == nullptr) {
+                Fatal<std::invalid_argument>("Current object is a synchronizer on CPU.\n");
+            }
+            return stream_ptr;
+        },
+        "Get the CUDA stream if the current synchronizer is on GPU.",
+        py::return_value_policy::reference
+    );
+}
+
 void wrap_mics(py::module & merlin_package) {
     wrap_env(merlin_package);
     wrap_utils(merlin_package);
+    wrap_synchronizer(merlin_package);
 }
 
 }  // namespace merlin

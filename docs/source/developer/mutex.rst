@@ -7,9 +7,11 @@ program is stuck inside an infinite loop.
 
 Warning about the mutex in the documentation of functions locking or unlocking the mutex is mandatory.
 
-This section lists all functions and class methods that altering with the mutex lock in the
-:cpp:member:`merlin::Environment::mutex`. Developer must pay attention to avoid these functions inside a critical
-region.
+This section lists all functions and class methods that interact with the mutex of
+:cpp:member:`merlin::Environment::mutex`. Developers must pay attention to avoid these functions inside a critical
+region. When compiling Merlin in debug mode (i.e. ``CMAKE_BUILD_TYPE=Debug``), a notification and stacktrace is printed
+out to the standard output whenever the mutex is locked or unlocked. They provide information of the source location at
+which the mutex is altered, thus facilitating deadlock traceback.
 
 CUDA library
 ------------

@@ -1,0 +1,21 @@
+// html : 12/16
+// latex : 10/16
+digraph EnvCompilation {
+    node [fontname="Fira Code SemiBold", fontsize="16", shape=record, style=filled, labelloc=c]
+    subgraph SourceFiles {
+        node [color=lightskyblue1, label="*.cpp"] cpp;
+        node [color=lightskyblue1, label="*.cu"] cu;
+    }
+
+    subgraph Object {
+        node [color=steelblue1, label="*.o or *.obj"] obj;
+    }
+
+    subgraph Lib {
+        node [color=dodgerblue, label="libmerlinenv"] libmerlinenv;
+    }
+
+    cpp -> obj [color=dimgrey];
+    cu -> obj [color=dimgrey];
+    obj -> libmerlinenv [color=royalblue4];
+}

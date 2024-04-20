@@ -1,0 +1,19 @@
+// html : 12/16
+// latex : 10/16
+digraph StaticCompilation {
+    node [fontname="Fira Code SemiBold", fontsize="16", shape=record, style=filled, labelloc=c]
+    subgraph SourceFiles {
+        node [color=lightskyblue1, label="*.rdc"] rdc;
+    }
+
+    subgraph Object {
+        node [color=steelblue1, label="*.o or *.obj"] obj;
+    }
+
+    subgraph Lib {
+        node [color=dodgerblue, label="libmerlinrdc"] libmerlinrdc;
+    }
+
+    rdc -> obj [color=dimgrey];
+    obj -> libmerlinrdc [color=royalblue4];
+}

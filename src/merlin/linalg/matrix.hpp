@@ -5,6 +5,7 @@
 #include <array>    // std::array
 #include <cstdint>  // std::uint64_t
 #include <string>   // std::string
+#include <utility>  // std::swap
 
 #include "merlin/exports.hpp"             // MERLIN_EXPORTS
 #include "merlin/linalg/declaration.hpp"  // merlin::linalg::Matrix
@@ -26,6 +27,26 @@ class linalg::Matrix {
      *  @param ncol Number of columns.
      */
     MERLIN_EXPORTS Matrix(std::uint64_t nrow, std::uint64_t ncol);
+    /// @}
+
+    /// @name Copy and move
+    /// @{
+    /** @brief Copy constructor.*/
+    MERLIN_EXPORTS Matrix(const linalg::Matrix & src);
+    /** @brief Copy assignment.*/
+    MERLIN_EXPORTS linalg::Matrix & operator=(const linalg::Matrix & src);
+    /** @brief Move constructor.*/
+    Matrix(linalg::Matrix && src) : ld_(src.ld_) {
+        this->data_ = std::exchange(src.data_, nullptr);
+        std::swap(this->shape_, src.shape_);
+    }
+    /** @brief Move assignment.*/
+    linalg::Matrix & operator=(linalg::Matrix && src) {
+        std::swap(this->data_, src.data_);
+        std::swap(this->shape_, src.shape_);
+        std::swap(this->ld_, src.ld_);
+        return *this;
+    }
     /// @}
 
     /// @name Get attributes

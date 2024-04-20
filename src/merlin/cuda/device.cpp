@@ -11,6 +11,23 @@ namespace merlin {
 
 #ifndef __MERLIN_CUDA__
 
+// Construct a device from its ID
+cuda::Device::Device(int id) {
+    Fatal<cuda_compile_error>("Enable option MERLIN_CUDA at compilation to use this feature.\n");
+}
+
+// Get instance point to current GPU
+cuda::Device cuda::Device::get_current_gpu(void) {
+    Fatal<cuda_compile_error>("Enable option MERLIN_CUDA at compilation to use this feature.\n");
+    return cuda::Device();
+}
+
+// Get total number of GPU
+std::uint64_t cuda::Device::get_num_gpu(void) {
+    Fatal<cuda_compile_error>("Enable option MERLIN_CUDA at compilation to use this feature.\n");
+    return 0;
+}
+
 // Print limit of device
 void cuda::Device::print_specification(void) const {
     Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");

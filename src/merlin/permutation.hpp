@@ -72,7 +72,7 @@ class Permutation {
      */
     template <typename Iterator>
     __cuhostdev__ constexpr void inplace_permute(Iterator dest) {
-        for (std::uint64_t i = 0; i < this->size(); i++) {
+        for (std::int64_t i = 0; i < this->size(); i++) {
             // skip to the next non-processed item
             if (this->index_[i] < 0) {
                 continue;

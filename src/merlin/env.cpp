@@ -67,9 +67,6 @@ std::mt19937_64 Environment::random_generator;
 // CUDA environment
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Default CUDA kernel block size
-std::uint64_t Environment::default_block_size = 64;
-
 #ifndef __MERLIN_CUDA__
 
 // Initialize CUDA context

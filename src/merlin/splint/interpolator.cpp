@@ -7,13 +7,10 @@
 
 #include "merlin/array/array.hpp"   // merlin::array::Array
 #include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/cuda/device.hpp"   // merlin::cuda::Device
+#include "merlin/cuda/device.hpp"   // merlin::cuda::CtxGuard
 #include "merlin/env.hpp"           // merlin::Environment
 #include "merlin/logger.hpp"        // merlin::Fatal, merlin::cuda_compile_error
 #include "merlin/splint/tools.hpp"  // merlin::splint::construct_coeff_cpu, merlin::splint::construct_coeff_gpu
-
-#define push_gpu(gpu) std::uintptr_t current_ctx = gpu.push_context()
-#define pop_gpu() cuda::Device::pop_context(current_ctx)
 
 namespace merlin {
 
@@ -24,7 +21,7 @@ namespace merlin {
 #ifndef __MERLIN_CUDA__
 
 // Create pointer to copied members of merlin::splint::Interpolator on GPU
-void splint::create_intpl_gpuptr(const grid::CartesianGrid & cpu_grid, const Vector<splint::Method> & cpu_methods,
+void splint::create_intpl_gpuptr(const grid::CartesianGrid & cpu_grid, const splint::Method * cpu_methods,
                                  grid::CartesianGrid *& gpu_pgrid, std::array<unsigned int, max_dim> *& gpu_pmethods,
                                  std::uintptr_t stream_ptr) {
     Fatal<cuda_compile_error>("Cannot invoke GPU function since merlin is not compiled with CUDA option.\n");
@@ -43,52 +40,45 @@ void splint::cuda_mem_free(void * ptr, std::uint64_t stream_ptr) {
 
 // Construct from a CPU array
 splint::Interpolator::Interpolator(const grid::CartesianGrid & grid, const array::Array & values,
-                                   const Vector<splint::Method> & method, ProcessorType processor) :
-ndim_(grid.ndim()), shared_mem_size_(grid.sharedmem_size()) {
+                                   const splint::Method * p_method, Synchronizer & synchronizer) :
+ndim_(grid.ndim()), shared_mem_size_(grid.sharedmem_size()), p_synch_(&synchronizer) {
     // check shape
     if (grid.shape() != values.shape()) {
         Fatal<std::invalid_argument>("Grid and data have different shape.\n");
     }
-    if (grid.ndim() != method.size()) {
-        Fatal<std::invalid_argument>("Grid and method vector have different shape.\n");
-    }
     // initialize pointers
-    if (processor == ProcessorType::Cpu) {
+    if (this->on_gpu()) {
+        // GPU
+        cuda::Stream & stream = std::get<cuda::Stream>(this->p_synch_->core);
+        cuda::CtxGuard guard(stream.get_gpu());
+        splint::create_intpl_gpuptr(grid, p_method, this->p_grid_, this->p_method_, stream.get_stream_ptr());
+        this->p_coeff_ = new array::Parcel(values.shape());
+        static_cast<array::Parcel *>(this->p_coeff_)->transfer_data_to_gpu(values, stream);
+    } else {
         // CPU
-        this->synchronizer_ = Synchronizer(std::future<void>());
         this->p_grid_ = new grid::CartesianGrid(grid);
         this->p_coeff_ = new array::Array(values);
         this->p_method_ = new std::array<unsigned int, max_dim>();
         this->p_method_->fill(0);
-        for (std::uint64_t i = 0; i < method.size(); i++) {
-            (*(this->p_method_))[i] = static_cast<unsigned int>(method[i]);
+        for (std::uint64_t i = 0; i < this->ndim_; i++) {
+            (*(this->p_method_))[i] = static_cast<unsigned int>(p_method[i]);
         }
-    } else if (processor == ProcessorType::Gpu) {
-        // GPU
-        this->synchronizer_ = Synchronizer(cuda::Stream(cuda::StreamSetting::NonBlocking));
-        cuda::Stream & stream = std::get<cuda::Stream>(this->synchronizer_.synchronizer);
-        push_gpu(stream.get_gpu());
-        splint::create_intpl_gpuptr(grid, method, this->p_grid_, this->p_method_, stream.get_stream_ptr());
-        this->p_coeff_ = new array::Parcel(values.shape());
-        static_cast<array::Parcel *>(this->p_coeff_)->transfer_data_to_gpu(values, stream);
-        pop_gpu();
     }
 }
 
 // Calculate interpolation coefficients based on provided method
 void splint::Interpolator::build_coefficients(std::uint64_t n_threads) {
     if (!(this->on_gpu())) {
-        std::future<void> & current_sync = std::get<std::future<void>>(this->synchronizer_.synchronizer);
+        std::future<void> & current_sync = std::get<std::future<void>>(this->p_synch_->core);
         std::future<void> new_sync = std::async(std::launch::async, splint::construct_coeff_cpu,
                                                 std::move(current_sync), this->p_coeff_->data(), this->p_grid_,
                                                 this->p_method_, n_threads);
-        this->synchronizer_ = Synchronizer(std::move(new_sync));
+        *(this->p_synch_) = Synchronizer(std::move(new_sync));
     } else {
-        cuda::Stream & stream = std::get<cuda::Stream>(this->synchronizer_.synchronizer);
-        push_gpu(stream.get_gpu());
+        cuda::Stream & stream = std::get<cuda::Stream>(this->p_synch_->core);
+        cuda::CtxGuard guard(stream.get_gpu());
         splint::construct_coeff_gpu(this->p_coeff_->data(), this->p_grid_, this->p_method_, n_threads,
                                     this->shared_mem_size_, &stream);
-        pop_gpu();
     }
 }
 
@@ -112,12 +102,21 @@ void splint::Interpolator::evaluate(const array::Array & points, DoubleVec & res
         Fatal<std::invalid_argument>("Size of result array must be equal to the number of points.\n");
     }
     // evaluate interpolation
-    std::future<void> & current_sync = std::get<std::future<void>>(this->synchronizer_.synchronizer);
+    std::future<void> & current_sync = std::get<std::future<void>>(this->p_synch_->core);
     std::future<void> new_sync = std::async(std::launch::async, splint::eval_intpl_cpu, std::move(current_sync),
                                             this->p_coeff_->data(), this->p_grid_, this->p_method_, points.data(),
                                             result.size(), result.data(), n_threads);
-    this->synchronizer_ = Synchronizer(std::move(new_sync));
+    *(this->p_synch_) = Synchronizer(std::move(new_sync));
 }
+
+#ifndef __MERLIN_CUDA__
+
+// Interpolate by GPU
+void splint::Interpolator::evaluate(const array::Parcel & points, DoubleVec & result, std::uint64_t n_threads) {
+    Fatal<cuda_compile_error>("Compile the library with CUDA option to enable interpolation on GPU.\n");
+}
+
+#endif  // __MERLIN_CUDA__
 
 // String representation
 std::string splint::Interpolator::str(void) const {
@@ -146,9 +145,8 @@ splint::Interpolator::~Interpolator(void) {
     } else {
         // delete joint memory of both on GPU
         if (this->p_grid_ != nullptr) {
-            push_gpu(cuda::Device(this->gpu_id()));
-            cuda_mem_free(this->p_grid_, std::get<cuda::Stream>(this->synchronizer_.synchronizer).get_stream_ptr());
-            pop_gpu();
+            cuda::CtxGuard guard(cuda::Device(this->gpu_id()));
+            cuda_mem_free(this->p_grid_, std::get<cuda::Stream>(this->p_synch_->core).get_stream_ptr());
         }
     }
 }

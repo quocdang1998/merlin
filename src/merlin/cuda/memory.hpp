@@ -53,9 +53,9 @@ class cuda::Memory {
     template <std::uint64_t index>
     typename std::tuple_element<index, std::tuple<Args *...>>::type get(void);
 
-    /** @brief Disown the memory.
+    /** @brief Disown the memory on GPU, but not deallocate it.
      *  @details Release the pointer to GPU data, and the internal pointer is set to ``nullptr``. After calling this
-     *  method, GPU pointers contained by the object will no longer be valid anymore.
+     *  method, GPU pointers contained by the object will no longer be valid anymore, but the memory is not freed.
      */
     void * disown(void) noexcept { return std::exchange(this->gpu_ptr_, nullptr); }
 

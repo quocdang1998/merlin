@@ -66,6 +66,8 @@ class array::Stock : public array::NdData {
     FileLock & get_file_lock(void) const noexcept { return this->flock_; }
     /** @brief Check if the policy is thread safe.*/
     constexpr bool is_thread_safe(void) const noexcept { return this->thread_safe_; }
+    /** @brief Check if the file is created with the same endianess as the machine.*/
+    constexpr bool is_same_endianess(void) const noexcept { return this->same_endianess_; }
     /// @}
 
     /// @name Get and set element
@@ -116,17 +118,19 @@ class array::Stock : public array::NdData {
     MERLIN_EXPORTS ~Stock(void);
 
   protected:
-    /** @brief Pointer to file stream.*/
-    mutable std::FILE * file_ptr_;
-    /** @brief Lock file.*/
-    mutable FileLock flock_;
+    /** @brief Filename.*/
+    std::string filename_;
     /** @brief Thread safe read/write.*/
     bool thread_safe_ = true;
     /** @brief Start writing/reading position wrt. the beginning of file.*/
     std::uint64_t offset_;
+    /** @brief Flag indicating if the stock file is created with the same endianess as the machine.*/
+    bool same_endianess_ = true;
 
-    /** @brief Filename.*/
-    std::string filename_;
+    /** @brief Pointer to file stream.*/
+    mutable std::FILE * file_ptr_;
+    /** @brief Lock file.*/
+    mutable FileLock flock_;
 
   private:
     /** @brief Read metadata from file.

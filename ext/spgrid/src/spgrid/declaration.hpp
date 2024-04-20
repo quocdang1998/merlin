@@ -4,7 +4,7 @@
 
 namespace spgrid {
 class SparseGrid;
-class Interpolator;
+class HierInterpolator;
 }  // namespace spgrid
 
 #endif  // SPGRID_DECLARATION_HPP_

@@ -9,7 +9,7 @@
         #error MinGW on Windows not supported, use MSVC compiler instead.
     #else
         #error Unknown Windows compiler, use MSVC compiler to suppress this error.
-    #endif                                         // _MSC_VER
+    #endif  // _MSC_VER
 #elif defined(__linux__) && !defined(__ANDROID__)  // On Linux, detect GCC
     #if defined(__clang__)
         #error Clang not supported, switch to GNU g++ instead.

@@ -3,6 +3,7 @@
 #define MERLIN_SLICE_HPP_
 
 #include <array>             // std::array
+#include <cmath>             // std::ceil
 #include <cstdint>           // std::uint64_t
 #include <initializer_list>  // std::initializer_list
 #include <limits>            // std::numeric_limits
@@ -24,8 +25,11 @@ class Slice {
      *  @param stop Stop position.
      *  @param step Step.
      */
-    __cuhostdev__ Slice(std::uint64_t start = 0, std::uint64_t stop = std::numeric_limits<std::uint64_t>::max(),
-                        std::uint64_t step = 1);
+    Slice(std::uint64_t start = 0, std::uint64_t stop = std::numeric_limits<std::uint64_t>::max(),
+          std::uint64_t step = 1) :
+    start_(start), stop_(stop), step_(step) {
+        this->check_validity();
+    }
     /** @brief Constructor from initializer list.
      *  @param list An initializer list:
      *     - If empty, all elements of the dimension are taken.
@@ -33,24 +37,24 @@ class Slice {
      *     - If 2 elements, slicing from the first one to the last one.
      *     - If 3 elements, similar to member constructor.
      */
-    __cuhostdev__ Slice(std::initializer_list<std::uint64_t> list);
+    MERLIN_EXPORTS Slice(std::initializer_list<std::uint64_t> list);
     /// @}
 
     /// @name Copy and Move
     /// @{
     /** @brief Copy constructor.*/
-    __cuhostdev__ Slice(const Slice & src) : start_(src.start_), stop_(src.stop_), step_(src.step_) {}
+    Slice(const Slice & src) : start_(src.start_), stop_(src.stop_), step_(src.step_) {}
     /** @brief Copy assignment.*/
-    __cuhostdev__ Slice & operator=(const Slice & src) {
+    Slice & operator=(const Slice & src) {
         this->start_ = src.start_;
         this->stop_ = src.stop_;
         this->step_ = src.step_;
         return *this;
     }
     /** @brief Move constructor.*/
-    __cuhostdev__ Slice(Slice && src) : start_(src.start_), stop_(src.stop_), step_(src.step_) {}
+    Slice(Slice && src) : start_(src.start_), stop_(src.stop_), step_(src.step_) {}
     /** @brief Move assignment.*/
-    __cuhostdev__ Slice & operator=(Slice && src) {
+    Slice & operator=(Slice && src) {
         this->start_ = src.start_;
         this->stop_ = src.stop_;
         this->step_ = src.step_;
@@ -82,7 +86,14 @@ class Slice {
      *  @return A tuple of 3 ``std::uint64_t``, respectively the offset, new shape and new stride of dimension of
      *  sliced array. If the slice has only one element, new shape is 1.
      */
-    __cuhostdev__ std::array<std::uint64_t, 3> slice_on(std::uint64_t shape, std::uint64_t stride) const;
+    __cuhostdev__ std::array<std::uint64_t, 3> slice_on(std::uint64_t shape, std::uint64_t stride) const {
+        std::uint64_t stop = (this->stop_ > shape) ? shape : this->stop_;
+        double steps = static_cast<double>(stop - this->start_) / static_cast<double>(this->step_);
+        std::uint64_t new_shp = (steps < 0) ? 0 : std::uint64_t(std::ceil(steps));
+        std::uint64_t offset = this->start_ * stride;
+        std::uint64_t new_strd = this->step_ * stride;
+        return {offset, new_shp, new_strd};
+    }
     /** @brief Get index in whole array given index in a sliced array.*/
     __cuhostdev__ constexpr std::uint64_t get_index_in_whole_array(std::uint64_t index_sliced_array) const noexcept {
         return this->start_ + (this->step_ * index_sliced_array);
@@ -105,7 +116,7 @@ class Slice {
     /// @name Destructor
     /// @{
     /** @brief Default destructor.*/
-    __cuhostdev__ ~Slice(void);
+    ~Slice(void) = default;
     /// @}
 
   protected:
@@ -118,7 +129,7 @@ class Slice {
 
   private:
     /** @brief Check validity of values inputted in the Slice.*/
-    __cuhostdev__ void check_validity(void) const;
+    MERLIN_EXPORTS void check_validity(void) const;
 };
 
 /** @brief Array of slices.*/

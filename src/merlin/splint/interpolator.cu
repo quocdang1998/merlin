@@ -16,12 +16,12 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Create pointer to copied members of merlin::splint::Interpolator on GPU
-void splint::create_intpl_gpuptr(const grid::CartesianGrid & cpu_grid, const Vector<splint::Method> & cpu_methods,
+void splint::create_intpl_gpuptr(const grid::CartesianGrid & cpu_grid, const splint::Method * cpu_methods,
                                  grid::CartesianGrid *& gpu_pgrid, std::array<unsigned int, max_dim> *& gpu_pmethods,
                                  std::uintptr_t stream_ptr) {
     std::array<unsigned int, max_dim> converted_cpu_methods;
     converted_cpu_methods.fill(0);
-    for (std::uint64_t i = 0; i < cpu_methods.size(); i++) {
+    for (std::uint64_t i = 0; i < cpu_grid.ndim(); i++) {
         converted_cpu_methods[i] = static_cast<unsigned int>(cpu_methods[i]);
     }
     cuda::Memory gpu_mem(stream_ptr, cpu_grid, converted_cpu_methods);
@@ -59,7 +59,7 @@ void splint::Interpolator::evaluate(const array::Parcel & points, DoubleVec & re
         Fatal<std::invalid_argument>("Size of result array must be equal to the number of points.\n");
     }
     // get CUDA Stream
-    cuda::Stream & stream = std::get<cuda::Stream>(this->synchronizer_.synchronizer);
+    cuda::Stream & stream = std::get<cuda::Stream>(this->p_synch_->core);
     ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr());
     std::uintptr_t current_ctx = stream.get_gpu().push_context();
     // evaluate interpolation

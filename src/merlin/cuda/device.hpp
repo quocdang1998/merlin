@@ -22,18 +22,18 @@ class cuda::Device {
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
-    __cuhostdev__ Device(void) {}
+    Device(void) = default;
     /** @brief Constructor from GPU ID.*/
-    __cuhostdev__ Device(int id);
+    MERLIN_EXPORTS Device(int id);
     /// @}
 
     /// @name Copy and Move
     /// @details Move constructor and Move assignment are deleted because they are not necessary.
     /// @{
     /** @brief Copy constructor.*/
-    __cuhostdev__ Device(const cuda::Device & src) { this->id_ = src.id_; }
+    Device(const cuda::Device & src) { this->id_ = src.id_; }
     /** @brief Copy assignment.*/
-    __cuhostdev__ cuda::Device & operator=(const cuda::Device & src) {
+    cuda::Device & operator=(const cuda::Device & src) {
         this->id_ = src.id_;
         return *this;
     }
@@ -42,17 +42,17 @@ class cuda::Device {
     /// @name Get members
     /// @{
     /** @brief Get reference to GPU ID.*/
-    __cuhostdev__ constexpr int & id(void) noexcept { return this->id_; }
+    constexpr int & id(void) noexcept { return this->id_; }
     /** @brief Get constant reference to GPU ID.*/
-    __cuhostdev__ constexpr const int & id(void) const noexcept { return this->id_; }
+    constexpr const int & id(void) const noexcept { return this->id_; }
     /// @}
 
     /// @name Query
     /// @{
     /** @brief Get current GPU.*/
-    __cuhostdev__ static cuda::Device get_current_gpu(void);
+    MERLIN_EXPORTS static cuda::Device get_current_gpu(void);
     /** @brief Get total number of CUDA capable GPU.*/
-    __cuhostdev__ static std::uint64_t get_num_gpu(void);
+    MERLIN_EXPORTS static std::uint64_t get_num_gpu(void);
     /** @brief Print GPU specifications.*/
     MERLIN_EXPORTS void print_specification(void) const;
     /** @brief Test functionality of GPU.
@@ -115,7 +115,7 @@ class cuda::Device {
     /// @name Destructor
     /// @{
     /** @brief Default destructor.*/
-    __cuhostdev__ ~Device(void);
+    ~Device(void) = default;
     /// @}
 
   protected:
@@ -129,7 +129,7 @@ class cuda::CtxGuard {
     /// @{
     /** @brief Default constructor.*/
     CtxGuard(void) = default;
-    /** @brief Contructor from cuda::Device.*/
+    /** @brief Constructor from cuda::Device.*/
     CtxGuard(const cuda::Device & gpu) { this->context_ptr_ = gpu.push_context(); }
     /// @}
 

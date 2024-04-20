@@ -125,7 +125,10 @@ std::array<double, 2> array::stat(const array::NdData * target, CopyFunction cop
     }
     // deallocate buffer
     delete[] reinterpret_cast<char *>(buffer_data);
-    return {total_mean, total_var / total_normal};
+    if (total_normal != 0) {
+        total_var /= total_normal;
+    }
+    return {total_mean, total_var};
 }
 
 // String representation of an array

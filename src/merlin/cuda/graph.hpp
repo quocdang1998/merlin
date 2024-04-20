@@ -102,6 +102,7 @@ class cuda::Graph {
      */
     MERLIN_EXPORTS cuda::GraphNode add_memcpy_node(void * dest, const void * src, std::uint64_t size,
                                                    cuda::MemcpyKind copy_flag, const Vector<cuda::GraphNode> & deps);
+#ifdef __NVCC__
     /** @brief Add CUDA kernel node.
      *  @param kernel Pointer to function (functor) on GPU to be executed.
      *  @param n_blocks Number of blocks in the grid.
@@ -113,6 +114,7 @@ class cuda::Graph {
     template <typename Function, typename... Args>
     cuda::GraphNode add_kernel_node(Function * kernel, std::uint64_t n_blocks, std::uint64_t n_threads,
                                     std::uint64_t shared_mem, const Vector<cuda::GraphNode> & deps, Args &&... args);
+#endif  // __NVCC__
     /** @brief Add CUDA host node.
      *  @param functor Pointer to CPU function take in a pointer to ``void`` argument.
      *  @param deps %Vector of nodes on which the node depends.

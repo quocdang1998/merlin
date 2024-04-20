@@ -15,9 +15,8 @@ __global__ void foo(void) {
     std::printf("Static CUDA graph kernel execution.\n");
 }
 
-void str_callback(::cudaStream_t stream, ::cudaError_t status, void * data) {
-    int & a = *(static_cast<int *>(data));
-    std::printf("Static graph callback argument: %d\n", a);
+void str_callback(const std::string & a, int b) {
+    std::printf("Static graph callback arguments: \"%s\" and %d\n", a.c_str(), b);
 }
 
 __global__ void print_array(double * array) {
@@ -44,13 +43,13 @@ int main(void) {
     Message("Test 3 : Static CUDA Graph\n");
     cuda::Stream s(cuda::StreamSetting::NonBlocking);
     std::printf("Default stream: %s.\n", s.str().c_str());
-    int data = 1;
     s.check_cuda_context();
     cuda::begin_capture_stream(s);
     ::foo<<<2, 2, 0, reinterpret_cast<::cudaStream_t>(s.get_stream_ptr())>>>();
     cuda::Graph static_graph = cuda::end_capture_stream(s);
     static_graph.execute(s);
-    s.add_callback(str_callback, &data);
+    std::string data = "static callback message!";
+    s.add_callback(str_callback, data, 4);
     s.synchronize();
 
     // dynamic graph with callback

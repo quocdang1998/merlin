@@ -5,7 +5,7 @@
 #include <map>      // std::map
 #include <sstream>  // std::ostringstream
 
-#include "cuda.h"  // ::CUcontext, ::cuCtxGetCurrent, ::cuCtxPopCurrent, ::cuCtxPushCurrent, ::cuDeviceGetName
+#include <cuda.h>  // ::CUcontext, ::cuCtxGetCurrent, ::cuCtxPopCurrent, ::cuCtxPushCurrent, ::cuDeviceGetName
 
 #include "merlin/env.hpp"     // merlin::Environment
 #include "merlin/logger.hpp"  // merlin::DebugLog, merlin::Warning, merlin::Fatal, merlin::cuda_runtime_error
@@ -62,6 +62,35 @@ static inline std::uintptr_t get_current_context(void) {
 // ---------------------------------------------------------------------------------------------------------------------
 // Device
 // ---------------------------------------------------------------------------------------------------------------------
+
+// Construct a device from its ID
+cuda::Device::Device(int id) {
+    int limit = cuda::Device::get_num_gpu();
+    if ((id < 0) || (id >= limit)) {
+        Fatal<cuda_runtime_error>("Invalid ID of GPU (expected value between 0 and less than %d).\n", limit);
+    }
+    this->id_ = id;
+}
+
+// Get instance point to current GPU
+cuda::Device cuda::Device::get_current_gpu(void) {
+    int current_device;
+    ::cudaError_t err_ = ::cudaGetDevice(&current_device);
+    if (err_ != 0) {
+        Fatal<cuda_runtime_error>("cudaGetDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+    }
+    return cuda::Device(current_device);
+}
+
+// Get total number of GPU
+std::uint64_t cuda::Device::get_num_gpu(void) {
+    int count;
+    ::cudaError_t err_ = ::cudaGetDeviceCount(&count);
+    if (err_ != 0) {
+        Fatal<cuda_runtime_error>("cudaGetDeviceCount failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+    }
+    return count;
+}
 
 // Print limit of device
 void cuda::Device::print_specification(void) const {
