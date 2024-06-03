@@ -14,15 +14,16 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Update model inside a CPU parallel region
-void candy::optmz::AdaGrad::update_cpu(void * optimizer_algor, candy::Model & model, const candy::Gradient & grad,
-                                       std::uint64_t thread_idx, std::uint64_t n_threads) noexcept {
+void candy::optmz::AdaGrad::update_cpu(void * optimizer_algor, double * history, candy::Model & model,
+                                       const candy::Gradient & grad, std::uint64_t time_step, std::uint64_t thread_idx,
+                                       std::uint64_t n_threads) noexcept {
     candy::OptmzStatic & union_algor = *(reinterpret_cast<candy::OptmzStatic *>(optimizer_algor));
     candy::optmz::AdaGrad & algor = std::get<candy::optmz::AdaGrad>(union_algor);
     for (std::uint64_t i_param = thread_idx; i_param < model.num_params(); i_param += n_threads) {
         // copy gradient history to thread register and copy it back
-        double grad_history = algor.grad_history[i_param];
+        double grad_history = history[i_param];
         grad_history += grad.value()[i_param] * grad.value()[i_param];
-        algor.grad_history[i_param] = grad_history;
+        history[i_param] = grad_history;
         // update parameter
         double correction = algor.learning_rate * grad.value()[i_param];
         correction /= std::sqrt(grad_history + algor.bias);

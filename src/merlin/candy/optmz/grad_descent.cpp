@@ -12,7 +12,8 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Update model inside a CPU parallel region
-void candy::optmz::GradDescent::update_cpu(void * optimizer_algor, candy::Model & model, const candy::Gradient & grad,
+void candy::optmz::GradDescent::update_cpu(void * optimizer_algor, double * history, candy::Model & model,
+                                           const candy::Gradient & grad, std::uint64_t time_step,
                                            std::uint64_t thread_idx, std::uint64_t n_threads) noexcept {
     candy::OptmzStatic & union_algor = *(reinterpret_cast<candy::OptmzStatic *>(optimizer_algor));
     candy::optmz::GradDescent & algor = std::get<candy::optmz::GradDescent>(union_algor);

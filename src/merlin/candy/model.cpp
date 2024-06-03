@@ -189,9 +189,7 @@ bool candy::Model::check_negative(void) const noexcept {
 bool candy::Model::check_compatible_shape(const Index & shape) const noexcept {
     std::pair<Index::const_iterator, Index::const_iterator> iter = std::mismatch(
         this->rshape_.cbegin(), this->rshape_.cend(), shape.cbegin(),
-        [this](const std::uint64_t & rshape, const std::uint64_t & shape) {
-            return rshape == shape * this->rank_;
-        });
+        [this](const std::uint64_t & rshape, const std::uint64_t & shape) { return rshape == shape * this->rank_; });
     return iter.first == this->rshape_.end();
 }
 

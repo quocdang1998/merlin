@@ -29,7 +29,8 @@ int main(void) {
 
     // candy::Optimizer opt = candy::create_grad_descent(0.5);
     // candy::Optimizer opt = candy::create_adam(0.3, 0.9, 0.99, model);
-    candy::Optimizer opt = candy::create_adadelta(1, 0.9999, model);
+    // candy::Optimizer opt = candy::create_adadelta(1, 0.9999, model);
+    candy::Optimizer opt = candy::create_rmsprop(0.8, 0.01, model);
 
     Synchronizer cpu_synch(ProcessorType::Cpu);
     candy::Trainer train("FooTrainer", model, opt, cpu_synch);

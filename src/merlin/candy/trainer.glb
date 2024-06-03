@@ -54,6 +54,7 @@ __global__ static void train_kernel(candy::Model * p_model, const array::Parcel 
     Index index_mem;
     index_mem.fill(0);
     candy::rmse_gpu(p_model_shr, p_data_shr, &posteriori_error, &normal_count, thread_idx, block_size, index_mem);
+    std::uint64_t step = 0;
     do {
         // copy posterioiri error -> priori error
         if (thread_idx == 0) {
@@ -63,13 +64,15 @@ __global__ static void train_kernel(candy::Model * p_model, const array::Parcel 
         // repeat training process
         for (std::uint64_t i = 0; i < rep; i++) {
             gradient.calc_by_gpu(*p_model_shr, *p_data_shr, thread_idx, block_size, index_mem);
-            p_optmz->update_gpu(*p_model_shr, gradient, thread_idx, block_size);
+            p_optmz->update_gpu(*p_model_shr, gradient, step + i, thread_idx, block_size);
         }
         candy::rmse_gpu(p_model_shr, p_data_shr, &posteriori_error, &normal_count, thread_idx, block_size, index_mem);
         update_go_on(priori_error, posteriori_error, threshold, go_on, local_go_on, thread_idx);
+        step += rep;
     } while (local_go_on);
-    // copy model data from shared memory back to global memory
+    // copy model and optimizer data from shared memory back to global memory
     p_model_shr->copy_by_block(p_model, p_model + 1, thread_idx, block_size);
+    p_optmz_shr->copy_by_block(p_optmz, p_optmz + 1, thread_idx, block_size);
 }
 
 // Train a model using GPU parallelism
@@ -134,7 +137,7 @@ __global__ void dryrun_kernel(candy::Model * p_model, const array::Parcel * p_da
     // repeatedly iterate until a surge in the error detected
     for (std::uint64_t iter = 1; iter < max_iter; iter++) {
         gradient.calc_by_gpu(*p_model_shr, *p_data_shr, thread_idx, block_size, index_mem);
-        p_optmz->update_gpu(*p_model_shr, gradient, thread_idx, block_size);
+        p_optmz->update_gpu(*p_model_shr, gradient, iter - 1, thread_idx, block_size);
         candy::rmse_gpu(p_model_shr, p_data_shr, &saved_error, &normal_count, thread_idx, block_size, index_mem);
         if (thread_idx == 0) {
             error[iter] = saved_error;

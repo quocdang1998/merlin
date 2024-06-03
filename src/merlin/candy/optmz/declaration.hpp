@@ -7,6 +7,7 @@ struct GradDescent;
 struct AdaGrad;
 struct Adam;
 struct AdaDelta;
+struct RmsProp;
 }  // namespace merlin::candy::optmz
 
 #endif  // MERLIN_CANDY_OPTMZ_DECLARATION_HPP_

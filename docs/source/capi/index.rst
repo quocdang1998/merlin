@@ -288,6 +288,15 @@ Adaptive delta
    merlin::candy::optmz::AdaDelta
    merlin::candy::create_adadelta
 
+Root mean square propagation
+''''''''''''''''''''''''''''
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::candy::optmz::RmsProp
+   merlin::candy::create_rmsprop
+
 Launch calculation
 ^^^^^^^^^^^^^^^^^^
 

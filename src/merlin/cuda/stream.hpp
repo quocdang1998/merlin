@@ -31,8 +31,8 @@ template <typename Function, typename... Args>
 void cuda_callback_wrapper(::cudaStream_t stream, ::cudaError_t status, void * data) {
     std::uintptr_t * data_ptr = reinterpret_cast<std::uintptr_t *>(data);
     Function * p_callback = reinterpret_cast<Function *>(data_ptr[0]);
-    std::tuple<Args&&...> * p_args = reinterpret_cast<std::tuple<Args&&...> *>(data_ptr[1]);
-    std::apply(std::forward<Function>(*p_callback), std::forward<std::tuple<Args&&...>>(*p_args));
+    std::tuple<Args &&...> * p_args = reinterpret_cast<std::tuple<Args &&...> *>(data_ptr[1]);
+    std::apply(std::forward<Function>(*p_callback), std::forward<std::tuple<Args &&...>>(*p_args));
     delete[] data_ptr;
     delete p_args;
 }
@@ -129,10 +129,10 @@ class cuda::Stream {
     template <typename Function, typename... Args>
     void add_callback(Function & callback, Args &&... args) {
         Function * p_callback = &callback;
-        std::tuple<Args&&...> * p_args = new std::tuple<Args&&...>(std::forward_as_tuple(std::forward<Args>(args)...));
+        std::tuple<Args &&...> * p_arg = new std::tuple<Args &&...>(std::forward_as_tuple(std::forward<Args>(args)...));
         std::uintptr_t * data = new std::uintptr_t[2];
         data[0] = reinterpret_cast<std::uintptr_t>(p_callback);
-        data[1] = reinterpret_cast<std::uintptr_t>(p_args);
+        data[1] = reinterpret_cast<std::uintptr_t>(p_arg);
         cuda::cuda_stream_add_callback(this->stream_, cuda_callback_wrapper<Function, Args...>, data);
     }
 #endif  // __NVCC__

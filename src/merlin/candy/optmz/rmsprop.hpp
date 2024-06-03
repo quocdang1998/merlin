@@ -1,39 +1,36 @@
 // Copyright 2023 quocdang1998
-#ifndef MERLIN_CANDY_OPTMZ_ADADELTA_HPP_
-#define MERLIN_CANDY_OPTMZ_ADADELTA_HPP_
+#ifndef MERLIN_CANDY_OPTMZ_RMSPROP_HPP_
+#define MERLIN_CANDY_OPTMZ_RMSPROP_HPP_
 
 #include <cstdint>  // std::uint64_t
 
 #include "merlin/candy/declaration.hpp"        // merlin::candy::Gradient, merlin::candy::Model
-#include "merlin/candy/optmz/declaration.hpp"  // merlin::candy::optmz::AdaDelta
+#include "merlin/candy/optmz/declaration.hpp"  // merlin::candy::optmz::RmsProp
 #include "merlin/config.hpp"                   // __cudevice__
 #include "merlin/exports.hpp"                  // MERLIN_EXPORTS
 
 namespace merlin {
 
-/** @brief %Optimizer by adaptive delta method.
+/** @brief %Optimizer by root mean square propagation method.
  *  @details Each parameter will be updated by the formula:
- *  @f[ s_{t+1} = \rho s_t + (1 - \rho) {\left(\frac{\partial L}{\partial p}\right)_{t}}^2 @f]
- *  @f[ g_{t+1} = \sqrt{\frac{\Delta_t + \varepsilon}{s_{t+1} + \varepsilon}} \left( \frac{\partial L}{\partial p}
- *  \right)_{t} @f]
- *  @f[ p_{t+1} = p_t - \eta g_{t+1} @f]
- *  @f[ \Delta_{t+1} = \rho \Delta_t + (1 - \rho) {g_{t+1}}^2 @f]
+ *  @f[ s_{t+1} = \beta s_t + (1 - \beta) {\left(\frac{\partial L}{\partial p}\right)_{t}}^2 @f]
+ *  @f[ p_{t+1} = p_t - \frac{\eta}{\sqrt{\varepsilon + s_{t+1}}} \left(\frac{\partial L}{\partial p}\right)_{t} @f]
  *
  *  in which @f$ t @f$ is update instance,  @f$ p @f$ is value of parameter, @f$ \eta @f$ is the learning rate, @f$
- *  \rho @f$ is a constant controlling the decay of the previous parameter update, @f$ \varepsilon @f$ is the correction
- *  factor (bias), and @f$ L @f$ is the loss function.
+ *  \beta @f$ is a constant controlling the decay of the previous parameter update, @f$ \varepsilon @f$ is the
+ *  correction factor (bias), and @f$ L @f$ is the loss function.
  */
-struct candy::optmz::AdaDelta {
+struct candy::optmz::RmsProp {
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
-    AdaDelta(void) = default;
+    RmsProp(void) = default;
     /** @brief Constructor from members.
      *  @param lr Learning rate.
-     *  @param r Constant controlling the decay of the previous parameter update.
-     *  @param b Bias.
+     *  @param b Constant controlling the decay of the previous parameter update.
+     *  @param e Bias to prevent division error.
      */
-    AdaDelta(double lr, double r, double b = 1.0e-8) : learning_rate(lr), rho(r), bias(b) {}
+    RmsProp(double lr, double b, double e = 1.0e-16) : learning_rate(lr), beta(b), bias(e) {}
     /// @}
 
     /// @name Update model by gradient
@@ -55,7 +52,7 @@ struct candy::optmz::AdaDelta {
     /** @brief Learning rate.*/
     double learning_rate;
     /** @brief Constant controlling the decay of the previous parameter update.*/
-    double rho;
+    double beta;
     /** @brief Bias to prevent division error.*/
     double bias;
     /// @}
@@ -63,4 +60,4 @@ struct candy::optmz::AdaDelta {
 
 }  // namespace merlin
 
-#endif  // MERLIN_CANDY_OPTMZ_ADADELTA_HPP_
+#endif  // MERLIN_CANDY_OPTMZ_RMSPROP_HPP_

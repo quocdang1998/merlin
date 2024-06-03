@@ -15,13 +15,13 @@
 #include "merlin/exports.hpp"   // MERLINENV_EXPORTS
 #include "merlin/platform.hpp"  // __MERLIN_LINUX__
 
+namespace merlin {
+
 // Stack tracing
 // -------------
 
-namespace merlin {
 /** @brief Print the stacktrace at the crash moment.*/
 MERLINENV_EXPORTS void print_stacktrace(int skip = 1);
-
 
 // Get error message from Windows and Unix
 // ---------------------------------------

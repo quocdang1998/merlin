@@ -29,7 +29,7 @@ __cuhostdev__ static void ndim_idx_wkd(std::uint64_t index, std::uint64_t skip_d
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Calculate gradient of a model based on relative square metric
-__cuhostdev__ double candy::rlsquare_grad(const candy::Model & model, const array::NdData & train_data,
+__cuhostdev__ static double rlsquare_grad(const candy::Model & model, const array::NdData & train_data,
                                           std::uint64_t i_param, Index & index_mem) noexcept {
     // initialize gradient
     double gradient = 0.0;
@@ -70,52 +70,7 @@ __cuhostdev__ double candy::rlsquare_grad(const candy::Model & model, const arra
 }
 
 // Calculate gradient of a model based on relative square metric
-__cuhostdev__ void candy::rlsquare_grad(const candy::Model & model, const array::NdData & train_data,
-                                        DoubleVec & gradient, std::uint64_t thread_idx, std::uint64_t n_threads,
-                                        Index & index_mem) noexcept {
-    // loop over each parameter
-    for (std::uint64_t i_param = thread_idx; i_param < model.num_params(); i_param += n_threads) {
-        // initialize gradient
-        double param_gradient = 0.0;
-        // get parameter index
-        auto [param_dim, param_index] = index_in_subsequence(i_param, model.rshape().data(), model.ndim());
-        std::uint64_t param_rank = param_index % model.rank();
-        param_index /= model.rank();
-        // loop over each point in the dataset to calculate the gradient
-        std::uint64_t n_subset = train_data.size() / train_data.shape()[param_dim];
-        index_mem[param_dim] = param_index;
-        for (std::uint64_t i_point = 0; i_point < n_subset; i_point++) {
-            // calculate ndim index
-            ndim_idx_wkd(i_point, param_dim, train_data.shape().data(), train_data.ndim(), index_mem.data());
-            // get point value
-            std::uintptr_t point_ptr = reinterpret_cast<std::uintptr_t>(train_data.data());
-            for (std::uint64_t i = 0; i < train_data.ndim(); i++) {
-                point_ptr += index_mem[i] * train_data.strides()[i];
-            }
-            double point_value = *(reinterpret_cast<double *>(point_ptr));
-            // check for normal data
-            if (!is_normal(point_value)) {
-                continue;
-            }
-            double point_gradient = 1.0;
-            // divide by 1/point_value^2
-            point_gradient /= point_value * point_value;
-            // multiply by coefficient of the same rank from other dimension
-            for (std::uint64_t i = 0; i < model.ndim(); i++) {
-                point_gradient *= (i == param_dim) ? 1.0 : model.get(i, index_mem[i], param_rank);
-            }
-            // multiply by value evaluation
-            double point_eval = model.eval(index_mem);
-            point_gradient *= point_eval - point_value;
-            // add gradient on a point to gradient of parameter
-            param_gradient += point_gradient;
-        }
-        gradient[i_param] = param_gradient;
-    }
-}
-
-// Calculate gradient of a model based on relative square metric
-__cuhostdev__ double candy::absquare_grad(const candy::Model & model, const array::NdData & train_data,
+__cuhostdev__ static double absquare_grad(const candy::Model & model, const array::NdData & train_data,
                                           std::uint64_t i_param, Index & index_mem) noexcept {
     // initialize gradient
     double gradient = 0.0;
@@ -153,47 +108,13 @@ __cuhostdev__ double candy::absquare_grad(const candy::Model & model, const arra
     return gradient;
 }
 
-
-// Calculate gradient of a model based on relative square metric
-__cuhostdev__ void candy::absquare_grad(const candy::Model & model, const array::NdData & train_data,
-                                        DoubleVec & gradient, std::uint64_t thread_idx, std::uint64_t n_threads,
-                                        Index & index_mem) noexcept {
-    // loop over each parameter
+// Function calculating gradient
+__cuhostdev__ void candy::calc_gradient(const candy::Model & model, const array::NdData & train_data,
+                                        DoubleVec & gradient, unsigned int metric, std::uint64_t thread_idx,
+                                        std::uint64_t n_threads, Index & index_mem) noexcept {
+    static std::array<candy::GradientCalc, 2> grad_methods = {rlsquare_grad, absquare_grad};
     for (std::uint64_t i_param = thread_idx; i_param < model.num_params(); i_param += n_threads) {
-        // initialize gradient
-        double param_gradient = 0.0;
-        // get parameter index
-        auto [param_dim, param_index] = index_in_subsequence(i_param, model.rshape().data(), model.ndim());
-        std::uint64_t param_rank = param_index % model.rank();
-        param_index /= model.rank();
-        // loop over each point in the dataset to calculate the gradient
-        std::uint64_t n_subset = train_data.size() / train_data.shape()[param_dim];
-        index_mem[param_dim] = param_index;
-        for (std::uint64_t i_point = 0; i_point < n_subset; i_point++) {
-            // calculate ndim index
-            ndim_idx_wkd(i_point, param_dim, train_data.shape().data(), train_data.ndim(), index_mem.data());
-            // get point value
-            std::uintptr_t point_ptr = reinterpret_cast<std::uintptr_t>(train_data.data());
-            for (std::uint64_t i = 0; i < train_data.ndim(); i++) {
-                point_ptr += index_mem[i] * train_data.strides()[i];
-            }
-            double point_value = *(reinterpret_cast<double *>(point_ptr));
-            // check for normal data
-            if (!is_finite(point_value)) {
-                continue;
-            }
-            double point_gradient = 1.0;
-            // multiply by coefficient of the same rank from other dimension
-            for (std::uint64_t i = 0; i < model.ndim(); i++) {
-                point_gradient *= (i == param_dim) ? 1.0 : model.get(i, index_mem[i], param_rank);
-            }
-            // multiply by value evaluation
-            double point_eval = model.eval(index_mem);
-            point_gradient *= point_eval - point_value;
-            // add gradient on a point to gradient of parameter
-            param_gradient += point_gradient;
-        }
-        gradient[i_param] = param_gradient;
+        gradient[i_param] = grad_methods[metric](model, train_data, i_param, index_mem);
     }
 }
 
@@ -207,9 +128,8 @@ __cuhostdev__ void candy::absquare_grad(const candy::Model & model, const array:
 __cudevice__ void candy::Gradient::calc_by_gpu(candy::Model & model, const array::Parcel & train_data,
                                                std::uint64_t thread_idx, std::uint64_t n_threads,
                                                Index & index_mem) noexcept {
-    static std::array<candy::GradientCalc, 2> grad_methods = {candy::rlsquare_grad, candy::absquare_grad};
-    unsigned int metric = static_cast<unsigned int>(this->train_metric_);
-    grad_methods[metric](model, train_data, this->value_, thread_idx, n_threads, index_mem);
+    candy::calc_gradient(model, train_data, this->value_, static_cast<unsigned int>(this->train_metric_), thread_idx,
+                         n_threads, index_mem);
     __syncthreads();
 }
 

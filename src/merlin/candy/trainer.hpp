@@ -93,8 +93,7 @@ class candy::Trainer {
     /** @brief Copy assignment.*/
     candy::Trainer & operator=(const candy::Trainer & src) = delete;
     /** @brief Move constructor.*/
-    Trainer(candy::Trainer && src) :
-    model_(std::move(src.model_)), optmz_(std::move(src.optmz_)) {
+    Trainer(candy::Trainer && src) : model_(std::move(src.model_)), optmz_(std::move(src.optmz_)) {
         this->p_synch_ = std::exchange(src.p_synch_, nullptr);
         this->cpu_grad_mem_ = std::exchange(src.cpu_grad_mem_, nullptr);
     }

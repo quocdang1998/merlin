@@ -13,7 +13,7 @@ namespace merlin {
  *  @details Each parameter will be updated by the formula:
  *  @f[ p_{t+1} = p_t - \eta \left( \frac{\partial L}{\partial p} \right)_t @f]
  *
- *  , in which @f$ t @f$ is update instance,  @f$ p @f$ is value of parameter, @f$ \eta @f$ is the learning rate, and
+ *  in which @f$ t @f$ is update instance,  @f$ p @f$ is value of parameter, @f$ \eta @f$ is the learning rate, and
  *  @f$ L @f$ is the loss function.
  */
 struct candy::optmz::GradDescent {
@@ -27,16 +27,15 @@ struct candy::optmz::GradDescent {
 
     /// @name Update model by gradient
     /// @{
-    /** @brief Update model parameters.*/
-    __cuhostdev__ static void update(void * optimizer_algor, candy::Model & model, std::uint64_t i_param,
-                                     double gradient, std::uint64_t step) noexcept;
     /** @brief Update model inside a CPU parallel region.*/
-    MERLIN_EXPORTS static void update_cpu(void * optimizer_algor, candy::Model & model, const candy::Gradient & grad,
+    MERLIN_EXPORTS static void update_cpu(void * optimizer_algor, double * history, candy::Model & model,
+                                          const candy::Gradient & grad, std::uint64_t time_step,
                                           std::uint64_t thread_idx, std::uint64_t n_threads) noexcept;
 #ifdef __NVCC__
     /** @brief Update model inside a GPU parallel region.*/
-    __cudevice__ static void update_gpu(void * optimizer_algor, candy::Model & model, const candy::Gradient & grad,
-                                        std::uint64_t thread_idx, std::uint64_t n_threads) noexcept;
+    __cudevice__ static void update_gpu(void * optimizer_algor, double * history, candy::Model & model,
+                                        const candy::Gradient & grad, std::uint64_t time_step, std::uint64_t thread_idx,
+                                        std::uint64_t n_threads) noexcept;
 #endif  // __NVCC__
     /// @}
 

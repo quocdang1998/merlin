@@ -1,8 +1,7 @@
 // Copyright 2023 quocdang1998
 #include "merlin/candy/optimizer.hpp"
 
-#include <array>        // std::array
-#include <type_traits>  // std::add_pointer
+#include <array>  // std::array
 
 namespace merlin {
 
@@ -14,39 +13,51 @@ namespace merlin {
 
 // Update model inside a GPU parallel region
 __cudevice__ void candy::Optimizer::update_gpu(candy::Model & model, const candy::Gradient & grad,
-                                               std::uint64_t thread_idx, std::uint64_t n_threads) noexcept {
-    using UpdaterByGpu = std::add_pointer<void(void *, candy::Model &, const candy::Gradient &, std::uint64_t,
-                                               std::uint64_t) noexcept>::type;
-    static std::array<UpdaterByGpu, 4> gpu_updater_func = {
-        candy::optmz::GradDescent::update_gpu,
-        candy::optmz::AdaGrad::update_gpu,
-        candy::optmz::Adam::update_gpu,
-        candy::optmz::AdaDelta::update_gpu,
+                                               std::uint64_t time_step, std::uint64_t thread_idx,
+                                               std::uint64_t n_threads) noexcept {
+    static std::array<candy::OptmzUpdater, 5> gpu_updater_func = {
+        candy::optmz::GradDescent::update_gpu,  // grad descent
+        candy::optmz::AdaGrad::update_gpu,      // adagrad
+        candy::optmz::Adam::update_gpu,         // adam
+        candy::optmz::AdaDelta::update_gpu,     // adadelta
+        candy::optmz::RmsProp::update_gpu,      // rmsprop
     };
     void * optimizer_algor = reinterpret_cast<void *>(&this->static_data);
-    gpu_updater_func[this->static_data.index()](optimizer_algor, model, grad, thread_idx, n_threads);
+    gpu_updater_func[this->static_data.index()](optimizer_algor, this->dynamic_data, model, grad, time_step, thread_idx,
+                                                n_threads);
 }
 
 // Copy object to pre-allocated memory region by current CUDA block of threads
 __cudevice__ void * candy::Optimizer::copy_by_block(candy::Optimizer * dest_ptr, void * dynamic_data_ptr,
                                                     std::uint64_t thread_idx, std::uint64_t block_size) const {
     // shallow copy of the data
+    double * dest_dynamic_data = reinterpret_cast<double *>(dynamic_data_ptr);
+    std::uint64_t size = this->dynamic_size;
     if (thread_idx == 0) {
         dest_ptr->static_data = this->static_data;
-        dest_ptr->dynamic_data = this->dynamic_data;
-        dest_ptr->dynamic_size = this->dynamic_size;
+        dest_ptr->dynamic_data = dest_dynamic_data;
+        dest_ptr->dynamic_size = size;
     }
     __syncthreads();
-    return dynamic_data_ptr;
+    for (std::uint64_t i_elem = thread_idx; i_elem < size; i_elem += block_size) {
+        dest_dynamic_data[i_elem] = this->dynamic_data[i_elem];
+    }
+    __syncthreads();
+    return dest_dynamic_data + size;
 }
 
 // Copy object to a pre-allocated memory region by a single GPU threads
 __cudevice__ void * candy::Optimizer::copy_by_thread(candy::Optimizer * dest_ptr, void * dynamic_data_ptr) const {
     // shallow copy of the data
+    double * dest_dynamic_data = reinterpret_cast<double *>(dynamic_data_ptr);
+    std::uint64_t size = this->dynamic_size;
     dest_ptr->static_data = this->static_data;
-    dest_ptr->dynamic_data = this->dynamic_data;
-    dest_ptr->dynamic_size = this->dynamic_size;
-    return dynamic_data_ptr;
+    dest_ptr->dynamic_data = dest_dynamic_data;
+    dest_ptr->dynamic_size = size;
+    for (std::uint64_t i_elem = 0; i_elem < size; i_elem++) {
+        dest_dynamic_data[i_elem] = this->dynamic_data[i_elem];
+    }
+    return dest_dynamic_data + size;
 }
 
 #endif  // __NVCC__

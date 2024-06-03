@@ -186,6 +186,7 @@ Optimization algorithms
    merlin.candy.create_adagrad
    merlin.candy.create_adam
    merlin.candy.create_adadelta
+   merlin.candy.create_rmsprop
 
 Asynchronous fitting
 ^^^^^^^^^^^^^^^^^^^^

@@ -181,7 +181,7 @@ Options for customizing the compilation of C++/CUDA interface:
 
    :Type: ``BOOL``
    :Value: ``ON``, ``OFF``
-   :Default: ``ON``
+   :Default: ``OFF``
 
 .. envvar:: MERLIN_DETECT_CUDA_ARCH
 

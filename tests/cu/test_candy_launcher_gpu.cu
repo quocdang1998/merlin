@@ -33,7 +33,8 @@ int main (void) {
     Message("Model before trained: %s\n", model.str().c_str());
 
     // initialize optimizer
-    candy::Optimizer opt = candy::create_grad_descent(0.2);
+    // candy::Optimizer opt = candy::create_grad_descent(0.2);
+    candy::Optimizer opt = candy::create_rmsprop(0.2, 1e-3, model);
 
     // create trainer
     std::uint64_t rep = 10;
@@ -42,7 +43,7 @@ int main (void) {
     candy::Trainer train_gpu("GpuTrainer", model, opt, gpu_sync);
     Synchronizer cpu_sync(ProcessorType::Cpu);
     candy::Trainer train_cpu("CpuTrainer", model, opt, cpu_sync);
-    
+
     // GPU dryrun
     std::uint64_t max_iter = 50;
     DoubleVec error_by_step(max_iter);

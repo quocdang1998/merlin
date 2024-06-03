@@ -1,10 +1,8 @@
 // Copyright 2023 quocdang1998
 #include "merlin/candy/optimizer.hpp"
 
-#include <array>        // std::array
-#include <cstring>      // std::memcpy, std::memset
-#include <type_traits>  // std::add_pointer
-#include <utility>      // std::exchange
+#include <array>    // std::array
+#include <cstring>  // std::memcpy, std::memset
 
 #include "merlin/candy/model.hpp"  // merlin::candy::Model
 #include "merlin/logger.hpp"       // merlin::Fatal, merlin::cuda_compile_error
@@ -20,29 +18,8 @@ candy::Optimizer::Optimizer(const candy::Optimizer & src) :
 static_data(src.static_data), dynamic_size(src.dynamic_size) {
     // copy dynamic data
     if (src.dynamic_size != 0) {
-        this->dynamic_data = new char[src.dynamic_size];
-        std::memcpy(this->dynamic_data, src.dynamic_data, src.dynamic_size);
-    }
-    // assign data
-    switch (this->static_data.index()) {
-        case 0 : {  // gradient descent
-            break;
-        }
-        case 1 : {  // adagrad
-            candy::optmz::AdaGrad & opt_algor = std::get<candy::optmz::AdaGrad>(this->static_data);
-            opt_algor.grad_history = reinterpret_cast<double *>(this->dynamic_data);
-            break;
-        }
-        case 2 : {  // adam
-            candy::optmz::Adam & opt_algor = std::get<candy::optmz::Adam>(this->static_data);
-            opt_algor.moments = reinterpret_cast<double *>(this->dynamic_data);
-            break;
-        }
-        case 3 : {  // adadelta
-            candy::optmz::AdaDelta & opt_algor = std::get<candy::optmz::AdaDelta>(this->static_data);
-            opt_algor.rms_delta = reinterpret_cast<double *>(this->dynamic_data);
-            break;
-        }
+        this->dynamic_data = new double[src.dynamic_size];
+        std::memcpy(this->dynamic_data, src.dynamic_data, sizeof(double) * src.dynamic_size);
     }
 }
 
@@ -56,46 +33,9 @@ candy::Optimizer & candy::Optimizer::operator=(const candy::Optimizer & src) {
     }
     // copy dynamic data
     if (src.dynamic_size != 0) {
-        this->dynamic_data = new char[src.dynamic_size];
-        std::memcpy(this->dynamic_data, src.dynamic_data, src.dynamic_size);
+        this->dynamic_data = new double[src.dynamic_size];
+        std::memcpy(this->dynamic_data, src.dynamic_data, sizeof(double) * src.dynamic_size);
     }
-    // assign data
-    switch (this->static_data.index()) {
-        case 0 : {  // gradient descent
-            break;
-        }
-        case 1 : {  // adagrad
-            candy::optmz::AdaGrad & opt_algor = std::get<candy::optmz::AdaGrad>(this->static_data);
-            opt_algor.grad_history = reinterpret_cast<double *>(this->dynamic_data);
-            break;
-        }
-        case 2 : {  // adam
-            candy::optmz::Adam & opt_algor = std::get<candy::optmz::Adam>(this->static_data);
-            opt_algor.moments = reinterpret_cast<double *>(this->dynamic_data);
-            break;
-        }
-        case 3 : {  // adadelta
-            candy::optmz::AdaDelta & opt_algor = std::get<candy::optmz::AdaDelta>(this->static_data);
-            opt_algor.rms_delta = reinterpret_cast<double *>(this->dynamic_data);
-            break;
-        }
-    }
-    return *this;
-}
-
-// Move constructor
-candy::Optimizer::Optimizer(candy::Optimizer && src) :
-static_data(std::move(src.static_data)), dynamic_size(std::move(src.dynamic_size)) {
-    // exchange pointer
-    this->dynamic_data = std::exchange(src.dynamic_data, nullptr);
-}
-
-// Move assignment
-candy::Optimizer & candy::Optimizer::operator=(candy::Optimizer && src) {
-    this->static_data = std::move(src.static_data);
-    this->dynamic_size = std::move(src.dynamic_size);
-    // exchange pointer
-    this->dynamic_data = std::exchange(src.dynamic_data, nullptr);
     return *this;
 }
 
@@ -105,15 +45,16 @@ bool candy::Optimizer::is_compatible(const candy::Model & model) const {
         case 0 : {  // gradient descent
             break;
         }
-        case 1 : {  // adagrad
-            if (this->dynamic_size != sizeof(double) * model.num_params()) {
+        case 1 :
+        case 4 : {  // adagrad, rmsprop
+            if (this->dynamic_size != model.num_params()) {
                 return false;
             }
             break;
         }
         case 2 :
         case 3 : {  // adam, adadelta
-            if (this->dynamic_size != 2 * sizeof(double) * model.num_params()) {
+            if (this->dynamic_size != 2 * model.num_params()) {
                 return false;
             }
             break;
@@ -123,33 +64,18 @@ bool candy::Optimizer::is_compatible(const candy::Model & model) const {
 }
 
 // Update model inside a CPU parallel region
-void candy::Optimizer::update_cpu(candy::Model & model, std::uint64_t i_param, double gradient,
-                                  std::uint64_t step) noexcept {
-    using Updater = std::add_pointer<void(void *, candy::Model &, std::uint64_t, double,
-                                               std::uint64_t) noexcept>::type;
-    static std::array<Updater, 4> updater_func = {
-        candy::optmz::GradDescent::update,
-        candy::optmz::AdaGrad::update,
-        candy::optmz::Adam::update,
-        candy::optmz::AdaDelta::update,
+void candy::Optimizer::update_cpu(candy::Model & model, const candy::Gradient & grad, std::uint64_t time_step,
+                                  std::uint64_t thread_idx, std::uint64_t n_threads) noexcept {
+    static std::array<candy::OptmzUpdater, 5> cpu_updater_func = {
+        candy::optmz::GradDescent::update_cpu,  // grad descent
+        candy::optmz::AdaGrad::update_cpu,      // adagrad
+        candy::optmz::Adam::update_cpu,         // adam
+        candy::optmz::AdaDelta::update_cpu,     // adadelta
+        candy::optmz::RmsProp::update_cpu,      // rmsprop
     };
     void * optimizer_algor = reinterpret_cast<void *>(&this->static_data);
-    updater_func[this->static_data.index()](optimizer_algor, model, i_param, gradient, step);
-}
-
-// Update model inside a CPU parallel region
-void candy::Optimizer::update_cpu(candy::Model & model, const candy::Gradient & grad, std::uint64_t thread_idx,
-                                  std::uint64_t n_threads) noexcept {
-    using UpdaterByCpu = std::add_pointer<void(void *, candy::Model &, const candy::Gradient &, std::uint64_t,
-                                               std::uint64_t) noexcept>::type;
-    static std::array<UpdaterByCpu, 4> cpu_updater_func = {
-        candy::optmz::GradDescent::update_cpu,
-        candy::optmz::AdaGrad::update_cpu,
-        candy::optmz::Adam::update_cpu,
-        candy::optmz::AdaDelta::update_cpu,
-    };
-    void * optimizer_algor = reinterpret_cast<void *>(&this->static_data);
-    cpu_updater_func[this->static_data.index()](optimizer_algor, model, grad, thread_idx, n_threads);
+    cpu_updater_func[this->static_data.index()](optimizer_algor, this->dynamic_data, model, grad, time_step, thread_idx,
+                                                n_threads);
 }
 
 #ifndef __MERLIN_CUDA__
@@ -157,6 +83,12 @@ void candy::Optimizer::update_cpu(candy::Model & model, const candy::Gradient & 
 // Copy the optimizer from CPU to a pre-allocated memory on GPU
 void * candy::Optimizer::copy_to_gpu(candy::Optimizer * gpu_ptr, void * dynamic_data_ptr,
                                      std::uintptr_t stream_ptr) const {
+    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
+    return nullptr;
+}
+
+// Copy data from GPU to CPU
+void * candy::Optimizer::copy_from_gpu(double * data_from_gpu, std::uintptr_t stream_ptr) noexcept {
     Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
     return nullptr;
 }
@@ -213,12 +145,11 @@ candy::Optimizer candy::create_adagrad(double learning_rate, const candy::Model 
     check_bias(bias);
     // construct optimizer
     candy::Optimizer opt;
-    std::uint64_t num_params = model.num_params();
-    opt.dynamic_size = sizeof(double) * num_params;
-    opt.dynamic_data = new char[opt.dynamic_size];
-    std::memset(opt.dynamic_data, 0, opt.dynamic_size);
+    opt.dynamic_size = model.num_params();
+    opt.dynamic_data = new double[opt.dynamic_size];
+    std::memset(opt.dynamic_data, 0, sizeof(double) * opt.dynamic_size);
     opt.static_data = candy::OptmzStatic(std::in_place_type<candy::optmz::AdaGrad>,
-                                         candy::optmz::AdaGrad(learning_rate, opt.dynamic_data, bias));
+                                         candy::optmz::AdaGrad(learning_rate, bias));
     return opt;
 }
 
@@ -232,30 +163,43 @@ candy::Optimizer candy::create_adam(double learning_rate, double beta_m, double 
     check_weight(beta_v);
     // construct optimizer
     candy::Optimizer opt;
-    std::uint64_t num_params = model.num_params();
-    opt.dynamic_size = 2 * sizeof(double) * num_params;
-    opt.dynamic_data = new char[opt.dynamic_size];
-    std::memset(opt.dynamic_data, 0, opt.dynamic_size);
+    opt.dynamic_size = 2 * model.num_params();
+    opt.dynamic_data = new double[opt.dynamic_size];
+    std::memset(opt.dynamic_data, 0, sizeof(double) * opt.dynamic_size);
     opt.static_data = candy::OptmzStatic(std::in_place_type<candy::optmz::Adam>,
-                                         candy::optmz::Adam(learning_rate, beta_m, beta_v, opt.dynamic_data, bias, 0));
+                                         candy::optmz::Adam(learning_rate, beta_m, beta_v, bias));
     return opt;
 }
 
 // Create an optimizer with adadelta algorithm
-candy::Optimizer candy::create_adadelta(double learning_rate, double decay_constant, const candy::Model & model,
-                                        double bias) {
+candy::Optimizer candy::create_adadelta(double learning_rate, double rho, const candy::Model & model, double bias) {
     // check argument
     check_learning_rate(learning_rate);
     check_bias(bias);
-    check_weight(decay_constant);
+    check_weight(rho);
     // construct optimizer
     candy::Optimizer opt;
-    std::uint64_t num_params = model.num_params();
-    opt.dynamic_size = 2 * sizeof(double) * num_params;
-    opt.dynamic_data = new char[opt.dynamic_size];
-    std::memset(opt.dynamic_data, 0, opt.dynamic_size);
+    opt.dynamic_size = 2 * model.num_params();
+    opt.dynamic_data = new double[opt.dynamic_size];
+    std::memset(opt.dynamic_data, 0, sizeof(double) * opt.dynamic_size);
     opt.static_data = candy::OptmzStatic(std::in_place_type<candy::optmz::AdaDelta>,
-                                         candy::optmz::AdaDelta(learning_rate, decay_constant, opt.dynamic_data, bias));
+                                         candy::optmz::AdaDelta(learning_rate, rho, bias));
+    return opt;
+}
+
+// Create an optimizer with rmsprop algorithm
+candy::Optimizer candy::create_rmsprop(double learning_rate, double beta, const candy::Model & model, double bias) {
+    // check argument
+    check_learning_rate(learning_rate);
+    check_bias(bias);
+    check_weight(beta);
+    // construct optimizer
+    candy::Optimizer opt;
+    opt.dynamic_size = model.num_params();
+    opt.dynamic_data = new double[opt.dynamic_size];
+    std::memset(opt.dynamic_data, 0, sizeof(double) * opt.dynamic_size);
+    opt.static_data = candy::OptmzStatic(std::in_place_type<candy::optmz::RmsProp>,
+                                         candy::optmz::RmsProp(learning_rate, beta, bias));
     return opt;
 }
 

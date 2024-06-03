@@ -345,8 +345,8 @@ void wrap_optimizer(py::module & candy_module) {
     // create adadelta
     candy_module.def(
         "create_adadelta",
-        [](double learning_rate, double decay_constant, const candy::Model & model, double bias) {
-            return new candy::Optimizer(candy::create_adadelta(learning_rate, decay_constant, model, bias));
+        [](double learning_rate, double rho, const candy::Model & model, double bias) {
+            return new candy::Optimizer(candy::create_adadelta(learning_rate, rho, model, bias));
         },
         R"(
         Create an optimizer with AdaDelta algorithm.
@@ -357,13 +357,36 @@ void wrap_optimizer(py::module & candy_module) {
         ----------
         learning_rate : float
             Learning rate.
-        decay_constant : float
+        rho : float
             Decay constant.
         model : merlin.candy.Model
             Model to fit.
         bias : float, default=1e-8
             Bias.)",
-        py::arg("learning_rate"), py::arg("decay_constant"), py::arg("model"), py::arg("bias") = 1e-8
+        py::arg("learning_rate"), py::arg("rho"), py::arg("model"), py::arg("bias") = 1e-8
+    );
+    // create rmsprop
+    candy_module.def(
+        "create_rmsprop",
+        [](double learning_rate, double beta, const candy::Model & model, double bias) {
+            return new candy::Optimizer(candy::create_rmsprop(learning_rate, beta, model, bias));
+        },
+        R"(
+        Create an optimizer with RmsProp algorithm.
+
+        See also :cpp:class:`merlin::candy::optmz::RmsProp`.
+
+        Parameters
+        ----------
+        learning_rate : float
+            Learning rate.
+        beta : float
+            Decay constant.
+        model : merlin.candy.Model
+            Model to fit.
+        bias : float, default=1e-16
+            Bias to avoid division by zero.)",
+        py::arg("learning_rate"), py::arg("beta"), py::arg("model"), py::arg("bias") = 1e-16
     );
 }
 

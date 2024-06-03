@@ -8,7 +8,7 @@
 cmake_minimum_required(VERSION 3.25)
 
 # options
-set(MERLIN_CUDA ON CACHE BOOL "Build library using CUDA") # -DMERLIN_CUDA=OFF
+set(MERLIN_CUDA OFF CACHE BOOL "Build library using CUDA") # -DMERLIN_CUDA=OFF
 set(MERLIN_DETECT_CUDA_ARCH ON # -DMERLIN_DETECT_CUDA_ARCH=OFF
     CACHE BOOL "Automatically detect CUDA architectures of all GPUs (use CMAKE_CUDA_ARCHITECTURES otherwise)")
 set(MERLIN_LIBKIND "AUTO" # -DMERLIN_LIBKIND=STATIC or -DMERLIN_LIBKIND=SHARED
@@ -29,6 +29,7 @@ list(
     candy/optmz/adam.cpp
     candy/optmz/adagrad.cpp
     candy/optmz/grad_descent.cpp
+    candy/optmz/rmsprop.cpp
     candy/gradient.cpp
     candy/loss.cpp
     candy/model.cpp
@@ -82,6 +83,7 @@ list(
     candy/optmz/adagrad.rdc
     candy/optmz/adam.rdc
     candy/optmz/grad_descent.rdc
+    candy/optmz/rmsprop.rdc
     candy/gradient.rdc
     candy/loss.rdc
     candy/model.rdc

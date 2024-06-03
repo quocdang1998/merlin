@@ -38,6 +38,7 @@ void candy::Trainer::update(const array::Parcel & data, std::uint64_t rep, doubl
     candy::train_by_gpu(mem.get<0>(), mem.get<1>(), mem.get<2>(), metric, rep, n_threads, threshold, shared_mem,
                         stream);
     this->model_.copy_from_gpu(reinterpret_cast<double *>(mem.get<0>() + 1), stream.get_stream_ptr());
+    this->optmz_.copy_from_gpu(reinterpret_cast<double *>(mem.get<2>() + 1), stream.get_stream_ptr());
     stream.add_callback(candy::end_message, this->name_);
 }
 

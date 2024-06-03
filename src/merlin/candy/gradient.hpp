@@ -17,48 +17,21 @@ namespace merlin {
 namespace candy {
 
 /** @brief Function type calculating gradient.*/
-using GradientCalc = std::add_pointer<void(const candy::Model &, const array::NdData &, DoubleVec &, std::uint64_t,
-                                           std::uint64_t, Index &)>::type;
+using GradientCalc =
+    std::add_pointer<double(const candy::Model &, const array::NdData &, std::uint64_t, Index &) noexcept>::type;
 
-/** @brief Calculate gradient of a model based on relative square metric.
+/** @brief Function calculating gradient.
  *  @param model Model on which the gradient is calculated.
- *  @param train_data Data to calculate loss function.
- *  @param i_param Index of parameter vector.
- *  @param index_mem Cache memory storing index foreach thread.
- */
-__cuhostdev__ double rlsquare_grad(const candy::Model & model, const array::NdData & train_data, std::uint64_t i_param,
-                                   Index & index_mem) noexcept;
-
-/** @brief Calculate gradient of a model based on relative square metric.
- *  @param model Model on which the gradient is calculated.
- *  @param train_data Data to calculate loss function.
+ *  @param train_data Data to train the model loss function.
  *  @param gradient Vector storing the resulted gradient.
+ *  @param metric Metric for calculating the gradient.
  *  @param thread_idx Index of the current thread calculating the gradient.
  *  @param n_threads Number of threads calculating the gradient.
  *  @param index_mem Cache memory storing index foreach thread.
  */
-__cuhostdev__ void rlsquare_grad(const candy::Model & model, const array::NdData & train_data, DoubleVec & gradient,
-                                 std::uint64_t thread_idx, std::uint64_t n_threads, Index & index_mem) noexcept;
-
-/** @brief Calculate gradient of a model based on absolute square metric.
- *  @param model Model on which the gradient is calculated.
- *  @param train_data Data to calculate loss function.
- *  @param i_param Index of parameter vector.
- *  @param index_mem Cache memory storing index foreach thread.
- */
-__cuhostdev__ double absquare_grad(const candy::Model & model, const array::NdData & train_data, std::uint64_t i_param,
-                                   Index & index_mem) noexcept;
-
-/** @brief Calculate gradient of a model based on absolute square metric.
- *  @param model Model on which the gradient is calculated.
- *  @param train_data Data to calculate loss function.
- *  @param gradient Vector storing the resulted gradient.
- *  @param thread_idx Index of the current thread calculating the gradient.
- *  @param n_threads Number of threads calculating the gradient.
- *  @param index_mem Cache memory storing index foreach thread.
- */
-__cuhostdev__ void absquare_grad(const candy::Model & model, const array::NdData & train_data, DoubleVec & gradient,
-                                 std::uint64_t thread_idx, std::uint64_t n_threads, Index & index_mem) noexcept;
+__cuhostdev__ void calc_gradient(const candy::Model & model, const array::NdData & train_data, DoubleVec & gradient,
+                                 unsigned int metric, std::uint64_t thread_idx, std::uint64_t n_threads,
+                                 Index & index_mem) noexcept;
 
 }  // namespace candy
 
@@ -86,18 +59,6 @@ class candy::Gradient {
 
     /// @name Calculation
     /// @{
-    /** @brief Update model by gradient descent from data in CPU parallel section.
-     *  @param model Canonical model.
-     *  @param train_data Data to train the model.
-     *  @param optmz Optimizer to optimize the model.
-     *  @param step Number of step used to calculate.
-     *  @param thread_idx Index of the current thread calculating the gradient.
-     *  @param n_threads Number of threads calculating the gradient.
-     *  @param index_mem Cache memory storing index foreach thread.
-     */
-    MERLIN_EXPORTS void update_by_cpu(candy::Model & model, const array::Array & train_data, candy::Optimizer & optmz,
-                                      std::uint64_t step, std::uint64_t thread_idx, std::uint64_t n_threads,
-                                      Index & index_mem) noexcept;
     /** @brief Calculate gradient from data in CPU parallel section.
      *  @param model Canonical model.
      *  @param train_data Data to train the model.
