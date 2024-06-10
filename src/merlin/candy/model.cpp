@@ -1,7 +1,7 @@
 // Copyright 2023 quocdang1998
 #include "merlin/candy/model.hpp"
 
-#include <algorithm>  // std::all_of, std::find
+#include <algorithm>  // std::find
 #include <cmath>      // std::pow, std::sqrt
 #include <iterator>   // std::distance
 #include <random>     // std::mt19937_64, std::normal_distribution, std::uniform_real_distribution
@@ -178,12 +178,6 @@ void * candy::Model::copy_from_gpu(double * data_from_gpu, std::uintptr_t stream
 }
 
 #endif  // __MERLIN_CUDA__
-
-// Check if these is a negative parameter in the model
-bool candy::Model::check_negative(void) const noexcept {
-    return std::all_of(this->parameters_.cbegin(), this->parameters_.cend(),
-                       [](const double & value) { return value >= 0; });
-}
 
 // Check if a given data shape is compatible with the current model
 bool candy::Model::check_compatible_shape(const Index & shape) const noexcept {

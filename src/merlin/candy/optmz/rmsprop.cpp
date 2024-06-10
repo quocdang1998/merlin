@@ -29,7 +29,6 @@ void candy::optmz::RmsProp::update_cpu(void * optimizer_algor, double * history,
         correction /= std::sqrt(algor.bias + rms);
         model[i_param] -= correction;
     }
-    _Pragma("omp barrier");
 }
 
 }  // namespace merlin

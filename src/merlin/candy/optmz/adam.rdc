@@ -38,7 +38,6 @@ __cudevice__ void candy::optmz::Adam::update_gpu(void * optimizer_algor, double 
         correction /= std::sqrt(second_moment) + algor.bias;
         model[i_param] -= correction;
     }
-    __syncthreads();
 }
 
 #endif  // __NVCC__

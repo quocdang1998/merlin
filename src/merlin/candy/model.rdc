@@ -1,6 +1,8 @@
 // Copyright 2023 quocdang1998
 #include "merlin/candy/model.hpp"
 
+#include <algorithm>  // std::all_of
+
 #include "merlin/utils.hpp"  // merlin::ptr_to_subsequence
 
 namespace merlin {
@@ -16,6 +18,12 @@ __cuhostdev__ double candy::Model::eval(const Index & index) const noexcept {
         result += rank_eval;
     }
     return result;
+}
+
+// Check if these is a negative parameter in the model
+__cuhostdev__ bool candy::Model::all_positive(void) const noexcept {
+    return std::all_of(this->parameters_.cbegin(), this->parameters_.cend(),
+                       [](const double & value) { return value >= 0; });
 }
 
 #ifdef __NVCC__

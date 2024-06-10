@@ -45,7 +45,7 @@ void candy::train_by_cpu(std::future<void> && synch, candy::Model * p_model, con
         candy::rmse_cpu(p_model, p_data, posteriori_error, normal_count, thread_idx, n_threads, index_mem);
     }
     // training loop
-    std::uint64_t step = 0;
+    std::uint64_t step = 1;
     do {
         priori_error = posteriori_error;
         _Pragma("omp parallel num_threads(n_threads)") {
@@ -112,9 +112,10 @@ void candy::dryrun_by_cpu(std::future<void> && synch, candy::Model * p_model, co
         // gradient descent loop
         for (std::uint64_t iter = 1; iter < max_iter; iter++) {
             gradient.calc_by_cpu(*p_model, *p_data, thread_idx, n_threads, index_mem);
-            p_optimizer->update_cpu(*p_model, gradient, iter - 1, thread_idx, n_threads);
+            p_optimizer->update_cpu(*p_model, gradient, iter, thread_idx, n_threads);
             candy::rmse_cpu(p_model, p_data, error[iter], normal_count, thread_idx, n_threads, index_mem);
-            if (!is_normal(error[iter]) || (error[iter] / error[iter - 1] >= 1.0 + 1e-10)) {
+            bool break_condition = !is_normal(error[iter]) || (error[iter] / error[iter - 1] >= 1.0 + 1e-10);
+            if (break_condition) {
                 break;
             }
             _Pragma("omp single") { *count = iter + 1; }

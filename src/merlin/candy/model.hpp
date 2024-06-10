@@ -108,7 +108,7 @@ class candy::Model {
     /** @brief Check if these is a negative parameter in the model.
      *  @return Return ``false`` if these is a negative parameter in the model.
      */
-    MERLIN_EXPORTS bool check_negative(void) const noexcept;
+    __cuhostdev__ bool all_positive(void) const noexcept;
     /** @brief Check if a given data shape is compatible with the current model.*/
     MERLIN_EXPORTS bool check_compatible_shape(const Index & shape) const noexcept;
     /// @}

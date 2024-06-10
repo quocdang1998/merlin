@@ -28,9 +28,14 @@ int main(void) {
     Message("Model before trained: %s\n", model.str().c_str());
 
     // candy::Optimizer opt = candy::create_grad_descent(0.5);
-    // candy::Optimizer opt = candy::create_adam(0.3, 0.9, 0.99, model);
+    // candy::Optimizer opt = candy::create_adagrad(0.5, model);
+    // candy::Optimizer opt = candy::create_adam(0.5, 0.9, 0.99, model);
     // candy::Optimizer opt = candy::create_adadelta(1, 0.9999, model);
-    candy::Optimizer opt = candy::create_rmsprop(0.8, 0.01, model);
+    candy::Optimizer opt = candy::create_rmsprop(0.5, 1e-4, model);
+    {
+        Message m("Optimizer:");
+        m << opt.str() << "\n";
+    }
 
     Synchronizer cpu_synch(ProcessorType::Cpu);
     candy::Trainer train("FooTrainer", model, opt, cpu_synch);
@@ -53,4 +58,9 @@ int main(void) {
     cpu_synch.synchronize();
     Message("Model after trained: %s\n", train.model().str().c_str());
     Message("Reconstructed: %s\n", reconstructed_data.str().c_str());
+
+    {
+        Message m("Optimizer:");
+        m << train.optmz().str() << "\n";
+    }
 }

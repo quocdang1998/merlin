@@ -3,11 +3,27 @@
 
 #include <array>    // std::array
 #include <cstring>  // std::memcpy, std::memset
+#include <sstream>  // std::ostringstream
 
 #include "merlin/candy/model.hpp"  // merlin::candy::Model
 #include "merlin/logger.hpp"       // merlin::Fatal, merlin::cuda_compile_error
 
 namespace merlin {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Utility
+// ---------------------------------------------------------------------------------------------------------------------
+
+static void print_dynamic_data(std::ostringstream & os, const double * dynamic_data, std::uint64_t dynamic_size) {
+    os << "dynamic_data=<";
+    for (std::uint64_t i = 0; i < dynamic_size; i++) {
+        if (i != 0) {
+            os << " ";
+        }
+        os << dynamic_data[i];
+    }
+    os << ">";
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Optimizer
@@ -76,6 +92,7 @@ void candy::Optimizer::update_cpu(candy::Model & model, const candy::Gradient & 
     void * optimizer_algor = reinterpret_cast<void *>(&this->static_data);
     cpu_updater_func[this->static_data.index()](optimizer_algor, this->dynamic_data, model, grad, time_step, thread_idx,
                                                 n_threads);
+    _Pragma("omp barrier");
 }
 
 #ifndef __MERLIN_CUDA__
@@ -95,6 +112,58 @@ void * candy::Optimizer::copy_from_gpu(double * data_from_gpu, std::uintptr_t st
 
 #endif  // __MERLIN_CUDA__
 
+// String representation
+std::string candy::Optimizer::str(void) const {
+    std::ostringstream os;
+    os << "<Optimizer(";
+    switch (this->static_data.index()) {
+        case 0 : {  // gradient descent
+            os << "type=GradDescent, ";
+            const candy::optmz::GradDescent & algor = std::get<0>(this->static_data);
+            os << "eta=" << algor.learning_rate;
+            break;
+        }
+        case 1 : {  // adagrad
+            os << "type=AdaGrad, ";
+            const candy::optmz::AdaGrad & algor = std::get<1>(this->static_data);
+            os << "eta=" << algor.learning_rate << ", ";
+            os << "bias=" << algor.bias << ", ";
+            print_dynamic_data(os, this->dynamic_data, this->dynamic_size);
+            break;
+        }
+        case 2 : {  // adam
+            os << "type=Adam, ";
+            const candy::optmz::Adam & algor = std::get<2>(this->static_data);
+            os << "eta=" << algor.learning_rate << ", ";
+            os << "beta_m=" << algor.beta_m << ", ";
+            os << "beta_v=" << algor.beta_v << ", ";
+            os << "bias=" << algor.bias << ", ";
+            print_dynamic_data(os, this->dynamic_data, this->dynamic_size);
+            break;
+        }
+        case 3 : {  // adadelta
+            os << "type=AdaDelta, ";
+            const candy::optmz::AdaDelta & algor = std::get<3>(this->static_data);
+            os << "eta=" << algor.learning_rate << ", ";
+            os << "rho=" << algor.rho << ", ";
+            os << "bias=" << algor.bias << ", ";
+            print_dynamic_data(os, this->dynamic_data, this->dynamic_size);
+            break;
+        }
+        case 4 : {  // rmsprop
+            os << "type=RmsProp, ";
+            const candy::optmz::RmsProp & algor = std::get<4>(this->static_data);
+            os << "eta=" << algor.learning_rate << ", ";
+            os << "beta=" << algor.beta << ", ";
+            os << "bias=" << algor.bias << ", ";
+            print_dynamic_data(os, this->dynamic_data, this->dynamic_size);
+            break;
+        }
+    }
+    os << ")>";
+    return os.str();
+}
+
 // Destructor
 candy::Optimizer::~Optimizer(void) {
     if (this->dynamic_data != nullptr) {
@@ -108,7 +177,7 @@ candy::Optimizer::~Optimizer(void) {
 
 // Check for positive learning rate
 static inline void check_learning_rate(double learning_rate) {
-    if (learning_rate < 0) {
+    if (learning_rate <= 0) {
         Fatal<std::invalid_argument>("Learning rate must be positive.\n");
     }
 }

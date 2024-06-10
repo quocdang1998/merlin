@@ -34,7 +34,6 @@ __cudevice__ void candy::optmz::AdaDelta::update_gpu(void * optimizer_algor, dou
         history[2 * i_param] = rms;
         history[2 * i_param + 1] = delta;
     }
-    __syncthreads();
 }
 
 #endif  // __NVCC__

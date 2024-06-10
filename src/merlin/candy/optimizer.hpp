@@ -2,6 +2,7 @@
 #ifndef MERLIN_CANDY_OPTIMIZER_HPP_
 #define MERLIN_CANDY_OPTIMIZER_HPP_
 
+#include <string>       // std::string
 #include <type_traits>  // std::add_pointer
 #include <utility>      // std::exchange
 #include <variant>      // std::variant
@@ -108,6 +109,12 @@ struct candy::Optimizer {
 #endif  // __NVCC__
     /** @brief Copy data from GPU back to CPU.*/
     MERLIN_EXPORTS void * copy_from_gpu(double * data_from_gpu, std::uintptr_t stream_ptr = 0) noexcept;
+    /// @}
+
+    /// @name Representation
+    /// @{
+    /** @brief String representation.*/
+    MERLIN_EXPORTS std::string str(void) const;
     /// @}
 
     /// @name Destructor

@@ -31,7 +31,6 @@ __cudevice__ void candy::optmz::AdaGrad::update_gpu(void * optimizer_algor, doub
         correction /= std::sqrt(grad_history + algor.bias);
         model[i_param] -= correction;
     }
-    __syncthreads();
 }
 
 #endif  // __NVCC__

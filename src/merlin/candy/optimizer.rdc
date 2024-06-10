@@ -25,6 +25,7 @@ __cudevice__ void candy::Optimizer::update_gpu(candy::Model & model, const candy
     void * optimizer_algor = reinterpret_cast<void *>(&this->static_data);
     gpu_updater_func[this->static_data.index()](optimizer_algor, this->dynamic_data, model, grad, time_step, thread_idx,
                                                 n_threads);
+    __syncthreads();
 }
 
 // Copy object to pre-allocated memory region by current CUDA block of threads

@@ -36,7 +36,6 @@ void candy::optmz::Adam::update_cpu(void * optimizer_algor, double * history, ca
         correction /= std::sqrt(second_moment) + algor.bias;
         model[i_param] -= correction;
     }
-    _Pragma("omp barrier");
 }
 
 }  // namespace merlin

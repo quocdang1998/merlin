@@ -20,7 +20,6 @@ void candy::optmz::GradDescent::update_cpu(void * optimizer_algor, double * hist
     for (std::uint64_t i_param = thread_idx; i_param < model.num_params(); i_param += n_threads) {
         model[i_param] -= algor.learning_rate * grad.value()[i_param];
     }
-    _Pragma("omp barrier");
 }
 
 }  // namespace merlin

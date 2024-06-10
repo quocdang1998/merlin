@@ -31,7 +31,6 @@ __cudevice__ void candy::optmz::RmsProp::update_gpu(void * optimizer_algor, doub
         correction /= std::sqrt(algor.bias + rms);
         model[i_param] -= correction;
     }
-    __syncthreads();
 }
 
 #endif  // __NVCC__

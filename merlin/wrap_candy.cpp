@@ -108,9 +108,9 @@ void wrap_model(py::module & candy_module) {
     );
     // check negative
     model_pyclass.def(
-        "check_negative",
-        [](candy::Model & self) { return self.check_negative(); },
-        "Check if these is a negative parameter in the model."
+        "all_positive",
+        [](candy::Model & self) { return self.all_positive(); },
+        "Check if all parameters in the model are positive."
     );
     // initialization
     model_pyclass.def(
@@ -278,6 +278,11 @@ void wrap_optimizer(py::module & candy_module) {
         ),
         R"(
         Default constructor.)"
+    );
+    // representation
+    optimizer_pyclass.def(
+        "__repr__",
+        [](const candy::Optimizer & self) { return self.str(); }
     );
     // create grad descent
     candy_module.def(

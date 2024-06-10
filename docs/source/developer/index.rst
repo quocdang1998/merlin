@@ -53,3 +53,27 @@ Some cautions when developing the package:
    :hidden:
 
    mutex
+
+
+Data serialization
+------------------
+
+Data in Merlin can be serialized into a binary data file for transfering data across multiple executables. There are
+three classes that can be serialized/deserialized in Merlin: multi-dimensional array, regression polynomial and
+CANDECOMP-PARAFAC model.
+
+.. tabularcolumns:: \X{1}{2}\X{1}{2}
+
+.. table::
+   :class: longtable
+   :widths: 30 70
+
+   ============================= ========================================================
+   :doc:`array`                  Serialization algorithm of multi-dimensional array
+   ============================= ========================================================
+
+.. toctree::
+   :maxdepth: -1
+   :hidden:
+
+   array

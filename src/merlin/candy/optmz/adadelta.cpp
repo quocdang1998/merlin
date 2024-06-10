@@ -32,7 +32,6 @@ void candy::optmz::AdaDelta::update_cpu(void * optimizer_algor, double * history
         history[2 * i_param] = rms;
         history[2 * i_param + 1] = delta;
     }
-    _Pragma("omp barrier");
 }
 
 }  // namespace merlin
