@@ -2,26 +2,25 @@
 #ifndef MERLIN_CUDA_GRAPH_HPP_
 #define MERLIN_CUDA_GRAPH_HPP_
 
-#include <array>    // std::array
-#include <cstdint>  // std::uintptr_t
-#include <string>   // std::string
-#include <tuple>    // std::tuple
+#include <array>        // std::array
+#include <cstdint>      // std::uintptr_t
+#include <string>       // std::string
+#include <tuple>        // std::tuple
+#include <type_traits>  // std::add_pointer
+#include <vector>       // std::vector
 
 #include "merlin/cuda/declaration.hpp"   // merlin::cuda::Graph
 #include "merlin/cuda/enum_wrapper.hpp"  // merlin::cuda::MemcpyKind, merlin::cuda::NodeType
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
-#include "merlin/vector.hpp"             // merlin::Vector
 
 namespace merlin {
 
-namespace cuda {
-
 /** @brief CUDA graph node.*/
-struct GraphNode {
+struct alignas(std::uintptr_t) cuda::GraphNode {
     /** @brief Default constructor.*/
     GraphNode(void) = default;
     /** @brief Constructor from pointer.*/
-    GraphNode(std::uintptr_t ptr) : graphnode_ptr(ptr) {}
+    GraphNode(std::uintptr_t ptr) : node_id(ptr) {}
 
     /** @brief Get node type.*/
     cuda::NodeType get_node_type(void) const;
@@ -30,15 +29,29 @@ struct GraphNode {
     ~GraphNode(void) = default;
 
     /** @brief Pointer to CUDA graph node object.*/
-    std::uintptr_t graphnode_ptr = 0;
+    std::uintptr_t node_id = 0;
 };
 
-static inline Vector<cuda::GraphNode> begin_graphnode = Vector<cuda::GraphNode>();
+namespace cuda {
+
+/** Default beginning of graph.*/
+MERLIN_EXPORTS extern const std::vector<cuda::GraphNode> begin_graphnode;
+
+/** @brief Typename of CPU callback function to added to graph.*/
+#ifdef __NVCC__
+using GraphCallback = ::cudaHostFn_t;
+#else
+using GraphCallback = std::add_pointer<void(void *)>;
+#endif  // __NVCC__
+
+/** @brief Wrapper of the function adding CUDA callback to graph.*/
+MERLIN_EXPORTS cuda::GraphNode add_callback_to_graph(std::uintptr_t graph_ptr, cuda::GraphCallback functor,
+                                                     const std::vector<cuda::GraphNode> & deps, void * arg);
 
 #ifdef __NVCC__
-typedef cudaHostFn_t CudaHostFunction;
-#else
-typedef void (*CudaHostFunction)(void *);
+/** @brief Wrapper callback around a host function for graph.*/
+template <typename Function, typename... Args>
+void graph_callback_wrapper(void * data);
 #endif  // __NVCC__
 
 }  // namespace cuda
@@ -53,7 +66,7 @@ class cuda::Graph {
      */
     MERLIN_EXPORTS Graph(int flag = -1);
     /** @brief Constructor from pointer.*/
-    Graph(std::uintptr_t graph_ptr) : graph_ptr_(graph_ptr) {}
+    Graph(std::uintptr_t graph_ptr) : graph_(graph_ptr) {}
     /// @}
 
     /// @name Copy and Move
@@ -71,28 +84,28 @@ class cuda::Graph {
     /// @name Get members
     /// @{
     /** @brief Get pointer of CUDA graph object.*/
-    std::uintptr_t get_graph_ptr(void) const { return this->graph_ptr_; }
+    std::uintptr_t get_graph_ptr(void) const { return this->graph_; }
     /** @brief Get number of nodes in a graph.*/
     MERLIN_EXPORTS std::uint64_t get_num_nodes(void) const;
     /** @brief Get node list.*/
-    MERLIN_EXPORTS Vector<cuda::GraphNode> get_node_list(void) const;
+    MERLIN_EXPORTS std::vector<cuda::GraphNode> get_node_list(void) const;
     /** @brief Get number of edges.*/
     MERLIN_EXPORTS std::uint64_t get_num_edges(void) const;
     /** @brief Get edge list.
      *  @return A vector of pairs of graph nodes. The first node is origin of the edge, the second is destination.
      */
-    MERLIN_EXPORTS Vector<std::array<cuda::GraphNode, 2>> get_edge_list(void) const;
+    MERLIN_EXPORTS std::vector<std::array<cuda::GraphNode, 2>> get_edge_list(void) const;
     /// @}
 
     /// @name Add nodes to graph
     /// @{
-    /** @brief Add memory allocation node.
-     *  @param size Size (in bytes) to allocate.
+    /** @brief Add memory allocation node on the current GPU.
+     *  @param size Size (in bytes) to allocate on GPU.
      *  @param deps %Vector of nodes on which the node depends.
      *  @return Tuple of added graph node and pointer to allocated data.
      */
-    MERLIN_EXPORTS std::tuple<cuda::GraphNode, void *> add_mem_alloc_node(std::uint64_t size,
-                                                                          const Vector<cuda::GraphNode> & deps);
+    MERLIN_EXPORTS std::tuple<cuda::GraphNode, void *> add_malloc_node(std::uint64_t size,
+                                                                       const std::vector<cuda::GraphNode> & deps);
     /** @brief Add memory copy node.
      *  @param dest Pointer to destination array.
      *  @param src Pointer to source destination.
@@ -101,7 +114,8 @@ class cuda::Graph {
      *  @param deps %Vector of nodes on which the node depends.
      */
     MERLIN_EXPORTS cuda::GraphNode add_memcpy_node(void * dest, const void * src, std::uint64_t size,
-                                                   cuda::MemcpyKind copy_flag, const Vector<cuda::GraphNode> & deps);
+                                                   cuda::MemcpyKind copy_flag,
+                                                   const std::vector<cuda::GraphNode> & deps);
 #ifdef __NVCC__
     /** @brief Add CUDA kernel node.
      *  @param kernel Pointer to function (functor) on GPU to be executed.
@@ -113,37 +127,39 @@ class cuda::Graph {
      */
     template <typename Function, typename... Args>
     cuda::GraphNode add_kernel_node(Function * kernel, std::uint64_t n_blocks, std::uint64_t n_threads,
-                                    std::uint64_t shared_mem, const Vector<cuda::GraphNode> & deps, Args &&... args);
-#endif  // __NVCC__
+                                    std::uint64_t shared_mem, const std::vector<cuda::GraphNode> & deps,
+                                    Args &&... args);
     /** @brief Add CUDA host node.
      *  @param functor Pointer to CPU function take in a pointer to ``void`` argument.
      *  @param deps %Vector of nodes on which the node depends.
-     *  @param arg Pointer to argument to pass to the function.
+     *  @param args Arguments to pass to the function.
      */
-    MERLIN_EXPORTS cuda::GraphNode add_host_node(cuda::CudaHostFunction functor, const Vector<cuda::GraphNode> & deps,
-                                                 void * arg = nullptr);
+    template <typename Function, typename... Args>
+    cuda::GraphNode add_host_node(Function & callback, const std::vector<cuda::GraphNode> & deps, Args &&... args);
+#endif  // __NVCC__
     /** @brief Add CUDA deallocation node.
      *  @param ptr GPU pointer to be freed.
      *  @param deps %Vector of nodes on which the node depends.
      */
-    MERLIN_EXPORTS cuda::GraphNode add_memfree_node(void * ptr, const Vector<cuda::GraphNode> & deps);
+    MERLIN_EXPORTS cuda::GraphNode add_memfree_node(void * ptr, const std::vector<cuda::GraphNode> & deps);
     /** @brief Add CUDA event record node.
      *  @param event CUDA event to be recorded.
      *  @param deps %Vector of nodes on which the node depends.
      */
     MERLIN_EXPORTS cuda::GraphNode add_event_record_node(const cuda::Event & event,
-                                                         const Vector<cuda::GraphNode> & deps);
+                                                         const std::vector<cuda::GraphNode> & deps);
     /** @brief Add CUDA event wait node.
      *  @param event CUDA event to be synchronized.
      *  @param deps %Vector of nodes on which the node depends.
      */
-    MERLIN_EXPORTS cuda::GraphNode add_event_wait_node(const cuda::Event & event, const Vector<cuda::GraphNode> & deps);
+    MERLIN_EXPORTS cuda::GraphNode add_event_wait_node(const cuda::Event & event,
+                                                       const std::vector<cuda::GraphNode> & deps);
     /** @brief Add CUDA child graph node.
      *  @param child_graph CUDA graph as child graph to be added.
      *  @param deps %Vector of nodes on which the node depends.
      */
     MERLIN_EXPORTS cuda::GraphNode add_child_graph_node(const cuda::Graph & child_graph,
-                                                        const Vector<cuda::GraphNode> & deps);
+                                                        const std::vector<cuda::GraphNode> & deps);
     /// @}
 
     /// @name Operation on CUDA Graph
@@ -166,7 +182,7 @@ class cuda::Graph {
 
   protected:
     /** @brief Pointer to CUDA graph object.*/
-    std::uintptr_t graph_ptr_ = 0;
+    std::uintptr_t graph_ = 0;
 
   private:
     /** @brief Destroy current CUDA graph instance.*/

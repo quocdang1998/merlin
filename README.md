@@ -49,6 +49,12 @@ python setup.py build_ext -i
 
 ## Documentation
 
+Required Sphinx extensions:
+
+```
+pip install -U sphinx_rtd_theme sphinx_design breathe sphinx_doxysummary
+```
+
 Code documentation can be built with Doxygen and Sphinx:
 
 ```

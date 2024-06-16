@@ -11,6 +11,7 @@
 #include <syncstream>       // std::osyncstream
 #include <utility>          // std::forward
 
+#include "merlin/color.hpp"     // __MERLIN_COLOR
 #include "merlin/config.hpp"    // merlin::printf_buffer, __cudevice__, __cuhostdev__
 #include "merlin/exports.hpp"   // MERLINENV_EXPORTS
 #include "merlin/platform.hpp"  // __MERLIN_LINUX__
@@ -111,17 +112,18 @@ struct Message {
      */
     template <typename... Args>
     Message(FmtString fmt = "", Args &&... args) {
-        char format_buffer[printf_buffer] = "message [%s] in %s l.%" PRIdLEAST32 " : ";
+        char format_buffer[printf_buffer] = "%smessage%s [%s] in %s l.%" PRIdLEAST32 " : ";
         cat_str(format_buffer + len(format_buffer), fmt.str);
         char buffer[printf_buffer];
-        std::snprintf(buffer, printf_buffer, format_buffer, fmt.loc.function_name(), get_fname(fmt.loc.file_name()),
-                      fmt.loc.line(), std::forward<Args>(args)...);
+        std::snprintf(buffer, printf_buffer, format_buffer, color_out(color::bold_blue), color_out(color::normal),
+                      fmt.loc.function_name(), get_fname(fmt.loc.file_name()), fmt.loc.line(),
+                      std::forward<Args>(args)...);
         this->stream << buffer;
     }
     /** @brief Stream operator.*/
     template <typename T>
     Message & operator<<(T && obj) {
-        this->stream << obj;
+        this->stream << std::forward<T>(obj);
         return *this;
     }
     /** @brief Force print out content to the output stream.*/
@@ -150,17 +152,18 @@ struct Warning {
      */
     template <typename... Args>
     Warning(FmtString fmt = "", Args &&... args) {
-        char format_buffer[printf_buffer] = "warning [%s] in %s l.%" PRIdLEAST32 " : ";
+        char format_buffer[printf_buffer] = "%swarning%s [%s] in %s l.%" PRIdLEAST32 " : ";
         cat_str(format_buffer + len(format_buffer), fmt.str);
         char buffer[printf_buffer];
-        std::snprintf(buffer, printf_buffer, format_buffer, fmt.loc.function_name(), get_fname(fmt.loc.file_name()),
-                      fmt.loc.line(), std::forward<Args>(args)...);
+        std::snprintf(buffer, printf_buffer, format_buffer, color_err(color::bold_yellow), color_err(color::normal),
+                      fmt.loc.function_name(), get_fname(fmt.loc.file_name()), fmt.loc.line(),
+                      std::forward<Args>(args)...);
         this->stream << buffer;
     }
     /** @brief Stream operator.*/
     template <typename T>
     Warning & operator<<(T && obj) {
-        this->stream << obj;
+        this->stream << std::forward<T>(obj);
         return *this;
     }
     /** @brief Force print out content to the output stream.*/
@@ -185,10 +188,10 @@ struct DebugLog {
      */
     DebugLog(FmtString fmt, Args &&... args) {
 #ifndef NDEBUG
-        char buffer[printf_buffer] = "debug [%s] in %s l.%" PRIdLEAST32 " : ";
+        char buffer[printf_buffer] = "%sdebug%s [%s] in %s l.%" PRIdLEAST32 " : ";
         cat_str(buffer + len(buffer), fmt.str);
-        std::fprintf(stderr, buffer, fmt.loc.function_name(), get_fname(fmt.loc.file_name()), fmt.loc.line(),
-                     std::forward<Args>(args)...);
+        std::fprintf(stderr, buffer, color_err(color::bold_green), color_err(color::normal), fmt.loc.function_name(),
+                     get_fname(fmt.loc.file_name()), fmt.loc.line(), std::forward<Args>(args)...);
         print_stacktrace(2);
 #endif
     }
@@ -222,8 +225,9 @@ struct Fatal {
         _Pragma("GCC diagnostic pop");
 #endif  // __MERLIN_LINUX__
         // concatenate exception message to source location info
-        std::fprintf(stderr, "fatal [%s] in %s l.%" PRIdLEAST32 " : %s", fmt.loc.function_name(),
-                     get_fname(fmt.loc.file_name()), fmt.loc.line(), exception_buffer);
+        std::fprintf(stderr, "%sfatal%s [%s] in %s l.%" PRIdLEAST32 " : %s", color_err(color::bold_red),
+                     color_err(color::normal), fmt.loc.function_name(), get_fname(fmt.loc.file_name()), fmt.loc.line(),
+                     exception_buffer);
 #ifndef NDEBUG
         print_stacktrace(2);
 #endif
@@ -256,9 +260,10 @@ struct CudaOut {
      */
     template <typename... Args>
     __cudevice__ CudaOut(FmtString fmt, Args &&... args) {
-        char buffer[printf_buffer] = "cudaout [%s] in %s l.%" PRIdLEAST32 " : ";
+        char buffer[printf_buffer] = "%scudaout%s [%s] in %s l.%" PRIdLEAST32 " : ";
         cat_str(buffer + len(buffer), fmt.str);
-        std::printf(buffer, fmt.loc.function_name(), get_fname(fmt.loc.file_name()), fmt.loc.line(),
+        std::printf(buffer, __MERLIN_COLOR_CUDA(color::bold_cyan), __MERLIN_COLOR_CUDA(color::normal),
+                    fmt.loc.function_name(), get_fname(fmt.loc.file_name()), fmt.loc.line(),
                     std::forward<Args>(args)...);
     }
 };

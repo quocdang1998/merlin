@@ -3,8 +3,8 @@
 
 #include <cuda.h>  // ::cuInit
 
+#include "merlin/color.hpp"     // merlin::cout_terminal, merlin::cuprintf_terminal
 #include "merlin/logger.hpp"    // merlin::Fatal, merlin::Warning
-#include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
 
 namespace merlin {
 

@@ -24,7 +24,7 @@ __global__ void print_array(double * array) {
 }
 
 
-void graph_callback(void * data) {
+void graph_callback(void) {
     Message("Graph callback function for dynamic graph.\n");
 }
 
@@ -56,7 +56,7 @@ int main(void) {
     Message("Test 4 : Dynamic CUDA Graph\n");
     cuda::Event ev(cuda::EventCategory::BlockingSync | cuda::EventCategory::DisableTiming);
     cuda::Graph dynamic_graph(0);
-    auto [mem_alloc_node, data_ptr_void] = dynamic_graph.add_mem_alloc_node(4*sizeof(double),
+    auto [mem_alloc_node, data_ptr_void] = dynamic_graph.add_malloc_node(4*sizeof(double),
                                                                             cuda::begin_graphnode);
     double * data_ptr = reinterpret_cast<double *>(data_ptr_void);
     double data_cpu[4] = {5.8, 4.3, 2.5, 1.6};
@@ -69,7 +69,7 @@ int main(void) {
     cuda::GraphNode event_record_node = dynamic_graph.add_event_record_node(ev, {kernel_node});
     cuda::GraphNode event_wait_node = dynamic_graph.add_event_wait_node(ev, {kernel_node2});
     cuda::GraphNode memfree_node = dynamic_graph.add_memfree_node(data_ptr, {kernel_node, kernel_node2});
-    cuda::GraphNode graph_callback_node = dynamic_graph.add_host_node(&graph_callback, {memfree_node});
+    cuda::GraphNode graph_callback_node = dynamic_graph.add_host_node(graph_callback, {memfree_node});
     dynamic_graph.export_to_dot("output.dot");
     dynamic_graph.execute(s);
     s.synchronize();

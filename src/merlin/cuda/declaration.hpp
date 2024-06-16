@@ -7,7 +7,9 @@ class Device;    // GPU device
 class CtxGuard;  // CUDA context lock guard
 class Event;     // CUDA events (milestone in the stream)
 class Stream;    // CUDA streams (queues of tasks)
-class Graph;     // CUDA execution graph
+
+struct GraphNode;  // CUDA graph node
+class Graph;       // CUDA execution graph
 
 template <typename... Args>
 class Memory;  // CUDA Memory copy interface

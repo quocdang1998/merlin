@@ -4,9 +4,9 @@
 
 #include <string>  // std::string
 
+#include "merlin/config.hpp"             // __cuhostdev__, merlin::Index
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/regpl/declaration.hpp"  // merlin::regpl::Polynomial
-#include "merlin/config.hpp"             // __cuhostdev__, merlin::Index
 #include "merlin/vector.hpp"             // merlin::DoubleVec, merlin::UIntVec
 
 namespace merlin {

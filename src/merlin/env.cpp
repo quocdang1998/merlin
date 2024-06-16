@@ -1,15 +1,6 @@
 // Copyright quocdang1998
 #include "merlin/env.hpp"
 
-#include "merlin/platform.hpp"  // __MERLIN_LINUX__, __MERLIN_WINDOWS__
-
-#if defined(__MERLIN_WINDOWS__)
-    #include <io.h>     // ::_isatty
-    #include <stdio.h>  // ::_fileno
-#elif defined(__MERLIN_LINUX__)
-    #include <unistd.h>  // ::fileno, ::isatty
-#endif
-
 namespace merlin {
 
 // Default constructor
@@ -19,14 +10,6 @@ Environment::Environment(void) {
     if (Environment::is_initialized) {
         return;
     }
-    // get redirection
-#if defined(__MERLIN_WINDOWS__)
-    Environment::cout_terminal = ::_isatty(::_fileno(stdout));
-    Environment::cerr_terminal = ::_isatty(::_fileno(stderr));
-#elif defined(__MERLIN_LINUX__)
-    Environment::cout_terminal = ::isatty(::fileno(stdout));
-    Environment::cerr_terminal = ::isatty(::fileno(stderr));
-#endif
     // initialize CUDA context
     initialize_cuda_context();
     Environment::is_initialized = true;

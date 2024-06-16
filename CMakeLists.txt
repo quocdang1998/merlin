@@ -96,7 +96,7 @@ list(
     splint/intpl/newton.rdc
     splint/tools.rdc
     utils.rdc)
-list(APPEND MERLIN_SRC_ENV env.cpp logger.cpp)
+list(APPEND MERLIN_SRC_ENV env.cpp logger.cpp color.cpp)
 list(APPEND MERLIN_SRC_CUENV env.cu)
 
 # convert path to source to absolute path

@@ -64,8 +64,7 @@ class splint::Interpolator {
     /** @brief Copy assignment.*/
     splint::Interpolator & operator=(const splint::Interpolator & src) = delete;
     /** @brief Move constructor.*/
-    Interpolator(splint::Interpolator && src) :
-    ndim_(src.ndim_), shared_mem_size_(src.shared_mem_size_) {
+    Interpolator(splint::Interpolator && src) : ndim_(src.ndim_), shared_mem_size_(src.shared_mem_size_) {
         this->p_grid_ = std::exchange(src.p_grid_, nullptr);
         this->p_coeff_ = std::exchange(src.p_coeff_, nullptr);
         this->p_method_ = std::exchange(src.p_method_, nullptr);

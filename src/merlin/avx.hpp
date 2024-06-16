@@ -1,3 +1,4 @@
+// Copyright 2024 quocdang1998
 #ifndef MERLIN_AVX_HPP_
 #define MERLIN_AVX_HPP_
 

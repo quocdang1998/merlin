@@ -13,7 +13,7 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Wrapper of the function adding CUDA callback to stream
-void cuda::cuda_stream_add_callback(std::uintptr_t stream, cuda::StreamCallback func, void * arg) {
+void cuda::add_callback_to_stream(std::uintptr_t stream, cuda::StreamCallback func, void * arg) {
     Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA for stream management.\n");
 }
 

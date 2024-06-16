@@ -14,7 +14,7 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Wrapper of the function adding CUDA callback to stream
-void cuda::cuda_stream_add_callback(std::uintptr_t stream, cuda::StreamCallback func, void * arg) {
+void cuda::add_callback_to_stream(std::uintptr_t stream, cuda::StreamCallback func, void * arg) {
     ::cudaError_t err_ = ::cudaStreamAddCallback(reinterpret_cast<::cudaStream_t>(stream), func, arg, 0);
     if (err_ != 0) {
         Fatal<cuda_runtime_error>("Add callback to stream failed with message \"%s\".\n", ::cudaGetErrorString(err_));

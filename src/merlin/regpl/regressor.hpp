@@ -27,7 +27,6 @@ void eval_by_gpu(const regpl::Polynomial * p_poly, const double * point_data, do
 
 }  // namespace regpl
 
-
 // Regressor
 // ---------
 
