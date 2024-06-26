@@ -7,6 +7,7 @@
 #include "merlin/cuda/device.hpp"  // merlin::cuda::Device
 #include "merlin/cuda/event.hpp"   // merlin::cuda::Event
 #include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
+#include "merlin/env.hpp"          // merlin::check_cuda_env
 #include "merlin/logger.hpp"       // merlin::Fatal, merlin::Warning, merlin::cuda_runtime_error
 
 namespace merlin {
@@ -63,6 +64,7 @@ void cuda::Graph::destroy_graph(void) {
 
 // Constructor
 cuda::Graph::Graph(int flag) {
+    check_cuda_env();
     ::cudaError_t err_;
     switch (flag) {
         case -1 : {  // default constructor

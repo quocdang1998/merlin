@@ -130,7 +130,7 @@ class cuda::Graph {
                                     std::uint64_t shared_mem, const std::vector<cuda::GraphNode> & deps,
                                     Args &&... args);
     /** @brief Add CUDA host node.
-     *  @param functor Pointer to CPU function take in a pointer to ``void`` argument.
+     *  @param callback Pointer to CPU function take in a pointer to ``void`` argument.
      *  @param deps %Vector of nodes on which the node depends.
      *  @param args Arguments to pass to the function.
      */

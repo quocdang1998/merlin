@@ -5,6 +5,7 @@
 
 #include "merlin/cuda/event.hpp"  // merlin::cuda::Event
 #include "merlin/cuda/graph.hpp"  // merlin::cuda::Graph
+#include "merlin/env.hpp"         // merlin::check_cuda_env
 #include "merlin/logger.hpp"      // merlin::Fatal, merlin::Warning, merlin::cuda_runtime_error
 
 namespace merlin {
@@ -26,10 +27,15 @@ void cuda::add_callback_to_stream(std::uintptr_t stream, cuda::StreamCallback fu
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Default constructor (the null stream)
-cuda::Stream::Stream(void) { this->device_ = cuda::Device::get_current_gpu(); }
+cuda::Stream::Stream(void) {
+    check_cuda_env();
+    this->device_ = cuda::Device::get_current_gpu();
+}
 
 // Constructor from setting flag and priority
 cuda::Stream::Stream(cuda::StreamSetting setting, int priority) {
+    // check environment
+    check_cuda_env();
     // get min and max priority
     int min_priority, max_priority;
     ::cudaDeviceGetStreamPriorityRange(&min_priority, &max_priority);

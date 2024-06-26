@@ -1,8 +1,8 @@
 // Copyright 2023 quocdang1998
 #include <cinttypes>
 #include <cmath>
-#include <omp.h>
 #include <iostream>
+#include <omp.h>
 
 #include "merlin/array/array.hpp"
 #include "merlin/array/operation.hpp"
@@ -10,13 +10,17 @@
 #include "merlin/candy/model.hpp"
 #include "merlin/candy/optimizer.hpp"
 #include "merlin/candy/trainer.hpp"
+#include "merlin/env.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/synchronizer.hpp"
 #include "merlin/utils.hpp"
 #include "merlin/vector.hpp"
 
+using namespace merlin;
+
 int main(void) {
-    using namespace merlin;
+    // create Environment
+    Environment::init_cuda(0);
 
     // double data[6] = {1.2, 2.3, 3.6, 4.8, 7.1, 2.5};
     double data[6] = {2.5, 3.0, 3.5, 4.45, 5.34, 6.07};

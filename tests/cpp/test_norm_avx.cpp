@@ -1,3 +1,4 @@
+#include "merlin/env.hpp"
 #include "merlin/linalg/dot.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/vector.hpp"
@@ -5,6 +6,8 @@
 using namespace merlin;
 
 int main(void) {
+    // create Environment
+    Environment::init_cuda(0);
     // data
     DoubleVec a = {2.1, 1.2, 5.7, 2.8, 6.3, 8.7, 3.3, 5.9, 8.8, 1.5, 3.8, 1.7, 5.5, 6.8, 8.8, 9.4, 6.3, 3.8, 6.4};
     Message("a = %s\n", a.str(", ").c_str());

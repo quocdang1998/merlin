@@ -7,7 +7,7 @@
 
 #include <cuda.h>  // ::CUcontext, ::cuCtxGetCurrent, ::cuCtxPopCurrent, ::cuCtxPushCurrent, ::cuDeviceGetName
 
-#include "merlin/env.hpp"     // merlin::Environment
+#include "merlin/env.hpp"     // merlin::check_cuda_env, merlin::Environment
 #include "merlin/logger.hpp"  // merlin::DebugLog, merlin::Warning, merlin::Fatal, merlin::cuda_runtime_error
 
 namespace merlin {
@@ -65,6 +65,7 @@ static inline std::uintptr_t get_current_context(void) {
 
 // Construct a device from its ID
 cuda::Device::Device(int id) {
+    check_cuda_env();
     int limit = cuda::Device::get_num_gpu();
     if ((id < 0) || (id >= limit)) {
         Fatal<cuda_runtime_error>("Invalid ID of GPU (expected value between 0 and less than %d).\n", limit);

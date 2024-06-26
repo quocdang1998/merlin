@@ -2,11 +2,15 @@
 #include "merlin/array/array.hpp"
 #include "merlin/array/parcel.hpp"
 #include "merlin/cuda/device.hpp"
+#include "merlin/env.hpp"
 #include "merlin/logger.hpp"
 
 using namespace merlin;
 
 int main(void) {
+    // create Environment
+    Environment::init_cuda(0);
+
     // initialize an tensor
     double A_data[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     UIntVec dims = {2, 3};

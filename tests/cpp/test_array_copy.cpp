@@ -2,14 +2,17 @@
 #include <cstdint>
 #include <cstdio>
 
-#include "merlin/logger.hpp"
 #include "merlin/array/array.hpp"
 #include "merlin/array/operation.hpp"
+#include "merlin/env.hpp"
+#include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
-#include "merlin/array/operation.hpp"
+
+using namespace merlin;
 
 int main(void) {
-    using namespace merlin;
+    // create Environment
+    Environment::init_cuda(0);
 
     // original:
     // [1.0, 3.0, 5.0, 7.0, 9.0 ]

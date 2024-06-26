@@ -262,9 +262,8 @@ struct CudaOut {
     __cudevice__ CudaOut(FmtString fmt, Args &&... args) {
         char buffer[printf_buffer] = "%scudaout%s [%s] in %s l.%" PRIdLEAST32 " : ";
         cat_str(buffer + len(buffer), fmt.str);
-        std::printf(buffer, __MERLIN_COLOR_CUDA(color::bold_cyan), __MERLIN_COLOR_CUDA(color::normal),
-                    fmt.loc.function_name(), get_fname(fmt.loc.file_name()), fmt.loc.line(),
-                    std::forward<Args>(args)...);
+        std::printf(buffer, color_cuda(color::bold_cyan), color_cuda(color::normal), fmt.loc.function_name(),
+                    get_fname(fmt.loc.file_name()), fmt.loc.line(), std::forward<Args>(args)...);
     }
 };
 

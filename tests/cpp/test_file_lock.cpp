@@ -4,11 +4,14 @@
 #include <string>
 #include <thread>
 
+#include "merlin/env.hpp"
 #include "merlin/filelock.hpp"
 #include "merlin/logger.hpp"
 
+using namespace merlin;
+
 int main(int argc, char * argv[]) {
-    using namespace merlin;
+    Environment::init_cuda(0);
 
     if (argc != 2) {
         Fatal<std::invalid_argument>("Expected exactly 1 argument too run. Enter \"1\" for creating the file, \"2\" "

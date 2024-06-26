@@ -2,6 +2,7 @@
 
 #include "merlin/cuda/device.hpp"
 #include "merlin/cuda/memory.hpp"
+#include "merlin/env.hpp"
 #include "merlin/vector.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
@@ -29,6 +30,9 @@ __global__ void initialize_on_gpu(void) {
 }
 
 int main(void) {
+    // create Environment
+    Environment::init_cuda(0);
+
     // create UIntVec instance
     UIntVec x({1, 2, 3}), y({7, 8, 9});
     Message("Initialize UIntVec with values: %" PRIu64 " %" PRIu64 " %" PRIu64 ".\n", x[0], x[1], x[2]);

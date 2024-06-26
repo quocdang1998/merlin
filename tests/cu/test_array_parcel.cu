@@ -4,6 +4,7 @@
 #include "merlin/array/parcel.hpp"
 #include "merlin/cuda/device.hpp"
 #include "merlin/cuda/memory.hpp"
+#include "merlin/env.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
 #include "merlin/vector.hpp"
@@ -33,6 +34,9 @@ __global__ void print_element_from_shared_memory(array::Parcel * parcel_ptr) {
 }
 
 int main(void) {
+    // create Environment
+    Environment::init_cuda(0);
+
     // initialize an tensor
     double A_data[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     UIntVec dims = {2, 3};

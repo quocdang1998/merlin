@@ -1,5 +1,6 @@
 #include "merlin/cuda/device.hpp"
 #include "merlin/cuda/memory.hpp"
+#include "merlin/env.hpp"
 #include "merlin/grid/regular_grid.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
@@ -14,6 +15,9 @@ __global__ void print_reg_grid(const grid::RegularGrid * grid) {
 }
 
 int main(void) {
+    // create Environment
+    Environment::init_cuda(0);
+
     // create grid
     grid::RegularGrid grid(3);
     grid.push_back({1.1, 2.3, 4.5});

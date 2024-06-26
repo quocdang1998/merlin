@@ -3,6 +3,7 @@
 #include "merlin/config.hpp"
 #include "merlin/cuda/device.hpp"
 #include "merlin/cuda/memory.hpp"
+#include "merlin/env.hpp"
 #include "merlin/grid/cartesian_grid.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
@@ -36,6 +37,8 @@ __global__ void print_grid(grid::CartesianGrid * grid_ptr) {
 }
 
 int main(void) {
+    Environment::init_cuda(0);
+
     DoubleVec v1 = {0.1, 0.2, 0.3};
     DoubleVec v2 = {1.0, 2.0, 3.0, 4.0};
     DoubleVec v3 = {0.0, 0.25};

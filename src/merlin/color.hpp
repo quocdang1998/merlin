@@ -35,6 +35,9 @@ inline constexpr const char * color_err(const char * color) { return (cerr_termi
 /** @brief Pointer to device memory indicating if ``stdout`` is redirected into a file.*/
 inline constexpr bool cuprintf_terminal = true;
 
+/** @brief Print out color on CUDA.*/
+inline constexpr const char * color_cuda(const char * color) { return (cuprintf_terminal) ? color : ""; }
+
 namespace color {
 
 /** @brief Switch terminal color back to normal.*/

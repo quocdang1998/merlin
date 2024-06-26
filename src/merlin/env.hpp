@@ -2,8 +2,6 @@
 #ifndef MERLIN_ENV_HPP_
 #define MERLIN_ENV_HPP_
 
-#include <atomic>   // std::atomic_uint
-#include <cstdint>  // std::uint64_t
 #include <mutex>    // std::mutex
 #include <random>   // std::mt19937_64
 
@@ -17,46 +15,28 @@ class MERLINENV_EXPORTS Environment {
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
-    Environment(void);
-    /// @}
-
-    /// @name Output redirection
-    /// @{
-    /** @brief Check if ``stdout`` is redirected into a file.*/
-    static bool cout_terminal;
-    /** @brief Check if ``stderr`` is redirected into a file.*/
-    static bool cerr_terminal;
+    Environment(void) = delete;
     /// @}
 
     /// @name Shared variables
     /// @{
-    /** @brief Check if the environment is initialized or not.*/
-    static bool is_initialized;
-    /** @brief Number of Environment instances created.*/
-    static std::atomic_uint num_instances;
     /** @brief Mutex for locking threads.*/
     static std::mutex mutex;
     /** @brief Random generator.*/
     static std::mt19937_64 random_generator;
     /// @}
 
-    /// @name Destructor
+    /// @name CUDA environment
     /// @{
-    /** @brief Destructor.*/
-    ~Environment(void);
+    /** @brief Check if CUDA environment is initialized or not.*/
+    static bool is_cuda_initialized;
+    /** @brief Initialize CUDA context.*/
+    static void init_cuda(int default_gpu = 0);
     /// @}
 };
 
-/** @brief Default environment.*/
-MERLINENV_EXPORTS extern Environment default_environment;
-
-/** @brief Initialize the default CUDA context.*/
-void initialize_cuda_context(void);
-
-/** @brief Alarm for CUDA error.
- *  @details Double-check if CUDA operations have an unthrown error.
- */
-void alarm_cuda_error(void);
+/** @brief Throw an error if CUDA environment has not been initialized.*/
+MERLINENV_EXPORTS void check_cuda_env(void);
 
 }  // namespace merlin
 

@@ -1,5 +1,6 @@
-#include "merlin/regpl/polynomial.hpp"
+#include "merlin/env.hpp"
 #include "merlin/logger.hpp"
+#include "merlin/regpl/polynomial.hpp"
 #include "merlin/vector.hpp"
 
 double reference(double * point) {
@@ -8,8 +9,11 @@ double reference(double * point) {
     return result;
 }
 
+using namespace merlin;
+
 int main(void) {
-    using namespace merlin;
+
+    Environment::init_cuda(0);
 
     double coeff_simplified[] = {1.3, 2.4, 3.8, -6.2, -1.8, -3.5};
     UIntVec coef_idx = {9, 3, 11, 7, 16, 13};
