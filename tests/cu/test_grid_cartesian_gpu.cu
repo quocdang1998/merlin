@@ -3,7 +3,6 @@
 #include "merlin/config.hpp"
 #include "merlin/cuda/device.hpp"
 #include "merlin/cuda/memory.hpp"
-#include "merlin/env.hpp"
 #include "merlin/grid/cartesian_grid.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
@@ -37,15 +36,20 @@ __global__ void print_grid(grid::CartesianGrid * grid_ptr) {
 }
 
 int main(void) {
-    Environment::init_cuda(0);
+    // set GPU
+    cuda::Device gpu(0);
+    gpu.set_as_current();
 
+    // initialize Cartesian grid
     DoubleVec v1 = {0.1, 0.2, 0.3};
     DoubleVec v2 = {1.0, 2.0, 3.0, 4.0};
     DoubleVec v3 = {0.0, 0.25};
     grid::CartesianGrid cart_gr({v1, v2, v3});
 
+    // copy Cartesian grid to GPU
     cuda::Memory mem(0, cart_gr);
 
+    // tests
     grid::CartesianGrid * gpu_gr = mem.get<0>();
     print_grid<<<1,1>>>(gpu_gr);
     print_grid_from_shared_mem<<<1,1,cart_gr.sharedmem_size()>>>(gpu_gr);

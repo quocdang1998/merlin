@@ -6,7 +6,6 @@
 #include "merlin/cuda/graph.hpp"
 #include "merlin/cuda/stream.hpp"
 #include "merlin/cuda/event.hpp"
-#include "merlin/env.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
 
@@ -30,8 +29,9 @@ void graph_callback(void) {
 }
 
 int main(void) {
-    // create Environment
-    Environment::init_cuda(0);
+    // set GPU
+    cuda::Device gpu(0);
+    gpu.set_as_current();
 
     // print GPU specifications
     Message("Test 1 : GPU specification\n");

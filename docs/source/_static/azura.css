@@ -79,7 +79,7 @@
 /* custom colors */
 :root {
     --hue:                        207;  /* main hue color */
-    --hls:                        calc(var(--hue) - 10);  /* less hue */
+    --hls:                        calc(var(--hue) - 5);  /* less hue */
     --hmn:                        calc(var(--hue) + 10);  /* moderate hue*/
     --hpl:                        calc(var(--hue) + 15);  /* more hue*/
     --hrv:                        calc(var(--hue) + 180);  /* reverse hue */
@@ -90,6 +90,8 @@
     --background:                 hsl(var(--hue),  10%, 95%);  /* background */
     --table-odd-row:              hsl(var(--hue),  14%, 96%);  /* table odd row */
     --table-border:               hsl(var(--hue),  10%, 90%);  /* table border */
+    --button:                     hsl(var(--hue),  75%, 55%);  /* button */
+    --button-hover:               hsl(var(--hue),  75%, 50%);  /* button hovered */
 
     --link:                       hsl(var(--hue), 100%, 42%);  /* link */
     --visited-link:               hsl(var(--hue),  81%, 24%);  /* visited link */
@@ -120,8 +122,8 @@
     --type:                       hsl(var(--hmn),  53%, 55%);  /* type */
 
     --admonition-background:      hsl(var(--hue),  30%, 95%);  /* admonition content background */
-    --note:                       hsl(var(--hls),  80%, 60%);  /* note title */
-    --warning:                    hsl(var(--hrv), 100%, 50%);  /* warning title */
+    --note:                       hsl(var(--hls),  70%, 65%);  /* note title */
+    --warning:                    hsl(var(--hrv),  70%, 65%);  /* warning title */
 
     --codetabs-title:             hsl(var(--hmn), 100%, 50%);  /* code tabs title */
     --codetabs-title-hover:       hsl(var(--hue), 100%, 70%);  /* hovered code tabs title */
@@ -213,7 +215,27 @@ dl > dt.field-odd::after, dl > dt.field-even::after {
 }
 
 /* footer */
-.btn, .btn-neutral {}
+div.rst-footer-buttons a.btn {
+    border: none;
+    box-shadow: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    color: white !important;
+    background: linear-gradient(to bottom right, var(--button), var(--button));
+}
+div.rst-footer-buttons a.btn:hover {
+    background: linear-gradient(to bottom right, var(--button-hover), var(--button-hover));
+    transition: none;
+}
+div.rst-footer-buttons a.btn:visited {
+    color: white !important;
+}
+div.rst-footer-buttons a.btn span.fa-arrow-circle-right {
+    margin-left: 5px;
+}
+div.rst-footer-buttons a.btn span.fa-arrow-circle-left {
+    margin-right: 5px;
+}
 
 /* ============================================================================
  NAVIGATION BAR + SEARCH RESULTS
@@ -456,16 +478,21 @@ html.writer-html4 .rst-content dl:not(.docutils) > dt, html.writer-html5 .rst-co
 
 .rst-content .admonition {
     background: var(--admonition-background);
+    border-radius: 6px;
 }
 
 /* Note */
 .rst-content .note .admonition-title {
     background: var(--note);
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
 }
 
 /* Warning */
 .rst-content .warning .admonition-title {
     background: var(--warning);
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
 }
 
 /* ============================================================================

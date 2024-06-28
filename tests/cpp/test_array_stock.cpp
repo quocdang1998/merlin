@@ -8,16 +8,12 @@
 
 #include "merlin/array/array.hpp"
 #include "merlin/array/stock.hpp"
-#include "merlin/env.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/vector.hpp"
 
 using namespace merlin;
 
 int main(void) {
-    // create Environment
-    Environment::init_cuda(0);
-
     // initialize array
     double A[10] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
     UIntVec dims = {3, 2};

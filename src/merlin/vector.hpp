@@ -189,7 +189,7 @@ class Vector {
     T * data_ = nullptr;
     /** @brief Size of data.*/
     std::uint64_t size_ = 0;
-    /** @brief Data is aasigned version of a bigger data.*/
+    /** @brief Data is assigned version of a bigger data.*/
     bool assigned_ = false;
 };
 

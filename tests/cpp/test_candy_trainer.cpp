@@ -10,7 +10,6 @@
 #include "merlin/candy/model.hpp"
 #include "merlin/candy/optimizer.hpp"
 #include "merlin/candy/trainer.hpp"
-#include "merlin/env.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/synchronizer.hpp"
 #include "merlin/utils.hpp"
@@ -19,9 +18,6 @@
 using namespace merlin;
 
 int main(void) {
-    // create Environment
-    Environment::init_cuda(0);
-
     // double data[6] = {1.2, 2.3, 3.6, 4.8, 7.1, 2.5};
     double data[6] = {2.5, 3.0, 3.5, 4.45, 5.34, 6.07};
     UIntVec data_dims = {2, 3}, data_strides = {data_dims[1] * sizeof(double), sizeof(double)};

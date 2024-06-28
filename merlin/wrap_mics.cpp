@@ -21,22 +21,6 @@ static void wrap_env(py::module & merlin_package) {
         Wrapper of :cpp:class:`merlin::Environment`.
         )"
     );
-    // constructors
-    env_pyclass.def(
-        py::init([]() { return new Environment(); }),
-        "Default constructor."
-    );
-    // number of instances
-    env_pyclass.def_readonly_static(
-        "is_initialized",
-        &Environment::is_initialized,
-        "Check if the environment is initialized or not."
-    );
-    env_pyclass.def_static(
-        "num_instances",
-        []() { return Environment::num_instances.load(); },
-        "Number of Environment instances created."
-    );
     // seed setting operator
     env_pyclass.def_static(
         "set_random_seed",
@@ -53,6 +37,12 @@ static void wrap_env(py::module & merlin_package) {
         },
         "Set a sequence of new random seed to the random generator.",
         py::arg("seed_seq")
+    );
+    // CUDA environment
+    env_pyclass.def_static(
+        "init_cuda",
+        [](void) { Environment::init_cuda(); },
+        "Initialize CUDA context."
     );
 }
 

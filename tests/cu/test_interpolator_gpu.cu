@@ -1,8 +1,8 @@
 #include "merlin/array/array.hpp"
 #include "merlin/array/parcel.hpp"
+#include "merlin/cuda/device.hpp"
 #include "merlin/cuda/stream.hpp"
 #include "merlin/cuda/memory.hpp"
-#include "merlin/env.hpp"
 #include "merlin/grid/cartesian_grid.hpp"
 #include "merlin/splint/interpolator.hpp"
 #include "merlin/splint/tools.hpp"
@@ -17,8 +17,9 @@ double foo(const DoubleVec & v) {
 }
 
 int main(void) {
-    // create Environment
-    Environment::init_cuda(0);
+    // set GPU
+    cuda::Device gpu(0);
+    gpu.set_as_current();
 
     // initialize data and grid
     grid::CartesianGrid cart_gr({{0.1, 0.2, 0.3}, {1.0, 2.0, 3.0, 4.0}, {0.0, 0.25, 0.5}});

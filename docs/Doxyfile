@@ -27,8 +27,7 @@ PREDEFINED             = "__cudevice__=__device__" \
                          "__NVCC__=1" \
                          "__DOXYGEN_PARSER__=1" \
                          "MERLIN_EXPORTS=1" \
-                         "MERLINSHARED_EXPORTS=1" \
-                         "MERLIN_HOSTDEV_EXPORTS=1" \
+                         "MERLINENV_EXPORTS=1" \
                          "MERLIN_NO_EXPORT=1" \
                          "MERLIN_DEPRECATED=1"
 SORT_MEMBER_DOCS       = NO

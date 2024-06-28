@@ -3,7 +3,6 @@
 #include <vector>
 
 #include "merlin/array/array.hpp"
-#include "merlin/env.hpp"
 #include "merlin/grid/cartesian_grid.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/splint/interpolator.hpp"
@@ -37,9 +36,6 @@ array::Array point_generator(std::uint64_t num_point, const grid::CartesianGrid 
 }
 
 int main(void) {
-    // create Environment
-    Environment::init_cuda(0);
-
     // initialize data and grid
     grid::CartesianGrid cart_gr({{0.1, 0.2, 0.3}, {1.0, 2.0, 3.0, 4.0}, {0.0, 0.25, 0.5}});
     array::Array value(cart_gr.shape());

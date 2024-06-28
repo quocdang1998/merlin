@@ -3,6 +3,7 @@
 
 #include <cstdio>   // std::printf
 #include <map>      // std::map
+#include <mutex>    // std::unique_lock
 #include <sstream>  // std::ostringstream
 
 #include <cuda.h>  // ::CUcontext, ::cuCtxGetCurrent, ::cuCtxPopCurrent, ::cuCtxPushCurrent, ::cuDeviceGetName
@@ -47,6 +48,10 @@ static int convert_SM_version_to_core(int major, int minor) {
     return num_gpu_arch_cores_per_SM[SM];
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Context
+// ---------------------------------------------------------------------------------------------------------------------
+
 // Get current CUDA context
 static inline std::uintptr_t get_current_context(void) {
     // check for current context as regular context
@@ -59,18 +64,67 @@ static inline std::uintptr_t get_current_context(void) {
     return reinterpret_cast<std::uintptr_t>(current_ctx);
 }
 
+// Duplicate the current context on the context stack
+/*static inline std::uintptr_t duplicate_current_context(void) {
+    ::cudaError_t err_;
+    std::uintptr_t current_ctx = get_current_context();
+    if (current_ctx != 0) {
+        err_ = static_cast<::cudaError_t>(::cuCtxPushCurrent(reinterpret_cast<::CUcontext>(current_ctx)));
+        if (err_ != 0) {
+            Fatal<cuda_runtime_error>("cuCtxPushCurrent failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        }
+    }
+    return current_ctx;
+}*/
+
+// Add primary context pointer to storage
+static inline void record_primary_context(int gpu) {
+    // initialize lock guard
+    std::unique_lock guard(Environment::mutex);
+    // skip when the context has already been recorded before
+    if (Environment::primary_ctx.contains(gpu)) {
+        return;
+    }
+    ::cudaError_t err_;
+    // duplicate current context
+    std::uintptr_t current_ctx = get_current_context();
+    if (current_ctx != 0) {
+        err_ = static_cast<::cudaError_t>(::cuCtxPushCurrent(reinterpret_cast<::CUcontext>(current_ctx)));
+        if (err_ != 0) {
+            Fatal<cuda_runtime_error>("cuCtxPushCurrent failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        }
+    }
+    // replace current context with the primary context of the GPU
+    err_ = ::cudaSetDevice(gpu);
+    if (err_ != 0) {
+            Fatal<cuda_runtime_error>("cudaSetDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        }
+    // record primary context
+    Environment::primary_ctx[gpu] = get_current_context();
+    // pop the newly added context
+    ::CUcontext ctx;
+    err_ = static_cast<::cudaError_t>(::cuCtxPopCurrent(&ctx));
+    if (err_ != 0) {
+        Fatal<cuda_runtime_error>("cuCtxPopCurrent failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+    }
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Device
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Construct a device from its ID
 cuda::Device::Device(int id) {
+    // check environment
     check_cuda_env();
+    // check argument
     int limit = cuda::Device::get_num_gpu();
     if ((id < 0) || (id >= limit)) {
         Fatal<cuda_runtime_error>("Invalid ID of GPU (expected value between 0 and less than %d).\n", limit);
     }
     this->id_ = id;
+    // check ID limit
+    record_primary_context(id);
 }
 
 // Get instance point to current GPU
@@ -195,17 +249,8 @@ std::uintptr_t cuda::Device::push_context(void) const {
     DebugLog("Environment::mutex is locked.\n");
     Environment::mutex.lock();
     std::uintptr_t current_context = get_current_context();
-    ::cudaError_t err_;
-    if (current_context != 0) {
-        err_ = static_cast<::cudaError_t>(::cuCtxPushCurrent(reinterpret_cast<::CUcontext>(current_context)));
-        if (err_ != 0) {
-            Fatal<cuda_runtime_error>("cuCtxPushCurrent failed with message \"%s\".\n", ::cudaGetErrorName(err_));
-        }
-    }
-    err_ = ::cudaSetDevice(this->id_);
-    if (err_ != 0) {
-        Fatal<cuda_runtime_error>("cudaSetDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
-    }
+    std::uintptr_t primary_context = Environment::primary_ctx.at(this->id_);
+    ::cudaError_t err_ = static_cast<::cudaError_t>(::cuCtxPushCurrent(reinterpret_cast<::CUcontext>(primary_context)));
     return current_context;
 }
 

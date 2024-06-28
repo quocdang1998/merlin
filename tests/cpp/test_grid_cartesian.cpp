@@ -2,14 +2,12 @@
 #include <cinttypes>
 
 #include "merlin/array/array.hpp"
-#include "merlin/env.hpp"
 #include "merlin/grid/cartesian_grid.hpp"
 #include "merlin/logger.hpp"
 
 using namespace merlin;
 
 int main(void) {
-    Environment::init_cuda(0);
     grid::CartesianGrid cart_gr({{0.1, 0.2, 0.3}, {1.0, 3.0, 2.0, 4.0}, {0.0, 0.25}});
     Message("Cartesian grid: %s\n", cart_gr.str().c_str());
     Message("Number of nodes: %" PRIu64 ", number of points: %" PRIu64 "\n", cart_gr.num_nodes(), cart_gr.size());

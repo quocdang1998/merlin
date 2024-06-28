@@ -1,6 +1,5 @@
 #include <cstring>
 
-#include "merlin/env.hpp"
 #include "merlin/linalg/matrix.hpp"
 #include "merlin/linalg/tri_solve.hpp"
 #include "merlin/linalg/qrp_decomp.hpp"
@@ -58,8 +57,6 @@ void test_triu_solve(void) {
 }
 
 void test_qr_solve(void) {
-    // create Environment
-    Environment::init_cuda(0);
     // data (20x4)
     double data[80] = {
         4.4, 6.7, 3.6, 8.8, 3.9, 8.1, 7.2, 6.9, 8.2, 2.9, 3.9, 5.7, 2.3, 2.8, 3.6, 1.7, 5.8, 4.1, 4.6, 1.4,

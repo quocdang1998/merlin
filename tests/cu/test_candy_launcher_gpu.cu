@@ -7,9 +7,9 @@
 #include "merlin/candy/optmz/adagrad.hpp"
 #include "merlin/candy/optmz/grad_descent.hpp"
 #include "merlin/candy/optimizer.hpp"
+#include "merlin/cuda/device.hpp"
 #include "merlin/cuda/memory.hpp"
 #include "merlin/cuda/stream.hpp"
-#include "merlin/env.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/synchronizer.hpp"
 #include "merlin/utils.hpp"
@@ -18,8 +18,9 @@
 using namespace merlin;
 
 int main (void) {
-    // create Environment
-    Environment::init_cuda(0);
+    // set GPU
+    cuda::Device gpu(0);
+    gpu.set_as_current();
 
     // initialize train data
     double data[6] = {1.2, 2.3, 3.6, 4.8, 7.1, 2.5};

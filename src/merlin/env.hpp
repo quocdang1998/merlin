@@ -2,6 +2,8 @@
 #ifndef MERLIN_ENV_HPP_
 #define MERLIN_ENV_HPP_
 
+#include <cstdint>  // std::uintptr_t
+#include <map>      // std::map
 #include <mutex>    // std::mutex
 #include <random>   // std::mt19937_64
 
@@ -10,30 +12,35 @@
 namespace merlin {
 
 /** @brief Execution environment of merlin.*/
-class MERLINENV_EXPORTS Environment {
+class Environment {
   public:
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
-    Environment(void) = delete;
+    MERLINENV_EXPORTS Environment(void);
     /// @}
 
     /// @name Shared variables
     /// @{
     /** @brief Mutex for locking threads.*/
-    static std::mutex mutex;
+    MERLINENV_EXPORTS static std::mutex mutex;
     /** @brief Random generator.*/
-    static std::mt19937_64 random_generator;
+    MERLINENV_EXPORTS static std::mt19937_64 random_generator;
     /// @}
 
     /// @name CUDA environment
     /// @{
     /** @brief Check if CUDA environment is initialized or not.*/
-    static bool is_cuda_initialized;
+    MERLINENV_EXPORTS static bool is_cuda_initialized;
     /** @brief Initialize CUDA context.*/
-    static void init_cuda(int default_gpu = 0);
+    MERLINENV_EXPORTS static void init_cuda(void);
+    /** @brief Primary context of each GPU.*/
+    MERLINENV_EXPORTS static std::map<int, std::uintptr_t> primary_ctx;
     /// @}
 };
+
+/** @brief Default environment.*/
+MERLINENV_EXPORTS extern Environment default_env;
 
 /** @brief Throw an error if CUDA environment has not been initialized.*/
 MERLINENV_EXPORTS void check_cuda_env(void);

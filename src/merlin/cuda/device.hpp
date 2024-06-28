@@ -69,7 +69,7 @@ class cuda::Device {
      */
     MERLIN_EXPORTS void set_as_current(void) const;
     /** @brief Push the primary context associated to the GPU to the context stack.
-     *  @warning This function will also lock the Environment::mutex without releasing it. User is reponsible for
+     *  @warning This function will also lock the Environment::mutex without releasing it. User is responsible for
      *  ensuring that the mutex is not locked by the current thread before calling this function (otherwise the
      *  situation will result in an infinite loop). Releasing the mutex after usage is automatically called inside the
      *  method cuda::Device::pop_context.
@@ -123,6 +123,12 @@ class cuda::Device {
     int id_ = -1;
 };
 
+/** @brief CUDA context guard.
+ *  @details This context manages a critical section during its lifetime to register the primary CUDA context associated
+ *  with a GPU. This context is used to launch operations and CUDA kernels. Upon destruction, if the context stack was
+ *  not empty prior to the primary context being added, the registered CUDA context will be removed from the context
+ *  stack.
+ */
 class cuda::CtxGuard {
   public:
     /// @name Constructor

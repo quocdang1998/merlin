@@ -15,7 +15,6 @@ import sys
 sys.path.append(os.path.abspath('../..'))
 import merlin
 
-
 # -- Project information -----------------------------------------------------
 
 project = 'Merlin'

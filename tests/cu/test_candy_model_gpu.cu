@@ -5,7 +5,6 @@
 #include "merlin/cuda/device.hpp"
 #include "merlin/cuda/memory.hpp"
 #include "merlin/cuda/stream.hpp"
-#include "merlin/env.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/vector.hpp"
 
@@ -43,8 +42,9 @@ __global__ void print_model(candy::Model * model_ptr) {
 }
 
 int main(void) {
-    // create Environment
-    Environment::init_cuda(0);
+    // set GPU
+    cuda::Device gpu(0);
+    gpu.set_as_current();
 
     // Initialize model
     candy::Model model(
