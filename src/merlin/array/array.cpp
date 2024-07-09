@@ -63,7 +63,7 @@ static inline void read_from_file(void * dest, std::FILE * file, const void * sr
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Construct Array from Numpy array
-array::Array::Array(double * data, const UIntVec & shape, const UIntVec & strides, bool copy) :
+array::Array::Array(double * data, const UIntVec & shape, const UIntVec & strides, bool copy, bool pin_memory) :
 array::NdData(data, shape, strides) {
     // copy or assign data
     this->release = copy;
@@ -81,7 +81,9 @@ array::NdData(data, shape, strides) {
         this->data_ = data;
         // pin memory
         std::uint64_t last_elem = array::get_leap(this->size_ - 1, this->shape_, this->strides_, this->ndim_);
-        array::cuda_pin_memory(this->data_, last_elem + sizeof(double));
+        if (pin_memory) {
+            array::cuda_pin_memory(this->data_, last_elem + sizeof(double));
+        }
     }
 }
 

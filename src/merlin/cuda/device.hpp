@@ -141,11 +141,7 @@ class cuda::CtxGuard {
 
     /// @name Destructor
     /** @brief Default destructor.*/
-    inline ~CtxGuard(void) {
-        if (this->context_ptr_ != 0) {
-            cuda::Device::pop_context(this->context_ptr_);
-        }
-    }
+    inline ~CtxGuard(void) { cuda::Device::pop_context(this->context_ptr_); }
 
   protected:
     /** @brief Pointer to the context guarded.*/

@@ -46,10 +46,14 @@ class array::Array : public array::NdData {
      *  @param shape Size per dimension.
      *  @param strides Stride per dimension.
      *  @param copy Copy the original tensor to C-contiguous tensor.
+     *  @param pin_memory If compiled with CUDA, pin pages containing assigned data to the memory. Pinned memory pages
+     *  cannot be swapped out of the memory. Memory should only be pages once, and the paging order must be performed on
+     *  the assigned array containing the first element of the whole array.
      *  @note The original memory tied to the pointer will not be freed at destruction. But if copy is true, the
         copied tensor is automatically deallocated inside the destructor.
      */
-    MERLIN_EXPORTS Array(double * data, const UIntVec & shape, const UIntVec & strides, bool copy = false);
+    MERLIN_EXPORTS Array(double * data, const UIntVec & shape, const UIntVec & strides, bool copy = false,
+                         bool pin_memory = true);
     /** @brief Constructor C-contiguous empty array from shape vector.*/
     MERLIN_EXPORTS Array(const Index & shape);
     /// @}

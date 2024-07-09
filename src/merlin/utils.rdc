@@ -4,8 +4,7 @@
 #include <cinttypes>  // PRIu64
 #include <cmath>      // std::floor, std::sqrt
 
-#include "merlin/logger.hpp"    // CUHDERR
-#include "merlin/platform.hpp"  // __MERLIN_WINDOWS__, __MERLIN_LINUX__
+#include "merlin/assume.hpp"  // assume
 
 namespace merlin {
 
@@ -15,6 +14,7 @@ namespace merlin {
 
 // Product of all elements of the vector
 __cuhostdev__ std::uint64_t prod_elements(const std::uint64_t * v, std::uint64_t size) {
+    assume(size <= 16);
     std::uint64_t result = 1;
     for (std::uint64_t i = 0; i < size; i++) {
         result *= v[i];
@@ -24,6 +24,7 @@ __cuhostdev__ std::uint64_t prod_elements(const std::uint64_t * v, std::uint64_t
 
 // Inner product of 2 index vectors
 __cuhostdev__ std::uint64_t inner_prod(const std::uint64_t * v1, const std::uint64_t * v2, std::uint64_t size) {
+    assume(size <= 16);
     std::uint64_t inner_product = 0;
     for (std::uint64_t i = 0; i < size; i++) {
         inner_product += v1[i] * v2[i];
@@ -34,6 +35,7 @@ __cuhostdev__ std::uint64_t inner_prod(const std::uint64_t * v1, const std::uint
 // Convert n-dimensional index to C-contiguous index
 __cuhostdev__ std::uint64_t ndim_to_contiguous_idx(const std::uint64_t * index, const std::uint64_t * shape,
                                                    std::uint64_t ndim) {
+    assume(ndim <= 16);
     std::uint64_t c_index = 0, cum_prod = 1;
     for (std::int64_t i = ndim - 1; i >= 0; i--) {
         c_index += index[i] * cum_prod;
@@ -45,6 +47,7 @@ __cuhostdev__ std::uint64_t ndim_to_contiguous_idx(const std::uint64_t * index, 
 // Convert C-contiguous index to n-dimensional index and save data to a pre-allocated memory
 __cuhostdev__ void contiguous_to_ndim_idx(std::uint64_t index, const std::uint64_t * shape, std::uint64_t ndim,
                                           std::uint64_t * data_ptr) {
+    assume(ndim <= 16);
     // calculate index vector
     std::uint64_t cum_prod = 1;
     for (std::int64_t i = ndim - 1; i >= 0; i--) {
@@ -55,6 +58,7 @@ __cuhostdev__ void contiguous_to_ndim_idx(std::uint64_t index, const std::uint64
 
 // Increment of n-dim index
 __cuhostdev__ std::int64_t increment_index(std::uint64_t * index, const std::uint64_t * shape, std::uint64_t ndim) {
+    assume(ndim <= 16);
     // increasing index
     std::int64_t i_dim = ndim;
     bool keep_decresing, not_dim_break;
@@ -69,6 +73,7 @@ __cuhostdev__ std::int64_t increment_index(std::uint64_t * index, const std::uin
 
 // Increment of n-dim index
 __cuhostdev__ std::int64_t decrement_index(std::uint64_t * index, const std::uint64_t * shape, std::uint64_t ndim) {
+    assume(ndim <= 16);
     // decresing index
     std::int64_t i_dim = ndim;
     bool keep_decresing, not_dim_break;
@@ -88,6 +93,7 @@ __cuhostdev__ std::int64_t decrement_index(std::uint64_t * index, const std::uin
 // Get a list of pointers divided from an original array
 __cuhostdev__ void ptr_to_subsequence(double * original, const std::uint64_t * divider_length, std::uint64_t num_seq,
                                       double ** data_ptr) {
+    assume(num_seq <= 16);
     std::uint64_t jump = 0;
     for (std::uint64_t i = 0; i < num_seq; i++) {
         data_ptr[i] = original + jump;
@@ -99,6 +105,7 @@ __cuhostdev__ void ptr_to_subsequence(double * original, const std::uint64_t * d
 __cuhostdev__ std::array<std::uint64_t, 2> index_in_subsequence(std::uint64_t index_full_array,
                                                                 const std::uint64_t * divider_length,
                                                                 std::uint64_t num_seq) noexcept {
+    assume(num_seq <= 16);
     std::uint64_t i_list = 0;
     std::int64_t index_in_list = index_full_array;
     for (std::uint64_t i = 0; i < num_seq; i++) {
@@ -115,38 +122,6 @@ __cuhostdev__ std::array<std::uint64_t, 2> triangular_index(std::uint64_t index)
     triangular_index[0] = std::floor((-1.f + std::sqrt(1.f + 8.f * index)) / 2.f);
     triangular_index[1] = index - (triangular_index[0] * (triangular_index[0] + 1)) / 2;
     return triangular_index;
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Sparse Grid
-// ---------------------------------------------------------------------------------------------------------------------
-
-// Get size of a sub-grid given its level vector
-__cuhostdev__ std::uint64_t calc_subgrid_size(const UIntVec & level_vector) noexcept {
-    std::uint64_t subgrid_size = 1;
-    for (std::uint64_t i_dim = 0; i_dim < level_vector.size(); i_dim++) {
-        const std::uint64_t & dim_level = level_vector[i_dim];
-        if (dim_level == 0) {
-            continue;
-        }
-        subgrid_size *= ((dim_level == 1) ? 2 : (1 << (dim_level - 1)));
-    }
-    return subgrid_size;
-}
-
-// Get shape of Cartesian subgrid
-__cuhostdev__ UIntVec get_level_shape(const UIntVec & level_vector) {
-    UIntVec grid_shape(level_vector.size());
-    for (std::uint64_t i = 0; i < level_vector.size(); i++) {
-        if (level_vector[i] == 0) {
-            grid_shape[i] = 1;
-        } else if (level_vector[i] == 1) {
-            grid_shape[i] = 2;
-        } else {
-            grid_shape[i] = 1 << (level_vector[i] - 1);
-        }
-    }
-    return grid_shape;
 }
 
 }  // namespace merlin

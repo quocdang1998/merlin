@@ -117,7 +117,7 @@ static void wrap_array_(py::module & array_module) {
     // constructor
     array_pyclass.def(
         py::init(
-            [](py::buffer buffer, bool copy) {
+            [](py::buffer buffer, bool copy, bool pin_memory) {
                 py::buffer_info info = buffer.request();
                 if (info.format != py::format_descriptor<double>::format()) {
                     throw std::runtime_error("Incompatible format: expected a double array.");
@@ -128,7 +128,7 @@ static void wrap_array_(py::module & array_module) {
                     shape[i_dim] = std::uint64_t(info.shape[i_dim]);
                     strides[i_dim] = std::uint64_t(info.strides[i_dim]);
                 }
-                return new array::Array(reinterpret_cast<double *>(info.ptr), shape, strides, copy);
+                return new array::Array(reinterpret_cast<double *>(info.ptr), shape, strides, copy, pin_memory);
             }
         ),
         R"(
@@ -138,10 +138,14 @@ static void wrap_array_(py::module & array_module) {
         ----------
         buffer :
             Original array.
-        copy :
+        copy : bool
             If ``True``, copy data from the buffer to a new C-contiguous array. otherwise, directly assign the array
-            to the pointer of the buffer.)",
-        py::arg("buffer"), py::arg("copy") = false,
+            to the pointer of the buffer.
+        pin_memory : bool
+            If ``True``, pin pages containing assigned data to the memory. Pinned memory pages cannot be swapped out of
+            the memory. Memory should only be pages once, and the paging order must be performed on the assigned array
+            containing the first element of the whole array.)",
+        py::arg("buffer"), py::arg("copy") = false, py::arg("pin_memory") = true,
         py::keep_alive<1,2>()
     );
     // conversion to Numpy
