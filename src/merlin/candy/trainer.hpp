@@ -26,10 +26,18 @@ inline void end_message(const std::string & trainer_name) {
     std::printf("Finish training of \"%s\"\n", trainer_name.c_str());
 }
 
+inline void save_model(candy::Model * p_model, std::string * p_fname) {
+    if (!p_fname->empty()) {
+        std::printf("Save to file %s\n", p_fname->c_str());
+        p_model->save(*p_fname, true);
+    }
+    delete p_fname;
+}
+
 /** @brief Train a model using CPU parallelism.*/
 void train_by_cpu(std::future<void> && synch, candy::Model * p_model, const array::Array * p_data,
                   candy::Optimizer * p_optimizer, double * cpu_grad_mem, candy::TrainMetric metric, std::uint64_t rep,
-                  double threshold, std::uint64_t n_threads, std::string * p_name);
+                  double threshold, std::uint64_t n_threads, std::string * p_name, std::string * p_fname);
 
 /** @brief Train a model using GPU parallelism.*/
 void train_by_gpu(candy::Model * p_model, const array::Parcel * p_data, candy::Optimizer * p_optimizer,
@@ -137,10 +145,12 @@ class candy::Trainer {
      *  @param threshold Threshold to stop the training process.
      *  @param n_threads Number of parallel threads for training the model.
      *  @param metric Training metric for the model.
+     *  @param export_file Name of the file to export the trained model to. If empty, the model will not be exported.
      */
     MERLIN_EXPORTS void update(const array::Array & data, std::uint64_t rep, double threshold,
                                std::uint64_t n_threads = 1,
-                               candy::TrainMetric metric = candy::TrainMetric::RelativeSquare);
+                               candy::TrainMetric metric = candy::TrainMetric::RelativeSquare,
+                               const std::string & export_file = "");
     /** @brief Update CP model according to gradient on GPU.
      *  @details Update CP model for a certain number of iterations, and check if the relative error after the training
      *  process is smaller than a given threshold. If this is the case, break the training. Otherwise, continue to train
@@ -153,10 +163,12 @@ class candy::Trainer {
      *  @param threshold Threshold to stop the training process.
      *  @param n_threads Number of parallel threads for training the model.
      *  @param metric Training metric for the model.
+     *  @param export_file Name of the file to export the trained model to. If empty, the model will not be exported.
      */
     MERLIN_EXPORTS void update(const array::Parcel & data, std::uint64_t rep, double threshold,
                                std::uint64_t n_threads = 32,
-                               candy::TrainMetric metric = candy::TrainMetric::RelativeSquare);
+                               candy::TrainMetric metric = candy::TrainMetric::RelativeSquare,
+                               const std::string & export_file = "");
     /// @}
 
     /// @name Error metric

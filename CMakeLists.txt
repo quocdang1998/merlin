@@ -25,6 +25,8 @@ list(
     array/array.cpp
     array/parcel.cpp
     array/stock.cpp
+    candy/intlz/gaussian.cpp
+    candy/intlz/uniform.cpp
     candy/optmz/adadelta.cpp
     candy/optmz/adam.cpp
     candy/optmz/adagrad.cpp

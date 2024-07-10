@@ -31,10 +31,10 @@ void cuda::stream_callback_wrapper(::cudaStream_t stream, ::cudaError_t status, 
 template <typename Function, typename... Args>
 void cuda::Stream::add_callback(Function & callback, Args &&... args) {
     Function * p_callback = &callback;
-    std::tuple<Args &&...> * p_arg = new std::tuple<Args &&...>(std::forward_as_tuple(std::forward<Args>(args)...));
+    std::tuple<Args &&...> * p_args = new std::tuple<Args &&...>(std::forward_as_tuple(std::forward<Args>(args)...));
     std::uintptr_t * data = new std::uintptr_t[2];
     data[0] = reinterpret_cast<std::uintptr_t>(p_callback);
-    data[1] = reinterpret_cast<std::uintptr_t>(p_arg);
+    data[1] = reinterpret_cast<std::uintptr_t>(p_args);
     cuda::add_callback_to_stream(this->stream_, cuda::stream_callback_wrapper<Function, Args...>, data);
 }
 

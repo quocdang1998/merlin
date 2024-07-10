@@ -9,6 +9,7 @@
 #include "merlin/candy/gradient.hpp"     // merlin::candy::Gradient
 #include "merlin/candy/model.hpp"        // merlin::candy::Model
 #include "merlin/candy/optimizer.hpp"    // merlin::candy::Optimizer
+#include "merlin/candy/randomizer.hpp"   // merlin::candy::Randomizer
 #include "merlin/candy/trainer.hpp"      // merlin::candy::Trainer
 
 namespace merlin {
@@ -18,6 +19,17 @@ static std::map<std::string, candy::TrainMetric> trainmetric_map = {
     {"relsquare", candy::TrainMetric::RelativeSquare},
     {"abssquare", candy::TrainMetric::AbsoluteSquare}
 };
+
+// Wrap merlin::candy::Randomizer enum
+static void wrap_randomizer(py::module & candy_module) {
+    auto randomizer_pyenum = py::enum_<candy::Randomizer>(
+        candy_module,
+        "Randomizer",
+        "Wrapper of :cpp:enum:`merlin::candy::Randomizer`"
+    );
+    randomizer_pyenum.value("Gaussian", candy::Randomizer::Gaussian);
+    randomizer_pyenum.value("Uniform", candy::Randomizer::Uniform);
+}
 
 // Wrap merlin::candy::Model class
 void wrap_model(py::module & candy_module) {
@@ -115,11 +127,12 @@ void wrap_model(py::module & candy_module) {
     // initialization
     model_pyclass.def(
         "initialize",
-        [](candy::Model & self, const array::Array & train_data) {
-            self.initialize(train_data);
+        [](candy::Model & self, const array::Array & train_data, py::list & randomizer) {
+            Vector<candy::Randomizer> cpp_randomizer(pyseq_to_vector<candy::Randomizer>(randomizer));
+            self.initialize(train_data, cpp_randomizer.data());
         },
         "Initialize values of model based on train data.",
-        py::arg("train_data")
+        py::arg("train_data"), py::arg("randomizer")
     );
     // serialization
     model_pyclass.def(
@@ -627,7 +640,7 @@ void wrap_trainer(py::module & candy_module) {
         "reconstruct_cpu",
         [](candy::Trainer & self, array::Array & dest, std::uint64_t n_threads) { self.reconstruct(dest, n_threads); },
         R"(
-        Reconstruct a whole multi-dimensional data from the model using CPU parallelism. 
+        Reconstruct a whole multi-dimensional data from the model using CPU parallelism.
 
         Parameters
         ----------
@@ -642,7 +655,7 @@ void wrap_trainer(py::module & candy_module) {
         "reconstruct_gpu",
         [](candy::Trainer & self, array::Parcel & dest, std::uint64_t n_threads) { self.reconstruct(dest, n_threads); },
         R"(
-        Reconstruct a whole multi-dimensional data from the model using GPU parallelism. 
+        Reconstruct a whole multi-dimensional data from the model using GPU parallelism.
 
         Parameters
         ----------
@@ -660,6 +673,7 @@ void wrap_candy(py::module & merlin_package) {
     py::module candy_module = merlin_package.def_submodule("candy", "Data compression by Candecomp-Paraface method.");
     // add classes
     wrap_model(candy_module);
+    wrap_randomizer(candy_module);
     wrap_gradient(candy_module);
     wrap_optimizer(candy_module);
     wrap_trainer(candy_module);

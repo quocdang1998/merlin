@@ -232,6 +232,17 @@ CP decomposition model
    merlin::candy::Model
    merlin::candy::Gradient
 
+Model initialization
+^^^^^^^^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::candy::Randomizer
+   merlin::candy::intlz::Initializer
+   merlin::candy::intlz::Gaussian
+   merlin::candy::intlz::Uniform
+
 Metric error
 ^^^^^^^^^^^^
 

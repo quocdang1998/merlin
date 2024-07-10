@@ -24,7 +24,8 @@ namespace merlin {
 // Train a model using CPU parallelism
 void candy::train_by_cpu(std::future<void> && synch, candy::Model * p_model, const array::Array * p_data,
                          candy::Optimizer * p_optimizer, double * cpu_grad_mem, candy::TrainMetric metric,
-                         std::uint64_t rep, double threshold, std::uint64_t n_threads, std::string * p_name) {
+                         std::uint64_t rep, double threshold, std::uint64_t n_threads, std::string * p_name,
+                         std::string * p_fname) {
     // finish old job
     if (synch.valid()) {
         synch.get();
@@ -64,7 +65,9 @@ void candy::train_by_cpu(std::future<void> && synch, candy::Model * p_model, con
         go_on = (is_normal(posteriori_error)) ? (rel_err > threshold) : false;
         step += rep;
     } while (go_on);
+    // save model to file
     candy::end_message(*p_name);
+    candy::save_model(p_model, p_fname);
 }
 
 // Calculate error using CPU parallelism
@@ -166,7 +169,7 @@ name_(name), model_(model), optmz_(optimizer), p_synch_(&synchronizer) {
 
 // Update CP model according to gradient on CPU
 void candy::Trainer::update(const array::Array & data, std::uint64_t rep, double threshold, std::uint64_t n_threads,
-                            candy::TrainMetric metric) {
+                            candy::TrainMetric metric, const std::string & export_file) {
     // check if trainer is on CPU
     if (this->on_gpu()) {
         Fatal<std::invalid_argument>("The current object is allocated on GPU.\n");
@@ -176,10 +179,11 @@ void candy::Trainer::update(const array::Array & data, std::uint64_t rep, double
         Fatal<std::invalid_argument>("Incompatible shape between data and model.\n");
     }
     // asynchronous launch
+    std::string * p_fname = new std::string(export_file);
     std::future<void> & current_sync = std::get<std::future<void>>(this->p_synch_->core);
     std::future<void> new_sync = std::async(std::launch::async, candy::train_by_cpu, std::move(current_sync),
                                             &(this->model_), &data, &(this->optmz_), this->cpu_grad_mem_, metric, rep,
-                                            threshold, n_threads, &(this->name_));
+                                            threshold, n_threads, &(this->name_), p_fname);
     *(this->p_synch_) = Synchronizer(std::move(new_sync));
 }
 
@@ -247,7 +251,7 @@ void candy::Trainer::reconstruct(array::Array & destination, std::uint64_t n_thr
 
 // Update CP model according to gradient on GPU
 void candy::Trainer::update(const array::Parcel & data, std::uint64_t rep, double threshold, std::uint64_t n_threads,
-                            candy::TrainMetric metric) {
+                            candy::TrainMetric metric, const std::string & export_file) {
     Fatal<cuda_compile_error>("Cannot invoke GPU function since merlin is not compiled with CUDA option.\n");
 }
 

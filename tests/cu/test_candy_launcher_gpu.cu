@@ -61,8 +61,8 @@ int main (void) {
     }
 
     // launch update
-    train_gpu.update(gpu_data, rep, threshold, 16, candy::TrainMetric::RelativeSquare);
-    train_cpu.update(train_data, rep, threshold, 3, candy::TrainMetric::RelativeSquare);
+    train_gpu.update(gpu_data, rep, threshold, 16, candy::TrainMetric::RelativeSquare, "result_gpu.txt");
+    train_cpu.update(train_data, rep, threshold, 3, candy::TrainMetric::RelativeSquare, "result_cpu.txt");
 
     // synchronize
     gpu_sync.synchronize();

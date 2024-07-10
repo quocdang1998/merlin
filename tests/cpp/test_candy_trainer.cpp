@@ -6,6 +6,7 @@
 
 #include "merlin/array/array.hpp"
 #include "merlin/array/operation.hpp"
+#include "merlin/candy/randomizer.hpp"
 #include "merlin/candy/gradient.hpp"
 #include "merlin/candy/model.hpp"
 #include "merlin/candy/optimizer.hpp"
@@ -25,13 +26,15 @@ int main(void) {
     Message("Data: %s\n", train_data.str().c_str());
 
     candy::Model model({{1.0, 0.5, 1.6, 2.7}, {2.0, 1.0, 2.4, 1.2, 4.6, 3.5}}, 2);
+    std::array<candy::Randomizer, 2> randomizer = {candy::Randomizer::Gaussian, candy::Randomizer::Gaussian};
+    model.initialize(train_data, randomizer.data());
     Message("Model before trained: %s\n", model.str().c_str());
 
     // candy::Optimizer opt = candy::create_grad_descent(0.5);
     // candy::Optimizer opt = candy::create_adagrad(0.5, model);
     // candy::Optimizer opt = candy::create_adam(0.5, 0.9, 0.99, model);
     // candy::Optimizer opt = candy::create_adadelta(1, 0.9999, model);
-    candy::Optimizer opt = candy::create_rmsprop(0.5, 1e-4, model);
+    candy::Optimizer opt = candy::create_rmsprop(0.3, 1e-5, model);
     {
         Message m("Optimizer:");
         m << opt.str() << "\n";

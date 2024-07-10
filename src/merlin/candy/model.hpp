@@ -8,6 +8,7 @@
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array
 #include "merlin/candy/declaration.hpp"  // merlin::candy::Model
+#include "merlin/candy/randomizer.hpp"   // merlin::candy::Randomizer
 #include "merlin/config.hpp"             // __cudevice__, __cuhostdev__, merlin::DPtrArray, merlin::Index
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/vector.hpp"             // merlin::DoubleVec, merlin::Vector
@@ -87,14 +88,9 @@ class candy::Model {
      *  to parameter. The value @f$ \sigma @f$ is the standard deviation of the hyper-slice corrected in corresponding
      *  with the mean.
      *  @param train_data Data to train the model.
+     *  @param randomizer Randomization approach for each dimension.
      */
-    MERLIN_EXPORTS void initialize(const array::Array & train_data);
-    /** @brief Initialize values of model based on rank-1 model.
-     *  @details Initialized values randomly of a model based on another trained rank-1 model.
-     *  @param rank_1_model Rank-1 model, must have the same shape as the current model.
-     *  @param rtol Relative tolerance of the randomized values.
-     */
-    MERLIN_EXPORTS void initialize(const candy::Model & rank_1_model, double rtol = 0.01);
+    MERLIN_EXPORTS void initialize(const array::Array & train_data, const candy::Randomizer * randomizer);
     /// @}
 
     /// @name Evaluation of the model

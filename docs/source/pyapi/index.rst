@@ -172,6 +172,7 @@ CP Model
    merlin.candy.Model
    merlin.candy.load_model
    merlin.candy.Gradient
+   merlin.candy.Randomizer
 
 Optimization algorithms
 ^^^^^^^^^^^^^^^^^^^^^^^

@@ -18,7 +18,7 @@ namespace merlin {
 
 // Update CP model according to gradient on GPU
 void candy::Trainer::update(const array::Parcel & data, std::uint64_t rep, double threshold, std::uint64_t n_threads,
-                            candy::TrainMetric metric) {
+                            candy::TrainMetric metric, const std::string & export_file) {
     // check if trainer is on GPU
     if (!(this->on_gpu())) {
         Fatal<std::invalid_argument>("The current object is allocated on CPU.\n");
@@ -39,7 +39,10 @@ void candy::Trainer::update(const array::Parcel & data, std::uint64_t rep, doubl
                         stream);
     this->model_.copy_from_gpu(reinterpret_cast<double *>(mem.get<0>() + 1), stream.get_stream_ptr());
     this->optmz_.copy_from_gpu(reinterpret_cast<double *>(mem.get<2>() + 1), stream.get_stream_ptr());
+    // save model to a file
     stream.add_callback(candy::end_message, this->name_);
+    std::string * p_fname = new std::string(export_file);
+    stream.add_callback(candy::save_model, &(this->model_), p_fname);
 }
 
 // Get the RMSE and RMAE error with respect to a given dataset by GPU

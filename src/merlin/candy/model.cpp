@@ -4,6 +4,7 @@
 #include <algorithm>  // std::find
 #include <cmath>      // std::pow, std::sqrt
 #include <iterator>   // std::distance
+#include <memory>     // std::unique_ptr
 #include <random>     // std::mt19937_64, std::normal_distribution, std::uniform_real_distribution
 #include <sstream>    // std::ostringstream
 #include <vector>     // std::vector
@@ -89,76 +90,45 @@ candy::Model & candy::Model::operator=(const candy::Model & src) {
 }
 
 // Initialize values of model based on train data
-void candy::Model::initialize(const array::Array & train_data) {
+void candy::Model::initialize(const array::Array & train_data, const candy::Randomizer * randomizer) {
     // check shape
     if (!this->check_compatible_shape(train_data.shape())) {
         Fatal<std::invalid_argument>("Incompatible shape between data and model.\n");
     }
-    // initialize model parameters
+    // initialize model parameters for each dimension
     for (std::uint64_t i_dim = 0; i_dim < this->ndim_; i_dim++) {
         std::uint64_t num_division = train_data.shape()[i_dim];
         SliceArray slice_division;
         slice_division.fill(Slice());
+        // loop on each hyper-slice
         for (std::uint64_t i_division = 0; i_division < num_division; i_division++) {
             // calculate mean value for each hyper-slice
             slice_division[i_dim] = Slice(i_division, i_division + 1, 1);
-            array::NdData * p_subset_data = train_data.sub_array(slice_division);
+            std::unique_ptr<array::NdData> p_subset_data(train_data.sub_array(slice_division));
             auto [mean, variance] = p_subset_data->get_mean_variance();
-            delete p_subset_data;
             double stdeviation = std::sqrt(variance);
-            // zero mean and variance
-            if ((mean == 0.0) && (stdeviation == 0.0)) {
-                for (std::uint64_t r = 0; r < this->rank_; r++) {
-                    this->get(i_dim, i_division, r) = 0.0;
-                }
-                continue;
-            }
             // calculate mean <- (mean/rank)^(1/ndim) and stdeviation <- stdeviation * new_mean / old_mean
             if (mean != 0.0) {
                 stdeviation /= mean;
                 mean = std::pow(mean / this->rank_, 1.f / this->ndim());
                 stdeviation *= mean;
             }
-            std::normal_distribution<double> generator(mean, stdeviation);
-            // initialize by random
-            for (std::uint64_t r = 0; r < this->rank_; r++) {
-                double & param = this->get(i_dim, i_division, r);
-                do {
-                    param = generator(Environment::random_generator);
-                } while (param <= 0);
+            // initializer randomizer
+            std::unique_ptr<candy::intlz::Initializer> p_initializer;
+            switch (randomizer[i_dim]) {
+                case candy::Randomizer::Gaussian : {
+                    p_initializer.reset(new candy::intlz::Gaussian(mean, stdeviation));
+                    break;
+                }
+                case candy::Randomizer::Uniform : {
+                    p_initializer.reset(new candy::intlz::Uniform(mean, 0.01));
+                    break;
+                }
             }
-        }
-    }
-}
-
-// Initialize values of model based on rank-1 model
-void candy::Model::initialize(const candy::Model & rank_1_model, double rtol) {
-    // check argument
-    if (rank_1_model.rank_ != 1) {
-        Fatal<std::invalid_argument>("Model provided is not rank-1.\n");
-    }
-    if (this->ndim() != rank_1_model.ndim()) {
-        Fatal<std::invalid_argument>("Expected rank-1 model having the same ndim as the current model.\n");
-    }
-    for (std::uint64_t i_dim = 0; i_dim < this->ndim_; i_dim++) {
-        if (rank_1_model.rshape_[i_dim] * this->rank_ != this->rshape_[i_dim]) {
-            Fatal<std::invalid_argument>("Incoherent shape of 2 models.\n");
-        }
-    }
-    // calculate min and max in relative for each rank
-    double rstep = (2.0 * rtol) / static_cast<double>(this->rank_);
-    DoubleVec rtol_rank(this->rank_ + 1);
-    for (std::uint64_t r = 0; r < this->rank_ + 1; r++) {
-        rtol_rank[r] = 1.0 - rtol + r * rstep;
-    }
-    // initialize
-    for (std::uint64_t i_param = 0; i_param < rank_1_model.num_params(); i_param++) {
-        double param_value = rank_1_model.parameters_[i_param];
-        param_value /= std::pow(this->rank_, 1.0 / static_cast<double>(this->ndim_));
-        for (std::uint64_t r = 0; r < this->rank_; r++) {
-            std::uniform_real_distribution<double> generator(param_value * rtol_rank[r],
-                                                             param_value * rtol_rank[r + 1]);
-            this->parameters_[i_param * this->rank_ + r] = generator(Environment::random_generator);
+            // initialize model parameters
+            for (std::uint64_t r = 0; r < this->rank_; r++) {
+                this->get(i_dim, i_division, r) = p_initializer->sample();
+            }
         }
     }
 }
