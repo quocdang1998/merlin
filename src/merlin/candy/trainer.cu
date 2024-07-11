@@ -18,7 +18,7 @@ namespace merlin {
 
 // Update CP model according to gradient on GPU
 void candy::Trainer::update(const array::Parcel & data, std::uint64_t rep, double threshold, std::uint64_t n_threads,
-                            candy::TrainMetric metric, const std::string & export_file) {
+                            candy::TrainMetric metric, bool export_result) {
     // check if trainer is on GPU
     if (!(this->on_gpu())) {
         Fatal<std::invalid_argument>("The current object is allocated on CPU.\n");
@@ -34,15 +34,14 @@ void candy::Trainer::update(const array::Parcel & data, std::uint64_t rep, doubl
     cuda::Stream & stream = std::get<cuda::Stream>(this->p_synch_->core);
     cuda::CtxGuard guard(stream.get_gpu());
     cuda::Memory mem(stream.get_stream_ptr(), this->model_, data, this->optmz_);
-    stream.add_callback(candy::start_message, this->name_);
     candy::train_by_gpu(mem.get<0>(), mem.get<1>(), mem.get<2>(), metric, rep, n_threads, threshold, shared_mem,
                         stream);
     this->model_.copy_from_gpu(reinterpret_cast<double *>(mem.get<0>() + 1), stream.get_stream_ptr());
     this->optmz_.copy_from_gpu(reinterpret_cast<double *>(mem.get<2>() + 1), stream.get_stream_ptr());
     // save model to a file
-    stream.add_callback(candy::end_message, this->name_);
-    std::string * p_fname = new std::string(export_file);
-    stream.add_callback(candy::save_model, &(this->model_), p_fname);
+    if (export_result) {
+        stream.add_callback(candy::save_model, this->model_, this->fname_);
+    }
 }
 
 // Get the RMSE and RMAE error with respect to a given dataset by GPU

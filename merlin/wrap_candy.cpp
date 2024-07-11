@@ -39,7 +39,8 @@ void wrap_model(py::module & candy_module) {
         R"(
         Canonical decomposition model.
 
-        Wrapper of :cpp:class:`merlin::candy::Model`.)"
+        Wrapper of :cpp:class:`merlin::candy::Model`.
+        )"
     );
     // constructor
     model_pyclass.def(
@@ -56,7 +57,8 @@ void wrap_model(py::module & candy_module) {
         shape : Sequence[int]
             Shape of decompressed data.
         rank : int
-            Rank of canonical decomposition model (number of vector per axis).)",
+            Rank of canonical decomposition model (number of vector per axis).
+        )",
         py::arg("shape"), py::arg("rank")
     );
     // attributes
@@ -146,7 +148,8 @@ void wrap_model(py::module & candy_module) {
         fname : str
             Name of the output file.
         lock : bool, default=False
-            Lock the file when writing to prevent data race. The lock action may cause a delay.)",
+            Lock the file when writing to prevent data race. The lock action may cause a delay.
+        )",
         py::arg("fname"), py::arg("lock") = false
     );
     // representation
@@ -170,7 +173,8 @@ void wrap_model(py::module & candy_module) {
         fname : str
             Name of the input file.
         lock : bool, default=False
-            Lock the file when writing to prevent data race. The lock action may cause a delay.)",
+            Lock the file when writing to prevent data race. The lock action may cause a delay.
+        )",
         py::arg("fname"), py::arg("lock") = false
     );
 }
@@ -211,7 +215,8 @@ void wrap_gradient(py::module & candy_module) {
         num_params : int
             Number of parameters of the target model.
         metric : str, default="relsquare"
-            Loss function to calculate the gradient.)",
+            Loss function to calculate the gradient.
+        )",
         py::arg("num_params"), py::arg("metric") = "relsquare"
     );
     // enter and exit
@@ -222,8 +227,7 @@ void wrap_gradient(py::module & candy_module) {
             self.value().data() = gradient_memory;
             return &self;
         },
-        R"(
-        Allocate memory and make the gradient valid.)"
+        "Allocate memory and make the gradient valid."
     );
     gradient_pyclass.def(
         "__exit__",
@@ -231,8 +235,7 @@ void wrap_gradient(py::module & candy_module) {
             delete[] self.value().data();
             self.value().data() = nullptr;
         },
-        R"(
-        De-allocate memory and make the gradient invalid.)"
+        "De-allocate memory and make the gradient invalid."
     );
     // calculate gradient
     gradient_pyclass.def(
@@ -251,7 +254,8 @@ void wrap_gradient(py::module & candy_module) {
         model : merlin.candy.Model
             Target model to calculate the gradient.
         data : merlin.array.Array
-            Data to calculate the gradient.)",
+            Data to calculate the gradient.
+        )",
         py::arg("model"), py::arg("data")
     );
     // get Python memory view to the result of the gradient
@@ -263,7 +267,8 @@ void wrap_gradient(py::module & candy_module) {
         R"(
         Get a Python memory view to the gradient calculated.
 
-        This memory view can be transformed into list or Numpy array as demanded by user.)"
+        This memory view can be transformed into list or Numpy array as demanded by user.
+        )"
     );
     // representation
     gradient_pyclass.def(
@@ -311,7 +316,8 @@ void wrap_optimizer(py::module & candy_module) {
         Parameters
         ----------
         learning_rate : float
-            Learning rate.)",
+            Learning rate.
+        )",
         py::arg("learning_rate")
     );
     // create adagrad
@@ -332,7 +338,8 @@ void wrap_optimizer(py::module & candy_module) {
         model : merlin.candy.Model
             Model to fit.
         bias : float, default=1e-8
-            Bias.)",
+            Bias.
+        )",
         py::arg("learning_rate"), py::arg("model"), py::arg("bias") = 1e-8
     );
     // create adam
@@ -357,7 +364,8 @@ void wrap_optimizer(py::module & candy_module) {
         model : merlin.candy.Model
             Model to fit.
         bias : float, default=1e-8
-            Bias.)",
+            Bias.
+        )",
         py::arg("learning_rate"), py::arg("beta_m"), py::arg("beta_v"), py::arg("model"), py::arg("bias") = 1e-8
     );
     // create adadelta
@@ -380,7 +388,8 @@ void wrap_optimizer(py::module & candy_module) {
         model : merlin.candy.Model
             Model to fit.
         bias : float, default=1e-8
-            Bias.)",
+            Bias.
+        )",
         py::arg("learning_rate"), py::arg("rho"), py::arg("model"), py::arg("bias") = 1e-8
     );
     // create rmsprop
@@ -403,7 +412,8 @@ void wrap_optimizer(py::module & candy_module) {
         model : merlin.candy.Model
             Model to fit.
         bias : float, default=1e-16
-            Bias to avoid division by zero.)",
+            Bias to avoid division by zero.
+        )",
         py::arg("learning_rate"), py::arg("beta"), py::arg("model"), py::arg("bias") = 1e-16
     );
 }
@@ -421,9 +431,8 @@ void wrap_trainer(py::module & candy_module) {
     // constructor
     trainer_pyclass.def(
         py::init(
-            [](const std::string & name, const candy::Model & model, const candy::Optimizer & optimizer,
-               Synchronizer & synch) {
-                return new candy::Trainer(name, model, optimizer, synch);
+            [](const candy::Model & model, const candy::Optimizer & optimizer, Synchronizer & synch) {
+                return new candy::Trainer(model, optimizer, synch);
             }
         ),
         R"(
@@ -431,16 +440,15 @@ void wrap_trainer(py::module & candy_module) {
 
         Parameters
         ----------
-        name : str
-            Name of the trainer.
         model : merlin.candy.Model
             Model to train.
         optimizer : merlin.candy.Optimizer
             Optimizer training the model.
         synch : merlin.Synchronizer
             Asynchronous stream to register the training process. Destroying the synchronizer before the Trainer results
-            in undefined behavior.)",
-        py::arg("name"), py::arg("model"), py::arg("optimizer"), py::arg("synch"), py::keep_alive<1,5>()
+            in undefined behavior.
+        )",
+        py::arg("model"), py::arg("optimizer"), py::arg("synch"), py::keep_alive<1,5>()
     );
     // attributes
     trainer_pyclass.def_property_readonly(
@@ -459,14 +467,22 @@ void wrap_trainer(py::module & candy_module) {
     trainer_pyclass.def(
         "change_optmz",
         [](candy::Trainer & self, candy::Optimizer * p_new_optmz) { self.change_optmz(std::move(*p_new_optmz)); },
-        "Change optimizer."
+        "Change optimizer.",
+        py::arg("new_optmz")
+    );
+    // change filename
+    trainer_pyclass.def(
+        "set_fname",
+        [](candy::Trainer & self, const std::string & new_fname) { self.set_fname(new_fname); },
+        "Set filename to serialize trained model.",
+        py::arg("new_fname")
     );
     // train model
     trainer_pyclass.def(
         "update_cpu",
         [](candy::Trainer & self, const array::Array & data, std::uint64_t rep, double threshold,
-           std::uint64_t n_threads, const std::string & metric) {
-            self.update(data, rep, threshold, n_threads, trainmetric_map.at(metric));
+           std::uint64_t n_threads, const std::string & metric, bool export_result) {
+            self.update(data, rep, threshold, n_threads, trainmetric_map.at(metric), export_result);
         },
         R"(
         Update CP model according to gradient on CPU.
@@ -486,14 +502,18 @@ void wrap_trainer(py::module & candy_module) {
         n_threads : int, default=1
             Number of parallel threads for training the model.
         metric : str, default="relsquare"
-            Training metric for the model.)",
-        py::arg("data"), py::arg("rep"), py::arg("threshold"), py::arg("n_threads") = 1, py::arg("metric") = "relsquare"
+            Training metric for the model.
+        export_result : bool, default=True
+            Save trained model to a file.
+        )",
+        py::arg("data"), py::arg("rep"), py::arg("threshold"), py::arg("n_threads") = 1,
+        py::arg("metric") = "relsquare", py::arg("export_result") = true
     );
     trainer_pyclass.def(
         "update_gpu",
         [](candy::Trainer & self, const array::Parcel & data, std::uint64_t rep, double threshold,
-           std::uint64_t n_threads, const std::string & metric) {
-            self.update(data, rep, threshold, n_threads, trainmetric_map.at(metric));
+           std::uint64_t n_threads, const std::string & metric, bool export_result) {
+            self.update(data, rep, threshold, n_threads, trainmetric_map.at(metric), export_result);
         },
         R"(
         Update CP model according to gradient on GPU.
@@ -513,9 +533,12 @@ void wrap_trainer(py::module & candy_module) {
         n_threads : int, default=32
             Number of parallel threads for training the model.
         metric : str, default="relsquare"
-            Training metric for the model.)",
+            Training metric for the model.
+        export_result : bool, default=True
+            Save trained model to a file.
+        )",
         py::arg("data"), py::arg("rep"), py::arg("threshold"), py::arg("n_threads") = 32,
-        py::arg("metric") = "relsquare"
+        py::arg("metric") = "relsquare", py::arg("export_result") = true
     );
     // calculate error
     trainer_pyclass.def(
@@ -591,10 +614,10 @@ void wrap_trainer(py::module & candy_module) {
             Training metric for the model.
         Returns
         -------
-        error : np.array
-            Vector storing error per iteration.
-        count : np.array
-            Array of size 1, storing the number of iterations performed before breaking the dry run.
+        error : np.ndarray[dtype=np.float64]
+            1-D array storing error per iteration.
+        count : np.ndarray[dtype=np.float64]
+            1-D array of size 1, storing the number of iterations performed before breaking the dry run.
         )",
         py::arg("data"), py::arg("max_iter") = 100, py::arg("n_threads") = 1, py::arg("metric") = "relsquare"
     );
@@ -628,10 +651,10 @@ void wrap_trainer(py::module & candy_module) {
             Training metric for the model.
         Returns
         -------
-        error : np.array
-            Vector storing error per iteration.
-        count : np.array
-            Array of size 1, storing the number of iterations performed before breaking the dry run.
+        error : np.ndarray[dtype=np.float64]
+            1-D array storing error per iteration.
+        count : np.ndarray[dtype=np.float64]
+            1-D array of size 1, storing the number of iterations performed before breaking the dry run.
         )",
         py::arg("data"), py::arg("max_iter") = 100, py::arg("n_threads") = 32, py::arg("metric") = "relsquare"
     );

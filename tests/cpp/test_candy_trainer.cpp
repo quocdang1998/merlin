@@ -41,7 +41,7 @@ int main(void) {
     }
 
     Synchronizer cpu_synch(ProcessorType::Cpu);
-    candy::Trainer train("FooTrainer", model, opt, cpu_synch);
+    candy::Trainer train(model, opt, cpu_synch);
 
     // test dry-run
     std::uint64_t max_iter = 50;
@@ -55,7 +55,7 @@ int main(void) {
     }
 
     // test official update
-    train.update(train_data, 10, 1e-2, 3, candy::TrainMetric::RelativeSquare);
+    train.update(train_data, 10, 1e-2, 3, candy::TrainMetric::RelativeSquare, false);
     array::Array reconstructed_data(train_data.shape());
     train.reconstruct(reconstructed_data, 4);
     cpu_synch.synchronize();

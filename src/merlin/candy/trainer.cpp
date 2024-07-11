@@ -24,13 +24,12 @@ namespace merlin {
 // Train a model using CPU parallelism
 void candy::train_by_cpu(std::future<void> && synch, candy::Model * p_model, const array::Array * p_data,
                          candy::Optimizer * p_optimizer, double * cpu_grad_mem, candy::TrainMetric metric,
-                         std::uint64_t rep, double threshold, std::uint64_t n_threads, std::string * p_name,
+                         std::uint64_t rep, double threshold, std::uint64_t n_threads, bool export_result,
                          std::string * p_fname) {
     // finish old job
     if (synch.valid()) {
         synch.get();
     }
-    candy::start_message(*p_name);
     // create gradient object
     candy::Gradient gradient(cpu_grad_mem, p_model->num_params(), metric);
     // calculate based on error
@@ -66,8 +65,9 @@ void candy::train_by_cpu(std::future<void> && synch, candy::Model * p_model, con
         step += rep;
     } while (go_on);
     // save model to file
-    candy::end_message(*p_name);
-    candy::save_model(p_model, p_fname);
+    if (export_result) {
+        candy::save_model(*p_model, *p_fname);
+    }
 }
 
 // Calculate error using CPU parallelism
@@ -153,9 +153,8 @@ void candy::reconstruct_by_cpu(std::future<void> && synch, candy::Model * p_mode
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Constructor a trainer
-candy::Trainer::Trainer(const std::string & name, const candy::Model & model, const candy::Optimizer & optimizer,
-                        Synchronizer & synchronizer) :
-name_(name), model_(model), optmz_(optimizer), p_synch_(&synchronizer) {
+candy::Trainer::Trainer(const candy::Model & model, const candy::Optimizer & optimizer, Synchronizer & synchronizer) :
+model_(model), optmz_(optimizer), p_synch_(&synchronizer) {
     // check argument
     if (!(optimizer.is_compatible(model))) {
         Fatal<std::invalid_argument>("Model and Optimizer are incompatible.\n");
@@ -169,7 +168,7 @@ name_(name), model_(model), optmz_(optimizer), p_synch_(&synchronizer) {
 
 // Update CP model according to gradient on CPU
 void candy::Trainer::update(const array::Array & data, std::uint64_t rep, double threshold, std::uint64_t n_threads,
-                            candy::TrainMetric metric, const std::string & export_file) {
+                            candy::TrainMetric metric, bool export_result) {
     // check if trainer is on CPU
     if (this->on_gpu()) {
         Fatal<std::invalid_argument>("The current object is allocated on GPU.\n");
@@ -179,11 +178,10 @@ void candy::Trainer::update(const array::Array & data, std::uint64_t rep, double
         Fatal<std::invalid_argument>("Incompatible shape between data and model.\n");
     }
     // asynchronous launch
-    std::string * p_fname = new std::string(export_file);
     std::future<void> & current_sync = std::get<std::future<void>>(this->p_synch_->core);
     std::future<void> new_sync = std::async(std::launch::async, candy::train_by_cpu, std::move(current_sync),
                                             &(this->model_), &data, &(this->optmz_), this->cpu_grad_mem_, metric, rep,
-                                            threshold, n_threads, &(this->name_), p_fname);
+                                            threshold, n_threads, export_result, &(this->fname_));
     *(this->p_synch_) = Synchronizer(std::move(new_sync));
 }
 

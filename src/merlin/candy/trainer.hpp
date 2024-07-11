@@ -18,26 +18,16 @@ namespace merlin {
 
 namespace candy {
 
-inline void start_message(const std::string & trainer_name) {
-    std::printf("Start training of \"%s\"\n", trainer_name.c_str());
-}
-
-inline void end_message(const std::string & trainer_name) {
-    std::printf("Finish training of \"%s\"\n", trainer_name.c_str());
-}
-
-inline void save_model(candy::Model * p_model, std::string * p_fname) {
-    if (!p_fname->empty()) {
-        std::printf("Save to file %s\n", p_fname->c_str());
-        p_model->save(*p_fname, true);
+inline void save_model(candy::Model & model, const std::string & fname) {
+    if (!fname.empty()) {
+        model.save(fname, true);
     }
-    delete p_fname;
 }
 
 /** @brief Train a model using CPU parallelism.*/
 void train_by_cpu(std::future<void> && synch, candy::Model * p_model, const array::Array * p_data,
                   candy::Optimizer * p_optimizer, double * cpu_grad_mem, candy::TrainMetric metric, std::uint64_t rep,
-                  double threshold, std::uint64_t n_threads, std::string * p_name, std::string * p_fname);
+                  double threshold, std::uint64_t n_threads, bool export_result, std::string * p_fname);
 
 /** @brief Train a model using GPU parallelism.*/
 void train_by_gpu(candy::Model * p_model, const array::Parcel * p_data, candy::Optimizer * p_optimizer,
@@ -84,14 +74,12 @@ class candy::Trainer {
     Trainer(void) = default;
     /** @brief Constructor a trainer.
      *  @warning This function will lock the mutex in GPU mode.
-     *  @param name Name of the trainer.
      *  @param model Candecomp model.
      *  @param optimizer Gradient method to train the model.
      *  @param synchronizer Reference to a asynchronous stream. Destroying the synchronizer before the Trainer results
      *  in undefined behavior.
      */
-    MERLIN_EXPORTS Trainer(const std::string & name, const candy::Model & model, const candy::Optimizer & optimizer,
-                           Synchronizer & synchronizer);
+    MERLIN_EXPORTS Trainer(const candy::Model & model, const candy::Optimizer & optimizer, Synchronizer & synchronizer);
     /// @}
 
     /// @name Copy and move
@@ -130,6 +118,8 @@ class candy::Trainer {
     }
     /** @brief Check if the interpolator is executed on GPU.*/
     constexpr bool on_gpu(void) const noexcept { return (this->p_synch_->core.index() == 1); }
+    /** @brief Set filename to serialize trained model.*/
+    void set_fname(const std::string & new_fname) { this->fname_ = new_fname; }
     /// @}
 
     /// @name Train CP model based on gradient descent for a given threshold
@@ -145,12 +135,13 @@ class candy::Trainer {
      *  @param threshold Threshold to stop the training process.
      *  @param n_threads Number of parallel threads for training the model.
      *  @param metric Training metric for the model.
-     *  @param export_file Name of the file to export the trained model to. If empty, the model will not be exported.
+     *  @param export_result If the filename of the trainer is not empty and this flag is set to ``True``, the trained
+     *  model will be exported to the file.
      */
     MERLIN_EXPORTS void update(const array::Array & data, std::uint64_t rep, double threshold,
                                std::uint64_t n_threads = 1,
                                candy::TrainMetric metric = candy::TrainMetric::RelativeSquare,
-                               const std::string & export_file = "");
+                               bool export_result = true);
     /** @brief Update CP model according to gradient on GPU.
      *  @details Update CP model for a certain number of iterations, and check if the relative error after the training
      *  process is smaller than a given threshold. If this is the case, break the training. Otherwise, continue to train
@@ -163,12 +154,13 @@ class candy::Trainer {
      *  @param threshold Threshold to stop the training process.
      *  @param n_threads Number of parallel threads for training the model.
      *  @param metric Training metric for the model.
-     *  @param export_file Name of the file to export the trained model to. If empty, the model will not be exported.
+     *  @param export_result If the filename of the trainer is not empty and this flag is set to ``True``, the trained
+     *  model will be exported to the file.
      */
     MERLIN_EXPORTS void update(const array::Parcel & data, std::uint64_t rep, double threshold,
                                std::uint64_t n_threads = 32,
                                candy::TrainMetric metric = candy::TrainMetric::RelativeSquare,
-                               const std::string & export_file = "");
+                               bool export_result = true);
     /// @}
 
     /// @name Error metric
@@ -234,8 +226,8 @@ class candy::Trainer {
     /// @}
 
   private:
-    /** @brief Name of the trainer.*/
-    std::string name_;
+    /** @brief Filename to export trained model.*/
+    std::string fname_;
     /** @brief Candecomp model.*/
     candy::Model model_;
     /** @brief Optimizer.*/

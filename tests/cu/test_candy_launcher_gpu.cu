@@ -45,9 +45,9 @@ int main (void) {
     std::uint64_t rep = 10;
     double threshold = 1e-5;
     Synchronizer gpu_sync(ProcessorType::Gpu);
-    candy::Trainer train_gpu("GpuTrainer", model, opt, gpu_sync);
+    candy::Trainer train_gpu(model, opt, gpu_sync);
     Synchronizer cpu_sync(ProcessorType::Cpu);
-    candy::Trainer train_cpu("CpuTrainer", model, opt, cpu_sync);
+    candy::Trainer train_cpu(model, opt, cpu_sync);
 
     // GPU dryrun
     std::uint64_t max_iter = 50;
@@ -61,8 +61,10 @@ int main (void) {
     }
 
     // launch update
-    train_gpu.update(gpu_data, rep, threshold, 16, candy::TrainMetric::RelativeSquare, "result_gpu.txt");
-    train_cpu.update(train_data, rep, threshold, 3, candy::TrainMetric::RelativeSquare, "result_cpu.txt");
+    train_gpu.set_fname("result_gpu.txt");
+    train_gpu.update(gpu_data, rep, threshold, 16, candy::TrainMetric::RelativeSquare, true);
+    train_cpu.set_fname("result_cpu.txt");
+    train_cpu.update(train_data, rep, threshold, 3, candy::TrainMetric::RelativeSquare, true);
 
     // synchronize
     gpu_sync.synchronize();
