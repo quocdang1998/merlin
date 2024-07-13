@@ -172,7 +172,6 @@ CP Model
    merlin.candy.Model
    merlin.candy.load_model
    merlin.candy.Gradient
-   merlin.candy.Randomizer
 
 Optimization algorithms
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -198,3 +197,14 @@ Asynchronous fitting
    :template: pyclass.rst
 
    merlin.candy.Trainer
+
+Random initialization
+^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated
+   :nosignatures:
+   :template: pyclass.rst
+
+   merlin.candy.rand.Gaussian
+   merlin.candy.rand.Uniform

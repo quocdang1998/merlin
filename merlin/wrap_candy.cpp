@@ -20,17 +20,6 @@ static std::map<std::string, candy::TrainMetric> trainmetric_map = {
     {"abssquare", candy::TrainMetric::AbsoluteSquare}
 };
 
-// Wrap merlin::candy::Randomizer enum
-static void wrap_randomizer(py::module & candy_module) {
-    auto randomizer_pyenum = py::enum_<candy::Randomizer>(
-        candy_module,
-        "Randomizer",
-        "Wrapper of :cpp:enum:`merlin::candy::Randomizer`"
-    );
-    randomizer_pyenum.value("Gaussian", candy::Randomizer::Gaussian);
-    randomizer_pyenum.value("Uniform", candy::Randomizer::Uniform);
-}
-
 // Wrap merlin::candy::Model class
 void wrap_model(py::module & candy_module) {
     auto model_pyclass = py::class_<candy::Model>(
@@ -691,15 +680,57 @@ void wrap_trainer(py::module & candy_module) {
     );
 }
 
+// Wrap merlin::candy::Randomizer enum
+static void wrap_randomizer(py::module & candy_module) {
+    // add candy submodule
+    py::module rand_module = candy_module.def_submodule("rand", "Randomization method for Canonical Polyadic model.");
+    // add Gaussian
+    auto gaussian_pyclass = py::class_<candy::rand::Gaussian>(
+        rand_module,
+        "Gaussian",
+        R"(
+        Initialization by normal distribution from data mean and variance.
+
+        Wrapper of :cpp:class:`merlin::candy::rand::Gaussian`.
+        )"
+    );
+    gaussian_pyclass.def(
+        py::init([](void) { return new candy::rand::Gaussian(); })
+    );
+    gaussian_pyclass.def(
+        "__repr__",
+        [](const candy::rand::Gaussian & self) { return self.str(); }
+    );
+    // add Uniform
+    auto uniform_pyclass = py::class_<candy::rand::Uniform>(
+        rand_module,
+        "Uniform",
+        R"(
+        Initialization by uniform distribution from data mean.
+
+        Wrapper of :cpp:class:`merlin::candy::rand::Uniform`.
+        )"
+    );
+    uniform_pyclass.def(
+        py::init([](double k) { return new candy::rand::Uniform(k); }),
+        "Constructor from relative scale value.",
+        py::arg("k") = 0.01
+    );
+    uniform_pyclass.def(
+        "__repr__",
+        [](const candy::rand::Uniform & self) { return self.str(); }
+    );
+}
+
 void wrap_candy(py::module & merlin_package) {
     // add candy submodule
     py::module candy_module = merlin_package.def_submodule("candy", "Data compression by Candecomp-Paraface method.");
     // add classes
     wrap_model(candy_module);
-    wrap_randomizer(candy_module);
     wrap_gradient(candy_module);
     wrap_optimizer(candy_module);
     wrap_trainer(candy_module);
+    wrap_randomizer(candy_module);
 }
 
 }  // namespace merlin

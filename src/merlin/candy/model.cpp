@@ -90,7 +90,7 @@ candy::Model & candy::Model::operator=(const candy::Model & src) {
 }
 
 // Initialize values of model based on train data
-void candy::Model::initialize(const array::Array & train_data, const candy::Randomizer * randomizer) {
+void candy::Model::initialize(const array::Array & train_data, candy::Randomizer * randomizer) {
     // check shape
     if (!this->check_compatible_shape(train_data.shape())) {
         Fatal<std::invalid_argument>("Incompatible shape between data and model.\n");
@@ -114,20 +114,10 @@ void candy::Model::initialize(const array::Array & train_data, const candy::Rand
                 stdeviation *= mean;
             }
             // initializer randomizer
-            std::unique_ptr<candy::intlz::Initializer> p_initializer;
-            switch (randomizer[i_dim]) {
-                case candy::Randomizer::Gaussian : {
-                    p_initializer.reset(new candy::intlz::Gaussian(mean, stdeviation));
-                    break;
-                }
-                case candy::Randomizer::Uniform : {
-                    p_initializer.reset(new candy::intlz::Uniform(mean, 0.01));
-                    break;
-                }
-            }
+            candy::set_params(randomizer[i_dim], mean, stdeviation);
             // initialize model parameters
             for (std::uint64_t r = 0; r < this->rank_; r++) {
-                this->get(i_dim, i_division, r) = p_initializer->sample();
+                this->get(i_dim, i_division, r) = candy::sample(randomizer[i_dim]);
             }
         }
     }

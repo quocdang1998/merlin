@@ -90,7 +90,7 @@ class candy::Model {
      *  @param train_data Data to train the model.
      *  @param randomizer Randomization approach for each dimension.
      */
-    MERLIN_EXPORTS void initialize(const array::Array & train_data, const candy::Randomizer * randomizer);
+    MERLIN_EXPORTS void initialize(const array::Array & train_data, candy::Randomizer * randomizer);
     /// @}
 
     /// @name Evaluation of the model

@@ -7,6 +7,7 @@ import numpy as np
 
 from merlin.array import Array, empty_array
 from merlin.candy import Model, Gradient, create_grad_descent, Trainer
+from merlin.candy.rand import Gaussian, Uniform
 from merlin import Synchronizer
 
 np_arr = np.array([[1.2, 2.4, 5.6], [3.7, 4.8, 5.3]], dtype=np.double)
@@ -14,7 +15,9 @@ data = Array(np_arr)
 
 # calculate gradient
 model = Model(data.shape, 2)
-model.initialize(data)
+randomizer = [Gaussian(), Uniform(0.01)]
+print(f"Randomizer: {randomizer}")
+model.initialize(data, randomizer)
 print("Gradient before trained :")
 with Gradient(model.num_params) as g:
     g.calc(model, data)

@@ -1,7 +1,7 @@
-merlin::candy::intlz::Uniform
+merlin::candy::rand::Gaussian
 =============================
 
-.. doxygenclass:: merlin::candy::intlz::Uniform
+.. doxygenclass:: merlin::candy::rand::Gaussian
    :members:
    :protected-members:
    :private-members:

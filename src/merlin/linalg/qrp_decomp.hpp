@@ -79,7 +79,7 @@ class linalg::QRPDecomp {
     linalg::Matrix core_;
     /** @brief Diagonal elements.*/
     DoubleVec diag_;
-    /** @brief Permutation matrix.*/
+    /** @brief %Permutation matrix.*/
     Permutation permut_;
 };
 

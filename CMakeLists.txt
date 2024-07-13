@@ -25,8 +25,8 @@ list(
     array/array.cpp
     array/parcel.cpp
     array/stock.cpp
-    candy/intlz/gaussian.cpp
-    candy/intlz/uniform.cpp
+    candy/rand/gaussian.cpp
+    candy/rand/uniform.cpp
     candy/optmz/adadelta.cpp
     candy/optmz/adam.cpp
     candy/optmz/adagrad.cpp
@@ -37,6 +37,7 @@ list(
     candy/model.cpp
     candy/optimizer.cpp
     candy/trainer.cpp
+    candy/randomizer.cpp
     cuda/device.cpp
     cuda/event.cpp
     cuda/graph.cpp

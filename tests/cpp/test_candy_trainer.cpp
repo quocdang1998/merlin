@@ -26,7 +26,7 @@ int main(void) {
     Message("Data: %s\n", train_data.str().c_str());
 
     candy::Model model({{1.0, 0.5, 1.6, 2.7}, {2.0, 1.0, 2.4, 1.2, 4.6, 3.5}}, 2);
-    std::array<candy::Randomizer, 2> randomizer = {candy::Randomizer::Gaussian, candy::Randomizer::Gaussian};
+    std::array<candy::Randomizer, 2> randomizer = {candy::rand::Gaussian(), candy::rand::Gaussian()};
     model.initialize(train_data, randomizer.data());
     Message("Model before trained: %s\n", model.str().c_str());
 
@@ -55,7 +55,7 @@ int main(void) {
     }
 
     // test official update
-    train.update(train_data, 10, 1e-2, 3, candy::TrainMetric::RelativeSquare, false);
+    train.update(train_data, 10, 1e-3, 3, candy::TrainMetric::RelativeSquare, false);
     array::Array reconstructed_data(train_data.shape());
     train.reconstruct(reconstructed_data, 4);
     cpu_synch.synchronize();

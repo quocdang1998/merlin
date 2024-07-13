@@ -239,9 +239,8 @@ Model initialization
    :toctree: generated
 
    merlin::candy::Randomizer
-   merlin::candy::intlz::Initializer
-   merlin::candy::intlz::Gaussian
-   merlin::candy::intlz::Uniform
+   merlin::candy::rand::Gaussian
+   merlin::candy::rand::Uniform
 
 Metric error
 ^^^^^^^^^^^^
