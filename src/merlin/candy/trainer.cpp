@@ -249,7 +249,7 @@ void candy::Trainer::reconstruct(array::Array & destination, std::uint64_t n_thr
 
 // Update CP model according to gradient on GPU
 void candy::Trainer::update(const array::Parcel & data, std::uint64_t rep, double threshold, std::uint64_t n_threads,
-                            candy::TrainMetric metric, const std::string & export_file) {
+                            candy::TrainMetric metric, bool export_result) {
     Fatal<cuda_compile_error>("Cannot invoke GPU function since merlin is not compiled with CUDA option.\n");
 }
 

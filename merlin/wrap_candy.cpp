@@ -437,7 +437,7 @@ void wrap_trainer(py::module & candy_module) {
             Asynchronous stream to register the training process. Destroying the synchronizer before the Trainer results
             in undefined behavior.
         )",
-        py::arg("model"), py::arg("optimizer"), py::arg("synch"), py::keep_alive<1,5>()
+        py::arg("model"), py::arg("optimizer"), py::arg("synch"), py::keep_alive<1,4>()
     );
     // attributes
     trainer_pyclass.def_property_readonly(
