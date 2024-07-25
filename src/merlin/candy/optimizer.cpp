@@ -31,46 +31,56 @@ static void print_dynamic_data(std::ostringstream & os, const double * dynamic_d
 
 // Copy constructor
 candy::Optimizer::Optimizer(const candy::Optimizer & src) :
-static_data(src.static_data), dynamic_size(src.dynamic_size) {
+static_data_(src.static_data_), dynamic_size_(src.dynamic_size_) {
     // copy dynamic data
-    if (src.dynamic_size != 0) {
-        this->dynamic_data = new double[src.dynamic_size];
-        std::memcpy(this->dynamic_data, src.dynamic_data, sizeof(double) * src.dynamic_size);
+    if (src.dynamic_size_ != 0) {
+        this->dynamic_data_ = new double[src.dynamic_size_];
+        std::memcpy(this->dynamic_data_, src.dynamic_data_, sizeof(double) * src.dynamic_size_);
     }
 }
 
 // Copy assignment
 candy::Optimizer & candy::Optimizer::operator=(const candy::Optimizer & src) {
-    this->static_data = src.static_data;
-    this->dynamic_size = src.dynamic_size;
+    this->static_data_ = src.static_data_;
+    this->dynamic_size_ = src.dynamic_size_;
     // release old dynamic data
-    if (this->dynamic_data != nullptr) {
-        delete[] this->dynamic_data;
+    if (this->dynamic_data_ != nullptr) {
+        delete[] this->dynamic_data_;
     }
     // copy dynamic data
-    if (src.dynamic_size != 0) {
-        this->dynamic_data = new double[src.dynamic_size];
-        std::memcpy(this->dynamic_data, src.dynamic_data, sizeof(double) * src.dynamic_size);
+    if (src.dynamic_size_ != 0) {
+        this->dynamic_data_ = new double[src.dynamic_size_];
+        std::memcpy(this->dynamic_data_, src.dynamic_data_, sizeof(double) * src.dynamic_size_);
     }
     return *this;
 }
 
+// Allocate dynamic data
+void candy::Optimizer::allocate_data(std::uint64_t size) {
+    if (this->dynamic_data_ != nullptr) {
+        delete[] this->dynamic_data_;
+    }
+    this->dynamic_size_ = size;
+    this->dynamic_data_ = new double[size];
+    std::memset(this->dynamic_data_, 0, sizeof(double) * size);
+}
+
 // Check compatibility with a model
 bool candy::Optimizer::is_compatible(const candy::Model & model) const {
-    switch (this->static_data.index()) {
+    switch (this->static_data_.index()) {
         case 0 : {  // gradient descent
             break;
         }
         case 1 :
         case 4 : {  // adagrad, rmsprop
-            if (this->dynamic_size != model.num_params()) {
+            if (this->dynamic_size_ != model.num_params()) {
                 return false;
             }
             break;
         }
         case 2 :
         case 3 : {  // adam, adadelta
-            if (this->dynamic_size != 2 * model.num_params()) {
+            if (this->dynamic_size_ != 2 * model.num_params()) {
                 return false;
             }
             break;
@@ -89,9 +99,9 @@ void candy::Optimizer::update_cpu(candy::Model & model, const candy::Gradient & 
         candy::optmz::AdaDelta::update_cpu,     // adadelta
         candy::optmz::RmsProp::update_cpu,      // rmsprop
     };
-    void * optimizer_algor = reinterpret_cast<void *>(&this->static_data);
-    cpu_updater_func[this->static_data.index()](optimizer_algor, this->dynamic_data, model, grad, time_step, thread_idx,
-                                                n_threads);
+    void * optimizer_algor = reinterpret_cast<void *>(&this->static_data_);
+    cpu_updater_func[this->static_data_.index()](optimizer_algor, this->dynamic_data_, model, grad, time_step,
+                                                 thread_idx, n_threads);
     _Pragma("omp barrier");
 }
 
@@ -116,47 +126,47 @@ void * candy::Optimizer::copy_from_gpu(double * data_from_gpu, std::uintptr_t st
 std::string candy::Optimizer::str(void) const {
     std::ostringstream os;
     os << "<Optimizer(";
-    switch (this->static_data.index()) {
+    switch (this->static_data_.index()) {
         case 0 : {  // gradient descent
             os << "type=GradDescent, ";
-            const candy::optmz::GradDescent & algor = std::get<0>(this->static_data);
+            const candy::optmz::GradDescent & algor = std::get<0>(this->static_data_);
             os << "eta=" << algor.learning_rate;
             break;
         }
         case 1 : {  // adagrad
             os << "type=AdaGrad, ";
-            const candy::optmz::AdaGrad & algor = std::get<1>(this->static_data);
+            const candy::optmz::AdaGrad & algor = std::get<1>(this->static_data_);
             os << "eta=" << algor.learning_rate << ", ";
             os << "bias=" << algor.bias << ", ";
-            print_dynamic_data(os, this->dynamic_data, this->dynamic_size);
+            print_dynamic_data(os, this->dynamic_data_, this->dynamic_size_);
             break;
         }
         case 2 : {  // adam
             os << "type=Adam, ";
-            const candy::optmz::Adam & algor = std::get<2>(this->static_data);
+            const candy::optmz::Adam & algor = std::get<2>(this->static_data_);
             os << "eta=" << algor.learning_rate << ", ";
             os << "beta_m=" << algor.beta_m << ", ";
             os << "beta_v=" << algor.beta_v << ", ";
             os << "bias=" << algor.bias << ", ";
-            print_dynamic_data(os, this->dynamic_data, this->dynamic_size);
+            print_dynamic_data(os, this->dynamic_data_, this->dynamic_size_);
             break;
         }
         case 3 : {  // adadelta
             os << "type=AdaDelta, ";
-            const candy::optmz::AdaDelta & algor = std::get<3>(this->static_data);
+            const candy::optmz::AdaDelta & algor = std::get<3>(this->static_data_);
             os << "eta=" << algor.learning_rate << ", ";
             os << "rho=" << algor.rho << ", ";
             os << "bias=" << algor.bias << ", ";
-            print_dynamic_data(os, this->dynamic_data, this->dynamic_size);
+            print_dynamic_data(os, this->dynamic_data_, this->dynamic_size_);
             break;
         }
         case 4 : {  // rmsprop
             os << "type=RmsProp, ";
-            const candy::optmz::RmsProp & algor = std::get<4>(this->static_data);
+            const candy::optmz::RmsProp & algor = std::get<4>(this->static_data_);
             os << "eta=" << algor.learning_rate << ", ";
             os << "beta=" << algor.beta << ", ";
             os << "bias=" << algor.bias << ", ";
-            print_dynamic_data(os, this->dynamic_data, this->dynamic_size);
+            print_dynamic_data(os, this->dynamic_data_, this->dynamic_size_);
             break;
         }
     }
@@ -166,8 +176,8 @@ std::string candy::Optimizer::str(void) const {
 
 // Destructor
 candy::Optimizer::~Optimizer(void) {
-    if (this->dynamic_data != nullptr) {
-        delete[] this->dynamic_data;
+    if (this->dynamic_data_ != nullptr) {
+        delete[] this->dynamic_data_;
     }
 }
 
@@ -202,8 +212,8 @@ candy::Optimizer candy::create_grad_descent(double learning_rate) {
     check_learning_rate(learning_rate);
     // construct optimizer
     candy::Optimizer opt;
-    opt.static_data = candy::OptmzStatic(std::in_place_type<candy::optmz::GradDescent>,
-                                         candy::optmz::GradDescent(learning_rate));
+    opt.static_data() = candy::OptmzStatic(std::in_place_type<candy::optmz::GradDescent>,
+                                          candy::optmz::GradDescent(learning_rate));
     return opt;
 }
 
@@ -214,10 +224,8 @@ candy::Optimizer candy::create_adagrad(double learning_rate, const candy::Model 
     check_bias(bias);
     // construct optimizer
     candy::Optimizer opt;
-    opt.dynamic_size = model.num_params();
-    opt.dynamic_data = new double[opt.dynamic_size];
-    std::memset(opt.dynamic_data, 0, sizeof(double) * opt.dynamic_size);
-    opt.static_data = candy::OptmzStatic(std::in_place_type<candy::optmz::AdaGrad>,
+    opt.allocate_data(model.num_params());
+    opt.static_data() = candy::OptmzStatic(std::in_place_type<candy::optmz::AdaGrad>,
                                          candy::optmz::AdaGrad(learning_rate, bias));
     return opt;
 }
@@ -232,11 +240,9 @@ candy::Optimizer candy::create_adam(double learning_rate, double beta_m, double 
     check_weight(beta_v);
     // construct optimizer
     candy::Optimizer opt;
-    opt.dynamic_size = 2 * model.num_params();
-    opt.dynamic_data = new double[opt.dynamic_size];
-    std::memset(opt.dynamic_data, 0, sizeof(double) * opt.dynamic_size);
-    opt.static_data = candy::OptmzStatic(std::in_place_type<candy::optmz::Adam>,
-                                         candy::optmz::Adam(learning_rate, beta_m, beta_v, bias));
+    opt.allocate_data(2 * model.num_params());
+    opt.static_data() = candy::OptmzStatic(std::in_place_type<candy::optmz::Adam>,
+                                           candy::optmz::Adam(learning_rate, beta_m, beta_v, bias));
     return opt;
 }
 
@@ -248,11 +254,9 @@ candy::Optimizer candy::create_adadelta(double learning_rate, double rho, const 
     check_weight(rho);
     // construct optimizer
     candy::Optimizer opt;
-    opt.dynamic_size = 2 * model.num_params();
-    opt.dynamic_data = new double[opt.dynamic_size];
-    std::memset(opt.dynamic_data, 0, sizeof(double) * opt.dynamic_size);
-    opt.static_data = candy::OptmzStatic(std::in_place_type<candy::optmz::AdaDelta>,
-                                         candy::optmz::AdaDelta(learning_rate, rho, bias));
+    opt.allocate_data(2 * model.num_params());
+    opt.static_data() = candy::OptmzStatic(std::in_place_type<candy::optmz::AdaDelta>,
+                                           candy::optmz::AdaDelta(learning_rate, rho, bias));
     return opt;
 }
 
@@ -264,11 +268,9 @@ candy::Optimizer candy::create_rmsprop(double learning_rate, double beta, const 
     check_weight(beta);
     // construct optimizer
     candy::Optimizer opt;
-    opt.dynamic_size = model.num_params();
-    opt.dynamic_data = new double[opt.dynamic_size];
-    std::memset(opt.dynamic_data, 0, sizeof(double) * opt.dynamic_size);
-    opt.static_data = candy::OptmzStatic(std::in_place_type<candy::optmz::RmsProp>,
-                                         candy::optmz::RmsProp(learning_rate, beta, bias));
+    opt.allocate_data(model.num_params());
+    opt.static_data() = candy::OptmzStatic(std::in_place_type<candy::optmz::RmsProp>,
+                                           candy::optmz::RmsProp(learning_rate, beta, bias));
     return opt;
 }
 

@@ -11,6 +11,7 @@
 #include "merlin/candy/model.hpp"
 #include "merlin/candy/optimizer.hpp"
 #include "merlin/candy/trainer.hpp"
+#include "merlin/candy/trial_policy.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/synchronizer.hpp"
 #include "merlin/utils.hpp"
@@ -44,12 +45,13 @@ int main(void) {
     candy::Trainer train(model, opt, cpu_synch);
 
     // test dry-run
-    std::uint64_t max_iter = 50;
-    DoubleVec error_by_step(max_iter);
+    candy::TrialPolicy policy(1, 9, 40);
+    DoubleVec error_by_step(policy.sum());
     std::uint64_t real_iter;
-    train.dry_run(train_data, error_by_step, real_iter, max_iter);
+    train.dry_run(train_data, error_by_step, real_iter, policy, 1);
     cpu_synch.synchronize();
-    bool test = real_iter == max_iter;
+    Message("Error dry-run: %s\n", error_by_step.str().c_str());
+    bool test = (real_iter == policy.sum());
     if (!test) {
         Fatal<std::runtime_error>("Provided optimizer not compatible with the model.\n");
     }

@@ -115,7 +115,7 @@ void candy::error_by_gpu(candy::Model * p_model, const array::Parcel * p_data, d
 
 __global__ void dryrun_kernel(candy::Model * p_model, const array::Parcel * p_data, candy::Optimizer * p_optmz,
                               candy::TrainMetric metric, double * error, std::uint64_t * count,
-                              std::uint64_t max_iter) {
+                              candy::TrialPolicy policy) {
     // get thread index and number of threads
     std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
     // copy objects on shared memory
@@ -123,45 +123,81 @@ __global__ void dryrun_kernel(candy::Model * p_model, const array::Parcel * p_da
     auto [grad_mem, p_model_shr, p_data_shr, p_optmz_shr] = cuda::copy_objects(shared_mem, *p_model, *p_data, *p_optmz);
     // assign data to gradient
     candy::Gradient gradient(reinterpret_cast<double *>(grad_mem), p_model_shr->num_params(), metric);
-    // calculate initial error
+    // initialize memory for index
     __shared__ unsigned long long normal_count;
     __shared__ double saved_error;
     __shared__ bool break_condition;
     Index index_mem;
     index_mem.fill(0);
+    // calculate initial error
     candy::rmse_gpu(p_model_shr, p_data_shr, &saved_error, &normal_count, thread_idx, block_size, index_mem);
     if (thread_idx == 0) {
         error[0] = saved_error;
         *count = 1;
     }
     __syncthreads();
-    // repeatedly iterate until a surge in the error detected
-    for (std::uint64_t iter = 1; iter < max_iter; iter++) {
+    // discarded phase
+    std::uint64_t start = 0;
+    std::uint64_t loops = policy.discarded();
+    for (std::uint64_t iter = 1; iter < loops; iter++) {
         gradient.calc_by_gpu(*p_model_shr, *p_data_shr, thread_idx, block_size, index_mem);
-        p_optmz->update_gpu(*p_model_shr, gradient, iter, thread_idx, block_size);
+        p_optmz_shr->update_gpu(*p_model_shr, gradient, start + iter, thread_idx, block_size);
         candy::rmse_gpu(p_model_shr, p_data_shr, &saved_error, &normal_count, thread_idx, block_size, index_mem);
         if (thread_idx == 0) {
-            error[iter] = saved_error;
-            break_condition = !is_normal(saved_error) || (saved_error / error[iter - 1] >= 1.0 + 1e-10);
+            error[start + iter] = saved_error;
+            break_condition = !is_normal(error[start + iter]);
+            *count += (break_condition) ? 0 : 1;
         }
         __syncthreads();
         if (break_condition) {
             break;
         }
+    }
+    loops = (*count == start + loops) ? (policy.strict()) : 0;
+    start += policy.discarded();
+    // strictly descent phase
+    for (std::uint64_t iter = 0; iter < loops; iter++) {
+        gradient.calc_by_gpu(*p_model_shr, *p_data_shr, thread_idx, block_size, index_mem);
+        p_optmz_shr->update_gpu(*p_model_shr, gradient, start + iter, thread_idx, block_size);
+        candy::rmse_gpu(p_model_shr, p_data_shr, &saved_error, &normal_count, thread_idx, block_size, index_mem);
         if (thread_idx == 0) {
-            *count = iter + 1;
+            error[start + iter] = saved_error;
+            break_condition = !is_normal(error[start + iter]);
+            break_condition = break_condition || (error[start + iter] >= error[start + iter - 1]);
+            *count += (break_condition) ? 0 : 1;
         }
         __syncthreads();
+        if (break_condition) {
+            break;
+        }
+    }
+    loops = (*count == start + loops) ? (policy.loose()) : 0;
+    start += policy.strict();
+    // loose phase
+    for (std::uint64_t iter = 0; iter < loops; iter++) {
+        gradient.calc_by_gpu(*p_model_shr, *p_data_shr, thread_idx, block_size, index_mem);
+        p_optmz_shr->update_gpu(*p_model_shr, gradient, start + iter, thread_idx, block_size);
+        candy::rmse_gpu(p_model_shr, p_data_shr, &saved_error, &normal_count, thread_idx, block_size, index_mem);
+        if (thread_idx == 0) {
+            error[start + iter] = saved_error;
+            break_condition = !is_normal(error[start + iter]);
+            break_condition = break_condition || (error[start + iter] / error[start + iter - 1] >= 1.0 + 1e-10);
+            *count += (break_condition) ? 0 : 1;
+        }
+        __syncthreads();
+        if (break_condition) {
+            break;
+        }
     }
 }
 
 // Dry-run the gradient update algorithm using GPU parallelism
 void candy::dryrun_by_gpu(candy::Model * p_model, const array::Parcel * p_data, candy::Optimizer * p_optimizer,
                           candy::TrainMetric metric, std::uint64_t n_threads, double * error, std::uint64_t * count,
-                          std::uint64_t max_iter, std::uint64_t shared_mem_size, cuda::Stream & stream) {
+                          candy::TrialPolicy policy, std::uint64_t shared_mem_size, cuda::Stream & stream) {
     ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr());
     dryrun_kernel<<<1, n_threads, shared_mem_size, cuda_stream>>>(p_model, p_data, p_optimizer, metric, error, count,
-                                                                  max_iter);
+                                                                  policy);
 }
 
 // Reconstruct CP-model

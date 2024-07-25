@@ -68,7 +68,7 @@ void candy::Trainer::get_error(const array::Parcel & data, double & rmse, double
 
 // Dry-run using GPU
 void candy::Trainer::dry_run(const array::Parcel & data, DoubleVec & error, std::uint64_t & actual_iter,
-                             std::uint64_t max_iter, std::uint64_t n_threads, candy::TrainMetric metric) {
+                             candy::TrialPolicy policy, std::uint64_t n_threads, candy::TrainMetric metric) {
     // check if trainer is on GPU
     if (!(this->on_gpu())) {
         Fatal<std::invalid_argument>("The current object is allocated on CPU.\n");
@@ -78,7 +78,7 @@ void candy::Trainer::dry_run(const array::Parcel & data, DoubleVec & error, std:
         Fatal<std::invalid_argument>("Incompatible shape between data and model.\n");
     }
     // check error length
-    if (error.size() < max_iter) {
+    if (error.size() < policy.sum()) {
         Fatal<std::invalid_argument>("Size of error must be greater or equal to max_iter.\n");
     }
     // calculate shared memory
@@ -90,7 +90,7 @@ void candy::Trainer::dry_run(const array::Parcel & data, DoubleVec & error, std:
     cuda::Memory mem(stream.get_stream_ptr(), this->model_, data, this->optmz_, error, actual_iter);
     // dry run
     double * error_gpu = reinterpret_cast<double *>(mem.get<3>() + 1);
-    candy::dryrun_by_gpu(mem.get<0>(), mem.get<1>(), mem.get<2>(), metric, n_threads, error_gpu, mem.get<4>(), max_iter,
+    candy::dryrun_by_gpu(mem.get<0>(), mem.get<1>(), mem.get<2>(), metric, n_threads, error_gpu, mem.get<4>(), policy,
                          shared_mem, stream);
     // clone data back to CPU
     error.copy_from_gpu(error_gpu, stream.get_stream_ptr());

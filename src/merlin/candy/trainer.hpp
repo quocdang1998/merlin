@@ -4,12 +4,13 @@
 #include <cstdio>   // std::printf
 #include <utility>  // std::swap, std::move
 
-#include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Parcel
-#include "merlin/candy/declaration.hpp"  // merlin::candy::Trainer
-#include "merlin/candy/model.hpp"        // merlin::candy::Model
-#include "merlin/candy/optimizer.hpp"    // merlin::candy::Optimizer
-#include "merlin/exports.hpp"            // MERLIN_EXPORTS
-#include "merlin/synchronizer.hpp"       // merlin::Synchronizer
+#include "merlin/array/declaration.hpp"   // merlin::array::Array, merlin::array::Parcel
+#include "merlin/candy/declaration.hpp"   // merlin::candy::Trainer
+#include "merlin/candy/model.hpp"         // merlin::candy::Model
+#include "merlin/candy/optimizer.hpp"     // merlin::candy::Optimizer
+#include "merlin/candy/trial_policy.hpp"  // merlin::candy::TrialPolicy
+#include "merlin/exports.hpp"             // MERLIN_EXPORTS
+#include "merlin/synchronizer.hpp"        // merlin::Synchronizer
 
 namespace merlin {
 
@@ -45,12 +46,12 @@ void error_by_gpu(candy::Model * p_model, const array::Parcel * p_data, double *
 /** @brief Dry-run the gradient update algorithm using CPU parallelism.*/
 void dryrun_by_cpu(std::future<void> && synch, candy::Model * p_model, const array::Array * p_data,
                    candy::Optimizer * p_optimizer, double * cpu_grad_mem, candy::TrainMetric metric,
-                   std::uint64_t n_threads, double * error, std::uint64_t * count, std::uint64_t max_iter);
+                   std::uint64_t n_threads, double * error, std::uint64_t * count, candy::TrialPolicy policy);
 
 /** @brief Dry-run the gradient update algorithm using GPU parallelism.*/
 void dryrun_by_gpu(candy::Model * p_model, const array::Parcel * p_data, candy::Optimizer * p_optimizer,
                    candy::TrainMetric metric, std::uint64_t n_threads, double * error, std::uint64_t * count,
-                   std::uint64_t max_iter, std::uint64_t shared_mem_size, cuda::Stream & stream);
+                   candy::TrialPolicy policy, std::uint64_t shared_mem_size, cuda::Stream & stream);
 
 /** @brief Reconstruct CP-model using CPU parallelism.*/
 void reconstruct_by_cpu(std::future<void> && synch, candy::Model * p_model, array::Array * p_data,
@@ -187,12 +188,12 @@ class candy::Trainer {
      *  @param data Data to train the model.
      *  @param error %Vector storing error per iteration, of which the size must be bigger or equal to ``max_iter``.
      *  @param actual_iter Return the number of iterations performed before halting the run.
-     *  @param max_iter Max number of iterations of the dry-run.
+     *  @param policy Number of steps for each stage of the dry-run.
      *  @param n_threads Number of parallel threads for calculating the gradient.
      *  @param metric Training metric for the model.
      */
     MERLIN_EXPORTS void dry_run(const array::Array & data, DoubleVec & error, std::uint64_t & actual_iter,
-                                std::uint64_t max_iter = 100, std::uint64_t n_threads = 1,
+                                candy::TrialPolicy policy = candy::TrialPolicy(), std::uint64_t n_threads = 1,
                                 candy::TrainMetric metric = candy::TrainMetric::RelativeSquare);
     /** @brief Dry-run using GPU parallelism.
      *  @details Perform gradient descent algorithm asynchronously for a given number of iterations without updating the
@@ -200,12 +201,12 @@ class candy::Trainer {
      *  @param data Data to train the model.
      *  @param error %Vector storing error per iteration, of which the size must be bigger or equal to ``max_iter``.
      *  @param actual_iter Return the number of iterations performed before halting the run.
-     *  @param max_iter Max number of iterations of the dry-run.
+     *  @param policy Number of steps for each stage of the dry-run.
      *  @param n_threads Number of parallel threads for calculating the gradient.
      *  @param metric Training metric for the model.
      */
     MERLIN_EXPORTS void dry_run(const array::Parcel & data, DoubleVec & error, std::uint64_t & actual_iter,
-                                std::uint64_t max_iter = 100, std::uint64_t n_threads = 32,
+                                candy::TrialPolicy policy = candy::TrialPolicy(), std::uint64_t n_threads = 32,
                                 candy::TrainMetric metric = candy::TrainMetric::RelativeSquare);
     /// @}
 

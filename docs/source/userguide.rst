@@ -215,9 +215,10 @@ From this loss function, one can calculate the gradient wrt. each entry of the e
    \boldsymbol{v}_{r',d'}[{i'}_{d'}]\right) - \hat{\boldsymbol{\sigma}}[\boldsymbol{i'}]\right) \right]
 
 Since the gradient always points in the direction of greatest increase, the CP model can be updated in the inverse
-direction to minimize the loss function. Many gradient descents algorithms are proposed, notably the stochastic gradient
-descent :cite:p:`amari1993backpropagation`, the adaptive gradient :cite:p:`duchi2011adaptive`, or adaptive moment
-gradient :cite:p:`zhang2018improved`.
+direction to minimize the loss function. Many gradient descents algorithms are proposed. Merlin supports five
+algorithms: stochastic gradient descent :cite:p:`amari1993backpropagation`, adaptive gradient
+:cite:p:`duchi2011adaptive`, adaptive moment gradient :cite:p:`zhang2018improved`, adaptative delta
+:cite:p:`zeiler2012adadelta` and root mean square propagation :cite:p:`liu2022hyper`.
 
 Within Merlin, the CP model undergoes an update using the back-propagation algorithm for :math:`K` iterations, then the
 error :math:`L_r` before and after training is compared against each other. If their relative difference falls below a

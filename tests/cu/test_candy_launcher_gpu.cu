@@ -39,7 +39,7 @@ int main (void) {
 
     // initialize optimizer
     // candy::Optimizer opt = candy::create_grad_descent(0.2);
-    candy::Optimizer opt = candy::create_rmsprop(0.2, 1e-3, model);
+    candy::Optimizer opt = candy::create_rmsprop(0.3, 1e-5, model);
 
     // create trainer
     std::uint64_t rep = 10;
@@ -50,12 +50,13 @@ int main (void) {
     candy::Trainer train_cpu(model, opt, cpu_sync);
 
     // GPU dryrun
-    std::uint64_t max_iter = 50;
-    DoubleVec error_by_step(max_iter);
+    candy::TrialPolicy policy(1, 9, 40);
+    DoubleVec error_by_step(policy.sum());
     std::uint64_t real_iter;
-    train_gpu.dry_run(gpu_data, error_by_step, real_iter, max_iter);
+    train_gpu.dry_run(gpu_data, error_by_step, real_iter, policy);
     gpu_sync.synchronize();
-    bool test = real_iter == max_iter;
+    Message("Error dry-run: %s\n", error_by_step.str().c_str());
+    bool test = (real_iter == policy.sum());
     if (!test) {
         Fatal<std::runtime_error>("Provided optimizer not compatible with the model.\n");
     }

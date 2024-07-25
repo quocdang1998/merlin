@@ -72,6 +72,10 @@ Major features include:
 
       The MIT License applies to this project, see :doc:`license`.
 
+.. raw:: html
+
+   <h2>Bibliography</h2>
+
 .. toctree::
    :maxdepth: 1
    :hidden:

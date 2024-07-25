@@ -197,6 +197,7 @@ Asynchronous fitting
    :template: pyclass.rst
 
    merlin.candy.Trainer
+   merlin.candy.TrialPolicy
 
 Random initialization
 ^^^^^^^^^^^^^^^^^^^^^

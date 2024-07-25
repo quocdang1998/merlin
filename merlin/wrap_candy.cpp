@@ -3,14 +3,15 @@
 
 #include <cstddef>        // nullptr
 
-#include "merlin/array/array.hpp"        // merlin::array::Array
-#include "merlin/array/parcel.hpp"       // merlin::array::Parcel
-#include "merlin/candy/declaration.hpp"  // merlin::candy::TrainMetric
-#include "merlin/candy/gradient.hpp"     // merlin::candy::Gradient
-#include "merlin/candy/model.hpp"        // merlin::candy::Model
-#include "merlin/candy/optimizer.hpp"    // merlin::candy::Optimizer
-#include "merlin/candy/randomizer.hpp"   // merlin::candy::Randomizer
-#include "merlin/candy/trainer.hpp"      // merlin::candy::Trainer
+#include "merlin/array/array.hpp"         // merlin::array::Array
+#include "merlin/array/parcel.hpp"        // merlin::array::Parcel
+#include "merlin/candy/declaration.hpp"   // merlin::candy::TrainMetric
+#include "merlin/candy/gradient.hpp"      // merlin::candy::Gradient
+#include "merlin/candy/model.hpp"         // merlin::candy::Model
+#include "merlin/candy/optimizer.hpp"     // merlin::candy::Optimizer
+#include "merlin/candy/randomizer.hpp"    // merlin::candy::Randomizer
+#include "merlin/candy/trainer.hpp"       // merlin::candy::Trainer
+#include "merlin/candy/trial_policy.hpp"  // merlin::candy::TrialPolicy
 
 namespace merlin {
 
@@ -407,6 +408,65 @@ void wrap_optimizer(py::module & candy_module) {
     );
 }
 
+// Wrap merlin::candy::TrialPolicy
+void wrap_trial_policy(py::module & candy_module) {
+    auto trial_policy_pyclass = py::class_<candy::TrialPolicy>(
+        candy_module,
+        "TrialPolicy",
+        R"(
+        Trial policy for test run (dry run).
+
+        Wrapper of :cpp:class:`merlin::candy::TrialPolicy`.)"
+    );
+    // constructor
+    trial_policy_pyclass.def(
+        py::init(
+            [](std::uint64_t discarded, std::uint64_t strict, std::uint64_t loose) {
+                return new candy::TrialPolicy(discarded, strict, loose);
+            }
+        ),
+        R"(
+        Constructor from attributes.
+
+        Parameters
+        ----------
+        discarded : int, default=1
+            Number of discarded steps.
+        strict : int, default=199
+            Number of steps with strictly descent of error.
+        loose : int, default=800
+            Number of steps tolerated for random rounding error near local minima.
+        )",
+        py::arg("discarded") = 1, py::arg("strict") = 199, py::arg("loose") = 800
+    );
+    // attributes
+    trial_policy_pyclass.def_property_readonly(
+        "discarded",
+        [](const candy::TrialPolicy & self) { return self.discarded(); },
+        "Get number of discarded steps."
+    );
+    trial_policy_pyclass.def_property_readonly(
+        "strict",
+        [](const candy::TrialPolicy & self) { return self.strict(); },
+        "Get number of steps with strictly descent of error."
+    );
+    trial_policy_pyclass.def_property_readonly(
+        "loose",
+        [](const candy::TrialPolicy & self) { return self.loose(); },
+        "Get number of steps tolerated for random rounding error near local minima."
+    );
+    trial_policy_pyclass.def_property_readonly(
+        "sum",
+        [](const candy::TrialPolicy & self) { return self.sum(); },
+        "Get total number of steps."
+    );
+    // representation
+    trial_policy_pyclass.def(
+        "__repr__",
+        [](const candy::TrialPolicy & self) { return self.str(); }
+    );
+}
+
 // Wrap merlin::candy::Trainer class
 void wrap_trainer(py::module & candy_module) {
     auto trainer_pyclass = py::class_<candy::Trainer>(
@@ -575,11 +635,11 @@ void wrap_trainer(py::module & candy_module) {
     // dry run
     trainer_pyclass.def(
         "dry_run_cpu",
-        [](candy::Trainer & self, const array::Array & data, std::uint64_t max_iter, std::uint64_t n_threads,
+        [](candy::Trainer & self, const array::Array & data, const candy::TrialPolicy & policy, std::uint64_t n_threads,
            const std::string & metric) {
-            DoubleVec error(max_iter);
+            DoubleVec error(policy.sum());
             UIntVec count(1);
-            self.dry_run(data, error, count[0], max_iter, n_threads, trainmetric_map.at(metric));
+            self.dry_run(data, error, count[0], policy, n_threads, trainmetric_map.at(metric));
             double * error_data = std::exchange(error.data(), nullptr);
             std::uint64_t * count_data = std::exchange(count.data(), nullptr);
             return std::make_pair(make_wrapper_array<double>(error_data, error.size()),
@@ -595,8 +655,8 @@ void wrap_trainer(py::module & candy_module) {
         ----------
         data : merlin.array.Array
             Data to train the model.
-        max_iter: int, default=100
-            Max number of iterations of the dry-run.
+        policy: merlin.candy.TrialPolicy, default=merlin.candy.TrialPolicy()
+            Number of steps for each stage of the dry-run.
         n_threads : int, default=1
             Number of parallel threads for calculating the gradient.
         metric : str, default="relsquare"
@@ -608,15 +668,16 @@ void wrap_trainer(py::module & candy_module) {
         count : np.ndarray[dtype=np.float64]
             1-D array of size 1, storing the number of iterations performed before breaking the dry run.
         )",
-        py::arg("data"), py::arg("max_iter") = 100, py::arg("n_threads") = 1, py::arg("metric") = "relsquare"
+        py::arg("data"), py::arg("policy") = candy::TrialPolicy(), py::arg("n_threads") = 1,
+        py::arg("metric") = "relsquare"
     );
     trainer_pyclass.def(
         "dry_run_gpu",
-        [](candy::Trainer & self, const array::Parcel & data, std::uint64_t max_iter, std::uint64_t n_threads,
-           const std::string & metric) {
-            DoubleVec error(max_iter);
+        [](candy::Trainer & self, const array::Parcel & data, const candy::TrialPolicy & policy,
+           std::uint64_t n_threads, const std::string & metric) {
+            DoubleVec error(policy.sum());
             UIntVec count(1);
-            self.dry_run(data, error, count[0], max_iter, n_threads, trainmetric_map.at(metric));
+            self.dry_run(data, error, count[0], policy, n_threads, trainmetric_map.at(metric));
             double * error_data = std::exchange(error.data(), nullptr);
             std::uint64_t * count_data = std::exchange(count.data(), nullptr);
             return std::make_pair(make_wrapper_array<double>(error_data, error.size()),
@@ -632,8 +693,8 @@ void wrap_trainer(py::module & candy_module) {
         ----------
         data : merlin.array.Parcel
             Data to train the model.
-        max_iter: int, default=100
-            Max number of iterations of the dry-run.
+        policy: merlin.candy.TrialPolicy, default=merlin.candy.TrialPolicy()
+            Number of steps for each stage of the dry-run.
         n_threads : int, default=32
             Number of parallel threads for calculating the gradient.
         metric : str, default="relsquare"
@@ -645,8 +706,8 @@ void wrap_trainer(py::module & candy_module) {
         count : np.ndarray[dtype=np.float64]
             1-D array of size 1, storing the number of iterations performed before breaking the dry run.
         )",
-        py::arg("data"), py::arg("max_iter") = 100, py::arg("n_threads") = 32, py::arg("metric") = "relsquare"
-    );
+        py::arg("data"), py::arg("policy") = candy::TrialPolicy(), py::arg("n_threads") = 32,
+        py::arg("metric") = "relsquare");
     // reconstruct
     trainer_pyclass.def(
         "reconstruct_cpu",
@@ -729,8 +790,9 @@ void wrap_candy(py::module & merlin_package) {
     wrap_model(candy_module);
     wrap_gradient(candy_module);
     wrap_optimizer(candy_module);
-    wrap_trainer(candy_module);
     wrap_randomizer(candy_module);
+    wrap_trial_policy(candy_module);
+    wrap_trainer(candy_module);
 }
 
 }  // namespace merlin

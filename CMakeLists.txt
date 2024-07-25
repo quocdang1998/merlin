@@ -36,8 +36,9 @@ list(
     candy/loss.cpp
     candy/model.cpp
     candy/optimizer.cpp
-    candy/trainer.cpp
     candy/randomizer.cpp
+    candy/trainer.cpp
+    candy/trial_policy.cpp
     cuda/device.cpp
     cuda/event.cpp
     cuda/graph.cpp

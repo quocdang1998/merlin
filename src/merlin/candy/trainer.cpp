@@ -91,37 +91,65 @@ void candy::error_by_cpu(std::future<void> && synch, candy::Model * p_model, con
 // Dry-run the gradient update algorithm using CPU parallelism
 void candy::dryrun_by_cpu(std::future<void> && synch, candy::Model * p_model, const array::Array * p_data,
                           candy::Optimizer * p_optimizer, double * cpu_grad_mem, candy::TrainMetric metric,
-                          std::uint64_t n_threads, double * error, std::uint64_t * count, std::uint64_t max_iter) {
+                          std::uint64_t n_threads, double * error, std::uint64_t * count, candy::TrialPolicy policy) {
     // finish old job
     if (synch.valid()) {
         synch.get();
     }
-    // create gradient object
+    // create gradient object and normal count
     candy::Gradient gradient(cpu_grad_mem, p_model->num_params(), metric);
-    // calculate initial error
     std::uint64_t normal_count;
-    _Pragma("omp parallel num_threads(n_threads)") {
-        Index index_mem;
-        index_mem.fill(0);
-        std::uint64_t thread_idx = ::omp_get_thread_num();
-        candy::rmse_cpu(p_model, p_data, error[0], normal_count, thread_idx, n_threads, index_mem);
-    }
     *count = 1;
-    // repeatedly iterate until a surge in the error detected
+    // parallel calculation
     _Pragma("omp parallel num_threads(n_threads)") {
+        // initialize memory for index
         Index index_mem;
         index_mem.fill(0);
         std::uint64_t thread_idx = ::omp_get_thread_num();
-        // gradient descent loop
-        for (std::uint64_t iter = 1; iter < max_iter; iter++) {
+        // calculate initial error
+        candy::rmse_cpu(p_model, p_data, error[0], normal_count, thread_idx, n_threads, index_mem);
+        // discarded phase
+        std::uint64_t start = 0;
+        std::uint64_t loops = policy.discarded();
+        for (std::uint64_t iter = 1; iter < loops; iter++) {
             gradient.calc_by_cpu(*p_model, *p_data, thread_idx, n_threads, index_mem);
-            p_optimizer->update_cpu(*p_model, gradient, iter, thread_idx, n_threads);
-            candy::rmse_cpu(p_model, p_data, error[iter], normal_count, thread_idx, n_threads, index_mem);
-            bool break_condition = !is_normal(error[iter]) || (error[iter] / error[iter - 1] >= 1.0 + 1e-10);
+            p_optimizer->update_cpu(*p_model, gradient, start + iter, thread_idx, n_threads);
+            candy::rmse_cpu(p_model, p_data, error[start + iter], normal_count, thread_idx, n_threads, index_mem);
+            bool break_condition = !is_normal(error[start + iter]);
             if (break_condition) {
                 break;
             }
-            _Pragma("omp single") { *count = iter + 1; }
+            _Pragma("omp single") { *count += 1; }
+            _Pragma("omp barrier");
+        }
+        loops = (*count == start + loops) ? (policy.strict()) : 0;
+        start += policy.discarded();
+        // strictly descent phase
+        for (std::uint64_t iter = 0; iter < loops; iter++) {
+            gradient.calc_by_cpu(*p_model, *p_data, thread_idx, n_threads, index_mem);
+            p_optimizer->update_cpu(*p_model, gradient, start + iter, thread_idx, n_threads);
+            candy::rmse_cpu(p_model, p_data, error[start + iter], normal_count, thread_idx, n_threads, index_mem);
+            bool break_condition = !is_normal(error[start + iter]);
+            break_condition = break_condition || (error[start + iter] / error[start + iter - 1] >= 1.0 - 1e-6);
+            if (break_condition) {
+                break;
+            }
+            _Pragma("omp single") { *count += 1; }
+            _Pragma("omp barrier");
+        }
+        loops = (*count == start + loops) ? (policy.loose()) : 0;
+        start += policy.strict();
+        // loose phase
+        for (std::uint64_t iter = 0; iter < loops; iter++) {
+            gradient.calc_by_cpu(*p_model, *p_data, thread_idx, n_threads, index_mem);
+            p_optimizer->update_cpu(*p_model, gradient, start + iter, thread_idx, n_threads);
+            candy::rmse_cpu(p_model, p_data, error[start + iter], normal_count, thread_idx, n_threads, index_mem);
+            bool break_condition = !is_normal(error[start + iter]);
+            break_condition = break_condition || (error[start + iter] / error[start + iter - 1] >= 1.0 + 1e-10);
+            if (break_condition) {
+                break;
+            }
+            _Pragma("omp single") { *count += 1; }
             _Pragma("omp barrier");
         }
     }
@@ -204,7 +232,7 @@ void candy::Trainer::get_error(const array::Array & data, double & rmse, double 
 
 // Dry-run
 void candy::Trainer::dry_run(const array::Array & data, DoubleVec & error, std::uint64_t & actual_iter,
-                             std::uint64_t max_iter, std::uint64_t n_threads, candy::TrainMetric metric) {
+                             candy::TrialPolicy policy, std::uint64_t n_threads, candy::TrainMetric metric) {
     // check if trainer is on CPU
     if (this->on_gpu()) {
         Fatal<std::invalid_argument>("The current object is allocated on GPU.\n");
@@ -214,7 +242,7 @@ void candy::Trainer::dry_run(const array::Array & data, DoubleVec & error, std::
         Fatal<std::invalid_argument>("Incompatible shape between data and model.\n");
     }
     // check error length
-    if (error.size() < max_iter) {
+    if (error.size() < policy.sum()) {
         Fatal<std::invalid_argument>("Size of error must be greater or equal to max_iter.\n");
     }
     // copy current model and optimizer
@@ -224,7 +252,7 @@ void candy::Trainer::dry_run(const array::Array & data, DoubleVec & error, std::
     std::future<void> & current_sync = std::get<std::future<void>>(this->p_synch_->core);
     std::future<void> new_sync = std::async(std::launch::async, candy::dryrun_by_cpu, std::move(current_sync),
                                             model_dry, &data, optmz_dry, this->cpu_grad_mem_, metric, n_threads,
-                                            error.data(), &actual_iter, max_iter);
+                                            error.data(), &actual_iter, policy);
     *(this->p_synch_) = Synchronizer(std::move(new_sync));
 }
 

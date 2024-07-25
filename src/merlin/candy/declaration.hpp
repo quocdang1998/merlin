@@ -15,8 +15,9 @@ enum class TrainMetric : unsigned int {
 class Gradient;
 class Launcher;
 class Model;
-struct Optimizer;
+class Optimizer;
 class Trainer;
+class TrialPolicy;
 }  // namespace merlin::candy
 
 #endif  // MERLIN_CANDY_DECLARATION_HPP_

@@ -31,7 +31,8 @@ using OptmzUpdater = std::add_pointer<void(void *, double *, candy::Model &, con
 }  // namespace candy
 
 /** @brief Algorithm for updating a model based on its gradient.*/
-struct candy::Optimizer {
+class candy::Optimizer {
+  public:
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
@@ -46,16 +47,26 @@ struct candy::Optimizer {
     MERLIN_EXPORTS candy::Optimizer & operator=(const candy::Optimizer & src);
     /** @brief Move constructor.*/
     Optimizer(candy::Optimizer && src) :
-    static_data(std::forward<candy::OptmzStatic>(src.static_data)), dynamic_size(src.dynamic_size) {
-        this->dynamic_data = std::exchange(src.dynamic_data, nullptr);
+    static_data_(std::forward<candy::OptmzStatic>(src.static_data_)), dynamic_size_(src.dynamic_size_) {
+        this->dynamic_data_ = std::exchange(src.dynamic_data_, nullptr);
     }
     /** @brief Move assignment.*/
     candy::Optimizer & operator=(candy::Optimizer && src) {
-        this->static_data = std::forward<candy::OptmzStatic>(src.static_data);
-        this->dynamic_size = src.dynamic_size;
-        this->dynamic_data = std::exchange(src.dynamic_data, nullptr);
+        this->static_data_ = std::forward<candy::OptmzStatic>(src.static_data_);
+        this->dynamic_size_ = src.dynamic_size_;
+        this->dynamic_data_ = std::exchange(src.dynamic_data_, nullptr);
         return *this;
     }
+    /// @}
+
+    /// @name Attributes
+    /// @{
+    /** @brief Get reference to static data.*/
+    constexpr candy::OptmzStatic & static_data(void) noexcept { return this->static_data_; }
+    /** @brief Get constant reference to static data.*/
+    constexpr const candy::OptmzStatic & static_data(void) const noexcept { return this->static_data_; }
+    /** @brief Allocate dynamic data.*/
+    void allocate_data(std::uint64_t size);
     /// @}
 
     /// @name Check compatibility with a model
@@ -80,7 +91,7 @@ struct candy::Optimizer {
     /// @{
     /** @brief Calculate number of bytes to allocate on GPU.*/
     std::uint64_t cumalloc_size(void) const noexcept {
-        return sizeof(candy::Optimizer) + sizeof(double) * this->dynamic_size;
+        return sizeof(candy::Optimizer) + sizeof(double) * this->dynamic_size_;
     }
     /** @brief Copy the optimizer from CPU to a pre-allocated memory on GPU.
      *  @param gpu_ptr Pointer to a pre-allocated GPU memory holding an instance.
@@ -123,15 +134,13 @@ struct candy::Optimizer {
     MERLIN_EXPORTS ~Optimizer(void);
     /// @}
 
-    /// @name Attributes
-    /// @{
+  protected:
     /** @brief Static data for the algorithm (data resides on the stack memory).*/
-    candy::OptmzStatic static_data;
+    candy::OptmzStatic static_data_;
     /** @brief Dynamic data for the algorithm (data resides on the heap memory and must be deallocated in destructor).*/
-    double * dynamic_data = nullptr;
+    double * dynamic_data_ = nullptr;
     /** @brief Size of dynamic memory.*/
-    std::uint64_t dynamic_size = 0;
-    /// @}
+    std::uint64_t dynamic_size_ = 0;
 };
 
 namespace candy {

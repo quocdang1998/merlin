@@ -314,6 +314,7 @@ Launch calculation
    :toctree: generated
 
    merlin::candy::Trainer
+   merlin::candy::TrialPolicy
 
 Low level API
 -------------
