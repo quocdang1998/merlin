@@ -92,6 +92,15 @@ inline constexpr AvxFlag use_avx = AvxFlag::NoAvx;
 static AvxFlag use_avx;
 #endif  // __DOXYGEN_PARSER__
 
+// Candy dry-run criterion
+// -----------------------
+
+/** @brief Maximum ratio between the RMSE of two consecutive step in strict mode.*/
+inline constexpr double strict_max_ratio = 1.0 - 1e-5;
+
+/** @brief Maximum ratio between the RMSE of two consecutive step in loose mode.*/
+inline constexpr double loose_max_ratio = 1.0 + 1e-10;
+
 }  // namespace merlin
 
 #endif  // MERLIN_CONFIG_HPP_

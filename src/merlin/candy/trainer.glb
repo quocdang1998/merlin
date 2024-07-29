@@ -163,7 +163,7 @@ __global__ void dryrun_kernel(candy::Model * p_model, const array::Parcel * p_da
         if (thread_idx == 0) {
             error[start + iter] = saved_error;
             break_condition = !is_normal(error[start + iter]);
-            break_condition = break_condition || (error[start + iter] >= error[start + iter - 1]);
+            break_condition = break_condition || (error[start + iter] >= strict_max_ratio * error[start + iter - 1]);
             *count += (break_condition) ? 0 : 1;
         }
         __syncthreads();
@@ -181,7 +181,7 @@ __global__ void dryrun_kernel(candy::Model * p_model, const array::Parcel * p_da
         if (thread_idx == 0) {
             error[start + iter] = saved_error;
             break_condition = !is_normal(error[start + iter]);
-            break_condition = break_condition || (error[start + iter] / error[start + iter - 1] >= 1.0 + 1e-10);
+            break_condition = break_condition || (error[start + iter] >= loose_max_ratio * error[start + iter - 1]);
             *count += (break_condition) ? 0 : 1;
         }
         __syncthreads();

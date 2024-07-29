@@ -130,7 +130,7 @@ void candy::dryrun_by_cpu(std::future<void> && synch, candy::Model * p_model, co
             p_optimizer->update_cpu(*p_model, gradient, start + iter, thread_idx, n_threads);
             candy::rmse_cpu(p_model, p_data, error[start + iter], normal_count, thread_idx, n_threads, index_mem);
             bool break_condition = !is_normal(error[start + iter]);
-            break_condition = break_condition || (error[start + iter] / error[start + iter - 1] >= 1.0 - 1e-6);
+            break_condition = break_condition || (error[start + iter] >= strict_max_ratio * error[start + iter - 1]);
             if (break_condition) {
                 break;
             }
@@ -145,7 +145,7 @@ void candy::dryrun_by_cpu(std::future<void> && synch, candy::Model * p_model, co
             p_optimizer->update_cpu(*p_model, gradient, start + iter, thread_idx, n_threads);
             candy::rmse_cpu(p_model, p_data, error[start + iter], normal_count, thread_idx, n_threads, index_mem);
             bool break_condition = !is_normal(error[start + iter]);
-            break_condition = break_condition || (error[start + iter] / error[start + iter - 1] >= 1.0 + 1e-10);
+            break_condition = break_condition || (error[start + iter] >= loose_max_ratio * error[start + iter - 1]);
             if (break_condition) {
                 break;
             }
