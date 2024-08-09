@@ -161,7 +161,7 @@ MERLIN_EXPORTS candy::Optimizer create_adadelta(double learning_rate, double rho
 
 /** @brief Create an optimizer with rmsprop algorithm.*/
 MERLIN_EXPORTS candy::Optimizer create_rmsprop(double learning_rate, double beta, const candy::Model & model,
-                                               double bias = 1.0e-16);
+                                               double bias = 1.0e-8);
 
 }  // namespace candy
 

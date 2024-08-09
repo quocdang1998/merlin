@@ -526,12 +526,12 @@ void wrap_trainer(py::module & candy_module) {
         "Set filename to serialize trained model.",
         py::arg("new_fname")
     );
-    // train model
+    // update model until convergence
     trainer_pyclass.def(
-        "update_cpu",
+        "update_until_cpu",
         [](candy::Trainer & self, const array::Array & data, std::uint64_t rep, double threshold,
            std::uint64_t n_threads, const std::string & metric, bool export_result) {
-            self.update(data, rep, threshold, n_threads, trainmetric_map.at(metric), export_result);
+            self.update_until(data, rep, threshold, n_threads, trainmetric_map.at(metric), export_result);
         },
         R"(
         Update CP model according to gradient on CPU.
@@ -559,10 +559,10 @@ void wrap_trainer(py::module & candy_module) {
         py::arg("metric") = "relsquare", py::arg("export_result") = true
     );
     trainer_pyclass.def(
-        "update_gpu",
+        "update_until_gpu",
         [](candy::Trainer & self, const array::Parcel & data, std::uint64_t rep, double threshold,
            std::uint64_t n_threads, const std::string & metric, bool export_result) {
-            self.update(data, rep, threshold, n_threads, trainmetric_map.at(metric), export_result);
+            self.update_until(data, rep, threshold, n_threads, trainmetric_map.at(metric), export_result);
         },
         R"(
         Update CP model according to gradient on GPU.
@@ -588,6 +588,61 @@ void wrap_trainer(py::module & candy_module) {
         )",
         py::arg("data"), py::arg("rep"), py::arg("threshold"), py::arg("n_threads") = 32,
         py::arg("metric") = "relsquare", py::arg("export_result") = true
+    );
+    // update model for a given number of iterations
+    trainer_pyclass.def(
+        "update_for_cpu",
+        [](candy::Trainer & self, const array::Array & data, std::uint64_t max_iter, std::uint64_t n_threads,
+           const std::string & metric, bool export_result) {
+            self.update_for(data, max_iter, n_threads, trainmetric_map.at(metric), export_result);
+        },
+        R"(
+        Update CP model according to gradient on CPU.
+
+        Update CP model for a certain number of iterations.
+
+        Parameters
+        ----------
+        data : merlin.array.Array
+            Data to train the model.
+        max_iter : int
+            Ma number of iterations.
+        n_threads : int, default=1
+            Number of parallel threads for training the model.
+        metric : str, default="relsquare"
+            Training metric for the model.
+        export_result : bool, default=True
+            Save trained model to a file.
+        )",
+        py::arg("data"), py::arg("max_iter"), py::arg("n_threads") = 1, py::arg("metric") = "relsquare",
+        py::arg("export_result") = true
+    );
+    trainer_pyclass.def(
+        "update_for_gpu",
+        [](candy::Trainer & self, const array::Parcel & data, std::uint64_t max_iter, std::uint64_t n_threads,
+           const std::string & metric, bool export_result) {
+            self.update_for(data, max_iter, n_threads, trainmetric_map.at(metric), export_result);
+        },
+        R"(
+        Update CP model according to gradient on GPU.
+
+        Update CP model for a certain number of iterations.
+
+        Parameters
+        ----------
+        data : merlin.array.Parcel
+            Data to train the model.
+        max_iter : int
+            Ma number of iterations.
+        n_threads : int, default=1
+            Number of parallel threads for training the model.
+        metric : str, default="relsquare"
+            Training metric for the model.
+        export_result : bool, default=True
+            Save trained model to a file.
+        )",
+        py::arg("data"), py::arg("max_iter"), py::arg("n_threads") = 1, py::arg("metric") = "relsquare",
+        py::arg("export_result") = true
     );
     // calculate error
     trainer_pyclass.def(

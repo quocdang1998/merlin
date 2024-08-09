@@ -83,6 +83,37 @@ void candy::train_by_gpu(candy::Model * p_model, const array::Parcel * p_data, c
     train_kernel<<<1, n_threads, shared_mem_size, cuda_stream>>>(p_model, p_data, p_optimizer, metric, rep, threshold);
 }
 
+// Processing kernel
+__global__ static void process_kernel(candy::Model * p_model, const array::Parcel * p_data, candy::Optimizer * p_optmz,
+                                      std::uint64_t max_iter, candy::TrainMetric metric) {
+    // get thread index and number of threads
+    std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
+    // copy objects on shared memory
+    extern __shared__ char shared_mem[];
+    auto [grad_mem, p_model_shr, p_data_shr, p_optmz_shr] = cuda::copy_objects(shared_mem, *p_model, *p_data, *p_optmz);
+    // assign data to gradient
+    candy::Gradient gradient(reinterpret_cast<double *>(grad_mem), p_model_shr->num_params(), metric);
+    // initialize cache memory
+    Index index_mem;
+    index_mem.fill(0);
+    // training loop
+    for (std::uint64_t i = 1; i <= max_iter; i++) {
+        gradient.calc_by_gpu(*p_model_shr, *p_data_shr, thread_idx, block_size, index_mem);
+        p_optmz->update_gpu(*p_model_shr, gradient, i, thread_idx, block_size);
+    }
+    // copy model and optimizer data from shared memory back to global memory
+    p_model_shr->copy_by_block(p_model, p_model + 1, thread_idx, block_size);
+    p_optmz_shr->copy_by_block(p_optmz, p_optmz + 1, thread_idx, block_size);
+}
+
+// Train a model using GPU parallelism
+void candy::process_by_gpu(candy::Model * p_model, const array::Parcel * p_data, candy::Optimizer * p_optimizer,
+                           std::uint64_t max_iter, std::uint64_t n_threads, candy::TrainMetric metric,
+                           std::uint64_t shared_mem_size, cuda::Stream & stream) {
+    ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr());
+    process_kernel<<<1, n_threads, shared_mem_size, cuda_stream>>>(p_model, p_data, p_optimizer, max_iter, metric);
+}
+
 // Error kernel
 __global__ void error_kernel(candy::Model * p_model, const array::Parcel * p_data, double * p_rmse, double * p_rmae) {
     // get thread index and number of threads

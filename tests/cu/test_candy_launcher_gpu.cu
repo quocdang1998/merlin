@@ -39,7 +39,7 @@ int main (void) {
 
     // initialize optimizer
     // candy::Optimizer opt = candy::create_grad_descent(0.2);
-    candy::Optimizer opt = candy::create_rmsprop(0.3, 1e-5, model);
+    candy::Optimizer opt = candy::create_rmsprop(0.05, 0.99, model);
 
     // create trainer
     std::uint64_t rep = 10;
@@ -50,7 +50,7 @@ int main (void) {
     candy::Trainer train_cpu(model, opt, cpu_sync);
 
     // GPU dryrun
-    candy::TrialPolicy policy(1, 9, 40);
+    /*candy::TrialPolicy policy(1, 9, 40);
     DoubleVec error_by_step(policy.sum());
     std::uint64_t real_iter;
     train_gpu.dry_run(gpu_data, error_by_step, real_iter, policy);
@@ -59,13 +59,27 @@ int main (void) {
     bool test = (real_iter == policy.sum());
     if (!test) {
         Fatal<std::runtime_error>("Provided optimizer not compatible with the model.\n");
+    }*/
+
+    // CPU dryrun
+    candy::TrialPolicy policy(1, 9, 40);
+    DoubleVec error_by_step(policy.sum());
+    std::uint64_t real_iter;
+    train_cpu.dry_run(train_data, error_by_step, real_iter, policy);
+    cpu_sync.synchronize();
+    Message("Error dry-run: %s\n", error_by_step.str().c_str());
+    bool test = (real_iter == policy.sum());
+    if (!test) {
+        Fatal<std::runtime_error>("Provided optimizer not compatible with the model.\n");
     }
 
     // launch update
     train_gpu.set_fname("result_gpu.txt");
-    train_gpu.update(gpu_data, rep, threshold, 16, candy::TrainMetric::RelativeSquare, true);
     train_cpu.set_fname("result_cpu.txt");
-    train_cpu.update(train_data, rep, threshold, 3, candy::TrainMetric::RelativeSquare, true);
+    // train_gpu.update_until(gpu_data, rep, threshold, 16, candy::TrainMetric::RelativeSquare, true);
+    // train_cpu.update_until(train_data, rep, threshold, 3, candy::TrainMetric::RelativeSquare, true);
+    train_gpu.update_for(gpu_data, 1000, 16, candy::TrainMetric::RelativeSquare, true);
+    train_cpu.update_for(train_data, 1000, 3, candy::TrainMetric::RelativeSquare, true);
 
     // synchronize
     gpu_sync.synchronize();

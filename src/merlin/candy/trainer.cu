@@ -17,8 +17,8 @@ namespace merlin {
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Update CP model according to gradient on GPU
-void candy::Trainer::update(const array::Parcel & data, std::uint64_t rep, double threshold, std::uint64_t n_threads,
-                            candy::TrainMetric metric, bool export_result) {
+void candy::Trainer::update_until(const array::Parcel & data, std::uint64_t rep, double threshold,
+                                  std::uint64_t n_threads, candy::TrainMetric metric, bool export_result) {
     // check if trainer is on GPU
     if (!(this->on_gpu())) {
         Fatal<std::invalid_argument>("The current object is allocated on CPU.\n");
@@ -36,6 +36,33 @@ void candy::Trainer::update(const array::Parcel & data, std::uint64_t rep, doubl
     cuda::Memory mem(stream.get_stream_ptr(), this->model_, data, this->optmz_);
     candy::train_by_gpu(mem.get<0>(), mem.get<1>(), mem.get<2>(), metric, rep, n_threads, threshold, shared_mem,
                         stream);
+    this->model_.copy_from_gpu(reinterpret_cast<double *>(mem.get<0>() + 1), stream.get_stream_ptr());
+    this->optmz_.copy_from_gpu(reinterpret_cast<double *>(mem.get<2>() + 1), stream.get_stream_ptr());
+    // save model to a file
+    if (export_result) {
+        stream.add_callback(candy::save_model, this->model_, this->fname_);
+    }
+}
+
+// Update CP model according to gradient using GPU
+void candy::Trainer::update_for(const array::Parcel & data, std::uint64_t max_iter, std::uint64_t n_threads,
+                                candy::TrainMetric metric, bool export_result) {
+    // check if trainer is on GPU
+    if (!(this->on_gpu())) {
+        Fatal<std::invalid_argument>("The current object is allocated on CPU.\n");
+    }
+    // check shape
+    if (!this->model_.check_compatible_shape(data.shape())) {
+        Fatal<std::invalid_argument>("Incompatible shape between data and model.\n");
+    }
+    // calculate shared memory
+    std::uint64_t shared_mem = this->model_.sharedmem_size() + this->optmz_.sharedmem_size() + data.sharedmem_size();
+    shared_mem += sizeof(double) * this->model_.num_params();
+    // copy memory to GPU and launch kernel
+    cuda::Stream & stream = std::get<cuda::Stream>(this->p_synch_->core);
+    cuda::CtxGuard guard(stream.get_gpu());
+    cuda::Memory mem(stream.get_stream_ptr(), this->model_, data, this->optmz_);
+    candy::process_by_gpu(mem.get<0>(), mem.get<1>(), mem.get<2>(), max_iter, n_threads, metric, shared_mem, stream);
     this->model_.copy_from_gpu(reinterpret_cast<double *>(mem.get<0>() + 1), stream.get_stream_ptr());
     this->optmz_.copy_from_gpu(reinterpret_cast<double *>(mem.get<2>() + 1), stream.get_stream_ptr());
     // save model to a file

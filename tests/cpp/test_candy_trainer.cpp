@@ -35,7 +35,7 @@ int main(void) {
     // candy::Optimizer opt = candy::create_adagrad(0.5, model);
     // candy::Optimizer opt = candy::create_adam(0.5, 0.9, 0.99, model);
     // candy::Optimizer opt = candy::create_adadelta(1, 0.9999, model);
-    candy::Optimizer opt = candy::create_rmsprop(0.3, 1e-5, model);
+    candy::Optimizer opt = candy::create_rmsprop(0.05, 0.99, model);
     {
         Message m("Optimizer:");
         m << opt.str() << "\n";
@@ -57,7 +57,8 @@ int main(void) {
     }
 
     // test official update
-    train.update(train_data, 10, 1e-3, 3, candy::TrainMetric::RelativeSquare, false);
+    // train.update_until(train_data, 1000, 1e-3, 3, candy::TrainMetric::RelativeSquare, false);
+    train.update_for(train_data, 10000, 3, candy::TrainMetric::RelativeSquare, false);
     array::Array reconstructed_data(train_data.shape());
     train.reconstruct(reconstructed_data, 4);
     cpu_synch.synchronize();

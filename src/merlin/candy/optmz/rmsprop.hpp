@@ -30,7 +30,7 @@ struct candy::optmz::RmsProp {
      *  @param b Constant controlling the decay of the previous parameter update.
      *  @param e Bias to prevent division error.
      */
-    RmsProp(double lr, double b, double e = 1.0e-16) : learning_rate(lr), beta(b), bias(e) {}
+    RmsProp(double lr, double b, double e = 1.0e-8) : learning_rate(lr), beta(b), bias(e) {}
     /// @}
 
     /// @name Update model by gradient

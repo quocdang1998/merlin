@@ -35,6 +35,16 @@ void train_by_gpu(candy::Model * p_model, const array::Parcel * p_data, candy::O
                   candy::TrainMetric metric, std::uint64_t rep, std::uint64_t n_threads, double threshold,
                   std::uint64_t shared_mem_size, cuda::Stream & stream);
 
+/** @brief Train a model using CPU parallelism.*/
+void process_by_cpu(std::future<void> && synch, candy::Model * p_model, const array::Array * p_data,
+                    candy::Optimizer * p_optimizer, double * cpu_grad_mem, std::uint64_t max_iter,
+                    std::uint64_t n_threads, candy::TrainMetric metric, bool export_result, std::string * p_fname);
+
+/** @brief Train a model using GPU parallelism.*/
+void process_by_gpu(candy::Model * p_model, const array::Parcel * p_data, candy::Optimizer * p_optimizer,
+                    std::uint64_t max_iter, std::uint64_t n_threads, candy::TrainMetric metric,
+                    std::uint64_t shared_mem_size, cuda::Stream & stream);
+
 /** @brief Calculate error using CPU parallelism.*/
 void error_by_cpu(std::future<void> && synch, candy::Model * p_model, const array::Array * p_data, double * p_rmse,
                   double * p_rmae, std::uint64_t n_threads);
@@ -123,9 +133,9 @@ class candy::Trainer {
     void set_fname(const std::string & new_fname) { this->fname_ = new_fname; }
     /// @}
 
-    /// @name Train CP model based on gradient descent for a given threshold
+    /// @name Train CP model for a given threshold
     /// @{
-    /** @brief Update CP model according to gradient on CPU.
+    /** @brief Update CP model according to gradient using CPU.
      *  @details Update CP model for a certain number of iterations, and check if the relative error after the training
      *  process is smaller than a given threshold. If this is the case, break the training. Otherwise, continue to train
      *  again and check.
@@ -139,11 +149,11 @@ class candy::Trainer {
      *  @param export_result If the filename of the trainer is not empty and this flag is set to ``True``, the trained
      *  model will be exported to the file.
      */
-    MERLIN_EXPORTS void update(const array::Array & data, std::uint64_t rep, double threshold,
-                               std::uint64_t n_threads = 1,
-                               candy::TrainMetric metric = candy::TrainMetric::RelativeSquare,
-                               bool export_result = true);
-    /** @brief Update CP model according to gradient on GPU.
+    MERLIN_EXPORTS void update_until(const array::Array & data, std::uint64_t rep, double threshold,
+                                     std::uint64_t n_threads = 1,
+                                     candy::TrainMetric metric = candy::TrainMetric::RelativeSquare,
+                                     bool export_result = true);
+    /** @brief Update CP model according to gradient using GPU.
      *  @details Update CP model for a certain number of iterations, and check if the relative error after the training
      *  process is smaller than a given threshold. If this is the case, break the training. Otherwise, continue to train
      *  again and check.
@@ -158,10 +168,43 @@ class candy::Trainer {
      *  @param export_result If the filename of the trainer is not empty and this flag is set to ``True``, the trained
      *  model will be exported to the file.
      */
-    MERLIN_EXPORTS void update(const array::Parcel & data, std::uint64_t rep, double threshold,
-                               std::uint64_t n_threads = 32,
-                               candy::TrainMetric metric = candy::TrainMetric::RelativeSquare,
-                               bool export_result = true);
+    MERLIN_EXPORTS void update_until(const array::Parcel & data, std::uint64_t rep, double threshold,
+                                     std::uint64_t n_threads = 32,
+                                     candy::TrainMetric metric = candy::TrainMetric::RelativeSquare,
+                                     bool export_result = true);
+    /// @}
+
+    /// @name Train CP model for a given number of iterations
+    /// @{
+    /** @brief Update CP model according to gradient using CPU.
+     *  @details Update CP model for a certain number of iterations.
+     *
+     *  This function is asynchronous. To get the model after trained, remember to synchronize the object first.
+     *  @param data Data to train the model.
+     *  @param max_iter Ma number of iterations.
+     *  @param n_threads Number of parallel threads for training the model.
+     *  @param metric Training metric for the model.
+     *  @param export_result If the filename of the trainer is not empty and this flag is set to ``True``, the trained
+     *  model will be exported to the file.
+     */
+    MERLIN_EXPORTS void update_for(const array::Array & data, std::uint64_t max_iter, std::uint64_t n_threads = 1,
+                                   candy::TrainMetric metric = candy::TrainMetric::RelativeSquare,
+                                   bool export_result = true);
+    /** @brief Update CP model according to gradient using GPU.
+     *  @details Update CP model for a certain number of iterations.
+     *
+     *  This function is asynchronous. To get the model after trained, remember to synchronize the object first.
+     *  @warning This function will lock the mutex.
+     *  @param data Data to train the model.
+     *  @param max_iter Ma number of iterations.
+     *  @param n_threads Number of parallel threads for training the model.
+     *  @param metric Training metric for the model.
+     *  @param export_result If the filename of the trainer is not empty and this flag is set to ``True``, the trained
+     *  model will be exported to the file.
+     */
+    MERLIN_EXPORTS void update_for(const array::Parcel & data, std::uint64_t max_iter, std::uint64_t n_threads = 32,
+                                   candy::TrainMetric metric = candy::TrainMetric::RelativeSquare,
+                                   bool export_result = true);
     /// @}
 
     /// @name Error metric
