@@ -34,9 +34,9 @@ void array::NdData::create_sub_array(array::NdData & sub_array, const SliceArray
         sub_array.shape_[i_dim] = shape;
         sub_array.strides_[i_dim] = stride;
     }
-    sub_array.calc_array_size();
     sub_array.ndim_ = this->ndim_;
     sub_array.data_ = reinterpret_cast<double *>(data_ptr);
+    sub_array.calc_array_size();
     sub_array.release = false;
 }
 

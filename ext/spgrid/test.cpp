@@ -7,6 +7,7 @@
 #include "merlin/array/array.hpp"
 #include "merlin/array/parcel.hpp"
 #include "merlin/grid/cartesian_grid.hpp"
+#include "merlin/synchronizer.hpp"
 #include "merlin/utils.hpp"
 
 #include "spgrid/hier_interpolator.hpp"
@@ -62,7 +63,6 @@ int main(void) {
         std::cout << it.str() << "\n";
         std::cout << get_grid(grid.fullgrid(), it.cum_idx).str() << "\n";
     }
-    std::cout << "Finish\n";
 
     // test copy from full grid array (pass)
     array::Array full_data(grid.shape());
@@ -73,9 +73,11 @@ int main(void) {
     // test Sparse grid interpolation
     Vector<splint::Method> methods = {splint::Method::Newton, splint::Method::Newton, splint::Method::Newton,
                                       splint::Method::Newton};
-    HierInterpolator hintpl(grid, full_data, methods);
+    Synchronizer synch_stream(ProcessorType::Cpu);
+    HierInterpolator hintpl(grid, full_data, methods.data(), synch_stream);
     array::Array points = point_generator(1000, grid.fullgrid());
     DoubleVec result(1000);
     hintpl.evaluate(points, result);
+    synch_stream.synchronize();
     std::cout << result.str() << "\n";
 }

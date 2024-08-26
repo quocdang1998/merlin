@@ -67,6 +67,7 @@ mln::array::Array get_data(const mln::array::Array & fulldata, const mln::Vector
     mln::array::Array resulted_data(array_shape);
     // get element
     mln::Index full_index;
+    full_index.fill(0);
     for (std::uint64_t i_point = 0; i_point < resulted_data.size(); i_point++) {
         mln::contiguous_to_ndim_idx(i_point, resulted_data.shape().data(), resulted_data.ndim(), full_index.data());
         for (std::uint64_t i_dim = 0; i_dim < resulted_data.ndim(); i_dim++) {
@@ -74,6 +75,11 @@ mln::array::Array get_data(const mln::array::Array & fulldata, const mln::Vector
             std::advance(it, full_index[i_dim]);
             full_index[i_dim] = *it;
         }
+        /*std::cout << "        Ipoint: " << i_point << ", full_index:";
+        for (int i = 0; i < fulldata.ndim(); i++) {
+            std::cout << " " << full_index[i];
+        }
+        std::cout << "\n";*/
         resulted_data[i_point] = fulldata.get(full_index);
     }
     return resulted_data;

@@ -9,8 +9,8 @@
 #include "merlin/cuda/stream.hpp"          // merlin::cuda::Stream
 #include "merlin/splint/interpolator.hpp"  // merlin::splint::Interpolator
 #include "merlin/splint/tools.hpp"         // merlin::splint::Method
+#include "merlin/synchronizer.hpp"         // merlin::Synchronizer
 #include "merlin/vector.hpp"               // merlin::Vector, merlin::DoubleVec
-
 
 #include "spgrid/declaration.hpp"  // spgrid::Interpolator
 
@@ -29,7 +29,7 @@ class HierInterpolator {
     HierInterpolator(void) = default;
     /** @brief Construct from a hierarchical grid and a full Cartesian data.*/
     HierInterpolator(const SparseGrid & grid, const mln::array::Array & full_data,
-                           const mln::Vector<mln::splint::Method> & method);
+                     const mln::splint::Method * p_method, mln::Synchronizer & synchronizer);
     /// @}
 
     /// @name Copy and move
@@ -59,6 +59,8 @@ class HierInterpolator {
   protected:
     /** @brief Vector of Cartesian interpolator.*/
     std::vector<mln::splint::Interpolator> intpl;
+    /** @brief Synchronizer.*/
+    mln::Synchronizer * p_synch_ = nullptr;
 };
 
 }  // namespace spgrid

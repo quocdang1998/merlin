@@ -24,7 +24,7 @@ __cudevice__ void candy::optmz::RmsProp::update_gpu(void * optimizer_algor, doub
     for (std::uint64_t i_param = thread_idx; i_param < model.num_params(); i_param += n_threads) {
         // update root mean square
         double rms = history[i_param];
-        rms = algor.beta * rms + grad.value()[i_param] * grad.value()[i_param];
+        rms = algor.beta * rms + (1.0 - algor.beta) * grad.value()[i_param] * grad.value()[i_param];
         history[i_param] = rms;
         // update parameter
         double correction = algor.learning_rate * grad.value()[i_param];

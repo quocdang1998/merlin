@@ -52,7 +52,7 @@ std::array<T, max_dim> make_array(ForwardIterator begin, ForwardIterator end) {
     return result_array;
 }
 
-/** @brief Make an array from incomplet initializer list.*/
+/** @brief Make an array from incomplete initializer list.*/
 template <class T>
 std::array<T, max_dim> make_array(std::initializer_list<T> list) {
     return make_array<T>(list.begin(), list.end());

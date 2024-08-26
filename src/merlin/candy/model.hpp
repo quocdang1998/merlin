@@ -159,6 +159,7 @@ class candy::Model {
      *  @param lock Lock the file when reading to prevent data race. The lock action may cause a delay.
      */
     MERLIN_EXPORTS void load(const std::string & fname, bool lock = false);
+    /// @}
 
     /// @name Representation
     /// @{
