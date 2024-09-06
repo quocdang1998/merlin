@@ -58,7 +58,7 @@ breathe_default_project = "merlin"
 breathe_show_include = True
 doxygen_xml = [breathe_projects[breathe_default_project]]
 
-# Sphinx-panel settings
+# Sphinx-design settings
 sd_fontawesome_latex = False
 
 # Citation

@@ -63,7 +63,7 @@ __cuhostdev__ constexpr std::uint64_t get_block_count(std::uint64_t block_size, 
 /** @brief Thread index in block.
  *  @details Get the three-dimensional flattened index of the current thread in the current block.
  */
-__cudevice__ constexpr std::uint64_t flatten_thread_index(void) {
+__cudevice__ inline std::uint64_t flatten_thread_index(void) {
     std::uint64_t result = threadIdx.x + threadIdx.y * blockDim.x + threadIdx.z * blockDim.x * blockDim.y;
     return result;
 }
@@ -71,7 +71,7 @@ __cudevice__ constexpr std::uint64_t flatten_thread_index(void) {
 /** @brief Size of block.
  *  @details Get the number of threads in the current block.
  */
-__cudevice__ constexpr std::uint64_t size_of_block(void) {
+__cudevice__ inline std::uint64_t size_of_block(void) {
     std::uint64_t result = blockDim.x * blockDim.y * blockDim.z;
     return result;
 }
@@ -79,7 +79,7 @@ __cudevice__ constexpr std::uint64_t size_of_block(void) {
 /** @brief Block index in grid.
  *  @details Get the three-dimensional flattened index of the current block in the current grid.
  */
-__cudevice__ constexpr std::uint64_t flatten_block_index(void) {
+__cudevice__ inline std::uint64_t flatten_block_index(void) {
     std::uint64_t result = blockIdx.x + blockIdx.y * gridDim.x + blockIdx.z * gridDim.x * gridDim.y;
     return result;
 }
@@ -87,7 +87,7 @@ __cudevice__ constexpr std::uint64_t flatten_block_index(void) {
 /** @brief Thread index in grid.
  *  @details Get the index of the current thread in the current grid.
  */
-__cudevice__ constexpr std::uint64_t flatten_kernel_index(void) {
+__cudevice__ inline std::uint64_t flatten_kernel_index(void) {
     std::uint64_t index_in_block = threadIdx.x + threadIdx.y * blockDim.x + threadIdx.z * blockDim.x * blockDim.y;
     std::uint64_t index_of_block = blockIdx.x + blockIdx.y * gridDim.x + blockIdx.z * gridDim.x * gridDim.y;
     std::uint64_t size_of_one_block = blockDim.x * blockDim.y * blockDim.z;

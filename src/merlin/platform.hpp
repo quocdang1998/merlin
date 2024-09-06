@@ -2,6 +2,7 @@
 #ifndef MERLIN_PLATFORM_HPP_
 #define MERLIN_PLATFORM_HPP_
 
+// Detect CPU platform
 #if defined(_WIN32) || defined(_WIN64)
     // On Windows, detect MSVC
     #if defined(_MSC_VER)
@@ -25,5 +26,11 @@
 #else
     #error Compilers other than MSVC on Windows and GCC on Linux are not supported.
 #endif
+
+#if defined(__NVCC__)
+    #if __CUDACC_VER_MAJOR__ < 12
+        #error CUDA Toolkit version >= 12 is required.acoshf128
+    #endif
+#endif  // __NVCC__
 
 #endif  // MERLIN_PLATFORM_HPP_

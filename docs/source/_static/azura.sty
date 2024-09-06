@@ -46,19 +46,19 @@
 \usetikzlibrary{calc, shapes}
 
 % Color
-\sphinxDeclareColorOption{main}{{RGB}{27, 130, 209}}
-\sphinxDeclareColorOption{second}{{RGB}{128, 200, 255}}
-\sphinxDeclareColorOption{guidebox}{{RGB}{191, 220, 245}}
-\sphinxDeclareColorOption{guideboxtitle}{{RGB}{2, 101, 186}}
-\sphinxDeclareColorOption{autosummary}{{RGB}{21, 109, 191}}
-\sphinxDeclareColorOption{sigwrapbox}{{RGB}{232, 245, 255}}
-\sphinxDeclareColorOption{sigwrapborder}{{RGB}{37, 154, 245}}
-\sphinxDeclareColorOption{itemwrapbox}{{RGB}{242, 242, 242}}
-\sphinxDeclareColorOption{itemwrapborder}{{RGB}{140, 140, 140}}
-\sphinxDeclareColorOption{codedefault}{{RGB}{0, 41, 74}}
-\sphinxDeclareColorOption{codeprop}{{RGB}{0, 63, 224}}
-\sphinxDeclareColorOption{codearg}{{RGB}{93, 122, 166}}
-\sphinxDeclareColorOption{codetype}{{RGB}{31, 147, 255}}
+\definecolor{main}{RGB}{27, 130, 209}
+\definecolor{second}{RGB}{128, 200, 255}
+\definecolor{guidebox}{RGB}{191, 220, 245}
+\definecolor{guideboxtitle}{RGB}{2, 101, 186}
+\definecolor{autosummary}{RGB}{21, 109, 191}
+\definecolor{sigwrapbox}{RGB}{232, 245, 255}
+\definecolor{sigwrapborder}{RGB}{37, 154, 245}
+\definecolor{itemwrapbox}{RGB}{242, 242, 242}
+\definecolor{itemwrapborder}{RGB}{140, 140, 140}
+\definecolor{codedefault}{RGB}{0, 41, 74}
+\definecolor{codeprop}{RGB}{0, 63, 224}
+\definecolor{codearg}{RGB}{93, 122, 166}
+\definecolor{codetype}{RGB}{31, 147, 255}
 
 % Hyperref
 \usepackage{hyperref}
@@ -129,13 +129,13 @@
     \fancyhf{}
     \fancyhead[LE]{ \small \nouppercase{\leftmark} }
     \fancyhead[RO]{ \small \nouppercase{\rightmark}}
-    \fancyfoot[RO, LE]{\textbf{\thepage}}
+    \fancyfoot[RO, LE]{\thepage}
 }
 \fancypagestyle{plain}{
     \renewcommand{\headrulewidth}{0pt}
     \renewcommand{\footrulewidth}{0pt}
     \fancyhf{}
-    \fancyfoot[RO, LE]{\textbf{\thepage}}
+    \fancyfoot[RO, LE]{\thepage}
 }
 
 % =============================================================================

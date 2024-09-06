@@ -16,6 +16,9 @@ set(MERLIN_LIBKIND "AUTO" # -DMERLIN_LIBKIND=STATIC or -DMERLIN_LIBKIND=SHARED
 set(MERLIN_TEST OFF CACHE BOOL "Build test executables") # -DMERLIN_TEST=ON
 set(MERLIN_EXT "" CACHE STRING "Space-separated list of extensions to be built") # -DMERLIN_EXT="readmpo spgrid"
 
+# package version
+set(MERLIN_VERSION "1.6.0")
+
 # source list
 list(
     APPEND
@@ -37,6 +40,9 @@ list(
     candy/model.cpp
     candy/optimizer.cpp
     candy/randomizer.cpp
+    candy/train/cpu_trainer.cpp
+    candy/train/gpu_trainer.cpp
+    candy/train/trainer_base.cpp
     candy/trainer.cpp
     candy/trial_policy.cpp
     cuda/device.cpp
@@ -66,7 +72,7 @@ list(
     array/parcel.cu
     candy/model.cu
     candy/optimizer.cu
-    candy/trainer.cu
+    candy/train/gpu_trainer.cu
     cuda/device.cu
     cuda/event.cu
     cuda/graph.cu
@@ -77,7 +83,7 @@ list(
     regpl/regressor.cu
     splint/interpolator.cu
     vector.cu)
-list(APPEND MERLIN_SRC_GLB candy/trainer.glb cuda/device.glb splint/tools.glb regpl/regressor.glb)
+list(APPEND MERLIN_SRC_GLB candy/train/gpu_trainer.glb cuda/device.glb splint/tools.glb regpl/regressor.glb)
 list(
     APPEND
     MERLIN_SRC_RDC
@@ -100,8 +106,7 @@ list(
     splint/intpl/newton.rdc
     splint/tools.rdc
     utils.rdc)
-list(APPEND MERLIN_SRC_ENV env.cpp logger.cpp color.cpp)
-list(APPEND MERLIN_SRC_CUENV env.cu)
+list(APPEND MERLIN_SRC_ENV env.cpp logger.cpp color.cpp version.cpp)
 
 # convert path to source to absolute path
 list(TRANSFORM MERLIN_SRC_CPP PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/merlin/)
@@ -109,7 +114,6 @@ list(TRANSFORM MERLIN_SRC_CU PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/merlin/)
 list(TRANSFORM MERLIN_SRC_GLB PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/merlin/)
 list(TRANSFORM MERLIN_SRC_RDC PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/merlin/)
 list(TRANSFORM MERLIN_SRC_ENV PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/merlin/)
-list(TRANSFORM MERLIN_SRC_CUENV PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/merlin/)
 
 # project name and language
 if(MERLIN_CUDA)
@@ -205,15 +209,10 @@ function(merlinsettargetproperties target_library)
 endfunction(merlinsettargetproperties)
 
 # setting library for static variables
-if(MERLIN_CUDA)
-    add_library(libmerlinenv SHARED ${MERLIN_SRC_ENV} ${MERLIN_SRC_CUENV})
-    set_source_files_properties(${MERLIN_SRC_SHRCU} PROPERTIES LANGUAGE CUDA)
-    target_link_libraries(libmerlinenv PRIVATE CUDA::cuda_driver)
-else()
-    add_library(libmerlinenv SHARED ${MERLIN_SRC_ENV})
-endif(MERLIN_CUDA)
-set_source_files_properties(${MERLIN_SRC_SHR} PROPERTIES LANGUAGE CXX)
+add_library(libmerlinenv SHARED ${MERLIN_SRC_ENV})
+set_source_files_properties(${MERLIN_SRC_ENV} PROPERTIES LANGUAGE CXX)
 set_property(TARGET libmerlinenv PROPERTY OUTPUT_NAME merlinenv)
+target_compile_definitions(libmerlinenv PRIVATE __MERLIN_VERSION__="${MERLIN_VERSION}")
 merlinsettargetproperties(libmerlinenv)
 
 # setting library for device code if compiling a shared library with CUDA
@@ -383,3 +382,6 @@ endif(MERLIN_DEBUG)
 
 # Lib kind
 file(APPEND ${MERLIN_CONFIG} "MERLIN_LIBKIND = \"${MERLIN_LIBKIND}\"\n")
+
+# Version
+file(APPEND ${MERLIN_CONFIG} "MERLIN_VERSION = \"${MERLIN_VERSION}\"\n")

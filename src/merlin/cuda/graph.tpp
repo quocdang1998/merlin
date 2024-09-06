@@ -2,7 +2,10 @@
 #ifndef MERLIN_CUDA_GRAPH_TPP_
 #define MERLIN_CUDA_GRAPH_TPP_
 
-#include "merlin/logger.hpp"  // merlin::Fatal, merlin::cuda_compile_error, merlin::cuda_runtime_error
+#include <tuple>        // std::apply, std::tuple
+#include <type_traits>  // std::decay_t
+
+#include "merlin/logger.hpp"  // merlin::cuda_runtime_error, merlin::Fatal
 
 namespace merlin {
 
@@ -16,11 +19,12 @@ namespace merlin {
 template <typename Function, typename... Args>
 void cuda::graph_callback_wrapper(void * data) {
     std::uintptr_t * data_ptr = reinterpret_cast<std::uintptr_t *>(data);
-    Function * p_callback = reinterpret_cast<Function *>(data_ptr[0]);
-    std::tuple<Args &&...> * p_args = reinterpret_cast<std::tuple<Args &&...> *>(data_ptr[1]);
-    std::apply(std::forward<Function>(*p_callback), std::forward<std::tuple<Args &&...>>(*p_args));
-    delete[] data_ptr;
+    std::decay_t<Function> * p_callback = reinterpret_cast<std::decay_t<Function> *>(data_ptr[0]);
+    std::tuple<Args...> * p_args = reinterpret_cast<std::tuple<Args...> *>(data_ptr[1]);
+    std::apply(*p_callback, std::forward<std::tuple<Args...>>(*p_args));
+    delete p_callback;
     delete p_args;
+    delete[] data_ptr;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -54,13 +58,13 @@ cuda::GraphNode cuda::Graph::add_kernel_node(Function * kernel, std::uint64_t n_
 
 // Add CUDA host node
 template <typename Function, typename... Args>
-cuda::GraphNode cuda::Graph::add_host_node(Function & callback, const std::vector<cuda::GraphNode> & deps,
+cuda::GraphNode cuda::Graph::add_host_node(Function && callback, const std::vector<cuda::GraphNode> & deps,
                                            Args &&... args) {
-    Function * p_callback = &callback;
-    std::tuple<Args &&...> * p_arg = new std::tuple<Args &&...>(std::forward_as_tuple(std::forward<Args>(args)...));
+    std::decay_t<Function> * p_callback = new std::decay_t<Function>(std::forward<Function>(callback));
+    std::tuple<Args...> * p_args = new std::tuple<Args...>(std::forward<Args>(args)...);
     std::uintptr_t * data = new std::uintptr_t[2];
     data[0] = reinterpret_cast<std::uintptr_t>(p_callback);
-    data[1] = reinterpret_cast<std::uintptr_t>(p_arg);
+    data[1] = reinterpret_cast<std::uintptr_t>(p_args);
     return cuda::add_callback_to_graph(this->graph_, cuda::graph_callback_wrapper<Function, Args...>, deps, data);
 }
 

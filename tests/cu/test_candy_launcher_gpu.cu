@@ -1,12 +1,15 @@
 #include "merlin/array/array.hpp"
 #include "merlin/array/operation.hpp"
 #include "merlin/array/parcel.hpp"
-#include "merlin/candy/trainer.hpp"
 #include "merlin/candy/model.hpp"
-#include "merlin/candy/optmz/adam.hpp"
-#include "merlin/candy/optmz/adagrad.hpp"
-#include "merlin/candy/optmz/grad_descent.hpp"
 #include "merlin/candy/optimizer.hpp"
+#include "merlin/candy/optmz/adagrad.hpp"
+#include "merlin/candy/optmz/adam.hpp"
+#include "merlin/candy/optmz/grad_descent.hpp"
+#include "merlin/candy/trainer.hpp"
+#include "merlin/candy/train/cpu_trainer.hpp"
+#include "merlin/candy/train/gpu_trainer.hpp"
+#include "merlin/candy/trial_policy.hpp"
 #include "merlin/cuda/device.hpp"
 #include "merlin/cuda/memory.hpp"
 #include "merlin/cuda/stream.hpp"
@@ -39,53 +42,79 @@ int main (void) {
 
     // initialize optimizer
     // candy::Optimizer opt = candy::create_grad_descent(0.2);
-    candy::Optimizer opt = candy::create_rmsprop(0.05, 0.99, model);
+    candy::Optimizer opt = candy::optmz::create_adagrad(0.1, model.num_params());
 
-    // create trainer
-    std::uint64_t rep = 10;
-    double threshold = 1e-5;
+    // initialize gpu trainer
+    // Synchronizer gpu_sync(cuda::Stream{});
     Synchronizer gpu_sync(ProcessorType::Gpu);
-    candy::Trainer train_gpu(model, opt, gpu_sync);
+    candy::train::GpuTrainer gpu_trainer(2, gpu_sync);
+    gpu_trainer.set_model("foo", model);
+    gpu_trainer.set_optmz("foo", opt);
+    gpu_trainer.set_data("foo", gpu_data);
+    gpu_sync.synchronize();
+
+    // initialize cpu trainer
     Synchronizer cpu_sync(ProcessorType::Cpu);
-    candy::Trainer train_cpu(model, opt, cpu_sync);
-
-    // GPU dryrun
-    /*candy::TrialPolicy policy(1, 9, 40);
-    DoubleVec error_by_step(policy.sum());
-    std::uint64_t real_iter;
-    train_gpu.dry_run(gpu_data, error_by_step, real_iter, policy);
-    gpu_sync.synchronize();
-    Message("Error dry-run: %s\n", error_by_step.str().c_str());
-    bool test = (real_iter == policy.sum());
-    if (!test) {
-        Fatal<std::runtime_error>("Provided optimizer not compatible with the model.\n");
-    }*/
-
-    // CPU dryrun
-    candy::TrialPolicy policy(1, 9, 40);
-    DoubleVec error_by_step(policy.sum());
-    std::uint64_t real_iter;
-    train_cpu.dry_run(train_data, error_by_step, real_iter, policy);
+    candy::train::CpuTrainer cpu_trainer(2, cpu_sync);
+    cpu_trainer.set_model("foo", model);
+    cpu_trainer.set_optmz("foo", opt);
+    cpu_trainer.set_data("foo", train_data);
     cpu_sync.synchronize();
-    Message("Error dry-run: %s\n", error_by_step.str().c_str());
-    bool test = (real_iter == policy.sum());
-    if (!test) {
-        Fatal<std::runtime_error>("Provided optimizer not compatible with the model.\n");
+
+    // dry-run on GPU
+    candy::TrialPolicy policy(1, 9, 90);
+    DoubleVec error(policy.sum());
+    std::uint64_t count;
+    std::map<std::string, std::pair<double *, std::uint64_t *>> tracking_map;
+    tracking_map["foo"] = {error.data(), &count};
+    gpu_trainer.dry_run(tracking_map, policy);
+    gpu_sync.synchronize();
+    if (count != policy.sum()) {
+        Fatal<std::runtime_error>("Invalid optimizer.\n");
     }
+    Message("Errors: ") << error.str() << "\n";
 
-    // launch update
-    train_gpu.set_fname("result_gpu.txt");
-    train_cpu.set_fname("result_cpu.txt");
-    // train_gpu.update_until(gpu_data, rep, threshold, 16, candy::TrainMetric::RelativeSquare, true);
-    // train_cpu.update_until(train_data, rep, threshold, 3, candy::TrainMetric::RelativeSquare, true);
-    train_gpu.update_for(gpu_data, 1000, 16, candy::TrainMetric::RelativeSquare, true);
-    train_cpu.update_for(train_data, 1000, 3, candy::TrainMetric::RelativeSquare, true);
-
-    // synchronize
-    gpu_sync.synchronize();
+    /*cpu_trainer.update_until(10000, 0.01);
+    gpu_trainer.update_until(10000, 0.01);*/
+    cpu_trainer.update_for(10);
+    gpu_trainer.update_for(10);
     cpu_sync.synchronize();
+    gpu_sync.synchronize();
 
-    // copy back to CPU
-    Message("Model after trained (GPU): %s\n", train_gpu.model().str().c_str());
-    Message("Model after trained (CPU): %s\n", train_cpu.model().str().c_str());
+    // print model
+    candy::Model gpu_model = gpu_trainer.get_model("foo");
+    Message("Model after trained (GPU): %s\n", gpu_model.str().c_str());
+    candy::Model cpu_model = cpu_trainer.get_model("foo");
+    Message("Model after trained (CPU): %s\n", cpu_model.str().c_str());
+
+    // print reconstructed data
+    array::Array cpu_recdata(train_data.shape());
+    std::map<std::string, array::Array *> cpu_recmap;
+    cpu_recmap["foo"] = &cpu_recdata;
+    cpu_trainer.reconstruct(cpu_recmap);
+    array::Parcel gpu_recdata(train_data.shape());
+    std::map<std::string, array::Parcel *> gpu_recmap;
+    gpu_recmap["foo"] = &gpu_recdata;
+    gpu_trainer.reconstruct(gpu_recmap);
+    cpu_sync.synchronize();
+    gpu_sync.synchronize();
+    Message("Reconstructed data (GPU): %s\n", gpu_recdata.str().c_str());
+    Message("Reconstructed data (CPU): %s\n", cpu_recdata.str().c_str());
+
+    // print error
+    double cpu_rmse, cpu_rmae;
+    std::map<std::string, std::array<double *, 2>> cpu_errmap;
+    cpu_errmap["foo"] = {&cpu_rmse, &cpu_rmae};
+    cpu_trainer.get_error(cpu_errmap);
+    double gpu_rmse, gpu_rmae;
+    std::map<std::string, std::array<double *, 2>> gpu_errmap;
+    gpu_errmap["foo"] = {&gpu_rmse, &gpu_rmae};
+    gpu_trainer.get_error(gpu_errmap);
+    cpu_sync.synchronize();
+    gpu_sync.synchronize();
+    Message("Error (GPU): %f %f\n", gpu_rmse, gpu_rmae);
+    Message("Error (CPU): %f %f\n", cpu_rmse, cpu_rmae);
+
+    // export models
+    gpu_trainer.export_models();
 }

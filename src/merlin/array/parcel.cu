@@ -3,6 +3,7 @@
 
 #include <cinttypes>   // PRIu64
 #include <functional>  // std::bind, std::placeholders
+#include <utility>     // std::forward, std::move
 
 #include "merlin/array/array.hpp"      // merlin::array::Array
 #include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::get_leap,
@@ -94,7 +95,7 @@ array::Parcel & array::Parcel::operator=(const array::Parcel & src) {
 }
 
 // Move constructor
-array::Parcel::Parcel(array::Parcel && src) : array::NdData(src) {
+array::Parcel::Parcel(array::Parcel && src) : array::NdData(std::move(src)) {
     // move device id and context
     this->device_ = src.device_;
     // take over pointer to source

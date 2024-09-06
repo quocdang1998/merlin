@@ -2,7 +2,8 @@
 #include <cinttypes>
 #include <cmath>
 #include <iostream>
-#include <omp.h>
+#include <map>
+#include <chrono>
 
 #include "merlin/array/array.hpp"
 #include "merlin/array/operation.hpp"
@@ -10,6 +11,7 @@
 #include "merlin/candy/gradient.hpp"
 #include "merlin/candy/model.hpp"
 #include "merlin/candy/optimizer.hpp"
+#include "merlin/candy/train/cpu_trainer.hpp"
 #include "merlin/candy/trainer.hpp"
 #include "merlin/candy/trial_policy.hpp"
 #include "merlin/logger.hpp"
@@ -31,42 +33,45 @@ int main(void) {
     model.initialize(train_data, randomizer.data());
     Message("Model before trained: %s\n", model.str().c_str());
 
-    // candy::Optimizer opt = candy::create_grad_descent(0.5);
-    // candy::Optimizer opt = candy::create_adagrad(0.5, model);
-    // candy::Optimizer opt = candy::create_adam(0.5, 0.9, 0.99, model);
-    // candy::Optimizer opt = candy::create_adadelta(1, 0.9999, model);
-    candy::Optimizer opt = candy::create_rmsprop(0.05, 0.99, model);
+    // candy::Optimizer opt = candy::optmz::create_grad_descent(0.5);
+    // candy::Optimizer opt = candy::optmz::create_adagrad(0.3, model.num_params());
+    // candy::Optimizer opt = candy::optmz::create_adam(0.5, 0.9, 0.99, model.num_params());
+    // candy::Optimizer opt = candy::optmz::create_adadelta(3, 0.9999, model.num_params());
+    candy::Optimizer opt = candy::optmz::create_rmsprop(0.02, 0.99, model.num_params());
     {
         Message m("Optimizer:");
         m << opt.str() << "\n";
     }
 
     Synchronizer cpu_synch(ProcessorType::Cpu);
-    candy::Trainer train(model, opt, cpu_synch);
-
-    // test dry-run
-    candy::TrialPolicy policy(1, 9, 40);
-    DoubleVec error_by_step(policy.sum());
-    std::uint64_t real_iter;
-    train.dry_run(train_data, error_by_step, real_iter, policy, 1);
+    candy::train::CpuTrainer cpu_train(4, cpu_synch);
+    cpu_train.set_model("foo", model);
+    cpu_train.set_optmz("foo", opt);
+    cpu_train.set_data("foo", train_data);
+    candy::TrialPolicy policy(2, 8, 40);
+    std::uint64_t valid_result;
+    DoubleVec error(policy.sum());
+    std::map<std::string, std::pair<double *, std::uint64_t *>> dryrun_map;
+    dryrun_map["foo"] = {error.data(), &valid_result};
+    cpu_train.dry_run(dryrun_map, policy);
     cpu_synch.synchronize();
-    Message("Error dry-run: %s\n", error_by_step.str().c_str());
-    bool test = (real_iter == policy.sum());
-    if (!test) {
-        Fatal<std::runtime_error>("Provided optimizer not compatible with the model.\n");
+    if (valid_result != policy.sum()) {
+        Fatal<std::runtime_error>("Invalid optimizer.\n");
     }
-
-    // test official update
-    // train.update_until(train_data, 1000, 1e-3, 3, candy::TrainMetric::RelativeSquare, false);
-    train.update_for(train_data, 10000, 3, candy::TrainMetric::RelativeSquare, false);
-    array::Array reconstructed_data(train_data.shape());
-    train.reconstruct(reconstructed_data, 4);
+    // cpu_train.set_export_fname("foo", "foo.txt");
+    cpu_train.update_until(1000, 0.01, 3, candy::TrainMetric::RelativeSquare, true);
+    // cpu_train.update_for(20000, 3, candy::TrainMetric::RelativeSquare, false);
     cpu_synch.synchronize();
-    Message("Model after trained: %s\n", train.model().str().c_str());
-    Message("Reconstructed: %s\n", reconstructed_data.str().c_str());
-
-    {
-        Message m("Optimizer:");
-        m << train.optmz().str() << "\n";
-    }
+    std::printf("Model new: %s\n", cpu_train.get_model("foo").str().c_str());
+    array::Array destination(train_data.shape());
+    std::map<std::string, array::Array *> destination_map;
+    destination_map["foo"] = &destination;
+    cpu_train.reconstruct(destination_map, 3);
+    double rmse, rmae;
+    std::map<std::string, std::array<double *, 2>> error_map;
+    error_map["foo"] = {&rmse, &rmae};
+    cpu_train.get_error(error_map, 3);
+    cpu_synch.synchronize();
+    std::printf("Reconstructed data: %s\n", destination.str().c_str());
+    std::printf("Reconstructed error: %f %f\n", rmse, rmae);
 }

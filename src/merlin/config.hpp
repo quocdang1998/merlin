@@ -1,3 +1,4 @@
+// Copyright 2024 quocdang1998
 #ifndef MERLIN_CONFIG_HPP_
 #define MERLIN_CONFIG_HPP_
 
@@ -6,11 +7,6 @@
 #include <initializer_list>  // std::initializer_list
 
 namespace merlin {
-
-// Package version
-// ---------------
-
-inline const char * version = "1.0.0";
 
 // Print buffer
 // ------------

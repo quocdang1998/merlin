@@ -182,11 +182,11 @@ Optimization algorithms
    :template: pyclass.rst
 
    merlin.candy.Optimizer
-   merlin.candy.create_grad_descent
-   merlin.candy.create_adagrad
-   merlin.candy.create_adam
-   merlin.candy.create_adadelta
-   merlin.candy.create_rmsprop
+   merlin.candy.optmz.create_grad_descent
+   merlin.candy.optmz.create_adagrad
+   merlin.candy.optmz.create_adam
+   merlin.candy.optmz.create_adadelta
+   merlin.candy.optmz.create_rmsprop
 
 Asynchronous fitting
 ^^^^^^^^^^^^^^^^^^^^

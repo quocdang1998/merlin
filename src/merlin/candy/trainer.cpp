@@ -1,19 +1,13 @@
 // Copyright 2023 quocdang1998
 #include "merlin/candy/trainer.hpp"
 
-#include <cstddef>  // std::size_t
-#include <future>   // std::async, std::future
-#include <utility>  // std::move
-
-#include <omp.h>  // ::omp_get_thread_num
-
-#include "merlin/array/array.hpp"     // merlin::array::Array
-#include "merlin/array/parcel.hpp"    // merlin::array::Parcel
-#include "merlin/candy/gradient.hpp"  // merlin::candy::Gradient
-#include "merlin/candy/loss.hpp"      // merlin::candy::rmse_cpu
-#include "merlin/env.hpp"             // merlin::Environment
-#include "merlin/logger.hpp"          // merlin::Fatal, merlin::cuda_compile_error
-#include "merlin/utils.hpp"           // merlin::is_normal, merlin::contiguous_to_ndim_idx
+#include "merlin/array/array.hpp"              // merlin::array::Array
+#include "merlin/array/nddata.hpp"             // merlin::array::NdData
+#include "merlin/array/parcel.hpp"             // merlin::array::Parcel
+#include "merlin/candy/model.hpp"              // merlin::candy::Model
+#include "merlin/candy/train/cpu_trainer.hpp"  // merlin::candy::train::CpuTrainer
+#include "merlin/candy/train/gpu_trainer.hpp"  // merlin::candy::train::GpuTrainer
+#include "merlin/logger.hpp"                   // merlin::Fatal
 
 namespace merlin {
 
@@ -21,352 +15,95 @@ namespace merlin {
 // Utility
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Train a model using CPU parallelism
-void candy::train_by_cpu(std::future<void> && synch, candy::Model * p_model, const array::Array * p_data,
-                         candy::Optimizer * p_optimizer, double * cpu_grad_mem, candy::TrainMetric metric,
-                         std::uint64_t rep, double threshold, std::uint64_t n_threads, bool export_result,
-                         std::string * p_fname) {
-    // finish old job
-    if (synch.valid()) {
-        synch.get();
-    }
-    // create gradient object
-    candy::Gradient gradient(cpu_grad_mem, p_model->num_params(), metric);
-    // calculate based on error
-    double priori_error = 0.0;
-    double posteriori_error;
-    std::uint64_t normal_count;
-    bool go_on = true;
-    // calculate error before training
-    _Pragma("omp parallel num_threads(n_threads)") {
-        Index index_mem;
-        index_mem.fill(0);
-        std::uint64_t thread_idx = ::omp_get_thread_num();
-        candy::rmse_cpu(p_model, p_data, posteriori_error, normal_count, thread_idx, n_threads, index_mem);
-    }
-    // training loop
-    std::uint64_t step = 1;
-    do {
-        priori_error = posteriori_error;
-        _Pragma("omp parallel num_threads(n_threads)") {
-            // initialize cache memory
-            Index index_mem;
-            index_mem.fill(0);
-            std::uint64_t thread_idx = ::omp_get_thread_num();
-            // gradient descent loop
-            for (std::uint64_t i = 0; i < rep; i++) {
-                gradient.calc_by_cpu(*p_model, *p_data, thread_idx, n_threads, index_mem);
-                p_optimizer->update_cpu(*p_model, gradient, step + i, thread_idx, n_threads);
-            }
-            _Pragma("omp barrier");
-            candy::rmse_cpu(p_model, p_data, posteriori_error, normal_count, thread_idx, n_threads, index_mem);
+template <class ArrayType>
+std::map<std::string, ArrayType *> convert_map(const std::map<std::string, array::NdData *> & map) {
+    std::map<std::string, ArrayType *> converted_map;
+    for (auto & [name, p_data] : map) {
+        ArrayType * p_converted = dynamic_cast<ArrayType *>(p_data);
+        if (p_converted == nullptr) {
+            Fatal<std::runtime_error>("Wrong array type provided.\n");
         }
-        double rel_err = std::abs(priori_error - posteriori_error) / posteriori_error;
-        go_on = (is_normal(posteriori_error)) ? (rel_err > threshold) : false;
-        step += rep;
-    } while (go_on);
-    // save model to file
-    if (export_result) {
-        candy::save_model(*p_model, *p_fname);
+        converted_map[name] = p_converted;
     }
-}
-
-// Train a model using CPU parallelism
-void candy::process_by_cpu(std::future<void> && synch, candy::Model * p_model, const array::Array * p_data,
-                           candy::Optimizer * p_optimizer, double * cpu_grad_mem, std::uint64_t max_iter,
-                           std::uint64_t n_threads, candy::TrainMetric metric, bool export_result,
-                           std::string * p_fname) {
-    // finish old job
-    if (synch.valid()) {
-        synch.get();
-    }
-    // create gradient object
-    candy::Gradient gradient(cpu_grad_mem, p_model->num_params(), metric);
-    // training loop
-    _Pragma("omp parallel num_threads(n_threads)") {
-        // initialize cache memory
-        Index index_mem;
-        index_mem.fill(0);
-        // get thread index and loop
-        std::uint64_t thread_idx = ::omp_get_thread_num();
-        for (std::uint64_t i = 1; i <= max_iter; i++) {
-            gradient.calc_by_cpu(*p_model, *p_data, thread_idx, n_threads, index_mem);
-            p_optimizer->update_cpu(*p_model, gradient, i, thread_idx, n_threads);
-        }
-    }
-    // save model to file
-    if (export_result) {
-        candy::save_model(*p_model, *p_fname);
-    }
-}
-
-// Calculate error using CPU parallelism
-void candy::error_by_cpu(std::future<void> && synch, candy::Model * p_model, const array::Array * p_data,
-                         double * p_rmse, double * p_rmae, std::uint64_t n_threads) {
-    // finish old job
-    if (synch.valid()) {
-        synch.get();
-    }
-    // calculate error
-    std::uint64_t normal_count;
-    _Pragma("omp parallel num_threads(n_threads)") {
-        Index index_mem;
-        index_mem.fill(0);
-        std::uint64_t thread_idx = ::omp_get_thread_num();
-        candy::rmse_cpu(p_model, p_data, *p_rmse, normal_count, thread_idx, n_threads, index_mem);
-        candy::rmae_cpu(p_model, p_data, *p_rmae, normal_count, thread_idx, n_threads, index_mem);
-    }
-}
-
-// Dry-run the gradient update algorithm using CPU parallelism
-void candy::dryrun_by_cpu(std::future<void> && synch, candy::Model * p_model, const array::Array * p_data,
-                          candy::Optimizer * p_optimizer, double * cpu_grad_mem, candy::TrainMetric metric,
-                          std::uint64_t n_threads, double * error, std::uint64_t * count, candy::TrialPolicy policy) {
-    // finish old job
-    if (synch.valid()) {
-        synch.get();
-    }
-    // create gradient object and normal count
-    candy::Gradient gradient(cpu_grad_mem, p_model->num_params(), metric);
-    std::uint64_t normal_count;
-    *count = 1;
-    // parallel calculation
-    _Pragma("omp parallel num_threads(n_threads)") {
-        // initialize memory for index
-        Index index_mem;
-        index_mem.fill(0);
-        std::uint64_t thread_idx = ::omp_get_thread_num();
-        // calculate initial error
-        candy::rmse_cpu(p_model, p_data, error[0], normal_count, thread_idx, n_threads, index_mem);
-        // discarded phase
-        std::uint64_t start = 0;
-        std::uint64_t loops = policy.discarded();
-        for (std::uint64_t iter = 1; iter < loops; iter++) {
-            gradient.calc_by_cpu(*p_model, *p_data, thread_idx, n_threads, index_mem);
-            p_optimizer->update_cpu(*p_model, gradient, start + iter, thread_idx, n_threads);
-            candy::rmse_cpu(p_model, p_data, error[start + iter], normal_count, thread_idx, n_threads, index_mem);
-            bool break_condition = !is_normal(error[start + iter]);
-            if (break_condition) {
-                break;
-            }
-            _Pragma("omp single") { *count += 1; }
-            _Pragma("omp barrier");
-        }
-        loops = (*count == start + loops) ? (policy.strict()) : 0;
-        start += policy.discarded();
-        // strictly descent phase
-        for (std::uint64_t iter = 0; iter < loops; iter++) {
-            gradient.calc_by_cpu(*p_model, *p_data, thread_idx, n_threads, index_mem);
-            p_optimizer->update_cpu(*p_model, gradient, start + iter, thread_idx, n_threads);
-            candy::rmse_cpu(p_model, p_data, error[start + iter], normal_count, thread_idx, n_threads, index_mem);
-            bool break_condition = !is_normal(error[start + iter]);
-            break_condition = break_condition || (error[start + iter] >= strict_max_ratio * error[start + iter - 1]);
-            if (break_condition) {
-                break;
-            }
-            _Pragma("omp single") { *count += 1; }
-            _Pragma("omp barrier");
-        }
-        loops = (*count == start + loops) ? (policy.loose()) : 0;
-        start += policy.strict();
-        // loose phase
-        for (std::uint64_t iter = 0; iter < loops; iter++) {
-            gradient.calc_by_cpu(*p_model, *p_data, thread_idx, n_threads, index_mem);
-            p_optimizer->update_cpu(*p_model, gradient, start + iter, thread_idx, n_threads);
-            candy::rmse_cpu(p_model, p_data, error[start + iter], normal_count, thread_idx, n_threads, index_mem);
-            bool break_condition = !is_normal(error[start + iter]);
-            break_condition = break_condition || (error[start + iter] >= loose_max_ratio * error[start + iter - 1]);
-            if (break_condition) {
-                break;
-            }
-            _Pragma("omp single") { *count += 1; }
-            _Pragma("omp barrier");
-        }
-    }
-    // release memory
-    delete p_model;
-    delete p_optimizer;
-}
-
-// Reconstruct CP-model using CPU parallelism
-void candy::reconstruct_by_cpu(std::future<void> && synch, candy::Model * p_model, array::Array * p_data,
-                               std::uint64_t n_threads) {
-    // finish old job
-    if (synch.valid()) {
-        synch.get();
-    }
-    _Pragma("omp parallel num_threads(n_threads)") {
-        Index index;
-        index.fill(0);
-        std::uint64_t thread_idx = ::omp_get_thread_num();
-        for (std::uint64_t c_index = thread_idx; c_index < p_data->size(); c_index += n_threads) {
-            contiguous_to_ndim_idx(c_index, p_data->shape().data(), p_data->ndim(), index.data());
-            p_data->operator[](index) = p_model->eval(index);
-        }
-    }
+    return converted_map;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Trainer
 // ---------------------------------------------------------------------------------------------------------------------
 
-// Constructor a trainer
-candy::Trainer::Trainer(const candy::Model & model, const candy::Optimizer & optimizer, Synchronizer & synchronizer) :
-model_(model), optmz_(optimizer), p_synch_(&synchronizer) {
-    // check argument
-    if (!(optimizer.is_compatible(model))) {
-        Fatal<std::invalid_argument>("Model and Optimizer are incompatible.\n");
-    }
-    // initialize synchronizer and allocate memory for gradient
-    if (!this->on_gpu()) {
-        std::size_t mem_size = sizeof(double) * this->model_.num_params();
-        this->cpu_grad_mem_ = static_cast<double *>(::operator new[](mem_size));
+// Constructor from the total number of elements
+candy::Trainer::Trainer(std::uint64_t capacity, Synchronizer & synch) {
+    switch (synch.core.index()) {
+        case 0 : {
+            this->p_core_ = new candy::train::CpuTrainer(capacity, synch);
+            break;
+        }
+        case 1 : {
+            this->p_core_ = new candy::train::GpuTrainer(capacity, synch);
+            break;
+        }
     }
 }
 
-// Update CP model according to gradient on CPU
-void candy::Trainer::update_until(const array::Array & data, std::uint64_t rep, double threshold,
-                                  std::uint64_t n_threads, candy::TrainMetric metric, bool export_result) {
-    // check if trainer is on CPU
-    if (this->on_gpu()) {
-        Fatal<std::invalid_argument>("The current object is allocated on GPU.\n");
+// Assign data to an ID
+void candy::Trainer::set_data(const std::string & name, const array::NdData & data) {
+    bool on_gpu = this->on_gpu();
+    if (const array::Array * p_data = dynamic_cast<const array::Array *>(&data); p_data != nullptr) {
+        if (on_gpu) {
+            Fatal<std::runtime_error>("Provided CPU array to GPU initialized object.\n");
+        }
+        static_cast<candy::train::CpuTrainer *>(this->p_core_)->set_data(name, *p_data);
+    } else if (const array::Parcel * p_data = dynamic_cast<const array::Parcel *>(&data); p_data != nullptr) {
+        if (!on_gpu) {
+            Fatal<std::runtime_error>("Provided GPU array to CPU initialized object.\n");
+        }
+        static_cast<candy::train::GpuTrainer *>(this->p_core_)->set_data(name, *p_data);
+    } else {
+        Fatal<std::runtime_error>("Array other than on CPU or GPU are not supported.\n");
     }
-    // check shape
-    if (!this->model_.check_compatible_shape(data.shape())) {
-        Fatal<std::invalid_argument>("Incompatible shape between data and model.\n");
-    }
-    // asynchronous launch
-    std::future<void> & current_sync = std::get<std::future<void>>(this->p_synch_->core);
-    std::future<void> new_sync = std::async(std::launch::async, candy::train_by_cpu, std::move(current_sync),
-                                            &(this->model_), &data, &(this->optmz_), this->cpu_grad_mem_, metric, rep,
-                                            threshold, n_threads, export_result, &(this->fname_));
-    *(this->p_synch_) = Synchronizer(std::move(new_sync));
 }
 
-// Update CP model according to gradient using CPU
-void candy::Trainer::update_for(const array::Array & data, std::uint64_t max_iter, std::uint64_t n_threads,
-                                candy::TrainMetric metric, bool export_result) {
-    // check if trainer is on CPU
-    if (this->on_gpu()) {
-        Fatal<std::invalid_argument>("The current object is allocated on GPU.\n");
+// Query if the object data is instatialized on CPU or on GPU
+bool candy::Trainer::on_gpu(void) {
+    if (this->p_core_ == nullptr) {
+        Fatal<std::runtime_error>("Trainer not initialized.\n");
     }
-    // check shape
-    if (!this->model_.check_compatible_shape(data.shape())) {
-        Fatal<std::invalid_argument>("Incompatible shape between data and model.\n");
+    if (candy::train::GpuTrainer * p_core = dynamic_cast<candy::train::GpuTrainer *>(this->p_core_);
+        p_core != nullptr) {
+        return true;
     }
-    // asynchronous launch
-    std::future<void> & current_sync = std::get<std::future<void>>(this->p_synch_->core);
-    std::future<void> new_sync = std::async(std::launch::async, candy::process_by_cpu, std::move(current_sync),
-                                            &(this->model_), &data, &(this->optmz_), this->cpu_grad_mem_, max_iter,
-                                            n_threads, metric, export_result, &(this->fname_));
-    *(this->p_synch_) = Synchronizer(std::move(new_sync));
+    return false;
 }
 
-// Get the RMSE and RMAE error with respect to a given dataset by CPU
-void candy::Trainer::get_error(const array::Array & data, double & rmse, double & rmae, std::uint64_t n_threads) {
-    // check if trainer is on CPU
-    if (this->on_gpu()) {
-        Fatal<std::invalid_argument>("The current object is allocated on GPU.\n");
+// Get copy to a model
+candy::Model candy::Trainer::get_model(const std::string & name) {
+    bool on_gpu = this->on_gpu();
+    candy::Model target_model;
+    if (!on_gpu) {
+        target_model = static_cast<candy::train::CpuTrainer *>(this->p_core_)->get_model(name);
+    } else {
+        target_model = static_cast<candy::train::GpuTrainer *>(this->p_core_)->get_model(name);
     }
-    // check shape
-    if (!this->model_.check_compatible_shape(data.shape())) {
-        Fatal<std::invalid_argument>("Incompatible shape between data and model.\n");
-    }
-    // asynchronous launch
-    std::future<void> & current_sync = std::get<std::future<void>>(this->p_synch_->core);
-    std::future<void> new_sync = std::async(std::launch::async, candy::error_by_cpu, std::move(current_sync),
-                                            &(this->model_), &data, &rmse, &rmae, n_threads);
-    *(this->p_synch_) = Synchronizer(std::move(new_sync));
+    return target_model;
 }
 
-// Dry-run
-void candy::Trainer::dry_run(const array::Array & data, DoubleVec & error, std::uint64_t & actual_iter,
-                             candy::TrialPolicy policy, std::uint64_t n_threads, candy::TrainMetric metric) {
-    // check if trainer is on CPU
-    if (this->on_gpu()) {
-        Fatal<std::invalid_argument>("The current object is allocated on GPU.\n");
+// Reconstruct a whole multi-dimensional data from the model using CPU parallelism
+void candy::Trainer::reconstruct(const std::map<std::string, array::NdData *> & rec_data_map, std::uint64_t n_threads) {
+    bool on_gpu = this->on_gpu();
+    if (!on_gpu) {
+        std::map<std::string, array::Array *> cpu_rec_data_map = convert_map<array::Array>(rec_data_map);
+        static_cast<candy::train::CpuTrainer *>(this->p_core_)->reconstruct(cpu_rec_data_map, n_threads);
+    } else {
+        std::map<std::string, array::Parcel *> gpu_rec_data_map = convert_map<array::Parcel>(rec_data_map);
+        static_cast<candy::train::GpuTrainer *>(this->p_core_)->reconstruct(gpu_rec_data_map, n_threads);
     }
-    // check shape
-    if (!this->model_.check_compatible_shape(data.shape())) {
-        Fatal<std::invalid_argument>("Incompatible shape between data and model.\n");
-    }
-    // check error length
-    if (error.size() < policy.sum()) {
-        Fatal<std::invalid_argument>("Size of error must be greater or equal to max_iter.\n");
-    }
-    // copy current model and optimizer
-    candy::Model * model_dry = new candy::Model(this->model_);
-    candy::Optimizer * optmz_dry = new candy::Optimizer(this->optmz_);
-    // asynchronous launch
-    std::future<void> & current_sync = std::get<std::future<void>>(this->p_synch_->core);
-    std::future<void> new_sync = std::async(std::launch::async, candy::dryrun_by_cpu, std::move(current_sync),
-                                            model_dry, &data, optmz_dry, this->cpu_grad_mem_, metric, n_threads,
-                                            error.data(), &actual_iter, policy);
-    *(this->p_synch_) = Synchronizer(std::move(new_sync));
-}
-
-// Reconstruct a whole multi-dimensional data from the model
-void candy::Trainer::reconstruct(array::Array & destination, std::uint64_t n_threads) {
-    // check if trainer is on CPU
-    if (this->on_gpu()) {
-        Fatal<std::invalid_argument>("The current object is allocated on GPU.\n");
-    }
-    // check shape
-    if (!this->model_.check_compatible_shape(destination.shape())) {
-        Fatal<std::invalid_argument>("Incompatible shape between data and model.\n");
-    }
-    // asynchronous launch
-    std::future<void> & current_sync = std::get<std::future<void>>(this->p_synch_->core);
-    std::future<void> new_sync = std::async(std::launch::async, candy::reconstruct_by_cpu, std::move(current_sync),
-                                            &this->model_, &destination, n_threads);
-    *(this->p_synch_) = Synchronizer(std::move(new_sync));
-}
-
-#ifndef __MERLIN_CUDA__
-
-// Update CP model according to gradient on GPU
-void candy::Trainer::update_until(const array::Parcel & data, std::uint64_t rep, double threshold,
-                                  std::uint64_t n_threads, candy::TrainMetric metric, bool export_result) {
-    Fatal<cuda_compile_error>("Cannot invoke GPU function since merlin is not compiled with CUDA option.\n");
-}
-
-// Update CP model according to gradient using GPU
-void candy::Trainer::update_for(const array::Parcel & data, std::uint64_t max_iter, std::uint64_t n_threads,
-                                candy::TrainMetric metric, bool export_result) {
-    Fatal<cuda_compile_error>("Cannot invoke GPU function since merlin is not compiled with CUDA option.\n");
-}
-
-// Get the RMSE and RMAE error with respect to a given dataset by GPU
-void candy::Trainer::get_error(const array::Parcel & data, double & rmse, double & rmae, std::uint64_t n_threads) {
-    Fatal<cuda_compile_error>("Cannot invoke GPU function since merlin is not compiled with CUDA option.\n");
-}
-
-// Dry-run using GPU
-void candy::Trainer::dry_run(const array::Parcel & data, DoubleVec & error, std::uint64_t & actual_iter,
-                             std::uint64_t max_iter, std::uint64_t n_threads, candy::TrainMetric metric) {
-    Fatal<cuda_compile_error>("Cannot invoke GPU function since merlin is not compiled with CUDA option.\n");
-}
-
-// Reconstruct a whole multi-dimensional data from the model using GPU parallelism
-void candy::Trainer::reconstruct(array::Parcel & destination, std::uint64_t n_threads) {
-    Fatal<cuda_compile_error>("Cannot invoke GPU function since merlin is not compiled with CUDA option.\n");
-}
-
-#endif  // __MERLIN__CUDA__
-
-// Change optimizer
-void candy::Trainer::change_optmz(candy::Optimizer && new_optimizer) {
-    if (!new_optimizer.is_compatible(this->model_)) {
-        Fatal<std::invalid_argument>("New optimizer is not compatible with the current model.\n");
-    }
-    this->optmz_ = std::forward<candy::Optimizer>(new_optimizer);
 }
 
 // Destructor
 candy::Trainer::~Trainer(void) {
-    if (this->cpu_grad_mem_ != nullptr) {
-        std::size_t mem_size = sizeof(double) * this->model_.num_params();
-        ::operator delete[](this->cpu_grad_mem_, mem_size);
+    if (this->p_core_ != nullptr) {
+        delete this->p_core_;
     }
 }
 

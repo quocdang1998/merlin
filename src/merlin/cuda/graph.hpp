@@ -5,8 +5,8 @@
 #include <array>        // std::array
 #include <cstdint>      // std::uintptr_t
 #include <string>       // std::string
-#include <tuple>        // std::tuple
 #include <type_traits>  // std::add_pointer
+#include <utility>      // std::pair
 #include <vector>       // std::vector
 
 #include "merlin/cuda/declaration.hpp"   // merlin::cuda::Graph
@@ -104,8 +104,8 @@ class cuda::Graph {
      *  @param deps %Vector of nodes on which the node depends.
      *  @return Tuple of added graph node and pointer to allocated data.
      */
-    MERLIN_EXPORTS std::tuple<cuda::GraphNode, void *> add_malloc_node(std::uint64_t size,
-                                                                       const std::vector<cuda::GraphNode> & deps);
+    MERLIN_EXPORTS std::pair<cuda::GraphNode, void *> add_malloc_node(std::uint64_t size,
+                                                                      const std::vector<cuda::GraphNode> & deps);
     /** @brief Add memory copy node.
      *  @param dest Pointer to destination array.
      *  @param src Pointer to source destination.
@@ -135,7 +135,7 @@ class cuda::Graph {
      *  @param args Arguments to pass to the function.
      */
     template <typename Function, typename... Args>
-    cuda::GraphNode add_host_node(Function & callback, const std::vector<cuda::GraphNode> & deps, Args &&... args);
+    cuda::GraphNode add_host_node(Function && callback, const std::vector<cuda::GraphNode> & deps, Args &&... args);
 #endif  // __NVCC__
     /** @brief Add CUDA deallocation node.
      *  @param ptr GPU pointer to be freed.

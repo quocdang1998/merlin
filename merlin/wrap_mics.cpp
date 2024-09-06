@@ -38,12 +38,6 @@ static void wrap_env(py::module & merlin_package) {
         "Set a sequence of new random seed to the random generator.",
         py::arg("seed_seq")
     );
-    // CUDA environment
-    env_pyclass.def_static(
-        "init_cuda",
-        [](void) { Environment::init_cuda(); },
-        "Initialize CUDA context."
-    );
 }
 
 // Wrap utils functions

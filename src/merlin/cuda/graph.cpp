@@ -86,10 +86,10 @@ std::vector<std::array<cuda::GraphNode, 2>> cuda::Graph::get_edge_list(void) con
 }
 
 // Add memory allocation node
-std::tuple<cuda::GraphNode, void *> cuda::Graph::add_malloc_node(std::uint64_t size,
-                                                                 const std::vector<cuda::GraphNode> & deps) {
+std::pair<cuda::GraphNode, void *> cuda::Graph::add_malloc_node(std::uint64_t size,
+                                                                const std::vector<cuda::GraphNode> & deps) {
     Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA for graph management.\n");
-    return std::tuple<cuda::GraphNode, void *>();
+    return std::pair<cuda::GraphNode, void *>();
 }
 
 // Add memcpy node

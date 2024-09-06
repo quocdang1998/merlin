@@ -66,21 +66,21 @@ void candy::Optimizer::allocate_data(std::uint64_t size) {
 }
 
 // Check compatibility with a model
-bool candy::Optimizer::is_compatible(const candy::Model & model) const {
+bool candy::Optimizer::is_compatible(std::uint64_t num_params) const {
     switch (this->static_data_.index()) {
         case 0 : {  // gradient descent
             break;
         }
         case 1 :
         case 4 : {  // adagrad, rmsprop
-            if (this->dynamic_size_ != model.num_params()) {
+            if (this->dynamic_size_ != num_params) {
                 return false;
             }
             break;
         }
         case 2 :
         case 3 : {  // adam, adadelta
-            if (this->dynamic_size_ != 2 * model.num_params()) {
+            if (this->dynamic_size_ != 2 * num_params) {
                 return false;
             }
             break;
@@ -90,9 +90,9 @@ bool candy::Optimizer::is_compatible(const candy::Model & model) const {
 }
 
 // Update model inside a CPU parallel region
-void candy::Optimizer::update_cpu(candy::Model & model, const candy::Gradient & grad, std::uint64_t time_step,
-                                  std::uint64_t thread_idx, std::uint64_t n_threads) noexcept {
-    static std::array<candy::OptmzUpdater, 5> cpu_updater_func = {
+void candy::Optimizer::update_cpu(candy::Model & model, const candy::Gradient & grad,
+                                  std::uint64_t time_step) noexcept {
+    static std::array<candy::OptmzUpdaterCpu, 5> cpu_updater_func = {
         candy::optmz::GradDescent::update_cpu,  // grad descent
         candy::optmz::AdaGrad::update_cpu,      // adagrad
         candy::optmz::Adam::update_cpu,         // adam
@@ -100,9 +100,7 @@ void candy::Optimizer::update_cpu(candy::Model & model, const candy::Gradient & 
         candy::optmz::RmsProp::update_cpu,      // rmsprop
     };
     void * optimizer_algor = reinterpret_cast<void *>(&this->static_data_);
-    cpu_updater_func[this->static_data_.index()](optimizer_algor, this->dynamic_data_, model, grad, time_step,
-                                                 thread_idx, n_threads);
-    _Pragma("omp barrier");
+    cpu_updater_func[this->static_data_.index()](optimizer_algor, this->dynamic_data_, model, grad, time_step);
 }
 
 #ifndef __MERLIN_CUDA__
@@ -179,99 +177,6 @@ candy::Optimizer::~Optimizer(void) {
     if (this->dynamic_data_ != nullptr) {
         delete[] this->dynamic_data_;
     }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Create
-// ---------------------------------------------------------------------------------------------------------------------
-
-// Check for positive learning rate
-static inline void check_learning_rate(double learning_rate) {
-    if (learning_rate <= 0) {
-        Fatal<std::invalid_argument>("Learning rate must be positive.\n");
-    }
-}
-
-// Check for positive bias
-static inline void check_bias(double bias) {
-    if (bias < 0) {
-        Fatal<std::invalid_argument>("Bias must be positive.\n");
-    }
-}
-
-// Check for weight
-static inline void check_weight(double weight) {
-    if (weight * (weight - 1.0) > 0) {
-        Fatal<std::invalid_argument>("Weight value must be in range [0.0, 1.0].\n");
-    }
-}
-
-// Create an optimizer with gradient descent algorithm
-candy::Optimizer candy::create_grad_descent(double learning_rate) {
-    // check argument
-    check_learning_rate(learning_rate);
-    // construct optimizer
-    candy::Optimizer opt;
-    opt.static_data() = candy::OptmzStatic(std::in_place_type<candy::optmz::GradDescent>,
-                                          candy::optmz::GradDescent(learning_rate));
-    return opt;
-}
-
-// Create an optimizer with adagrad algorithm
-candy::Optimizer candy::create_adagrad(double learning_rate, const candy::Model & model, double bias) {
-    // check argument
-    check_learning_rate(learning_rate);
-    check_bias(bias);
-    // construct optimizer
-    candy::Optimizer opt;
-    opt.allocate_data(model.num_params());
-    opt.static_data() = candy::OptmzStatic(std::in_place_type<candy::optmz::AdaGrad>,
-                                         candy::optmz::AdaGrad(learning_rate, bias));
-    return opt;
-}
-
-// Create an optimizer with adam algorithm
-candy::Optimizer candy::create_adam(double learning_rate, double beta_m, double beta_v, const candy::Model & model,
-                                    double bias) {
-    // check argument
-    check_learning_rate(learning_rate);
-    check_bias(bias);
-    check_weight(beta_m);
-    check_weight(beta_v);
-    // construct optimizer
-    candy::Optimizer opt;
-    opt.allocate_data(2 * model.num_params());
-    opt.static_data() = candy::OptmzStatic(std::in_place_type<candy::optmz::Adam>,
-                                           candy::optmz::Adam(learning_rate, beta_m, beta_v, bias));
-    return opt;
-}
-
-// Create an optimizer with adadelta algorithm
-candy::Optimizer candy::create_adadelta(double learning_rate, double rho, const candy::Model & model, double bias) {
-    // check argument
-    check_learning_rate(learning_rate);
-    check_bias(bias);
-    check_weight(rho);
-    // construct optimizer
-    candy::Optimizer opt;
-    opt.allocate_data(2 * model.num_params());
-    opt.static_data() = candy::OptmzStatic(std::in_place_type<candy::optmz::AdaDelta>,
-                                           candy::optmz::AdaDelta(learning_rate, rho, bias));
-    return opt;
-}
-
-// Create an optimizer with rmsprop algorithm
-candy::Optimizer candy::create_rmsprop(double learning_rate, double beta, const candy::Model & model, double bias) {
-    // check argument
-    check_learning_rate(learning_rate);
-    check_bias(bias);
-    check_weight(beta);
-    // construct optimizer
-    candy::Optimizer opt;
-    opt.allocate_data(model.num_params());
-    opt.static_data() = candy::OptmzStatic(std::in_place_type<candy::optmz::RmsProp>,
-                                           candy::optmz::RmsProp(learning_rate, beta, bias));
-    return opt;
 }
 
 }  // namespace merlin

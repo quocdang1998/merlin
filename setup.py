@@ -15,7 +15,7 @@ sys.path.append(os.path.curdir)
 from setuptools import setup
 
 # custom setup helpers
-from setup_cfg import BuildExt, Extension, copy_dll_libs, ext_options
+from setup_cfg import BuildExt, Extension, copy_dll_libs, ext_options, version
 
 # create extension
 merlin_srclist = [
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     copy_dll_libs()
     setup(
         name="merlin",
-        version="1.0.0",
+        version=version,
         author="quocdang1998",
         author_email="quocdang1998@gmail.com",
         packages=["merlin"],

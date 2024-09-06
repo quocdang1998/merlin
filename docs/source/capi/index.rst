@@ -269,7 +269,7 @@ Gradient descent
    :toctree: generated
 
    merlin::candy::optmz::GradDescent
-   merlin::candy::create_grad_descent
+   merlin::candy::optmz::create_grad_descent
 
 Adaptative gradient
 '''''''''''''''''''
@@ -278,7 +278,7 @@ Adaptative gradient
    :toctree: generated
 
    merlin::candy::optmz::AdaGrad
-   merlin::candy::create_adagrad
+   merlin::candy::optmz::create_adagrad
 
 Adaptive estimates of lower-order moments
 '''''''''''''''''''''''''''''''''''''''''
@@ -287,7 +287,7 @@ Adaptive estimates of lower-order moments
    :toctree: generated
 
    merlin::candy::optmz::Adam
-   merlin::candy::create_adam
+   merlin::candy::optmz::create_adam
 
 Adaptive delta
 ''''''''''''''
@@ -296,7 +296,7 @@ Adaptive delta
    :toctree: generated
 
    merlin::candy::optmz::AdaDelta
-   merlin::candy::create_adadelta
+   merlin::candy::optmz::create_adadelta
 
 Root mean square propagation
 ''''''''''''''''''''''''''''
@@ -305,16 +305,29 @@ Root mean square propagation
    :toctree: generated
 
    merlin::candy::optmz::RmsProp
-   merlin::candy::create_rmsprop
+   merlin::candy::optmz::create_rmsprop
 
 Launch calculation
 ^^^^^^^^^^^^^^^^^^
+
+Generalized launch
+''''''''''''''''''
 
 .. doxysummary::
    :toctree: generated
 
    merlin::candy::Trainer
    merlin::candy::TrialPolicy
+
+CPU/GPU specified API
+'''''''''''''''''''''
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::candy::train::TrainerBase
+   merlin::candy::train::CpuTrainer
+   merlin::candy::train::GpuTrainer
 
 Low level API
 -------------

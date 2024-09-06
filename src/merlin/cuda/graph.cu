@@ -7,7 +7,6 @@
 #include "merlin/cuda/device.hpp"  // merlin::cuda::Device
 #include "merlin/cuda/event.hpp"   // merlin::cuda::Event
 #include "merlin/cuda/stream.hpp"  // merlin::cuda::Stream
-#include "merlin/env.hpp"          // merlin::check_cuda_env
 #include "merlin/logger.hpp"       // merlin::Fatal, merlin::Warning, merlin::cuda_runtime_error
 
 namespace merlin {
@@ -64,7 +63,6 @@ void cuda::Graph::destroy_graph(void) {
 
 // Constructor
 cuda::Graph::Graph(int flag) {
-    check_cuda_env();
     ::cudaError_t err_;
     switch (flag) {
         case -1 : {  // default constructor
@@ -185,8 +183,8 @@ std::vector<std::array<cuda::GraphNode, 2>> cuda::Graph::get_edge_list(void) con
 }
 
 // Add memory allocation node
-std::tuple<cuda::GraphNode, void *> cuda::Graph::add_malloc_node(std::uint64_t size,
-                                                                 const std::vector<cuda::GraphNode> & deps) {
+std::pair<cuda::GraphNode, void *> cuda::Graph::add_malloc_node(std::uint64_t size,
+                                                                const std::vector<cuda::GraphNode> & deps) {
     ::cudaGraphNode_t graph_node;
     ::cudaMemAllocNodeParams node_params;
     std::memset(&node_params, 0, sizeof(::cudaMemAllocNodeParams));
@@ -201,8 +199,8 @@ std::tuple<cuda::GraphNode, void *> cuda::Graph::add_malloc_node(std::uint64_t s
         Fatal<cuda_runtime_error>("Add memory allocation node to graph failed with message \"%s\".\n",
                                   ::cudaGetErrorString(err_));
     }
-    return std::tuple<cuda::GraphNode, void *>(cuda::GraphNode(reinterpret_cast<std::uintptr_t>(graph_node)),
-                                               node_params.dptr);
+    return std::pair<cuda::GraphNode, void *>(cuda::GraphNode(reinterpret_cast<std::uintptr_t>(graph_node)),
+                                              node_params.dptr);
 }
 
 // Add memcpy node

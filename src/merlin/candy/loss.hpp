@@ -16,7 +16,7 @@ namespace merlin::candy {
 // Relative mean square error
 // --------------------------
 
-/** @brief Calculate relative mean square error with CPU parallelism.
+/** @brief Calculate relative mean square error with CPU.
  *  @details Calculate:
  *  @f[ \sqrt{ \frac{1}{N} \left[ \sum_{\text{data}} \left( \frac{x_{\text{model}} - x_{\text{data}}}{x_{\text{data}}}
  *  \right)^2 \right] } @f]
@@ -28,13 +28,10 @@ namespace merlin::candy {
  *  @param p_data Pointer to train data.
  *  @param result Pointer to the result.
  *  @param count Number of normal elements.
- *  @param thread_idx Index of the current thread calculating the gradient.
- *  @param n_threads Number of threads to calculate.
  *  @param index_mem Cache memory storing index foreach thread.
  */
 MERLIN_EXPORTS void rmse_cpu(const candy::Model * p_model, const array::Array * p_data, double & result,
-                             std::uint64_t & count, std::uint64_t thread_idx, std::uint64_t n_threads,
-                             Index & index_mem) noexcept;
+                             std::uint64_t & count, Index & index_mem) noexcept;
 
 #ifdef __NVCC__
 
@@ -62,7 +59,7 @@ __cudevice__ void rmse_gpu(const candy::Model * p_model, const array::Parcel * p
 // Relative max absolute error
 // ---------------------------
 
-/** @brief Calculate relative max absolute error with CPU parallelism.
+/** @brief Calculate relative max absolute error with CPU.
  *  @details Calculate:
  *  @f[ \max_{\text{data}} \left[ \frac{\left| x_{\text{model}} - x_{\text{data}} \right|}{x_{\text{data}}} \right] @f]
  *
@@ -73,13 +70,10 @@ __cudevice__ void rmse_gpu(const candy::Model * p_model, const array::Parcel * p
  *  @param p_data Pointer to train data.
  *  @param result Pointer to the result.
  *  @param count Number of finite elements.
- *  @param thread_idx Index of the current thread calculating the gradient.
- *  @param n_threads Number of threads to calculate.
  *  @param index_mem Cache memory storing index foreach thread.
  */
 MERLIN_EXPORTS void rmae_cpu(const candy::Model * p_model, const array::Array * p_data, double & result,
-                             std::uint64_t & count, std::uint64_t thread_idx, std::uint64_t n_threads,
-                             Index & index_mem) noexcept;
+                             std::uint64_t & count, Index & index_mem) noexcept;
 
 #ifdef __NVCC__
 

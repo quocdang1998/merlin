@@ -17,7 +17,7 @@ class Environment {
     /// @name Constructor
     /// @{
     /** @brief Default constructor.*/
-    MERLINENV_EXPORTS Environment(void);
+    Environment(void) = default;
     /// @}
 
     /// @name Shared variables
@@ -30,20 +30,10 @@ class Environment {
 
     /// @name CUDA environment
     /// @{
-    /** @brief Check if CUDA environment is initialized or not.*/
-    MERLINENV_EXPORTS static bool is_cuda_initialized;
-    /** @brief Initialize CUDA context.*/
-    MERLINENV_EXPORTS static void init_cuda(void);
     /** @brief Primary context of each GPU.*/
     MERLINENV_EXPORTS static std::map<int, std::uintptr_t> primary_ctx;
     /// @}
 };
-
-/** @brief Default environment.*/
-MERLINENV_EXPORTS extern Environment default_env;
-
-/** @brief Throw an error if CUDA environment has not been initialized.*/
-MERLINENV_EXPORTS void check_cuda_env(void);
 
 }  // namespace merlin
 

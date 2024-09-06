@@ -35,11 +35,9 @@ std::ostream & operator<<(std::ostream & out, const candy::TrainMetric & metric)
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Calculate gradient from data in CPU parallel section
-void candy::Gradient::calc_by_cpu(candy::Model & model, const array::Array & train_data, std::uint64_t thread_idx,
-                                  std::uint64_t n_threads, Index & index_mem) noexcept {
-    candy::calc_gradient(model, train_data, this->value_, static_cast<unsigned int>(this->train_metric_), thread_idx,
-                         n_threads, index_mem);
-    _Pragma("omp barrier");
+void candy::Gradient::calc_by_cpu(candy::Model & model, const array::Array & train_data, Index & index_mem) noexcept {
+    candy::calc_gradient(model, train_data, this->value_, static_cast<unsigned int>(this->train_metric_), 0, 1,
+                         index_mem);
 }
 
 // String representation

@@ -48,6 +48,10 @@ class candy::Model {
 
     /// @name Get attributes
     /// @{
+    /** @brief Get pointer to model data.*/
+    __cuhostdev__ constexpr double * data(void) noexcept { return this->parameters_.data(); }
+    /** @brief Get pointer to (constant) model data.*/
+    __cuhostdev__ constexpr const double * data(void) const noexcept { return this->parameters_.data(); }
     /** @brief Get reference to parameters.*/
     __cuhostdev__ constexpr DPtrArray & param_vectors(void) noexcept { return this->param_vectors_; }
     /** @brief Get constant reference to parameters.*/

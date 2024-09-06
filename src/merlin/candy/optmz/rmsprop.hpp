@@ -37,8 +37,7 @@ struct candy::optmz::RmsProp {
     /// @{
     /** @brief Update model inside a CPU parallel region.*/
     MERLIN_EXPORTS static void update_cpu(void * optimizer_algor, double * history, candy::Model & model,
-                                          const candy::Gradient & grad, std::uint64_t time_step,
-                                          std::uint64_t thread_idx, std::uint64_t n_threads) noexcept;
+                                          const candy::Gradient & grad, std::uint64_t time_step) noexcept;
 #ifdef __NVCC__
     /** @brief Update model inside a GPU parallel region.*/
     __cudevice__ static void update_gpu(void * optimizer_algor, double * history, candy::Model & model,
@@ -57,6 +56,14 @@ struct candy::optmz::RmsProp {
     double bias;
     /// @}
 };
+
+namespace candy::optmz {
+
+/** @brief Create an optimizer with rmsprop algorithm.*/
+MERLIN_EXPORTS candy::Optimizer create_rmsprop(double learning_rate, double beta, std::uint64_t num_params,
+                                               double bias = 1.0e-8);
+
+}  // namespace candy::optmz
 
 }  // namespace merlin
 

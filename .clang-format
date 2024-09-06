@@ -58,6 +58,7 @@ IndentWrappedFunctionNames: true
 KeepEmptyLinesAtTheStartOfBlocks: false
 PackConstructorInitializers: NextLine
 PenaltyBreakAssignment: 40
+PenaltyExcessCharacter: 100
 PointerAlignment: Middle
 ReferenceAlignment: Middle
 RemoveBracesLLVM: false

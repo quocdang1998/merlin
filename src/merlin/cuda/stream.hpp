@@ -5,7 +5,6 @@
 #include <cstddef>      // nullptr
 #include <cstdint>      // std::uintptr_t
 #include <string>       // std::string
-#include <tuple>        // std::apply, std::tuple
 #include <type_traits>  // std::add_pointer
 #include <utility>      // std::exchange
 
@@ -106,22 +105,24 @@ class cuda::Stream {
      *  @details Example:
      *  @code {.cu}
      *  // function declaration
-     *  void stream_callback(const std::string & a, int b) {
-     *      std::printf("Stream callback arguments: \"%s\" and %d\n", a.c_str(), b);
+     *  void stream_callback(std::vector<int> && a, const std::string & b, int & c, double d) {
+     *      std::printf("Stream callback arguments: %zu, \"%s\", %d, and %f\n", a.size(), b.c_str(), c, d);
+     *      c += 1;
      *  }
      *
      *  // usage
-     *  int b = 1;
+     *  std::string b = "a dummy message!";
+     *  int c = 1;
      *  merlin::cuda::Stream s();
-     *  s.add_callback(str_callback, "a dummy message!", b);
+     *  s.add_callback(str_callback, std::vector<int>({1, 2, 3}), std::cref(b), std::ref(c), 0.5);
      *
      *  // stdout result:
-     *  // Stream callback arguments: "a dummy message!" and 1
+     *  // Stream callback arguments: 3, "a dummy message!", 1 and 0.5
      *  @endcode
      *  @note Result in undefined bahaviour if the ``callback`` is destroyed before synchronizing the stream.
      */
     template <typename Function, typename... Args>
-    void add_callback(Function & callback, Args &&... args);
+    void add_callback(Function && callback, Args &&... args);
 #endif  // __NVCC__
     /** @brief Record (register) an event on CUDA stream.
      *  @param event CUDA event to be recorded.

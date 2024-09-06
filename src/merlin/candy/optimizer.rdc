@@ -15,7 +15,7 @@ namespace merlin {
 __cudevice__ void candy::Optimizer::update_gpu(candy::Model & model, const candy::Gradient & grad,
                                                std::uint64_t time_step, std::uint64_t thread_idx,
                                                std::uint64_t n_threads) noexcept {
-    static std::array<candy::OptmzUpdater, 5> gpu_updater_func = {
+    static std::array<candy::OptmzUpdaterGpu, 5> gpu_updater_func = {
         candy::optmz::GradDescent::update_gpu,  // grad descent
         candy::optmz::AdaGrad::update_gpu,      // adagrad
         candy::optmz::Adam::update_gpu,         // adam

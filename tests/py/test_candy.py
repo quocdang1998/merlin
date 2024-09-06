@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(__file__, "../../../")))
 import numpy as np
 
 from merlin.array import Array, empty_array
-from merlin.candy import Model, Gradient, create_grad_descent, Trainer
+from merlin.candy import Model, Gradient, create_grad_descent, Trainer, TrialPolicy
 from merlin.candy.rand import Gaussian, Uniform
 from merlin import Synchronizer
 
@@ -26,8 +26,14 @@ with Gradient(model.num_params) as g:
 # dry run
 optmz = create_grad_descent(0.22)
 synch = Synchronizer("cpu")
-tr = Trainer(model, optmz, synch)
-error, count = tr.dry_run_cpu(data, 1000)
+tr = Trainer(1, synch)
+key = "foo"
+tr.set_model(key, model)
+tr.set_optmz(key, optmz)
+tr.set_data(key, data)
+# tr.set_export_fname(key, "foo.txt")
+policy = TrialPolicy(1, 9, 90)
+dry_run_map = tr.dry_run([key], policy=policy, n_threads=2, metric="relsquare")
 synch.synchronize()
 if count < 1000:
     print(error)

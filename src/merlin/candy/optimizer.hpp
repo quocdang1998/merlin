@@ -13,7 +13,7 @@
 #include "merlin/candy/optmz/adam.hpp"          // merlin::candy::optmz::Adam
 #include "merlin/candy/optmz/grad_descent.hpp"  // merlin::candy::optmz::GradDescent
 #include "merlin/candy/optmz/rmsprop.hpp"       // merlin::candy::optmz::RmsProp
-#include "merlin/config.hpp"                    // __cudevice__
+#include "merlin/config.hpp"                    // __cudevice__, __cuhostdev__
 #include "merlin/exports.hpp"                   // MERLIN_EXPORTS
 
 namespace merlin {
@@ -24,9 +24,13 @@ namespace candy {
 using OptmzStatic = std::variant<candy::optmz::GradDescent, candy::optmz::AdaGrad, candy::optmz::Adam,
                                  candy::optmz::AdaDelta, candy::optmz::RmsProp>;
 
-/** @brief Type of optimizing function.*/
-using OptmzUpdater = std::add_pointer<void(void *, double *, candy::Model &, const candy::Gradient &, std::uint64_t,
-                                           std::uint64_t, std::uint64_t) noexcept>::type;
+/** @brief Type of optimizing function on CPU.*/
+using OptmzUpdaterCpu =
+    std::add_pointer<void(void *, double *, candy::Model &, const candy::Gradient &, std::uint64_t) noexcept>::type;
+
+/** @brief Type of optimizing function on GPU.*/
+using OptmzUpdaterGpu = std::add_pointer<void(void *, double *, candy::Model &, const candy::Gradient &, std::uint64_t,
+                                              std::uint64_t, std::uint64_t) noexcept>::type;
 
 }  // namespace candy
 
@@ -62,9 +66,13 @@ class candy::Optimizer {
     /// @name Attributes
     /// @{
     /** @brief Get reference to static data.*/
-    constexpr candy::OptmzStatic & static_data(void) noexcept { return this->static_data_; }
+    __cuhostdev__ constexpr candy::OptmzStatic & static_data(void) noexcept { return this->static_data_; }
     /** @brief Get constant reference to static data.*/
-    constexpr const candy::OptmzStatic & static_data(void) const noexcept { return this->static_data_; }
+    __cuhostdev__ constexpr const candy::OptmzStatic & static_data(void) const noexcept { return this->static_data_; }
+    /** @brief Get pointer to optimizer dynamic data.*/
+    __cuhostdev__ constexpr double * dynamic_data(void) noexcept { return this->dynamic_data_; }
+    /** @brief Get pointer to (constant) optimizer dynamic data.*/
+    __cuhostdev__ constexpr const double * dynamic_data(void) const noexcept { return this->dynamic_data_; }
     /** @brief Allocate dynamic data.*/
     void allocate_data(std::uint64_t size);
     /// @}
@@ -72,14 +80,14 @@ class candy::Optimizer {
     /// @name Check compatibility with a model
     /// @{
     /** @brief Check compatibility with a model. Return ``false`` when incompatibility detected.*/
-    MERLIN_EXPORTS bool is_compatible(const candy::Model & model) const;
+    MERLIN_EXPORTS bool is_compatible(std::uint64_t num_params) const;
     /// @}
 
     /// @name Update model by gradient
     /// @{
-    /** @brief Update model inside a CPU parallel region.*/
-    MERLIN_EXPORTS void update_cpu(candy::Model & model, const candy::Gradient & grad, std::uint64_t time_step,
-                                   std::uint64_t thread_idx, std::uint64_t n_threads) noexcept;
+    /** @brief Update model using CPU.*/
+    MERLIN_EXPORTS void update_cpu(candy::Model & model, const candy::Gradient & grad,
+                                   std::uint64_t time_step) noexcept;
 #ifdef __NVCC__
     /** @brief Update model inside a GPU parallel region.*/
     __cudevice__ void update_gpu(candy::Model & model, const candy::Gradient & grad, std::uint64_t time_step,
@@ -142,28 +150,6 @@ class candy::Optimizer {
     /** @brief Size of dynamic memory.*/
     std::uint64_t dynamic_size_ = 0;
 };
-
-namespace candy {
-
-/** @brief Create an optimizer with gradient descent algorithm.*/
-MERLIN_EXPORTS candy::Optimizer create_grad_descent(double learning_rate);
-
-/** @brief Create an optimizer with adagrad algorithm.*/
-MERLIN_EXPORTS candy::Optimizer create_adagrad(double learning_rate, const candy::Model & model, double bias = 1.0e-8);
-
-/** @brief Create an optimizer with adam algorithm.*/
-MERLIN_EXPORTS candy::Optimizer create_adam(double learning_rate, double beta_m, double beta_v,
-                                            const candy::Model & model, double bias = 1.0e-8);
-
-/** @brief Create an optimizer with adadelta algorithm.*/
-MERLIN_EXPORTS candy::Optimizer create_adadelta(double learning_rate, double rho, const candy::Model & model,
-                                                double bias = 1.0e-8);
-
-/** @brief Create an optimizer with rmsprop algorithm.*/
-MERLIN_EXPORTS candy::Optimizer create_rmsprop(double learning_rate, double beta, const candy::Model & model,
-                                               double bias = 1.0e-8);
-
-}  // namespace candy
 
 }  // namespace merlin
 

@@ -1,6 +1,8 @@
 // Copyright 2023 quocdang1998
 #include "py_api.hpp"
 
+#include "merlin/version.hpp"  // merlin::version
+
 // Wrap main module
 PYBIND11_MODULE(merlin, merlin_package) {
     // metadata

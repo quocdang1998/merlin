@@ -8,7 +8,6 @@
 #include <type_traits>  // std::remove_pointer_t, std::is_trivially_copyable
 #include <utility>      // std::make_pair
 
-#include "merlin/env.hpp"     // merlin::check_cuda_env
 #include "merlin/logger.hpp"  // merlin::Fatal, merlin::cuda_runtime_error
 #include "merlin/utils.hpp"   // merlin::flatten_thread_index, merlin::size_of_block
 
@@ -94,8 +93,6 @@ __cudevice__ std::tuple<T *, Args *...> copy_metadata_to_shmem(void * data, void
 // Constructor
 template <typename... Args>
 cuda::Memory<Args...>::Memory(std::uintptr_t stream_ptr, const Args &... args) {
-    // check environment
-    check_cuda_env();
     // allocate data
     this->offset_.fill(0);
     this->stream_ptr_ = stream_ptr;

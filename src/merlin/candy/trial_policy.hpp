@@ -6,12 +6,13 @@
 #include <string>   // std::string
 
 #include "merlin/candy/declaration.hpp"  // merlin::candy::TrialPolicy
+#include "merlin/config.hpp"             // __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 
 namespace merlin {
 
 /** @brief Trial policy for test run (dry run).
- *  @details The dry run for Candecomp models necessitates 3 phases:
+ *  @details The dry run for CP models necessitates 3 phases:
  *  - **discarded** : chaotic evolution at the beginning of the training process.
  *  - **strict** : strictly descent of the error in the direction of the gradient. Relative decrement of relative error
  *    of a given step must be greater than @f$ 10^{-6} @f$ the relative error of the previous step.
@@ -29,13 +30,13 @@ class candy::TrialPolicy {
     /// @name Attributes
     /// @{
     /** @brief Get constant reference to number of discarded steps.*/
-    constexpr const std::uint64_t & discarded(void) const noexcept { return this->discarded_; }
+    __cuhostdev__ constexpr const std::uint64_t & discarded(void) const noexcept { return this->discarded_; }
     /** @brief Get constant reference to number of steps with strictly descent of error.*/
-    constexpr const std::uint64_t & strict(void) const noexcept { return this->strict_; }
+    __cuhostdev__ constexpr const std::uint64_t & strict(void) const noexcept { return this->strict_; }
     /** @brief Get constant reference to number of steps tolerated for random rounding error near local minima.*/
-    constexpr const std::uint64_t & loose(void) const noexcept { return this->loose_; }
+    __cuhostdev__ constexpr const std::uint64_t & loose(void) const noexcept { return this->loose_; }
     /** @brief Get constant reference to total number of steps.*/
-    constexpr const std::uint64_t & sum(void) const noexcept { return this->sum_; }
+    __cuhostdev__ constexpr const std::uint64_t & sum(void) const noexcept { return this->sum_; }
     /// @}
 
     /// @name Representation

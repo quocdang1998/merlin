@@ -7,7 +7,7 @@
 #include <functional>    // std::bind, std::placeholders
 #include <ios>           // std::ios_base::failure
 #include <shared_mutex>  // std::shared_lock
-#include <utility>       // std::forward
+#include <utility>       // std::forward, std::move
 
 #include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::get_leap,
                                        // merlin::array::copy, merlin::array::fill, merlin::array::print
@@ -122,7 +122,7 @@ array::Array & array::Array::operator=(const array::Array & src) {
 }
 
 // Move constructor
-array::Array::Array(array::Array && src) : array::NdData(src) {
+array::Array::Array(array::Array && src) : array::NdData(std::move(src)) {
     // disable release of the source
     this->release = src.release;
     src.release = false;

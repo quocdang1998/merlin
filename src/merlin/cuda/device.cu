@@ -8,7 +8,7 @@
 
 #include <cuda.h>  // ::CUcontext, ::cuCtxGetCurrent, ::cuCtxPopCurrent, ::cuCtxPushCurrent, ::cuDeviceGetName
 
-#include "merlin/env.hpp"     // merlin::check_cuda_env, merlin::Environment
+#include "merlin/env.hpp"     // merlin::Environment
 #include "merlin/logger.hpp"  // merlin::DebugLog, merlin::Warning, merlin::Fatal, merlin::cuda_runtime_error
 
 namespace merlin {
@@ -64,19 +64,6 @@ static inline std::uintptr_t get_current_context(void) {
     return reinterpret_cast<std::uintptr_t>(current_ctx);
 }
 
-// Duplicate the current context on the context stack
-/*static inline std::uintptr_t duplicate_current_context(void) {
-    ::cudaError_t err_;
-    std::uintptr_t current_ctx = get_current_context();
-    if (current_ctx != 0) {
-        err_ = static_cast<::cudaError_t>(::cuCtxPushCurrent(reinterpret_cast<::CUcontext>(current_ctx)));
-        if (err_ != 0) {
-            Fatal<cuda_runtime_error>("cuCtxPushCurrent failed with message \"%s\".\n", ::cudaGetErrorName(err_));
-        }
-    }
-    return current_ctx;
-}*/
-
 // Add primary context pointer to storage
 static inline void record_primary_context(int gpu) {
     // skip when the context has already been recorded before
@@ -113,8 +100,6 @@ static inline void record_primary_context(int gpu) {
 
 // Construct a device from its ID
 cuda::Device::Device(int id) {
-    // check environment
-    check_cuda_env();
     // check argument
     int limit = cuda::Device::get_num_gpu();
     if ((id < 0) || (id >= limit)) {

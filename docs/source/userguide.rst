@@ -244,9 +244,15 @@ and repeats the comparison until the stop criterion is met. All actions listed a
       // create an asynchronous stream to work
       merlin::Synchronizer synch_stream(merlin::ProcessorType::Cpu);
       // initialize a trainer to train CP model
-      merlin::candy::Trainer train(model, optimizer, synch_stream);
-      // train model with K = 10000, alpha = 1e-2 using 4 threads
-      train.update(data, 10000, 1e-2, 4);
+      std::uint64_t capacity = 1;  // expect at most 1 model to train
+      merlin::candy::Trainer train(capacity, synch_stream);
+      // assign trainer to model, optimizer and data
+      std::string key = "foo";
+      train.set_model(key, model);
+      train.set_optmz(key, optimizer);
+      train.set_data(key, data);
+      // train model with K = 10000, alpha = 1e-2
+      train.update_until(10000, 1e-2);
       synch_stream.synchronize();  // stop the main thread until the training algorithm has finished
 
    .. code-block:: python
@@ -263,16 +269,22 @@ and repeats the comparison until the stop criterion is met. All actions listed a
       #  create an asynchronous stream to work
       synch_stream = Synchronizer("cpu")
       # initialize a trainer to train CP model
-      train = Trainer(model, optimizer, synch_stream)
+      capacity = 1
+      train = Trainer(capacity, synch_stream)
+      # assign trainer to model, optimizer and data
+      key = "foo"
+      train.set_model(key, model);
+      train.set_optmz(key, optimizer);
+      train.set_data(key, data);
       # train model with K = 10000, alpha = 1e-2 using 4 threads
-      train.update_cpu(data, 10000, 1e-2, 4);
+      train.update_until(10000, 1e-2);
       synch_stream.synchronize();  # stop the main thread until the training algorithm has finished
 
 .. note::
 
    The default behavior of the ``Trainer`` class is asynchronous, thus allowing simultaneous training of multiple CP
    models on multiple datasets. Python users must ensure synchronization of ``Trainer`` objects before they are no
-   longer referred or contained by any variables, and before the script ends. Destroying un-synchronized ``Trainer``'s
+   longer referred or contained by any variables, and before the script ends. Destroying un-synchronized ``Trainer``
    results in segmentation fault.
 
 Polynomial representation
@@ -394,7 +406,7 @@ is similar to ``splint``.
       from merlin.array import Array
       from merlin.grid import CartesianGrid
       from merlin.regpl import Polynomial, Regressor, create_vandermonde
-      
+
       data = Array(...)          # initialize 1d of ravelled data from C-contiguous data
       grid = CartesianGrid(...)  # initialize grid
 

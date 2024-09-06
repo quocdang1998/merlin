@@ -1,7 +1,6 @@
 // Copyright 2022 quocdang1998
 #include "merlin/cuda/event.hpp"
 
-#include "merlin/env.hpp"     // merlin::check_cuda_env
 #include "merlin/logger.hpp"  // merlin::Fatal, merlin::cuda_runtime_error
 
 namespace merlin {
@@ -12,7 +11,6 @@ namespace merlin {
 
 // Contruct an event with a given flag
 cuda::Event::Event(unsigned int category) : category_(category), device_(cuda::Device::get_current_gpu()) {
-    check_cuda_env();
     ::cudaEvent_t event;
     ::cudaError_t err_ = ::cudaEventCreateWithFlags(&event, category);
     if (err_ != 0) {

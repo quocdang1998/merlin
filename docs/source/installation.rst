@@ -41,7 +41,7 @@ To compile the documentation, install the following packages:
 
 .. code-block:: sh
 
-   pip install -U sphinx_rtd_theme sphinx_design breathe sphinx_doxysummary Sphinx
+   pip install -U sphinx_rtd_theme sphinx_design sphinxcontrib-bibtex breathe sphinx_doxysummary Sphinx
 
 .. |Doxygen| replace:: ``Doxygen>=1.8.5``
 .. _Doxygen: https://doxygen.nl/download.html
