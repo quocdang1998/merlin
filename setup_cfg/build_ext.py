@@ -103,6 +103,7 @@ def cuda_device_linker(self: _du_build_ext, ext: Extension, objects: List[str]):
     # get generic options for device linker step
     arch_args = [cu_arch_template.substitute(arch=str(arch)) for arch in ext.cuda_arch]
     dlink_option = [
+        f"-ccbin={os.path.dirname(self.compiler.cc)}",
         "-forward-unknown-to-host-compiler",
         "-Wno-deprecated-gpu-targets",
         "-shared",

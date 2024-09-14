@@ -97,7 +97,7 @@ latex_engine = 'xelatex'
 latex_additional_files = ['_static/azura.sty',  # '_static/logo.pdf',
                           '_static/azura.pdf', '_static/LeagueSpartan.otf',
                           '_static/FiraCode.ttf', '_static/FiraCode-SemiBold.ttf',
-                          '_static/ChunkFive.ttf', '_static/CocoGoose.ttf']
+                          '_static/LilitaOne.ttf', '_static/CocoGoose.ttf']
 latex_elements = {
     'papersize': 'a4paper',
     'passoptionstopackages': '\\PassOptionsToPackage{explicit}{titlesec}',

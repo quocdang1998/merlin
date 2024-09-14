@@ -13,8 +13,7 @@ OS-dependant macros
 
 .. envvar:: __MERLIN_WINDOWS__
 
-   :Condition: Defined when the package is compiled on Windows and the compiler
-      is MSVC.
+   :Condition: Defined when the package is compiled on Windows and the compiler is MSVC.
    :Source: ``src/platform.hpp``.
    :Usage: Wrapping around included header files and function definitions for Windows.
 
@@ -33,8 +32,7 @@ OS-dependant macros
 
 .. envvar:: __MERLIN_LINUX__
 
-   :Condition: Defined when the package is compiled on Linux and the compiler
-      is GNU ``g++``.
+   :Condition: Defined when the package is compiled on Linux and the compiler is GNU ``g++``.
    :Source: ``src/platform.hpp``.
    :Usage: Wrapping around included header files and function definitions for Linux.
 
@@ -150,17 +148,13 @@ Export macros for dynamic library on Windows
    :Condition: Defined at compilation of dynamic library ``libmerlin`` on
       Windows.
    :Source: ``exports.hpp``.
-   :Usage: Append before functions and classes that are linked dynamically with
-      the dynamic library ``merlin.dll``.
-   :Note: This macro with expands to empty when compiling on Linux, or when
-      compiling static library (:envvar:`MERLIN_LIBKIND` is ``STATIC``).
+   :Usage: Append before functions and classes that are linked dynamically with the dynamic library ``merlin.dll``.
+   :Note: This macro with expands to empty when compiling on Linux, or when compiling static library
+      (:envvar:`MERLIN_LIBKIND` is ``STATIC``).
 
 .. envvar:: MERLINENV_EXPORTS
 
-   :Condition: Defined at compilation of dynamic library ``libmerlinenv`` on
-      Windows.
+   :Condition: Defined at compilation of dynamic library ``libmerlinenv`` on Windows.
    :Source: ``exports.hpp``.
-   :Usage: Append before functions and classes that are linked dynamically with
-      the dynamic library ``merlinenv.dll``.
-   :Note: Similar to :envvar:`MERLIN_EXPORTS`, this macro with expands to empty
-      when compiling on Linux.
+   :Usage: Append before functions and classes that are linked dynamically with the dynamic library ``merlinenv.dll``.
+   :Note: Similar to :envvar:`MERLIN_EXPORTS`, this macro with expands to empty when compiling on Linux.

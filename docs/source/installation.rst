@@ -6,14 +6,14 @@ System requirements
 
 Prior to compiling the package, make sure that you have already installed these prerequisites:
 
--  C++ compiler: GNU ``g++>=11.2.0`` on **Linux** or Visual Studio 2022 ``cl>=19.39`` on **Windows**, with OpenMP
+-  C++ compiler: GNU ``g++>=13.2.0`` on **Linux** or Visual Studio 2022 ``cl>=19.41`` on **Windows**, with OpenMP
    enabled.
 
--  Cmake: ``cmake>=3.25.0``
+-  Cmake: ``cmake>=3.28.0``
 
 -  Build-tool: GNU ``make`` on **Linux** or ``ninja`` on **Windows** (Ninja extenstion of MSVC).
 
--  CUDA ``nvcc>=12.1`` (optional, but required if GPU parallelization option is ``ON``).
+-  CUDA ``nvcc>=12.6`` (optional, but required if GPU parallelization option is ``ON``).
 
 .. _setup_script_build_dependancies:
 
@@ -95,6 +95,7 @@ Studio installed on their machines (see also `Building on the command line
 
 .. code-block:: powershell
 
+   vcvarsall x64
    cmake --preset=windows .
    cd build
    ninja

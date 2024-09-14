@@ -91,7 +91,7 @@ class candy::Gradient {
     /// @}
 
   protected:
-    /** @brief Gradient of canonical model with respect to a data.*/
+    /** @brief %Gradient of canonical model with respect to a data.*/
     DoubleVec value_;
     /** @brief Training metric.*/
     candy::TrainMetric train_metric_ = candy::TrainMetric::RelativeSquare;

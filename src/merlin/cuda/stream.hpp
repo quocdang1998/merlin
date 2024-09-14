@@ -119,7 +119,6 @@ class cuda::Stream {
      *  // stdout result:
      *  // Stream callback arguments: 3, "a dummy message!", 1 and 0.5
      *  @endcode
-     *  @note Result in undefined bahaviour if the ``callback`` is destroyed before synchronizing the stream.
      */
     template <typename Function, typename... Args>
     void add_callback(Function && callback, Args &&... args);

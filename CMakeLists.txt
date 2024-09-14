@@ -5,7 +5,7 @@
 # ======================================================================================================================
 
 # cmake minimum version
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.28)
 
 # options
 set(MERLIN_CUDA OFF CACHE BOOL "Build library using CUDA") # -DMERLIN_CUDA=OFF
@@ -17,7 +17,7 @@ set(MERLIN_TEST OFF CACHE BOOL "Build test executables") # -DMERLIN_TEST=ON
 set(MERLIN_EXT "" CACHE STRING "Space-separated list of extensions to be built") # -DMERLIN_EXT="readmpo spgrid"
 
 # package version
-set(MERLIN_VERSION "1.6.0")
+set(MERLIN_VERSION "1.6.1")
 
 # source list
 list(

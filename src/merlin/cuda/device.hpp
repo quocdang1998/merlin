@@ -5,6 +5,7 @@
 #include <cstdint>  // std::uint64_t, std::uintptr_t
 #include <limits>   // std::numeric_limits
 #include <string>   // std::string
+#include <utility>  // std::exchange, std::swap
 
 #include "merlin/config.hpp"             // __cuhostdev__
 #include "merlin/cuda/declaration.hpp"   // merlin::cuda::Device
@@ -79,7 +80,7 @@ class cuda::Device {
     /** @brief Pop the current context out of the context stack.
      *  @warning This function will also unlock the mutex.
      */
-    MERLIN_EXPORTS static void pop_context(std::uintptr_t previous_context);
+    MERLIN_EXPORTS static void pop_context(std::uintptr_t previous_context) noexcept;
     /** @brief Get and set setting limits of the current GPU.
      *  @return Value of the limit of the current GPU if argument ``size`` is not given, and the value of size
      *  otherwise.
@@ -137,6 +138,21 @@ class cuda::CtxGuard {
     CtxGuard(void) = default;
     /** @brief Constructor from cuda::Device.*/
     CtxGuard(const cuda::Device & gpu) { this->context_ptr_ = gpu.push_context(); }
+    /// @}
+
+    /// @name Copy and move
+    /// @{
+    /** @brief Copy constructor.*/
+    CtxGuard(const cuda::CtxGuard & src) = delete;
+    /** @brief Copy assignment.*/
+    cuda::CtxGuard & operator=(const cuda::CtxGuard & src) = delete;
+    /** @brief Move constructor.*/
+    CtxGuard(cuda::CtxGuard && src) { this->context_ptr_ = std::exchange(src.context_ptr_, 0); }
+    /** @brief Move assignment.*/
+    cuda::CtxGuard & operator=(cuda::CtxGuard && src) {
+        std::swap(this->context_ptr_, src.context_ptr_);
+        return *this;
+    }
     /// @}
 
     /// @name Destructor

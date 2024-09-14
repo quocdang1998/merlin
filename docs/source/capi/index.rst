@@ -6,7 +6,7 @@ C++ API
    \setcounter{codelanguage}{1}
 
 In this documentation, the function and class method decorator ``__host__ __device__`` annotates a callable on both CPU
-and GPU, whereas the decorator ``__device__`` indicates the callable is available only on GPU. Functions and class
+and GPU, whereas the decorator ``__device__`` indicates that the callable is available only on GPU. Functions and class
 methods without any annotations can be executed exclusively by CPU.
 
 In case of non-CUDA compilation, ``__host__ __device__`` functions will becomes regular CPU function, while

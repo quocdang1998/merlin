@@ -51,9 +51,7 @@ std::uintptr_t cuda::Device::push_context(void) const {
 }
 
 // Pop the current context out of the context stack
-void cuda::Device::pop_context(std::uintptr_t previous_context) {
-    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to query for GPU.\n");
-}
+void cuda::Device::pop_context(std::uintptr_t previous_context) noexcept {}
 
 // Get and set limit
 std::uint64_t cuda::Device::limit(cuda::DeviceLimit limit, std::uint64_t size) {

@@ -11,7 +11,9 @@
             },
             "cacheVariables": {
                 "CMAKE_CXX_COMPILER": "cl.exe",
-                "CMAKE_BUILD_TYPE": "Release"
+                "CMAKE_BUILD_TYPE": "Release",
+                "MERLIN_CUDA": "OFF",
+                "MERLIN_TEST": "OFF"
             },
             "condition": {
                 "type": "equals",
@@ -20,17 +22,65 @@
             }
         },
         {
+            "name": "windows-cuda",
+            "inherits": "windows",
+            "cacheVariables": {
+                "MERLIN_CUDA": "ON"
+            }
+        },
+        {
+            "name": "windows-dev",
+            "inherits": "windows",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "MERLIN_TEST": "ON"
+            }
+        },
+        {
+            "name": "windows-cuda-dev",
+            "inherits": "windows-cuda",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "MERLIN_TEST": "ON"
+            }
+        },
+        {
             "name": "linux",
             "generator": "Unix Makefiles",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_CXX_COMPILER": "g++",
-                "CMAKE_BUILD_TYPE": "Release"
+                "CMAKE_BUILD_TYPE": "Release",
+                "MERLIN_CUDA": "OFF",
+                "MERLIN_TEST": "OFF"
             },
             "condition": {
                 "type": "equals",
                 "lhs": "${hostSystemName}",
                 "rhs": "Linux"
+            }
+        },
+        {
+            "name": "linux-cuda",
+            "inherits": "linux",
+            "cacheVariables": {
+                "MERLIN_CUDA": "ON"
+            }
+        },
+        {
+            "name": "linux-dev",
+            "inherits": "linux",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "MERLIN_TEST": "ON"
+            }
+        },
+        {
+            "name": "linux-cuda-dev",
+            "inherits": "linux-cuda",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "MERLIN_TEST": "ON"
             }
         }
     ]

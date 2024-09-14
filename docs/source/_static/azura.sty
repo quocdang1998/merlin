@@ -13,15 +13,14 @@
 \newcolumntype{M}[1]{>{\centering   \arraybackslash}m{#1}}
 
 % Font
-\usepackage{lmodern}
-\renewcommand{\familydefault}{\sfdefault}
+\usepackage[default, oldstyle, scale=.95]{opensans}
 \usepackage{fontspec}
 \setmonofont[Extension = .ttf, Scale = 0.8, Path = ./, UprightFont = *, BoldFont = *-SemiBold, ItalicFont = *]{FiraCode} % monofont
 \newcommand{\firabold}{%
     \fontspec[Extension = .ttf, Scale = 0.8, Path = ./, UprightFont = *, BoldFont = *]{FiraCode-SemiBold}%
 }
-\newcommand{\chunkfive}{%
-    \fontspec[Extension = .ttf, Path = ./, UprightFont = *, BoldFont = *, ItalicFont = *]{ChunkFive}%
+\newcommand{\lilitaone}{%
+    \fontspec[Extension = .ttf, Path = ./, UprightFont = *, BoldFont = *, ItalicFont = *]{LilitaOne}%
 }
 \newcommand{\spartan}{%
     \fontspec[Extension = .otf, Path = ./, UprightFont = *, BoldFont = *, ItalicFont = *]{LeagueSpartan}%
@@ -157,7 +156,7 @@
         };
         \node [anchor = north, inner sep = 0, outer sep = 0, text width = 0.8\paperwidth, align = center] at ($(current page.north) + (0, -0.25\paperheight)$) {%
             \color{white}%
-            {\fontsize{3em}{3.6em}\selectfont\chunkfive\MakeUppercase{\@title}}\\
+            {\fontsize{3em}{3.6em}\selectfont\lilitaone\MakeUppercase{\@title}}\\
             \vspace{\baselineskip}%
             {\normalsize\selectfont\spartan\MakeUppercase{\py@release \releaseinfo}}\\
             \vspace{4\baselineskip}%

@@ -9,7 +9,7 @@
 #include <cuda.h>  // ::CUcontext, ::cuCtxGetCurrent, ::cuCtxPopCurrent, ::cuCtxPushCurrent, ::cuDeviceGetName
 
 #include "merlin/env.hpp"     // merlin::Environment
-#include "merlin/logger.hpp"  // merlin::DebugLog, merlin::Warning, merlin::Fatal, merlin::cuda_runtime_error
+#include "merlin/logger.hpp"  // merlin::cuda_runtime_error, merlin::DebugLog, merlin::Fatal, merlin::Warning
 
 namespace merlin {
 
@@ -241,15 +241,15 @@ std::uintptr_t cuda::Device::push_context(void) const {
 }
 
 // Pop the current context out of the context stack
-void cuda::Device::pop_context(std::uintptr_t previous_context) {
+void cuda::Device::pop_context(std::uintptr_t previous_context) noexcept {
     if (previous_context != 0) {
         ::CUcontext ctx;
         ::cudaError_t err_ = static_cast<::cudaError_t>(::cuCtxPopCurrent(&ctx));
         if (err_ != 0) {
-            Fatal<cuda_runtime_error>("cuCtxPopCurrent failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+            Warning("cuCtxPopCurrent failed with message \"%s\".\n", ::cudaGetErrorName(err_));
         }
         if (previous_context != reinterpret_cast<std::uintptr_t>(ctx)) {
-            Fatal<std::invalid_argument>("Wrong context provided.\n");
+            Warning("Wrong context provided.\n");
         }
     }
     Environment::mutex.unlock();
