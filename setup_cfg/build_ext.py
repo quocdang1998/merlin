@@ -103,7 +103,6 @@ def cuda_device_linker(self: _du_build_ext, ext: Extension, objects: List[str]):
     # get generic options for device linker step
     arch_args = [cu_arch_template.substitute(arch=str(arch)) for arch in ext.cuda_arch]
     dlink_option = [
-        f"-ccbin={os.path.dirname(self.compiler.cc)}",
         "-forward-unknown-to-host-compiler",
         "-Wno-deprecated-gpu-targets",
         "-shared",
@@ -111,6 +110,8 @@ def cuda_device_linker(self: _du_build_ext, ext: Extension, objects: List[str]):
         "-dlto",
     ]
     dlink_option += arch_args
+    if sys.platform == "win32":
+        dlink_option += [f"-ccbin={os.path.dirname(self.compiler.cc)}"]
     # get list of libraries for linking
     lib_dlink = ext.libs_device_linker + [ext.lib_cudart, ext.lib_cudadevrt, ext.lib_cudadriver]
     # platform specific options
@@ -217,6 +218,8 @@ class CustomBuildExt(_du_build_ext):
         if ext.extra_objects:
             objects.extend(ext.extra_objects)
         extra_args = ext.extra_link_args or []
+        if not self.debug:
+            extra_args += ["-g0"]
         language = ext.language or self.compiler.detect_language(sources)
         name = ext.name.split(".")
         if name[-1] == "__init__":
