@@ -13,36 +13,13 @@
                                        // merlin::array::copy, merlin::array::fill, merlin::array::print
 #include "merlin/array/parcel.hpp"     // merlin::array::Parcel
 #include "merlin/array/stock.hpp"      // merlin::array::Stock
-#include "merlin/logger.hpp"           // merlin::Fatal
+#include "merlin/cuda/device.hpp"      // merlin::cuda::CtxGuard
+#include "merlin/logger.hpp"           // merlin::Fatal, merlin::cuda_runtime_error
+#include "merlin/memory.hpp"           // merlin::mem_alloc_host, merlin::mem_free_host, merlin::mem_register_host,
+                                       // merlin::mem_unregister_host, merlin::memcpy_gpu_to_cpu
 #include "merlin/utils.hpp"            // merlin::inner_prod
 
 namespace merlin {
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Memory lock (allocated array always stays in the RAM)
-// ---------------------------------------------------------------------------------------------------------------------
-
-#ifndef __MERLIN_CUDA__
-
-// Allocate non pageable memory
-double * array::allocate_memory(std::uint64_t size) {
-    double * result = new double[size];
-    if (result == nullptr) {
-        Fatal<std::runtime_error>("Cannot allocate memory.\n");
-    }
-    return result;
-}
-
-// Pin memory to RAM
-void array::cuda_pin_memory(double * ptr, std::uint64_t mem_size) {}
-
-// Unpin memory
-void array::cuda_unpin_memory(double * ptr) {}
-
-// Free non pageable memory
-void array::free_memory(double * ptr) { delete[] ptr; }
-
-#endif  // __MERLIN_CUDA__
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Read data
@@ -70,10 +47,10 @@ array::Array::Array(double * data, const UIntVec & shape, const UIntVec & stride
 array::NdData(data, shape, strides) {
     // copy or assign data
     this->release = copy;
-    this->is_pinned = pin_memory;
     if (copy) {
         // allocate a new tensor
-        this->data_ = array::allocate_memory(this->size());
+        this->data_ = reinterpret_cast<double *>(mem_alloc_host(this->size() * sizeof(double)));
+        this->is_pinned = false;
         // reform the stride tensor (force into C shape)
         this->strides_ = array::contiguous_strides(this->shape_, this->ndim_, sizeof(double));
         // copy data from old tensor to new tensor (optimized with memcpy)
@@ -86,7 +63,7 @@ array::NdData(data, shape, strides) {
         // pin memory
         std::uint64_t last_elem = array::get_leap(this->size_ - 1, this->shape_, this->strides_, this->ndim_);
         if (pin_memory) {
-            array::cuda_pin_memory(this->data_, last_elem + sizeof(double));
+            this->is_pinned = mem_register_host(reinterpret_cast<void *>(this->data_), last_elem + sizeof(double));
         }
     }
 }
@@ -94,7 +71,7 @@ array::NdData(data, shape, strides) {
 // Constructor from shape vector
 array::Array::Array(const Index & shape) : array::NdData(shape) {
     // initialize data
-    this->data_ = array::allocate_memory(this->size());
+    this->data_ = reinterpret_cast<double *>(mem_alloc_host(this->size() * sizeof(double)));
     // other meta data
     this->release = true;
 }
@@ -105,7 +82,7 @@ array::Array::Array(const array::Array & src) : array::NdData(src) {
     this->strides_ = array::contiguous_strides(this->shape_, this->ndim_, sizeof(double));
     this->release = true;
     // copy data
-    this->data_ = array::allocate_memory(this->size());
+    this->data_ = reinterpret_cast<double *>(mem_alloc_host(this->size() * sizeof(double)));
     array::copy(this, &src, std::memcpy);
 }
 
@@ -116,11 +93,11 @@ array::Array & array::Array::operator=(const array::Array & src) {
     this->strides_ = array::contiguous_strides(this->shape_, this->ndim_, sizeof(double));
     // free current data
     if (this->release) {
-        array::free_memory(this->data_);
+        mem_free_host(reinterpret_cast<void *>(this->data_));
     }
     this->release = true;
     // copy data
-    this->data_ = array::allocate_memory(this->size());
+    this->data_ = reinterpret_cast<double *>(mem_alloc_host(this->size() * sizeof(double)));
     array::copy(this, &src, std::memcpy);
     return *this;
 }
@@ -138,7 +115,7 @@ array::Array::Array(array::Array && src) : array::NdData(std::move(src)) {
 array::Array & array::Array::operator=(array::Array && src) {
     // disable release of the source and free current data
     if (this->release) {
-        array::free_memory(this->data_);
+        mem_free_host(reinterpret_cast<void *>(this->data_));
     }
     // copy meta data
     this->array::NdData::operator=(std::forward<array::Array>(src));
@@ -212,11 +189,17 @@ void array::Array::fill(double value) { array::fill(this, value, std::memcpy); }
 std::array<double, 2> array::Array::get_mean_variance(void) const { return array::stat(this, std::memcpy); }
 
 // Copy data from GPU array
-#ifndef __MERLIN_CUDA__
 void array::Array::clone_data_from_gpu(const array::Parcel & src, const cuda::Stream & stream) {
-    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to access Parcel feature.\n");
+    // check GPU
+    if (src.get_gpu() != stream.get_gpu()) {
+        Fatal<cuda_runtime_error>("GPU of the stream and the source data is not the same.\n");
+    }
+    // copy data from GPU to CPU
+    cuda::CtxGuard guard(src.get_gpu());
+    auto copy_func = std::bind(memcpy_gpu_to_cpu, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
+                               stream.get_stream_ptr());
+    array::copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), copy_func);
 }
-#endif  // __MERLIN_CUDA__
 
 // Export data to a file
 void array::Array::extract_data_from_file(const array::Stock & src) {
@@ -234,10 +217,10 @@ std::string array::Array::str(bool first_call) const { return array::print(this,
 array::Array::~Array(void) {
     if (this->data_ != nullptr) {
         if (this->is_pinned) {
-            array::cuda_unpin_memory(this->data_);
+            mem_unregister_host(reinterpret_cast<void *>(this->data_));
         }
         if (this->release) {
-            array::free_memory(this->data_);
+            mem_free_host(reinterpret_cast<void *>(this->data_));
         }
     }
 }

@@ -1,10 +1,10 @@
 // Copyright 2024 quocdang1998
 #include "merlin/regpl/regressor.hpp"
 
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/cuda/device.hpp"   // merlin::cuda::CtxGuard
-#include "merlin/cuda/memory.hpp"   // merlin::cuda::Memory
-#include "merlin/logger.hpp"        // merlin::Fatal
+#include "merlin/array/parcel.hpp"       // merlin::array::Parcel
+#include "merlin/cuda/copy_helpers.hpp"  // merlin::cuda::Dispatcher
+#include "merlin/cuda/device.hpp"        // merlin::cuda::CtxGuard
+#include "merlin/logger.hpp"             // merlin::Fatal
 
 namespace merlin {
 
@@ -35,7 +35,7 @@ void regpl::Regressor::evaluate(const array::Parcel & points, DoubleVec & result
     ::cudaStream_t cuda_stream = reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr());
     double * result_gpu;
     ::cudaMallocAsync(&result_gpu, num_points * sizeof(double), cuda_stream);
-    cuda::Memory mem(stream.get_stream_ptr(), this->poly_);
+    cuda::Dispatcher mem(stream.get_stream_ptr(), this->poly_);
     regpl::eval_by_gpu(mem.get<0>(), points.data(), result_gpu, num_points, n_threads, this->poly_.sharedmem_size(),
                        stream);
     ::cudaMemcpyAsync(result.data(), result_gpu, num_points * sizeof(double), ::cudaMemcpyDeviceToHost, cuda_stream);

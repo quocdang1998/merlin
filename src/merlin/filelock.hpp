@@ -17,16 +17,16 @@ namespace merlin {
  *
  *  Two types of locks are provided:
  *  - **shared** : multiple threads/processes with shared lock can access the file at the same time, but those with
- *  exclusive lock must wait until all shared locks are released. **This type of lock is used for processes reading
- *  the target file**.
+ *    exclusive lock must wait until all shared locks are released. **This type of lock is used for processes reading
+ *    the target file**.
  *  - **exclusive** : only one thread/process can access the file at a time, and all other tasks must wait until the
- *  lock is released. **Use this type of lock for processes writing the target file**.
+ *    lock is released. **Use this type of lock for processes writing the target file**.
  *  @note Locking mechanism depends on operating system:
- *   - On **Windows**, the lock is bound to read/write permission. Shared lock only blocks write permission, but
- *  exclusive lock blocks both. If another file stream ``std::FILE`` associated to the locked file is created,
- *  read/write operations when the lock is acquired will successfully return, but the operation will have no effect.
- *   - On **Linux**, the lock is not bound to read/write permission. Any other thread/process can read/write the file
- *  normally even when the file is locked by another process.
+ *  - On **Windows**, the lock is bound to read/write permission. Shared lock only blocks write permission, but
+ *    exclusive lock blocks both. If another file stream ``std::FILE`` associated to the locked file is created,
+ *    read/write operations when the lock is acquired will successfully return, but the operation will have no effect.
+ *  - On **Linux**, the lock is not bound to read/write permission. Any other thread/process can read/write the file
+ *    normally even when the file is locked by another process.
  */
 class FileLock {
   public:

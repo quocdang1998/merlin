@@ -6,6 +6,8 @@
 #include <sstream>      // std::ostringstream
 #include <type_traits>  // std::is_arithmetic_v, std::is_constructible_v, std::is_copy_assignable_v
 
+#include "merlin/memory.hpp"  // merlin::memcpy_cpu_to_gpu, merlin::memcpy_gpu_to_cpu
+
 namespace merlin {
 
 // Constructor from initializer list
@@ -119,12 +121,12 @@ __cuhostdev__ void Vector<T>::assign(T * ptr_first, T * ptr_last) {
 template <typename T>
 void * Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr, std::uintptr_t stream_ptr) const {
     // copy data
-    vector_cpy_to_gpu(data_ptr, this->data_, this->size_ * sizeof(T), stream_ptr);
+    memcpy_cpu_to_gpu(data_ptr, this->data_, this->size_ * sizeof(T), stream_ptr);
     // initialize an object containing metadata and copy it to GPU
     Vector<T> copy_on_gpu;
     copy_on_gpu.data_ = reinterpret_cast<T *>(data_ptr);
     copy_on_gpu.size_ = this->size_;
-    vector_cpy_to_gpu(gpu_ptr, &copy_on_gpu, sizeof(Vector<T>), stream_ptr);
+    memcpy_cpu_to_gpu(gpu_ptr, &copy_on_gpu, sizeof(Vector<T>), stream_ptr);
     // nullify data on copy to avoid deallocate memory on CPU
     copy_on_gpu.data_ = nullptr;
     std::uintptr_t ptr_end = reinterpret_cast<std::uintptr_t>(data_ptr) + this->size_ * sizeof(T);
@@ -135,7 +137,7 @@ void * Vector<T>::copy_to_gpu(Vector<T> * gpu_ptr, void * data_ptr, std::uintptr
 template <typename T>
 void * Vector<T>::copy_from_gpu(T * gpu_ptr, std::uintptr_t stream_ptr) {
     // copy data from GPU
-    vector_cpy_from_gpu(this->data_, gpu_ptr, this->size_ * sizeof(T), stream_ptr);
+    memcpy_gpu_to_cpu(this->data_, gpu_ptr, this->size_ * sizeof(T), stream_ptr);
     return reinterpret_cast<void *>(gpu_ptr + this->size_);
 }
 

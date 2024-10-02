@@ -64,7 +64,7 @@ void candy::Trainer::set_data(const std::string & name, const array::NdData & da
     }
 }
 
-// Query if the object data is instatialized on CPU or on GPU
+// Query if the object data is instantiated on CPU or on GPU
 bool candy::Trainer::on_gpu(void) {
     if (this->p_core_ == nullptr) {
         Fatal<std::runtime_error>("Trainer not initialized.\n");

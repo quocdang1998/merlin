@@ -56,6 +56,7 @@ list(
     linalg/matrix.cpp
     linalg/qrp_decomp.cpp
     linalg/tri_solve.cpp
+    memory.cpp
     permutation.cpp
     regpl/polynomial.cpp
     regpl/vandermonde.cpp
@@ -63,26 +64,19 @@ list(
     slice.cpp
     splint/interpolator.cpp
     splint/tools.cpp
-    utils.cpp
-    vector.cpp)
+    utils.cpp)
 list(
     APPEND
     MERLIN_SRC_CU
-    array/array.cu
-    array/parcel.cu
-    candy/model.cu
-    candy/optimizer.cu
     candy/train/gpu_trainer.cu
     cuda/device.cu
     cuda/event.cu
     cuda/graph.cu
     cuda/stream.cu
-    grid/cartesian_grid.cu
-    grid/regular_grid.cu
+    memory.cu
     regpl/polynomial.cu
     regpl/regressor.cu
-    splint/interpolator.cu
-    vector.cu)
+    splint/interpolator.cu)
 list(APPEND MERLIN_SRC_GLB candy/train/gpu_trainer.glb cuda/device.glb splint/tools.glb regpl/regressor.glb)
 list(
     APPEND

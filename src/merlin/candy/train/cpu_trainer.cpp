@@ -17,7 +17,7 @@
 #include "merlin/candy/model.hpp"      // merlin::candy::Model
 #include "merlin/candy/optimizer.hpp"  // merlin::candy::Optimizer
 #include "merlin/logger.hpp"           // merlin::Fatal
-#include "merlin/utils.hpp"            // merlin::is_normal, merlin::contiguous_to_ndim_idx
+#include "merlin/utils.hpp"            // merlin::is_finite, merlin::contiguous_to_ndim_idx
 
 namespace merlin {
 
@@ -63,7 +63,7 @@ void candy::train::run_dry_run(std::future<void> && synch, const candy::train::I
                 gradient.calc_by_cpu(model, data, index_mem);
                 optimizer.update_cpu(model, gradient, start + iter);
                 candy::rmse_cpu(&model, &data, error[start + iter], normal_count, index_mem);
-                bool break_condition = !is_normal(error[start + iter]);
+                bool break_condition = !is_finite(error[start + iter]);
                 if (break_condition) {
                     break;
                 }
@@ -76,7 +76,7 @@ void candy::train::run_dry_run(std::future<void> && synch, const candy::train::I
                 gradient.calc_by_cpu(model, data, index_mem);
                 optimizer.update_cpu(model, gradient, start + iter);
                 candy::rmse_cpu(&model, &data, error[start + iter], normal_count, index_mem);
-                bool break_condition = !is_normal(error[start + iter]) ||
+                bool break_condition = !is_finite(error[start + iter]) ||
                                        (error[start + iter] >= strict_max_ratio * error[start + iter - 1]);
                 if (break_condition) {
                     break;
@@ -90,7 +90,7 @@ void candy::train::run_dry_run(std::future<void> && synch, const candy::train::I
                 gradient.calc_by_cpu(model, data, index_mem);
                 optimizer.update_cpu(model, gradient, start + iter);
                 candy::rmse_cpu(&model, &data, error[start + iter], normal_count, index_mem);
-                bool break_condition = !is_normal(error[start + iter]) ||
+                bool break_condition = !is_finite(error[start + iter]) ||
                                        (error[start + iter] >= loose_max_ratio * error[start + iter - 1]);
                 if (break_condition) {
                     break;
@@ -152,7 +152,7 @@ void candy::train::run_update_until(std::future<void> && synch, const candy::tra
                 candy::rmse_cpu(&model, &data, posteriori_error, normal_count, index_mem);
                 double rel_err = std::abs(priori_error - posteriori_error) / posteriori_error;
                 // decide whether to continue
-                go_on = (is_normal(posteriori_error)) ? (rel_err > threshold) : false;
+                go_on = (is_finite(posteriori_error)) ? (rel_err > threshold) : false;
                 step += rep;
             } while (go_on);
             // save model to file
@@ -273,7 +273,7 @@ candy::train::CpuTrainer::CpuTrainer(std::uint64_t capacity, Synchronizer & sync
 candy::train::TrainerBase(capacity), p_data_(capacity, nullptr) {
     // check if the synchronizer is on CPU
     if (const cuda::Stream * stream_ptr = std::get_if<cuda::Stream>(&(synch.core))) {
-        Fatal<std::runtime_error>("The synchronizer is allocated on GPU.");
+        Fatal<std::runtime_error>("The synchronizer is allocated on GPU.\n");
     }
     this->p_synch_ = &synch;
     // allocate memory
@@ -325,7 +325,7 @@ void candy::train::CpuTrainer::set_data(const std::string & name, const array::A
 candy::Model & candy::train::CpuTrainer::get_model(const std::string & name) {
     const std::pair<std::uint64_t, std::array<bool, 3>> & status = this->map_.at(name);
     if (!status.second[0]) {
-        Fatal<std::runtime_error>("No model assigned to key \"%s\"", name.c_str());
+        Fatal<std::runtime_error>("No model assigned to key \"%s\".\n", name.c_str());
     }
     return this->p_model_[status.first];
 }
@@ -334,7 +334,7 @@ candy::Model & candy::train::CpuTrainer::get_model(const std::string & name) {
 candy::Optimizer & candy::train::CpuTrainer::get_optmz(const std::string & name) {
     const std::pair<std::uint64_t, std::array<bool, 3>> & status = this->map_.at(name);
     if (!status.second[1]) {
-        Fatal<std::runtime_error>("No optimizer assigned to key \"%s\"", name.c_str());
+        Fatal<std::runtime_error>("No optimizer assigned to key \"%s\".\n", name.c_str());
     }
     return this->p_optmz_[status.first];
 }

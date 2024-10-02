@@ -2,8 +2,8 @@
 
 #include "merlin/array/array.hpp"
 #include "merlin/array/parcel.hpp"
+#include "merlin/cuda/copy_helpers.hpp"
 #include "merlin/cuda/device.hpp"
-#include "merlin/cuda/memory.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
 #include "merlin/vector.hpp"
@@ -17,17 +17,20 @@ __global__ void print_element(array::Parcel * parcel_ptr) {
 }
 
 __global__ void print_element_from_shared_memory(array::Parcel * parcel_ptr) {
-    extern __shared__ array::Parcel share_ptr[];
-    auto [_, __] = cuda::copy_objects(share_ptr, *parcel_ptr);
-    CudaOut("Value from shared memory: %.1f\n", share_ptr[0][blockIdx.x*blockDim.x+threadIdx.x]);
+    extern __shared__ char share_ptr[];
+    std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
+    int i = 1;
+    auto [end_ptr, p_parcel_shr, p_i] = cuda::copy_objects(share_ptr, thread_idx, block_size, *parcel_ptr, i);
+    CudaOut("Value from shared memory: %.1f\n", (*p_parcel_shr)[thread_idx]);
     __shared__ double sum;
-    if (blockIdx.x*blockDim.x+threadIdx.x == 0) {
+    if (thread_idx == 0) {
         sum = 0;
     }
     __syncthreads();
-    ::atomicAdd_block(&sum, share_ptr[0][blockIdx.x*blockDim.x+threadIdx.x]);
-    if (blockIdx.x*blockDim.x+threadIdx.x == 0) {
+    ::atomicAdd_block(&sum, (*p_parcel_shr)[thread_idx]);
+    if (thread_idx == 0) {
         CudaOut("Summed value: %.1f\n", sum);
+        CudaOut("Integer: %d\n", *p_i);
     }
     __syncthreads();
 }
@@ -44,14 +47,17 @@ int main(void) {
     array::Array A(A_data, dims, strides, false);
     Message("CPU Array: %s\n", A.str().c_str());
 
-    // copy data to GPU and print each element of the tensor
+    // copy data to GPU
     cuda::Stream s(cuda::StreamSetting::Default);
     array::Parcel B(A.shape(), s);
     B.transfer_data_to_gpu(A, s);
-    cuda::Memory mem(s.get_stream_ptr(), B);
+    Message("GPU Array: %s\n", B.str().c_str());
+
+    // print each element of the tensor
+    cuda::Dispatcher mem(s.get_stream_ptr(), B);
     array::Parcel * B_gpu = mem.get<0>();
     print_element<<<1, B.size()>>>(B_gpu);
-    print_element_from_shared_memory<<<1, B.size(), B.sharedmem_size()>>>(B_gpu);
+    print_element_from_shared_memory<<<1, B.size(), B.sharedmem_size() + sizeof(int)>>>(B_gpu);
     A.clone_data_from_gpu(B);
     cuda::Device::synchronize();
 }

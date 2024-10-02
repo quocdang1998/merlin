@@ -11,6 +11,7 @@
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/logger.hpp"       // merlin::Fatal, merlin::Warning, merlin::cuda_compile_error
+#include "merlin/memory.hpp"       // merlin::memcpy_cpu_to_gpu
 #include "merlin/utils.hpp"        // merlin::ptr_to_subsequence, merlin::prod_elements
 
 namespace merlin {
@@ -132,16 +133,25 @@ grid::CartesianGrid & grid::CartesianGrid::operator=(const grid::CartesianGrid &
     return *this;
 }
 
-#ifndef __MERLIN_CUDA__
-
-// Copy data to a pre-allocated memory
 void * grid::CartesianGrid::copy_to_gpu(grid::CartesianGrid * gpu_ptr, void * grid_data_ptr,
                                         std::uintptr_t stream_ptr) const {
-    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
-    return nullptr;
+    // copy grid node vector to GPU
+    memcpy_cpu_to_gpu(grid_data_ptr, this->grid_nodes_.data(), this->num_nodes() * sizeof(double), stream_ptr);
+    // initialize a clone and calculate the pointer to subsequence node
+    grid::CartesianGrid cloned_obj;
+    cloned_obj.grid_shape_ = this->grid_shape_;
+    cloned_obj.ndim_ = this->ndim_;
+    cloned_obj.size_ = this->size_;
+    double * p_gpu_grid_nodes = reinterpret_cast<double *>(grid_data_ptr);
+    cloned_obj.grid_nodes_.data() = p_gpu_grid_nodes;
+    cloned_obj.grid_nodes_.size() = this->num_nodes();
+    cloned_obj.grid_vectors_.fill(nullptr);
+    ptr_to_subsequence(p_gpu_grid_nodes, this->grid_shape_.data(), this->ndim_, cloned_obj.grid_vectors_.data());
+    memcpy_cpu_to_gpu(gpu_ptr, &cloned_obj, sizeof(grid::CartesianGrid), stream_ptr);
+    // nullify pointer of temporary object to avoid de-allocate GPU pointer
+    cloned_obj.grid_nodes_.data() = nullptr;
+    return p_gpu_grid_nodes + this->num_nodes();
 }
-
-#endif  // __MERLIN_CUDA__
 
 // Get all points in the grid
 array::Array grid::CartesianGrid::get_points(void) const {

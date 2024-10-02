@@ -8,7 +8,6 @@
 #include <string>            // std::string
 
 #include "merlin/config.hpp"   // __cuhostdev__, __cudevice__
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
 
 namespace merlin {
 
@@ -23,10 +22,6 @@ template <typename T>
 __cuhostdev__ constexpr bool is_same_size(const Vector<T> & vec_1, const Vector<T> & vec_2) noexcept;
 template <typename T>
 __cuhostdev__ bool is_zeros(const Vector<T> & vec) noexcept;
-
-// CUDA copy functions
-MERLIN_EXPORTS void vector_cpy_to_gpu(void * dest, const void * src, std::uint64_t size, std::uintptr_t stream_ptr);
-MERLIN_EXPORTS void vector_cpy_from_gpu(void * dest, const void * src, std::uint64_t size, std::uintptr_t stream_ptr);
 
 /** @brief 1D non-resizable dynamic array.
  *  @details Similar to ``std::vector``, but transportable to GPU global memory and shared memory.

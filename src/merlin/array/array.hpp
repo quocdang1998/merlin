@@ -13,27 +13,6 @@
 
 namespace merlin {
 
-// Allocate non-pageable memory
-// ----------------------------
-
-namespace array {
-
-/** @brief Allocate non pageable memory.
- *  @param size Number of element in the allocated array.
- */
-double * allocate_memory(std::uint64_t size);
-
-/** @brief Pin memory to RAM.*/
-void cuda_pin_memory(double * ptr, std::uint64_t mem_size);
-
-/** @brief Unpin memory.*/
-void cuda_unpin_memory(double * ptr);
-
-/** @brief Free array allocated in non pageable memory.*/
-void free_memory(double * ptr);
-
-}  // namespace array
-
 // Array class
 // -----------
 
@@ -103,11 +82,17 @@ class array::Array : public array::NdData {
     MERLIN_EXPORTS void fill(double value);
     /** @brief Calculate mean and variance of all non-zero and finite elements.*/
     MERLIN_EXPORTS std::array<double, 2> get_mean_variance(void) const;
-    /** @brief Create a sub-array.*/
-    array::NdData * sub_array(const SliceArray & slices) const {
+    /** @brief Create a polymorphic sub-array.*/
+    array::NdData * get_p_sub_array(const SliceArray & slices) const {
         array::Array * p_result = new array::Array();
         this->create_sub_array(*p_result, slices);
         return p_result;
+    }
+    /** @brief Create sub-array with the same type.*/
+    array::Array get_sub_array(const SliceArray & slices) const {
+        array::Array sub_array;
+        this->create_sub_array(sub_array, slices);
+        return sub_array;
     }
     /// @}
 

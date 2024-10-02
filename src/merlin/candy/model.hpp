@@ -147,7 +147,10 @@ class candy::Model {
      */
     __cudevice__ void * copy_by_thread(candy::Model * dest_ptr, void * parameters_data_ptr) const;
 #endif  // __NVCC__
-    /** @brief Copy data from GPU back to CPU.*/
+    /** @brief Copy data from GPU back to CPU.
+     *  @details Copy data from a pointer to parameter data on GPU. The behavior is undefined if invalid pointer is
+     *  provided.
+     */
     MERLIN_EXPORTS void * copy_from_gpu(double * data_from_gpu, std::uintptr_t stream_ptr = 0) noexcept;
     /// @}
 

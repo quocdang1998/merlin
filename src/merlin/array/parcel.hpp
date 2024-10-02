@@ -39,7 +39,7 @@ class array::Parcel : public array::NdData {
     /// @name Get members
     /// @{
     /** @brief Get constant reference to ID of device containing data of a constant instance.*/
-    __cuhostdev__ constexpr const cuda::Device & device(void) const noexcept { return this->device_; }
+    __cuhostdev__ constexpr const cuda::Device & get_gpu(void) const noexcept { return this->device_; }
     /// @}
 
     /// @name Atributes
@@ -82,12 +82,19 @@ class array::Parcel : public array::NdData {
     MERLIN_EXPORTS void fill(double value);
     /** @brief Calculate mean and variance of all non-zero and finite elements.*/
     MERLIN_EXPORTS std::array<double, 2> get_mean_variance(void) const;
-    /** @brief Create a sub-array.*/
-    array::NdData * sub_array(const SliceArray & slices) const {
+    /** @brief Create a polymorphic sub-array.*/
+    array::NdData * get_p_sub_array(const SliceArray & slices) const {
         array::Parcel * p_result = new array::Parcel();
         this->create_sub_array(*p_result, slices);
         p_result->device_ = this->device_;
         return p_result;
+    }
+    /** @brief Create sub-array with the same type.*/
+    array::Parcel get_sub_array(const SliceArray & slices) const {
+        array::Parcel sub_array;
+        this->create_sub_array(sub_array, slices);
+        sub_array.device_ = this->device_;
+        return sub_array;
     }
     /// @}
 
@@ -139,10 +146,10 @@ class array::Parcel : public array::NdData {
 
     /// @name Destructor
     /// @{
-    /** @brief Free current data hold by the object.
+    /** @brief Deallocate the GPU memory associated to the object.
      *  @warning This function will lock the mutex.
      */
-    MERLIN_EXPORTS void free_current_data(const cuda::Stream & stream = cuda::Stream());
+    MERLIN_EXPORTS void free_current_data(const cuda::Stream & stream = cuda::Stream()) noexcept;
     /** @brief Destructor.*/
     MERLIN_EXPORTS ~Parcel(void);
     /// @}

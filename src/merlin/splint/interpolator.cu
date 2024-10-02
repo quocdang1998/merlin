@@ -3,11 +3,11 @@
 
 #include <utility>  // std::move
 
-#include "merlin/array/parcel.hpp"  // merlin::array::Parcel
-#include "merlin/cuda/memory.hpp"   // merlin::cuda::Memory
-#include "merlin/env.hpp"           // merlin::Environment
-#include "merlin/logger.hpp"        // merlin::Fatal
-#include "merlin/splint/tools.hpp"  // merlin::splint::construct_coeff_gpu
+#include "merlin/array/parcel.hpp"       // merlin::array::Parcel
+#include "merlin/cuda/copy_helpers.hpp"  // merlin::cuda::Dispatcher
+#include "merlin/env.hpp"                // merlin::Environment
+#include "merlin/logger.hpp"             // merlin::Fatal
+#include "merlin/splint/tools.hpp"       // merlin::splint::construct_coeff_gpu
 
 namespace merlin {
 
@@ -24,7 +24,7 @@ void splint::create_intpl_gpuptr(const grid::CartesianGrid & cpu_grid, const spl
     for (std::uint64_t i = 0; i < cpu_grid.ndim(); i++) {
         converted_cpu_methods[i] = static_cast<unsigned int>(cpu_methods[i]);
     }
-    cuda::Memory gpu_mem(stream_ptr, cpu_grid, converted_cpu_methods);
+    cuda::Dispatcher gpu_mem(stream_ptr, cpu_grid, converted_cpu_methods);
     gpu_pgrid = gpu_mem.get<0>();
     gpu_pmethods = gpu_mem.get<1>();
     gpu_mem.disown();

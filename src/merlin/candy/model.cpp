@@ -13,6 +13,7 @@
 #include "merlin/env.hpp"          // merlin::Environment
 #include "merlin/filelock.hpp"     // merlin::FileLock
 #include "merlin/logger.hpp"       // merlin::Fatal
+#include "merlin/memory.hpp"       // merlin::memcpy_cpu_to_gpu, merlin::memcpy_gpu_to_cpu
 #include "merlin/slice.hpp"        // merlin::SliceArray
 #include "merlin/utils.hpp"        // merlin::ptr_to_subsequence
 
@@ -104,8 +105,8 @@ void candy::Model::initialize(const array::Array & train_data, candy::Randomizer
         for (std::uint64_t i_division = 0; i_division < num_division; i_division++) {
             // calculate mean value for each hyper-slice
             slice_division[i_dim] = Slice(i_division, i_division + 1, 1);
-            std::unique_ptr<array::NdData> p_subset_data(train_data.sub_array(slice_division));
-            auto [mean, variance] = p_subset_data->get_mean_variance();
+            array::Array sub_data = train_data.get_sub_array(slice_division);
+            auto [mean, variance] = sub_data.get_mean_variance();
             double stdeviation = std::sqrt(variance);
             // calculate mean <- (mean/rank)^(1/ndim) and stdeviation <- stdeviation * new_mean / old_mean
             if (mean != 0.0) {
@@ -123,21 +124,31 @@ void candy::Model::initialize(const array::Array & train_data, candy::Randomizer
     }
 }
 
-#ifndef __MERLIN_CUDA__
-
 // Copy data to a pre-allocated memory
-void * candy::Model::copy_to_gpu(candy::Model * gpu_ptr, void * grid_vector_data_ptr, std::uintptr_t stream_ptr) const {
-    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
-    return nullptr;
+void * candy::Model::copy_to_gpu(candy::Model * gpu_ptr, void * parameters_data_ptr, std::uintptr_t stream_ptr) const {
+    // copy parameter data to GPU
+    memcpy_cpu_to_gpu(parameters_data_ptr, this->parameters_.data(), this->num_params() * sizeof(double), stream_ptr);
+    // initialize cloned version on GPU
+    candy::Model cloned_obj;
+    double * parameters_data = reinterpret_cast<double *>(parameters_data_ptr);
+    cloned_obj.parameters_.data() = parameters_data;
+    cloned_obj.parameters_.size() = this->num_params();
+    cloned_obj.rshape_ = this->rshape_;
+    cloned_obj.ndim_ = this->ndim_;
+    cloned_obj.rank_ = this->rank_;
+    cloned_obj.param_vectors_.fill(nullptr);
+    ptr_to_subsequence(parameters_data, this->rshape_.data(), this->ndim_, cloned_obj.param_vectors_.data());
+    memcpy_cpu_to_gpu(gpu_ptr, &cloned_obj, sizeof(candy::Model), stream_ptr);
+    // nullify pointer of temporary object to avoid de-allocate GPU pointer
+    cloned_obj.parameters_.data() = nullptr;
+    return reinterpret_cast<void *>(parameters_data + this->num_params());
 }
 
 // Copy data from GPU to CPU
 void * candy::Model::copy_from_gpu(double * data_from_gpu, std::uintptr_t stream_ptr) noexcept {
-    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
-    return nullptr;
+    memcpy_gpu_to_cpu(this->parameters_.data(), data_from_gpu, this->num_params() * sizeof(double), stream_ptr);
+    return reinterpret_cast<void *>(data_from_gpu + this->num_params());
 }
-
-#endif  // __MERLIN_CUDA__
 
 // Check if a given data shape is compatible with the current model
 bool candy::Model::check_compatible_shape(const Index & shape) const noexcept {

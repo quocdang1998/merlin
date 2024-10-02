@@ -88,8 +88,8 @@ class array::Stock : public array::NdData {
     MERLIN_EXPORTS void fill(double value);
     /** @brief Calculate mean and variance of all non-zero and finite elements.*/
     MERLIN_EXPORTS std::array<double, 2> get_mean_variance(void) const;
-    /** @brief Create a sub-array.*/
-    array::NdData * sub_array(const SliceArray & slices) const {
+    /** @brief Create a polymorphic sub-array.*/
+    array::NdData * get_p_sub_array(const SliceArray & slices) const {
         array::Stock * p_result = new array::Stock();
         this->create_sub_array(*p_result, slices);
         p_result->file_ptr_ = this->file_ptr_;
@@ -97,8 +97,18 @@ class array::Stock : public array::NdData {
         p_result->offset_ = this->offset_;
         p_result->thread_safe_ = this->thread_safe_;
         p_result->filename_ = this->filename_;
-        p_result->release = false;
         return p_result;
+    }
+    /** @brief Create sub-array with the same type.*/
+    array::Stock get_sub_array(const SliceArray & slices) const {
+        array::Stock sub_array;
+        this->create_sub_array(sub_array, slices);
+        sub_array.file_ptr_ = this->file_ptr_;
+        sub_array.flock_ = this->flock_;
+        sub_array.offset_ = this->offset_;
+        sub_array.thread_safe_ = this->thread_safe_;
+        sub_array.filename_ = this->filename_;
+        return sub_array;
     }
     /// @}
 

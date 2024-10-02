@@ -98,8 +98,8 @@ class array::NdData {
     virtual void fill(double value) {}
     /** @brief Calculate mean and variance of all non-zero and finite elements.*/
     virtual std::array<double, 2> get_mean_variance(void) const { return {0.0, 0.0}; }
-    /** @brief Create a sub-array.*/
-    virtual array::NdData * sub_array(const SliceArray & slices) const {
+    /** @brief Create a polymorphic sub-array.*/
+    virtual array::NdData * get_p_sub_array(const SliceArray & slices) const {
         array::NdData * p_result = new array::NdData();
         this->create_sub_array(*p_result, slices);
         return p_result;

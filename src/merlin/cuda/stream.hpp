@@ -78,7 +78,9 @@ class cuda::Stream {
     /** @brief Get priority of the stream.*/
     MERLIN_EXPORTS int get_priority(void) const;
     /** @brief Get GPU on which the stream resides.*/
-    constexpr const cuda::Device & get_gpu(void) const noexcept { return this->device_; }
+    inline cuda::Device get_gpu(void) const noexcept {
+        return (this->stream_ == 0) ? cuda::Device::get_current_gpu() : this->device_;
+    }
     /// @}
 
     /// @name Query

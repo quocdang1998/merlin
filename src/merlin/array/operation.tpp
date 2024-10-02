@@ -168,7 +168,7 @@ std::string array::print(const NdArray * target, const std::string & nametype, b
         SliceArray slice_i;
         slice_i.fill(Slice());
         slice_i[0] = Slice({i});
-        NdArray * p_sliced_array = static_cast<NdArray *>(target->sub_array(slice_i));
+        NdArray * p_sliced_array = static_cast<NdArray *>(target->get_p_sub_array(slice_i));
         p_sliced_array->remove_dim(0);
         os << p_sliced_array->str(false);
         delete p_sliced_array;

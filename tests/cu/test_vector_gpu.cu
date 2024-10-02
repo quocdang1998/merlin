@@ -1,10 +1,10 @@
 #include <cinttypes>
 
+#include "merlin/cuda/copy_helpers.hpp"
 #include "merlin/cuda/device.hpp"
-#include "merlin/cuda/memory.hpp"
-#include "merlin/vector.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
+#include "merlin/vector.hpp"
 
 using namespace merlin;
 
@@ -39,7 +39,7 @@ int main(void) {
     Message("Values expected from all tests: {1, 2, 3}.\n");
 
     // allocate and copy UIntVec to GPU
-    cuda::Memory m(0, x);
+    cuda::Dispatcher m(0, x);
     UIntVec * ptr_x_gpu = m.get<0>();
 
     // print vector on GPU

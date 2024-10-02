@@ -49,10 +49,10 @@ ndim_(grid.ndim()), shared_mem_size_(grid.sharedmem_size()), p_synch_(&synchroni
     // initialize pointers
     if (this->on_gpu()) {
         // GPU
+        this->p_coeff_ = new array::Parcel(values.shape());
         cuda::Stream & stream = std::get<cuda::Stream>(this->p_synch_->core);
         cuda::CtxGuard guard(stream.get_gpu());
         splint::create_intpl_gpuptr(grid, p_method, this->p_grid_, this->p_method_, stream.get_stream_ptr());
-        this->p_coeff_ = new array::Parcel(values.shape());
         static_cast<array::Parcel *>(this->p_coeff_)->transfer_data_to_gpu(values, stream);
     } else {
         // CPU

@@ -1,5 +1,5 @@
+#include "merlin/cuda/copy_helpers.hpp"
 #include "merlin/cuda/device.hpp"
-#include "merlin/cuda/memory.hpp"
 #include "merlin/grid/regular_grid.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
@@ -31,7 +31,7 @@ int main(void) {
     Message("RegularGrid CPU: %s\n", grid.str().c_str());
 
     // copy to GPU
-    cuda::Memory mem(0, grid);
+    cuda::Dispatcher mem(0, grid);
     print_reg_grid<<<1, grid.size()>>>(mem.get<0>());
     cuda::Device::synchronize();
 }

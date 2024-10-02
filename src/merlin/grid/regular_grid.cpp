@@ -7,6 +7,7 @@
 
 #include "merlin/array/array.hpp"  // merlin::array::Array
 #include "merlin/logger.hpp"       // merlin::Fatal, merlin::cuda_compile_error
+#include "merlin/memory.hpp"       // merlin::memcpy_cpu_to_gpu
 
 namespace merlin {
 
@@ -95,16 +96,27 @@ Point grid::RegularGrid::pop_back(void) noexcept {
     return last_point;
 }
 
-#ifndef __MERLIN_CUDA__
-
 // Copy data to a pre-allocated memory
 void * grid::RegularGrid::copy_to_gpu(grid::RegularGrid * gpu_ptr, void * grid_data_ptr,
                                       std::uintptr_t stream_ptr) const {
-    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
-    return nullptr;
+    // initialize buffer to store data of the copy before cloning it to GPU
+    grid::RegularGrid cloned_obj;
+    // copy grid ndim and size
+    cloned_obj.ndim_ = this->ndim_;
+    cloned_obj.num_points_ = this->num_points_;
+    // assign pointer to GPU
+    double * p_grid_data = reinterpret_cast<double *>(grid_data_ptr);
+    cloned_obj.grid_data_.data() = p_grid_data;
+    cloned_obj.grid_data_.size() = this->num_points_ * this->ndim_;
+    // copy grid points to GPU
+    memcpy_cpu_to_gpu(grid_data_ptr, this->grid_data_.data(), cloned_obj.grid_data_.size() * sizeof(double),
+                      stream_ptr);
+    // copy temporary object to GPU
+    memcpy_cpu_to_gpu(gpu_ptr, &cloned_obj, sizeof(grid::RegularGrid), stream_ptr);
+    // nullify pointer of temporary object to avoid de-allocate GPU pointer
+    cloned_obj.grid_data_.data() = nullptr;
+    return p_grid_data + cloned_obj.grid_data_.size();
 }
-
-#endif  // __MERLIN_CUDA__
 
 // String representation
 std::string grid::RegularGrid::str(void) const {

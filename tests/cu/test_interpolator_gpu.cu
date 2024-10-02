@@ -2,12 +2,11 @@
 #include "merlin/array/parcel.hpp"
 #include "merlin/cuda/device.hpp"
 #include "merlin/cuda/stream.hpp"
-#include "merlin/cuda/memory.hpp"
 #include "merlin/grid/cartesian_grid.hpp"
+#include "merlin/logger.hpp"
 #include "merlin/splint/interpolator.hpp"
 #include "merlin/splint/tools.hpp"
 #include "merlin/synchronizer.hpp"
-#include "merlin/logger.hpp"
 #include "merlin/vector.hpp"
 
 using namespace merlin;

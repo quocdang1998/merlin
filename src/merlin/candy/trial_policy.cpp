@@ -15,7 +15,7 @@ namespace merlin {
 candy::TrialPolicy::TrialPolicy(std::uint64_t discarded, std::uint64_t strict, std::uint64_t loose) :
 discarded_(discarded), strict_(strict), loose_(loose) {
     if (discarded < 1) {
-        Fatal<std::invalid_argument>("Discarded must be greater than 1 (always neglect the initial error).");
+        Fatal<std::invalid_argument>("Discarded must be greater than 1 (always neglect the initial error).\n");
     }
     this->sum_ = discarded + strict + loose;
 }

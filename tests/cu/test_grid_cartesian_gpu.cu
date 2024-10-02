@@ -1,8 +1,8 @@
 #include <cinttypes>
 
 #include "merlin/config.hpp"
+#include "merlin/cuda/copy_helpers.hpp"
 #include "merlin/cuda/device.hpp"
-#include "merlin/cuda/memory.hpp"
 #include "merlin/grid/cartesian_grid.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
@@ -47,7 +47,7 @@ int main(void) {
     grid::CartesianGrid cart_gr({v1, v2, v3});
 
     // copy Cartesian grid to GPU
-    cuda::Memory mem(0, cart_gr);
+    cuda::Dispatcher mem(0, cart_gr);
 
     // tests
     grid::CartesianGrid * gpu_gr = mem.get<0>();

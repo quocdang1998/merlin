@@ -3,6 +3,7 @@
 #include <cstdio>
 
 #include "merlin/array/array.hpp"
+#include "merlin/array/parcel.hpp"
 #include "merlin/array/operation.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/utils.hpp"
@@ -39,4 +40,5 @@ int main(void) {
     Message("Result          : %s\n", Ar_copy.str().c_str());
 
     auto [m, v] = Ar.get_mean_variance();
+
 }

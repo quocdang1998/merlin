@@ -1,14 +1,14 @@
 // Copyright 2024 quocdang1998
 #include "merlin/candy/train/gpu_trainer.hpp"
 
-#include "merlin/array/parcel.hpp"     // merlin::array::Parcel
-#include "merlin/candy/gradient.hpp"   // merlin::candy::Gradient
-#include "merlin/candy/loss.hpp"       // merlin::candy::rmse_gpu
-#include "merlin/candy/model.hpp"      // merlin::candy::Model
-#include "merlin/candy/optimizer.hpp"  // merlin::candy::Optimizer
-#include "merlin/cuda/memory.hpp"      // merlin::cuda::copy_objects
-#include "merlin/utils.hpp"            // merlin::flatten_block_index, merlin::flatten_thread_index, merlin::is_normal,
-                                       // merlin::size_of_block
+#include "merlin/array/parcel.hpp"       // merlin::array::Parcel
+#include "merlin/candy/gradient.hpp"     // merlin::candy::Gradient
+#include "merlin/candy/loss.hpp"         // merlin::candy::rmse_gpu
+#include "merlin/candy/model.hpp"        // merlin::candy::Model
+#include "merlin/candy/optimizer.hpp"    // merlin::candy::Optimizer
+#include "merlin/cuda/copy_helpers.hpp"  // merlin::cuda::copy_objects
+#include "merlin/utils.hpp"              // merlin::flatten_block_index, merlin::flatten_thread_index,
+                                         // merlin::is_finite, merlin::size_of_block
 
 namespace merlin {
 
@@ -20,7 +20,7 @@ namespace merlin {
 __cudevice__ inline void update_go_on(double & priori_error, double & posteriori_error, const double & threshold,
                                       bool & go_on, bool & local_go_on, const std::uint64_t & thread_idx) {
     if (thread_idx == 0) {
-        if (is_normal(posteriori_error)) {
+        if (is_finite(posteriori_error)) {
             go_on = (std::abs(priori_error - posteriori_error) / posteriori_error > threshold);
         } else {
             go_on = false;
@@ -49,7 +49,8 @@ __global__ static void kernel_dry_run(candy::Model * p_model, candy::Optimizer *
     candy::Optimizer & optmz = p_optmz[i_case];
     const array::Parcel & data = p_data[i_case];
     extern __shared__ char shared_mem[];
-    auto [grad_mem, p_model_shr, p_optmz_shr, p_data_shr] = cuda::copy_objects(shared_mem, model, optmz, data);
+    auto [grad_mem, p_model_shr, p_optmz_shr, p_data_shr] = cuda::copy_objects(shared_mem, thread_idx, block_size,
+                                                                               model, optmz, data);
     // assign data to gradient
     candy::Gradient gradient(reinterpret_cast<double *>(grad_mem), p_model_shr->num_params(), metric);
     // initialize memory for index
@@ -74,7 +75,7 @@ __global__ static void kernel_dry_run(candy::Model * p_model, candy::Optimizer *
         candy::rmse_gpu(p_model_shr, p_data_shr, &saved_error, &normal_count, thread_idx, block_size, index_mem);
         if (thread_idx == 0) {
             error[start + iter] = saved_error;
-            break_condition = !is_normal(error[start + iter]);
+            break_condition = !is_finite(error[start + iter]);
             count += (break_condition) ? 0 : 1;
         }
         __syncthreads();
@@ -91,7 +92,7 @@ __global__ static void kernel_dry_run(candy::Model * p_model, candy::Optimizer *
         candy::rmse_gpu(p_model_shr, p_data_shr, &saved_error, &normal_count, thread_idx, block_size, index_mem);
         if (thread_idx == 0) {
             error[start + iter] = saved_error;
-            break_condition = !is_normal(error[start + iter]) ||
+            break_condition = !is_finite(error[start + iter]) ||
                               (error[start + iter] >= strict_max_ratio * error[start + iter - 1]);
             count += (break_condition) ? 0 : 1;
         }
@@ -109,7 +110,7 @@ __global__ static void kernel_dry_run(candy::Model * p_model, candy::Optimizer *
         candy::rmse_gpu(p_model_shr, p_data_shr, &saved_error, &normal_count, thread_idx, block_size, index_mem);
         if (thread_idx == 0) {
             error[start + iter] = saved_error;
-            break_condition = !is_normal(error[start + iter]) ||
+            break_condition = !is_finite(error[start + iter]) ||
                               (error[start + iter] >= loose_max_ratio * error[start + iter - 1]);
             count += (break_condition) ? 0 : 1;
         }
@@ -142,7 +143,8 @@ __global__ static void kernel_update_until(candy::Model * p_model, candy::Optimi
     candy::Optimizer & optmz = p_optmz[block_index];
     const array::Parcel & data = p_data[block_index];
     extern __shared__ char shared_mem[];
-    auto [grad_mem, p_model_shr, p_optmz_shr, p_data_shr] = cuda::copy_objects(shared_mem, model, optmz, data);
+    auto [grad_mem, p_model_shr, p_optmz_shr, p_data_shr] = cuda::copy_objects(shared_mem, thread_idx, block_size,
+                                                                               model, optmz, data);
     // assign data to gradient
     candy::Gradient gradient(reinterpret_cast<double *>(grad_mem), p_model_shr->num_params(), metric);
     // initialize error variable
@@ -203,7 +205,8 @@ __global__ static void kernel_update_for(candy::Model * p_model, candy::Optimize
     candy::Optimizer & optmz = p_optmz[block_index];
     const array::Parcel & data = p_data[block_index];
     extern __shared__ char shared_mem[];
-    auto [grad_mem, p_model_shr, p_optmz_shr, p_data_shr] = cuda::copy_objects(shared_mem, model, optmz, data);
+    auto [grad_mem, p_model_shr, p_optmz_shr, p_data_shr] = cuda::copy_objects(shared_mem, thread_idx, block_size,
+                                                                               model, optmz, data);
     // assign data to gradient
     candy::Gradient gradient(reinterpret_cast<double *>(grad_mem), p_model_shr->num_params(), metric);
     // initialize cache memory
@@ -237,7 +240,7 @@ __global__ static void kernel_reconstruct(candy::Model * p_model, array::Parcel 
     candy::Model & model = p_model[block_index];
     array::Parcel & data = p_data[block_index];
     extern __shared__ char shared_mem[];
-    auto [remain, p_model_shr, p_data_shr] = cuda::copy_objects(shared_mem, model, data);
+    auto [remain, p_model_shr, p_data_shr] = cuda::copy_objects(shared_mem, thread_idx, block_size, model, data);
     Index index;
     index.fill(0);
     for (std::uint64_t c_index = thread_idx; c_index < p_data_shr->size(); c_index += block_size) {
@@ -265,7 +268,7 @@ __global__ static void kernel_get_error(candy::Model * p_model, array::Parcel * 
     array::Parcel & data = p_data[block_index];
     double & rmse = p_error[2 * block_index];
     double & rmae = p_error[2 * block_index + 1];
-    auto [remain, p_model_shr, p_data_shr] = cuda::copy_objects(shared_mem, model, data);
+    auto [remain, p_model_shr, p_data_shr] = cuda::copy_objects(shared_mem, thread_idx, block_size, model, data);
     // initialize memory for result on shred memory
     __shared__ double rmse_shr;
     __shared__ double rmae_shr;

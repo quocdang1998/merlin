@@ -105,7 +105,7 @@ Memory management helper
 .. doxysummary::
    :toctree: generated
 
-   merlin::cuda::Memory
+   merlin::cuda::Dispatcher
    merlin::cuda::copy_objects
 
 
@@ -331,6 +331,31 @@ CPU/GPU specified API
 
 Low level API
 -------------
+
+Memory allocation
+^^^^^^^^^^^^^^^^^
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::mem_alloc_host
+   merlin::mem_free_host
+   merlin::mem_register_host
+   merlin::mem_unregister_host
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::mem_alloc_device
+   merlin::mem_free_device
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::memcpy_cpu_to_gpu
+   merlin::memcpy_gpu_to_cpu
+   merlin::memcpy_gpu
+   merlin::memcpy_peer_gpu
 
 Log printing
 ^^^^^^^^^^^^

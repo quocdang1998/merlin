@@ -3,7 +3,7 @@
 
 #include <array>  // std::array
 
-#include "merlin/cuda/memory.hpp"            // merlin::cuda::copy_objects
+#include "merlin/cuda/copy_helpers.hpp"      // merlin::cuda::copy_objects
 #include "merlin/cuda/stream.hpp"            // merlin::cuda::Stream
 #include "merlin/splint/intpl/lagrange.hpp"  // merlin::splint::intpl::construct_lagrange
 #include "merlin/splint/intpl/linear.hpp"    // merlin::splint::intpl::construct_linear
@@ -31,7 +31,7 @@ __global__ static void construct_coeff_kernel(double * coeff, const grid::Cartes
     std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
     // copy data to dynamic shared memory
     extern __shared__ char dynamic_shmem[];
-    auto [end_shr_ptr, grid_shr] = cuda::copy_objects(dynamic_shmem, *p_grid);
+    auto [end_shr_ptr, grid_shr] = cuda::copy_objects(dynamic_shmem, thread_idx, block_size, *p_grid);
     std::array<unsigned int, max_dim> cache_method(*p_method);
     const Index & shape = grid_shr->shape();
     // initialization
@@ -83,7 +83,7 @@ __global__ static void eval_intpl_kernel(double * coeff, const grid::CartesianGr
     std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
     // copy to share memory
     extern __shared__ char dynamic_shmem[];
-    auto [end_shr_ptr, grid_shr] = cuda::copy_objects(dynamic_shmem, *p_grid);
+    auto [end_shr_ptr, grid_shr] = cuda::copy_objects(dynamic_shmem, thread_idx, block_size, *p_grid);
     std::array<unsigned int, max_dim> cache_method(*p_method);
     // initialization
     Index loop_index;

@@ -7,6 +7,7 @@
 
 #include "merlin/candy/model.hpp"  // merlin::candy::Model
 #include "merlin/logger.hpp"       // merlin::Fatal, merlin::cuda_compile_error
+#include "merlin/memory.hpp"       // merlin::memcpy_cpu_to_gpu, merlin::memcpy_gpu_to_cpu
 
 namespace merlin {
 
@@ -103,22 +104,29 @@ void candy::Optimizer::update_cpu(candy::Model & model, const candy::Gradient & 
     cpu_updater_func[this->static_data_.index()](optimizer_algor, this->dynamic_data_, model, grad, time_step);
 }
 
-#ifndef __MERLIN_CUDA__
-
 // Copy the optimizer from CPU to a pre-allocated memory on GPU
 void * candy::Optimizer::copy_to_gpu(candy::Optimizer * gpu_ptr, void * dynamic_data_ptr,
                                      std::uintptr_t stream_ptr) const {
-    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
-    return nullptr;
+    // copy dynamic data on GPU
+    memcpy_cpu_to_gpu(dynamic_data_ptr, this->dynamic_data_, sizeof(double) * this->dynamic_size_, stream_ptr);
+    // create an instant similar to the copy on GPU
+    candy::Optimizer copy_on_gpu;
+    copy_on_gpu.static_data_ = this->static_data_;
+    copy_on_gpu.dynamic_data_ = reinterpret_cast<double *>(dynamic_data_ptr);
+    copy_on_gpu.dynamic_size_ = this->dynamic_size_;
+    // copy the clone and dynamic data to GPU
+    memcpy_cpu_to_gpu(gpu_ptr, &copy_on_gpu, sizeof(candy::Optimizer), stream_ptr);
+    // nullify pointer on the clone
+    double * returned_ptr = copy_on_gpu.dynamic_data_;
+    copy_on_gpu.dynamic_data_ = nullptr;
+    return returned_ptr + this->dynamic_size_;
 }
 
 // Copy data from GPU to CPU
 void * candy::Optimizer::copy_from_gpu(double * data_from_gpu, std::uintptr_t stream_ptr) noexcept {
-    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
-    return nullptr;
+    memcpy_gpu_to_cpu(this->dynamic_data_, data_from_gpu, sizeof(double) * this->dynamic_size_, stream_ptr);
+    return reinterpret_cast<void *>(data_from_gpu + this->dynamic_size_);
 }
-
-#endif  // __MERLIN_CUDA__
 
 // String representation
 std::string candy::Optimizer::str(void) const {

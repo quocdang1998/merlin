@@ -210,6 +210,13 @@ struct DebugLog {
 template <class Exception>
 struct Fatal {
   public:
+    /** @brief Throw default constructed exception.*/
+    Fatal(void) {
+#ifndef NDEBUG
+        print_stacktrace(2);
+#endif  // NDEBUG
+        throw Exception();
+    }
     /** @brief Constructor from ``std::printf``'s syntax.
      *  @param fmt Format string (same syntax as ``std::printf``).
      *  @param args Arguments to be formatted.
@@ -231,7 +238,7 @@ struct Fatal {
                      exception_buffer);
 #ifndef NDEBUG
         print_stacktrace(2);
-#endif
+#endif  // NDEBUG
         if constexpr (std::is_same<Exception, std::filesystem::filesystem_error>::value) {
             throw std::filesystem::filesystem_error(exception_buffer, std::error_code(1, std::iostream_category()));
         } else {

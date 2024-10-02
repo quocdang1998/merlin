@@ -2,17 +2,19 @@
 
 #include "merlin/candy/model.hpp"
 #include "merlin/config.hpp"
+#include "merlin/cuda/copy_helpers.hpp"
 #include "merlin/cuda/device.hpp"
-#include "merlin/cuda/memory.hpp"
 #include "merlin/cuda/stream.hpp"
 #include "merlin/logger.hpp"
+#include "merlin/utils.hpp"
 #include "merlin/vector.hpp"
 
 using namespace merlin;
 
 __global__ void print_model_shr(candy::Model * model_ptr) {
     extern __shared__ candy::Model share_ptr[];
-    auto [_, __] = cuda::copy_objects(share_ptr, *model_ptr);
+    std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
+    auto [_, __] = cuda::copy_objects(share_ptr, thread_idx, block_size, *model_ptr);
     CudaOut("Candecomp Model on GPU (rank = %" PRIu64 "):\n", share_ptr->rank());
     for (int i = 0; i < share_ptr->ndim(); i++) {
         std::printf("Vector %d:", i);
@@ -56,7 +58,7 @@ int main(void) {
     Message("Model: %s\n", model.str().c_str());
 
     // Copy model on GPU
-    cuda::Memory mem(0, model);
+    cuda::Dispatcher mem(0, model);
     candy::Model * gpu_model = mem.get<0>();
     print_model<<<1, 1>>>(gpu_model);
     print_model_shr<<<1, 1, model.sharedmem_size() + sizeof(double)>>>(gpu_model);

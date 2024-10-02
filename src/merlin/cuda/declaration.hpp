@@ -12,7 +12,7 @@ struct GraphNode;  // CUDA graph node
 class Graph;       // CUDA execution graph
 
 template <typename... Args>
-class Memory;  // CUDA Memory copy interface
+class Dispatcher;  // CUDA Memory copy interface
 }  // namespace merlin::cuda
 
 #endif  // MERLIN_CUDA_DECLARATION_HPP_
