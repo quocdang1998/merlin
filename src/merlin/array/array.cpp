@@ -36,6 +36,9 @@ double * array::allocate_memory(std::uint64_t size) {
 // Pin memory to RAM
 void array::cuda_pin_memory(double * ptr, std::uint64_t mem_size) {}
 
+// Unpin memory
+void array::cuda_unpin_memory(double * ptr) {}
+
 // Free non pageable memory
 void array::free_memory(double * ptr) { delete[] ptr; }
 
@@ -67,6 +70,7 @@ array::Array::Array(double * data, const UIntVec & shape, const UIntVec & stride
 array::NdData(data, shape, strides) {
     // copy or assign data
     this->release = copy;
+    this->is_pinned = pin_memory;
     if (copy) {
         // allocate a new tensor
         this->data_ = array::allocate_memory(this->size());
@@ -228,8 +232,13 @@ std::string array::Array::str(bool first_call) const { return array::print(this,
 
 // Destructor
 array::Array::~Array(void) {
-    if (this->release && (this->data_ != nullptr)) {
-        array::free_memory(this->data_);
+    if (this->data_ != nullptr) {
+        if (this->is_pinned) {
+            array::cuda_unpin_memory(this->data_);
+        }
+        if (this->release) {
+            array::free_memory(this->data_);
+        }
     }
 }
 

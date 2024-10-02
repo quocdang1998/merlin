@@ -218,7 +218,7 @@ class CustomBuildExt(_du_build_ext):
         if ext.extra_objects:
             objects.extend(ext.extra_objects)
         extra_args = ext.extra_link_args or []
-        if not self.debug:
+        if not self.debug and sys.platform == "linux":
             extra_args += ["-g0"]
         language = ext.language or self.compiler.detect_language(sources)
         name = ext.name.split(".")

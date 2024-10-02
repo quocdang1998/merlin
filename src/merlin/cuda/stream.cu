@@ -35,14 +35,14 @@ cuda::Stream::Stream(cuda::StreamSetting setting, int priority) {
     // get min and max priority
     int min_priority, max_priority;
     ::cudaDeviceGetStreamPriorityRange(&min_priority, &max_priority);
-    if ((priority > min_priority) || (priority < max_priority)) {
+    int clamped_priority = std::clamp(priority, max_priority, min_priority);
+    if (clamped_priority != priority) {
         Warning("Priority out of range (expected priority in range [%d, %d], got %d), the priority will be clamped.",
                 max_priority, min_priority, priority);
     }
-    priority = std::clamp(priority, min_priority, max_priority);
     // create a stream within the context
     ::cudaStream_t stream;
-    ::cudaError_t err_ = ::cudaStreamCreateWithPriority(&stream, static_cast<unsigned int>(setting), priority);
+    ::cudaError_t err_ = ::cudaStreamCreateWithPriority(&stream, static_cast<unsigned int>(setting), clamped_priority);
     if (err_ != 0) {
         Fatal<cuda_runtime_error>("Create stream failed with message \"%s\".\n", ::cudaGetErrorString(err_));
     }

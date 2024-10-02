@@ -106,8 +106,6 @@ cuda::Device::Device(int id) {
         Fatal<cuda_runtime_error>("Invalid ID of GPU (expected value between 0 and less than %d).\n", limit);
     }
     this->id_ = id;
-    // check ID limit
-    record_primary_context(id);
 }
 
 // Get instance point to current GPU
@@ -225,12 +223,16 @@ void cuda::Device::set_as_current(void) const {
     if (err_ != 0) {
         Fatal<cuda_runtime_error>("cudaSetDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
     }
+    // update primary context map
+    std::unique_lock<std::mutex> lock(Environment::mutex);
+    record_primary_context(this->id_);
 }
 
 // Push the primary context associated to the GPU to the context stack
 std::uintptr_t cuda::Device::push_context(void) const {
     DebugLog("Environment::mutex is locked.\n");
     Environment::mutex.lock();
+    record_primary_context(this->id_);
     std::uintptr_t current_context = get_current_context();
     std::uintptr_t primary_context = Environment::primary_ctx.at(this->id_);
     ::cudaError_t err_ = static_cast<::cudaError_t>(::cuCtxPushCurrent(reinterpret_cast<::CUcontext>(primary_context)));

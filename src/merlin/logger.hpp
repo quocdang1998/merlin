@@ -10,6 +10,7 @@
 #include <stdexcept>        // std::runtime_error
 #include <syncstream>       // std::osyncstream
 #include <utility>          // std::forward
+#include <format>
 
 #include "merlin/color.hpp"     // __MERLIN_COLOR
 #include "merlin/config.hpp"    // merlin::printf_buffer, __cudevice__, __cuhostdev__

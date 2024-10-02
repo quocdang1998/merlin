@@ -26,6 +26,9 @@ double * allocate_memory(std::uint64_t size);
 /** @brief Pin memory to RAM.*/
 void cuda_pin_memory(double * ptr, std::uint64_t mem_size);
 
+/** @brief Unpin memory.*/
+void cuda_unpin_memory(double * ptr);
+
 /** @brief Free array allocated in non pageable memory.*/
 void free_memory(double * ptr);
 
@@ -131,6 +134,10 @@ class array::Array : public array::NdData {
     /** @brief Destructor.*/
     MERLIN_EXPORTS ~Array(void);
     /// @}
+
+  protected:
+    /** @brief Flag indicating if the memory page is pinned to RAM.*/
+    bool is_pinned = false;
 };
 
 }  // namespace merlin

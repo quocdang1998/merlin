@@ -8,7 +8,7 @@
 #include "merlin/array/parcel.hpp"     // merlin::array::Parcel
 #include "merlin/cuda/device.hpp"      // merlin::cuda::Device
 #include "merlin/env.hpp"              // merlin::Environment
-#include "merlin/logger.hpp"           // merlin::Fatal
+#include "merlin/logger.hpp"           // merlin::Fatal, merlin::Warning
 
 namespace merlin {
 
@@ -30,9 +30,16 @@ double * array::allocate_memory(std::uint64_t size) {
 // Pin memory to RAM
 void array::cuda_pin_memory(double * ptr, std::uint64_t mem_size) {
     ::cudaError_t err_ = ::cudaHostRegister(ptr, mem_size, cudaHostRegisterDefault);
-    if ((err_ != 0) && (err_ != 712)) {
-        // note: 712 = memory already page locked
-        Fatal<cuda_runtime_error>("Pin pageable memory failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+    if (err_ != 0) {
+        Warning("Pin pageable memory failed with message \"") << ::cudaGetErrorString(err_) << "\".\n";
+    }
+}
+
+// Unpin memory
+void array::cuda_unpin_memory(double * ptr) {
+    ::cudaError_t err_ = ::cudaHostUnregister(ptr);
+    if (err_ != 0) {
+        Warning("Unpin paged memory failed with message \"") << ::cudaGetErrorString(err_) << "\".\n";
     }
 }
 
