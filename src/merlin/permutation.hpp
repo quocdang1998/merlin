@@ -2,12 +2,13 @@
 #ifndef MERLIN_PERMUTATION_HPP_
 #define MERLIN_PERMUTATION_HPP_
 
-#include <string>   // std::string
-#include <utility>  // std::swap
+#include <iterator>  // std::random_access_iterator
+#include <string>    // std::string
+#include <utility>   // std::swap
 
 #include "merlin/config.hpp"   // __cuhostdev__
 #include "merlin/exports.hpp"  // MERLIN_EXPORTS
-#include "merlin/vector.hpp"   // merlin::IntVec
+#include "merlin/vector.hpp"   // merlin::IntView, merlin::IntVec, merlin::UIntVec
 
 namespace merlin {
 
@@ -39,7 +40,7 @@ class Permutation {
     /// @name Attributes
     /// @{
     /** @brief Constant reference to index vector.*/
-    __cuhostdev__ constexpr const Vector<std::int64_t> & index(void) const noexcept { return this->index_; }
+    __cuhostdev__ constexpr IntView index(void) const noexcept { return this->index_.get_view(); }
     /** @brief Get number of elements permuted.*/
     __cuhostdev__ constexpr std::uint64_t size(void) const noexcept { return this->index_.size(); }
     /// @}
@@ -61,6 +62,7 @@ class Permutation {
      *  @param dest Iterator to the first element of the destination container.
      */
     template <typename InputIterator, typename OutputIterator>
+    requires std::random_access_iterator<InputIterator> && std::random_access_iterator<OutputIterator>
     __cuhostdev__ constexpr void permute(InputIterator src, OutputIterator dest) const {
         for (std::uint64_t i = 0; i < this->size(); i++) {
             *(dest + this->index_[i]) = *(src + i);
@@ -71,6 +73,7 @@ class Permutation {
      *  @param dest Iterator to the first element of the array container to perform the permutation.
      */
     template <typename Iterator>
+    requires std::random_access_iterator<Iterator>
     __cuhostdev__ constexpr void inplace_permute(Iterator dest) {
         for (std::int64_t i = 0; i < this->size(); i++) {
             // skip to the next non-processed item
@@ -107,6 +110,7 @@ class Permutation {
      *  @param dest Iterator to the first element of the destination container.
      */
     template <typename InputIterator, typename OutputIterator>
+    requires std::random_access_iterator<InputIterator> && std::random_access_iterator<OutputIterator>
     __cuhostdev__ constexpr void inv_permute(InputIterator src, OutputIterator dest) const {
         for (std::uint64_t i = 0; i < this->size(); i++) {
             *(dest + i) = *(src + this->index_[i]);
@@ -117,6 +121,7 @@ class Permutation {
      *  @param dest Iterator to the first element of the array container to perform the permutation.
      */
     template <typename Iterator>
+    requires std::random_access_iterator<Iterator>
     __cuhostdev__ constexpr void inplace_inv_permute(Iterator dest) {
         for (std::uint64_t i = 0; i < this->size(); i++) {
             // skip to the next non-processed item

@@ -4,10 +4,10 @@
 
 #include <string>  // std::string
 
-#include "merlin/config.hpp"             // __cuhostdev__, merlin::Index
+#include "merlin/config.hpp"             // __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/regpl/declaration.hpp"  // merlin::regpl::Polynomial
-#include "merlin/vector.hpp"             // merlin::DoubleVec, merlin::UIntVec
+#include "merlin/vector.hpp"             // merlin::Index, merlin::Point, merlin::DoubleVec, merlin::UIntVec
 
 namespace merlin {
 
@@ -46,10 +46,10 @@ class regpl::Polynomial {
     /** @brief Get number of terms in the polynomial.*/
     __cuhostdev__ constexpr const std::uint64_t & size(void) const noexcept { return this->coeff_.size(); }
     /** @brief Get number of dimension.*/
-    __cuhostdev__ constexpr const std::uint64_t & ndim(void) const noexcept { return this->ndim_; }
+    __cuhostdev__ constexpr const std::uint64_t & ndim(void) const noexcept { return this->order_.size(); }
     /** @brief Get reference to coefficient array of the polynomial.*/
     __cuhostdev__ constexpr DoubleVec & coeff(void) noexcept { return this->coeff_; }
-    /** @brief Get constant reference to coefficient array of the polynomial.*/
+    /** @brief Get view to coefficient array of the polynomial.*/
     __cuhostdev__ constexpr const DoubleVec & coeff(void) const noexcept { return this->coeff_; }
     /** @brief Get order per dimension of the polynomial.*/
     __cuhostdev__ constexpr const Index & order(void) const noexcept { return this->order_; }
@@ -115,14 +115,16 @@ class regpl::Polynomial {
     /// @{
     /** @brief Write polynomial data into a file.
      *  @param fname Name of the output file.
+     *  @param offset Offset of the data to write.
      *  @param lock Lock the file when writing to prevent data race. The lock action may cause a delay.
      */
-    MERLIN_EXPORTS void save(const std::string & fname, bool lock = false) const;
+    MERLIN_EXPORTS void save(const std::string & fname, std::uint64_t offset = 0, bool lock = false) const;
     /** @brief Read polynomial data from a file.
      *  @param fname Name of the input file.
+     *  @param offset Offset of the data to read.
      *  @param lock Lock the file when reading to prevent data race. The lock action may cause a delay.
      */
-    MERLIN_EXPORTS void load(const std::string & fname, bool lock = false);
+    MERLIN_EXPORTS void load(const std::string & fname, std::uint64_t offset = 0, bool lock = false);
     /// @}
 
     /// @name Representation
@@ -142,8 +144,6 @@ class regpl::Polynomial {
     DoubleVec coeff_;
     /** @brief Max power per dimension.*/
     Index order_;
-    /** @brief Number of dimensions.*/
-    std::uint64_t ndim_ = 0;
 };
 
 }  // namespace merlin

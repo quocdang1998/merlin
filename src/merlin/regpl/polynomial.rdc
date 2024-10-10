@@ -33,7 +33,7 @@ __cuhostdev__ double regpl::Polynomial::eval(const Point & point, Point & buffer
         buffer[this->ndim() - 1] *= point[this->ndim() - 1];
         buffer[this->ndim() - 1] += this->coeff_[i_term];
         // get leaping dimension
-        std::int64_t leaping_dim = leaping_dimension(i_term, this->order_.data(), this->ndim_);
+        std::int64_t leaping_dim = leaping_dimension(i_term, this->order_.data(), this->ndim());
         for (std::int64_t i_dim = this->ndim() - 2; i_dim >= leaping_dim; i_dim--) {
             buffer[i_dim] *= point[i_dim];
             buffer[i_dim] += buffer[i_dim + 1];
@@ -50,14 +50,13 @@ __cudevice__ void * regpl::Polynomial::copy_by_block(regpl::Polynomial * dest_pt
                                                      std::uint64_t thread_idx, std::uint64_t block_size) const {
     // shallow copy of grid node, grid shape and grid vectors
     double * coeff_ptr = reinterpret_cast<double *>(coeff_data_ptr);
+    std::uint64_t size = this->size(), ndim = this->ndim();
     if (thread_idx == 0) {
-        dest_ptr->coeff_.data() = coeff_ptr;
-        dest_ptr->coeff_.size() = this->size();
-        dest_ptr->ndim_ = this->ndim_;
+        dest_ptr->coeff_.assign(coeff_ptr, size);
+        dest_ptr->order_.resize(ndim);
     }
     __syncthreads();
     // copy data of grid nodes and grid shape
-    std::uint64_t size = this->size(), ndim = this->ndim();
     for (std::uint64_t i_coeff = thread_idx; i_coeff < size; i_coeff += block_size) {
         dest_ptr->coeff_[i_coeff] = this->coeff_[i_coeff];
     }
@@ -73,18 +72,16 @@ __cudevice__ void * regpl::Polynomial::copy_by_block(regpl::Polynomial * dest_pt
 __cudevice__ void * regpl::Polynomial::copy_by_thread(regpl::Polynomial * dest_ptr, void * coeff_data_ptr) const {
     // shallow copy of grid node, grid shape and grid vectors
     double * coeff_ptr = reinterpret_cast<double *>(coeff_data_ptr);
-    dest_ptr->coeff_.data() = coeff_ptr;
-    dest_ptr->coeff_.size() = this->size();
-    dest_ptr->ndim_ = this->ndim_;
-    // copy data of grid nodes and grid shape
     std::uint64_t size = this->size(), ndim = this->ndim();
+    dest_ptr->coeff_.assign(coeff_ptr, size);
+    dest_ptr->order_.resize(ndim);
+    // copy data of grid nodes and grid shape
     for (std::uint64_t i_coeff = 0; i_coeff < size; i_coeff++) {
         dest_ptr->coeff_[i_coeff] = this->coeff_[i_coeff];
     }
     for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
         dest_ptr->order_[i_dim] = this->order_[i_dim];
     }
-    // re-calculate grid vectors
     return reinterpret_cast<void *>(coeff_ptr + size);
 }
 

@@ -1,15 +1,19 @@
 // Copyright 2024 quocdang1998
 #include "merlin/regpl/polynomial.hpp"
 
-#include <algorithm>   // std::stable_sort
-#include <cinttypes>   // PRIu64
-#include <filesystem>  // std::filesystem::filesystem_error
-#include <numeric>     // std::iota
-#include <sstream>     // std::ostringstream
+#include <algorithm>     // std::stable_sort
+#include <cinttypes>     // PRIu64
+#include <mutex>         // std::unique_lock
+#include <numeric>       // std::iota
+#include <shared_mutex>  // std::shared_lock
+#include <sstream>       // std::ostringstream
 
-#include "merlin/filelock.hpp"  // merlin::FileLock
-#include "merlin/logger.hpp"    // merlin::Fatal, merlin::cuda_compile_error
-#include "merlin/utils.hpp"     // merlin::prod_elements
+#include "merlin/io/file_lock.hpp"     // merlin::io::FileLock
+#include "merlin/io/file_pointer.hpp"  // merlin::io::FilePointer, merlin::io::open_file
+#include "merlin/io/io_engine.hpp"     // merlin::io::ReadEngine, merlin::io::WriteEngine
+#include "merlin/logger.hpp"           // merlin::Fatal, merlin::cuda_compile_error
+#include "merlin/memory.hpp"           // merlin::memcpy_cpu_to_gpu, merlin::memcpy_gpu_to_cpu
+#include "merlin/utils.hpp"            // merlin::prod_elements
 
 namespace merlin {
 
@@ -19,19 +23,14 @@ namespace merlin {
 
 // Constructor of an empty polynomial from order per dimension
 regpl::Polynomial::Polynomial(const Index & order) : order_(order) {
-    Index::const_iterator first_zero_element = std::find(order.begin(), order.end(), 0);
-    this->ndim_ = std::distance(order.begin(), first_zero_element);
-    this->coeff_ = DoubleVec(prod_elements(order.data(), this->ndim_));
+    this->coeff_ = DoubleVec(prod_elements(order.data(), order.size()));
 }
 
 // Constructor of a pre-allocated array of coefficients and order per dimension
-regpl::Polynomial::Polynomial(const DoubleVec & coeff, const Index & order) : order_(order) {
-    Index::const_iterator first_zero_element = std::find(order.begin(), order.end(), 0);
-    this->ndim_ = std::distance(order.begin(), first_zero_element);
-    if (coeff.size() != prod_elements(order.data(), this->ndim_)) {
+regpl::Polynomial::Polynomial(const DoubleVec & coeff, const Index & order) : coeff_(coeff), order_(order) {
+    if (coeff.size() != prod_elements(order.data(), order.size())) {
         Fatal<std::invalid_argument>("Insufficient number of coefficients provided for the given order_per_dim.\n");
     }
-    this->coeff_ = coeff;
 }
 
 // Set coefficients in case of a sparse polynomial
@@ -57,97 +56,75 @@ void regpl::Polynomial::set(double * coeff, const UIntVec & term_index) {
     }
 }
 
-#ifndef __MERLIN_CUDA__
-
 // Copy data to a pre-allocated memory
 void * regpl::Polynomial::copy_to_gpu(regpl::Polynomial * gpu_ptr, void * coeff_data_ptr,
                                       std::uintptr_t stream_ptr) const {
-    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
-    return nullptr;
+    // copy data of coefficient vector
+    memcpy_cpu_to_gpu(coeff_data_ptr, this->coeff_.data(), this->size() * sizeof(double), stream_ptr);
+    // initialize buffer to store data of the copy before cloning it to GPU
+    regpl::Polynomial copy_on_gpu;
+    // shallow copy of coefficients, orders and term index
+    double * coeff_ptr = reinterpret_cast<double *>(coeff_data_ptr);
+    copy_on_gpu.coeff_.assign(coeff_ptr, this->size());
+    copy_on_gpu.order_ = this->order_;
+    memcpy_cpu_to_gpu(gpu_ptr, &copy_on_gpu, sizeof(regpl::Polynomial), stream_ptr);
+    return reinterpret_cast<void *>(coeff_ptr + this->size());
 }
 
 // Copy data from GPU to CPU
 void * regpl::Polynomial::copy_from_gpu(double * data_from_gpu, std::uintptr_t stream_ptr) noexcept {
-    Fatal<cuda_compile_error>("Compile merlin with CUDA by enabling option MERLIN_CUDA to use this method.\n");
-    return nullptr;
+    memcpy_gpu_to_cpu(this->coeff_.data(), data_from_gpu, this->size() * sizeof(double), stream_ptr);
+    return reinterpret_cast<void *>(data_from_gpu + this->size());
 }
 
-#endif  // __MERLIN_CUDA__
-
 // Write polynomial data into a file
-void regpl::Polynomial::save(const std::string & fname, bool lock) const {
+void regpl::Polynomial::save(const std::string & fname, std::uint64_t offset, bool lock) const {
     // open file
-    std::FILE * file_stream = std::fopen(fname.c_str(), "wb");
-    if (file_stream == nullptr) {
-        Fatal<std::filesystem::filesystem_error>("Cannot create file %s\n", fname.c_str());
-    }
-    FileLock flock(file_stream);
-    // lambda write file
-    auto write_lambda = [&file_stream](const void * data, std::size_t elem_size, std::size_t n_elems) {
-        std::size_t success_written = std::fwrite(data, elem_size, n_elems, file_stream);
-        if (success_written < n_elems) {
-            Fatal<std::filesystem::filesystem_error>("Error occurred when writing the file.\n");
-        }
-    };
-    if (lock) {
-        flock.lock();
-    }
-    // write ndim and size
-    std::uint64_t meta_data[2] = {this->ndim_, this->size()};
-    write_lambda(meta_data, sizeof(std::uint64_t), 2);
-    // write order per dim
-    write_lambda(this->order_.data(), sizeof(std::uint64_t), this->ndim_);
-    // write coefficients and coeff index
-    write_lambda(this->coeff_.data(), sizeof(double), this->size());
-    // close file
-    if (lock) {
-        flock.unlock();
-    }
-    std::fclose(file_stream);
+    io::FilePointer file_stream = io::open_file(fname.c_str());
+    file_stream.seek(offset);
+    // acquire file lock
+    io::FileLock flock(file_stream.get());
+    std::unique_lock<io::FileLock> guard = ((lock) ? std::unique_lock<io::FileLock>(flock)
+                                                   : std::unique_lock<io::FileLock>());
+    // initialize write engines
+    io::WriteEngine<std::uint64_t> uint_write(file_stream.get());
+    io::WriteEngine<double> float_write(file_stream.get());
+    // write shape
+    std::uint64_t ndim = this->ndim();
+    uint_write.write(&ndim, 1);
+    uint_write.write(this->order_.data(), this->order_.size());
+    // write coefficients
+    float_write.write(this->coeff_.data(), this->coeff_.size());
 }
 
 // Read polynomial data from a file
-void regpl::Polynomial::load(const std::string & fname, bool lock) {
+void regpl::Polynomial::load(const std::string & fname, std::uint64_t offset, bool lock) {
     // open file
-    std::FILE * file_stream = std::fopen(fname.c_str(), "rb");
-    if (file_stream == nullptr) {
-        Fatal<std::filesystem::filesystem_error>("Cannot read file %s\n", fname.c_str());
-    }
-    FileLock flock(file_stream);
-    // lambda read file
-    auto read_lambda = [&file_stream](void * data, std::size_t elem_size, std::size_t n_elems) {
-        std::size_t success_read = std::fread(data, elem_size, n_elems, file_stream);
-        if (success_read < n_elems) {
-            Fatal<std::filesystem::filesystem_error>("Error occurred when reading the file.\n");
-        }
-    };
-    if (lock) {
-        flock.lock_shared();
-    }
-    // read ndim and size
-    std::uint64_t meta_data[2];
-    read_lambda(meta_data, sizeof(std::uint64_t), 2);
-    this->ndim_ = meta_data[0];
-    // read order per dim
-    this->order_.fill(0);
-    read_lambda(this->order_.data(), sizeof(std::uint64_t), meta_data[0]);
-    // read coefficients and coeff index
-    this->coeff_ = DoubleVec(meta_data[1]);
-    read_lambda(this->coeff_.data(), sizeof(double), meta_data[1]);
-    // close file
-    if (lock) {
-        flock.unlock();
-    }
-    std::fclose(file_stream);
+    io::FilePointer file_stream = io::open_file(fname.c_str());
+    file_stream.seek(offset);
+    // acquire file lock
+    io::FileLock flock(file_stream.get());
+    std::shared_lock<io::FileLock> guard = ((lock) ? std::shared_lock<io::FileLock>(flock)
+                                                   : std::shared_lock<io::FileLock>());
+    // initialize read engines
+    io::ReadEngine<std::uint64_t> uint_read(file_stream.get());
+    io::ReadEngine<double> float_read(file_stream.get());
+    // read shape
+    std::uint64_t ndim;
+    uint_read.read(&ndim, 1);
+    this->order_.resize(ndim);
+    uint_read.read(this->order_.data(), this->order_.size());
+    // read coefficients
+    std::uint64_t size = prod_elements(this->order_.data(), this->order_.size());
+    this->coeff_ = DoubleVec(size);
+    float_read.read(this->coeff_.data(), this->coeff_.size());
 }
 
 // String representation
 std::string regpl::Polynomial::str(void) const {
     std::ostringstream os;
     os << "<Polynomial(";
-    UIntVec order_vec;
-    order_vec.assign(const_cast<std::uint64_t *>(this->order_.data()), this->ndim_);
-    os << "order=" << order_vec.str() << ", ";
+    os << "order=" << this->order_.str() << ", ";
     os << "coeff=" << this->coeff_.str() << ")>";
     return os.str();
 }

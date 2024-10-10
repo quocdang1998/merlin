@@ -8,11 +8,12 @@
 #include <string>            // std::string
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array
-#include "merlin/config.hpp"             // __cuhostdev__, merlin::DPtrArray, merlin::Index, merlin::max_dim
+#include "merlin/config.hpp"             // __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/grid/declaration.hpp"   // merlin::grid::CartesianGrid
 #include "merlin/slice.hpp"              // merlin::SliceArray
-#include "merlin/vector.hpp"             // merlin::DoubleVec
+#include "merlin/vector.hpp"             // merlin::DoubleView, merlin::DPtrArray, merlin::Index, merlin::DoubleVec,
+                                         // merlin::DVecArray
 
 namespace merlin {
 
@@ -29,7 +30,7 @@ class grid::CartesianGrid {
     /** @brief Default constructor.*/
     CartesianGrid(void) = default;
     /** @brief Constructor from list of initializer lists.*/
-    MERLIN_EXPORTS CartesianGrid(const Vector<DoubleVec> & grid_vectors);
+    MERLIN_EXPORTS CartesianGrid(const DVecArray & grid_vectors);
     /** @brief Constructor as a sub-grid from a larger grid.*/
     MERLIN_EXPORTS CartesianGrid(const grid::CartesianGrid & whole, const SliceArray & slices);
     /// @}
@@ -49,15 +50,13 @@ class grid::CartesianGrid {
     /// @name Get members and attributes
     /// @{
     /** @brief Get grid vector of a given dimension.*/
-    __cuhostdev__ const DoubleVec grid_vector(std::uint64_t i_dim) const noexcept {
-        DoubleVec grid_vector;
-        grid_vector.assign(const_cast<double *>(this->grid_vectors_[i_dim]), this->grid_shape_[i_dim]);
-        return grid_vector;
+    __cuhostdev__ DoubleView grid_vector(std::uint64_t i_dim) const noexcept {
+        return DoubleView(this->grid_vectors_[i_dim], this->grid_shape_[i_dim]);
     }
     /** @brief Get constant reference to grid vector pointers.*/
     __cuhostdev__ constexpr const DPtrArray & grid_vectors(void) const noexcept { return this->grid_vectors_; }
     /** @brief Get dimensions of the grid.*/
-    __cuhostdev__ constexpr std::uint64_t ndim(void) const noexcept { return this->ndim_; }
+    __cuhostdev__ constexpr std::uint64_t ndim(void) const noexcept { return this->grid_shape_.size(); }
     /** @brief Get shape of the grid.*/
     __cuhostdev__ constexpr const Index & shape(void) const noexcept { return this->grid_shape_; }
     /** @brief Get total number of points in the grid.*/
@@ -81,16 +80,16 @@ class grid::CartesianGrid {
     /** @brief Get element at a given flatten index.
      *  @param index Flatten index of point in the grid (in C order).
      */
-    DoubleVec operator[](std::uint64_t index) const noexcept {
-        DoubleVec point(this->ndim());
+    Point operator[](std::uint64_t index) const noexcept {
+        Point point(this->ndim());
         this->get(index, point.data());
         return point;
     }
     /** @brief Get element at a given index vector.
      *  @param index Vector of index on each dimension.
      */
-    DoubleVec operator[](const Index & index) const noexcept {
-        DoubleVec point(this->ndim());
+    Point operator[](const Index & index) const noexcept {
+        Point point(this->ndim());
         this->get(index, point.data());
         return point;
     }
@@ -155,8 +154,6 @@ class grid::CartesianGrid {
     DoubleVec grid_nodes_;
     /** @brief Shape of the grid.*/
     Index grid_shape_;
-    /** @brief Number of dimensions.*/
-    std::uint64_t ndim_ = 0;
 
   private:
     /** @brief Number of points in the grid.*/

@@ -1,7 +1,7 @@
 // Copyright 2024 quocdang1998
 #include "merlin/candy/train/cpu_trainer.hpp"
 
-#include <algorithm>    // std::for_each
+#include <algorithm>    // std::accumulate, std::for_each
 #include <future>       // std::async, std::future
 #include <numeric>      // std::iota
 #include <string_view>  // std::string_view
@@ -18,6 +18,7 @@
 #include "merlin/candy/optimizer.hpp"  // merlin::candy::Optimizer
 #include "merlin/logger.hpp"           // merlin::Fatal
 #include "merlin/utils.hpp"            // merlin::is_finite, merlin::contiguous_to_ndim_idx
+#include "merlin/vector.hpp"           // merlin::Index
 
 namespace merlin {
 
@@ -53,8 +54,7 @@ void candy::train::run_dry_run(std::future<void> && synch, const candy::train::I
             DoubleVec grad_mem(model.num_params());
             candy::Gradient gradient(grad_mem.data(), model.num_params(), metric);
             // calculate error before training
-            Index index_mem;
-            index_mem.fill(0);
+            Index index_mem(model.ndim());
             candy::rmse_cpu(&model, &data, error[0], normal_count, index_mem);
             // discarded phase
             std::uint64_t start = 0;
@@ -135,8 +135,7 @@ void candy::train::run_update_until(std::future<void> && synch, const candy::tra
             std::uint64_t normal_count;
             bool go_on = true;
             // calculate error before training
-            Index index_mem;
-            index_mem.fill(0);
+            Index index_mem(model.ndim());
             candy::rmse_cpu(&model, &data, posteriori_error, normal_count, index_mem);
             // training loop
             std::uint64_t step = 1;
@@ -191,8 +190,7 @@ void candy::train::run_update_for(std::future<void> && synch, const candy::train
             DoubleVec grad_mem(model.num_params());
             candy::Gradient gradient(grad_mem.data(), model.num_params(), metric);
             // initialize index
-            Index index_mem;
-            index_mem.fill(0);
+            Index index_mem(model.ndim());
             // training loop
             for (std::uint64_t iter = 1; iter <= max_iter; iter++) {
                 gradient.calc_by_cpu(model, data, index_mem);
@@ -224,8 +222,7 @@ void candy::train::run_reconstruct(std::future<void> && synch, const candy::trai
             candy::Model & model = p_model[i_case];
             array::Array & rec_data = *(p_rec_data[i_case]);
             // initialize index
-            Index index;
-            index.fill(0);
+            Index index(model.ndim());
             // reconstruct
             for (std::uint64_t c_index = 0; c_index < rec_data.size(); c_index++) {
                 contiguous_to_ndim_idx(c_index, rec_data.shape().data(), rec_data.ndim(), index.data());
@@ -254,8 +251,7 @@ void candy::train::run_get_error(std::future<void> && synch, const candy::train:
             candy::Model & model = p_model[i_case];
             const array::Array & data = *(p_data[i_case]);
             // initialize index
-            Index index;
-            index.fill(0);
+            Index index(model.ndim());
             // calculate error
             std::uint64_t thread_idx = ::omp_get_thread_num();
             candy::rmse_cpu(&model, &data, *(p_error[i_case][0]), normal_count, index);
@@ -309,14 +305,40 @@ void candy::train::CpuTrainer::set_model(const std::string & name, const candy::
 
 // Add a optimizer to trainer
 void candy::train::CpuTrainer::set_optmz(const std::string & name, const candy::Optimizer & optmz) {
+    // check for model
+    const std::pair<std::uint64_t, std::array<bool, 3>> & status = this->map_.at(name);
+    if (!status.second[0]) {
+        Fatal<std::runtime_error>("Assign a model to key \"%s\" before adding optimizer.\n", name.c_str());
+    }
+    // check compatibility
     std::uint64_t index = this->get_index_or_create_key(name);
+    const Index & model_shape = this->details_[index].first;
+    auto operation = [rank = this->details_[index].second](std::uint64_t sum, std::uint64_t shape) {
+        return sum + rank * shape;
+    };
+    std::uint64_t num_param = std::accumulate(model_shape.begin(), model_shape.end(), 0, operation);
+    if (!optmz.is_compatible(num_param)) {
+        Fatal<std::invalid_argument>("Incompatible optimizer.\n");
+    }
+    // add optimizer
     this->map_.at(name).second[1] = true;
     this->p_optmz_[index] = optmz;
 }
 
 // Add data to trainer
 void candy::train::CpuTrainer::set_data(const std::string & name, const array::Array & data) {
+    // check for model
+    const std::pair<std::uint64_t, std::array<bool, 3>> & status = this->map_.at(name);
+    if (!status.second[0]) {
+        Fatal<std::runtime_error>("Assign a model to key \"%s\" before assigning data.\n", name.c_str());
+    }
+    // check compatibility
     std::uint64_t index = this->get_index_or_create_key(name);
+    const Index & model_shape = this->details_[index].first;
+    if (model_shape != data.shape()) {
+        Fatal<std::invalid_argument>("Incompatible data.\n");
+    }
+    // add reference to data
     this->map_.at(name).second[2] = true;
     this->p_data_[index] = &data;
 }
@@ -401,7 +423,7 @@ void candy::train::CpuTrainer::reconstruct(const std::map<std::string, array::Ar
     }
     // check shape
     for (std::uint64_t i_case = 0; i_case < this->size_; i_case++) {
-        if (!this->p_model_[i_case].check_compatible_shape(p_rec_data[i_case]->shape())) {
+        if (this->p_model_[i_case].shape() != p_rec_data[i_case]->shape()) {
             Fatal<std::runtime_error>("Model at index %" PRIu64 " is not compatible with destination array.\n", i_case);
         }
     }

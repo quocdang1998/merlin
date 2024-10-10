@@ -49,9 +49,11 @@ list(
     cuda/event.cpp
     cuda/graph.cpp
     cuda/stream.cpp
-    filelock.cpp
     grid/cartesian_grid.cpp
     grid/regular_grid.cpp
+    io/file_lock.cpp
+    io/file_pointer.cpp
+    io/io_engine.cpp
     linalg/dot.cpp
     linalg/matrix.cpp
     linalg/qrp_decomp.cpp
@@ -74,14 +76,16 @@ list(
     cuda/graph.cu
     cuda/stream.cu
     memory.cu
-    regpl/polynomial.cu
-    regpl/regressor.cu
-    splint/interpolator.cu)
-list(APPEND MERLIN_SRC_GLB candy/train/gpu_trainer.glb cuda/device.glb splint/tools.glb regpl/regressor.glb)
+)
+list(APPEND MERLIN_SRC_GLB
+    candy/train/gpu_trainer.glb
+    cuda/device.glb
+    splint/tools.glb
+    regpl/regressor.glb
+)
 list(
     APPEND
     MERLIN_SRC_RDC
-    array/operation.rdc
     array/parcel.rdc
     candy/optmz/adadelta.rdc
     candy/optmz/adagrad.rdc

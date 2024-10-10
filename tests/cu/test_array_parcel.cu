@@ -19,7 +19,7 @@ __global__ void print_element(array::Parcel * parcel_ptr) {
 __global__ void print_element_from_shared_memory(array::Parcel * parcel_ptr) {
     extern __shared__ char share_ptr[];
     std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
-    int i = 1;
+    int i = 2;
     auto [end_ptr, p_parcel_shr, p_i] = cuda::copy_objects(share_ptr, thread_idx, block_size, *parcel_ptr, i);
     CudaOut("Value from shared memory: %.1f\n", (*p_parcel_shr)[thread_idx]);
     __shared__ double sum;
@@ -42,8 +42,8 @@ int main(void) {
 
     // initialize an tensor
     double A_data[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    UIntVec dims = {2, 3};
-    UIntVec strides = {5*sizeof(double), 2*sizeof(double)};
+    Index dims = {2, 3};
+    Index strides = {5*sizeof(double), 2*sizeof(double)};
     array::Array A(A_data, dims, strides, false);
     Message("CPU Array: %s\n", A.str().c_str());
 

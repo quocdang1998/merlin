@@ -7,9 +7,10 @@
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Parcel
 #include "merlin/candy/declaration.hpp"  // merlin::candy::Model
-#include "merlin/config.hpp"             // __cudevice__, __cuhostdev__, merlin::Index
+#include "merlin/config.hpp"             // __cudevice__, __cuhostdev__
 #include "merlin/cuda/stream.hpp"        // merlin::cuda::Stream
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/vector.hpp"             // merlin::Index
 
 namespace merlin::candy {
 

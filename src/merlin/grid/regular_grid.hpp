@@ -7,10 +7,10 @@
 #include <string>            // std::string
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array
-#include "merlin/config.hpp"             // __cuhostdev__, merlin::Point
+#include "merlin/config.hpp"             // __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/grid/declaration.hpp"   // merlin::grid::RegularGrid
-#include "merlin/vector.hpp"             // merlin::DoubleVec
+#include "merlin/vector.hpp"             // merlin::DoubleView, merlin::DoubleVec, merlin::Point
 
 namespace merlin {
 
@@ -47,9 +47,7 @@ class grid::RegularGrid {
     /// @name Get members and attributes
     /// @{
     /** @brief Get pointer to grid data.*/
-    __cuhostdev__ constexpr double * grid_data(void) noexcept { return this->grid_data_.data(); }
-    /** @brief Get constant pointer to grid data.*/
-    __cuhostdev__ constexpr const double * grid_data(void) const noexcept { return this->grid_data_.data(); }
+    __cuhostdev__ constexpr DoubleView grid_data(void) const noexcept { return this->grid_data_.get_view(); }
     /** @brief Get dimensions of the grid.*/
     __cuhostdev__ constexpr std::uint64_t ndim(void) const noexcept { return this->ndim_; }
     /** @brief Get total number of points in the grid.*/
@@ -63,7 +61,7 @@ class grid::RegularGrid {
     /** @brief Add a point to the grid.
      *  @param new_point Vector of coordinates of the point to push.
      */
-    MERLIN_EXPORTS void push_back(const DoubleVec & new_point) noexcept;
+    MERLIN_EXPORTS void push_back(DoubleView new_point) noexcept;
     /** @brief Remove a point from the grid.
      *  @details Remove the last point from the grid.
      */
@@ -80,8 +78,8 @@ class grid::RegularGrid {
     /** @brief Get element at a given flatten index.
      *  @param index Flatten index of point in the grid (in C order).
      */
-    DoubleVec operator[](std::uint64_t index) const noexcept {
-        DoubleVec point(this->ndim_);
+    Point operator[](std::uint64_t index) const noexcept {
+        Point point(this->ndim_);
         this->get(index, point.data());
         return point;
     }

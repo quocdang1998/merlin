@@ -16,5 +16,5 @@ int main(void) {
     Message("Copied Cartesian grid: %s\n", cart_gr.str().c_str());
 
     array::Array grid_points = cart_gr2.get_points();
-    Message("Grid points: %s\n", grid_points.str().c_str());
+    Message("Grid points: ") << grid_points.str() << "\n";
 }

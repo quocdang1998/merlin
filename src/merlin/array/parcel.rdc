@@ -1,10 +1,10 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/parcel.hpp"
 
-#include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::get_leap
-#include "merlin/logger.hpp"           // CUDAERR
-#include "merlin/thread_divider.hpp"   // merlin::ThreadDivider
+#include "merlin/array/operation.hpp"  //merlin::array::get_leap
 #include "merlin/utils.hpp"            // merlin::inner_prod
+
+#include <cinttypes>
 
 namespace merlin {
 
@@ -16,28 +16,28 @@ namespace merlin {
 
 // Get reference to an element at a given n-dim index
 __cudevice__ double & array::Parcel::operator[](const Index & index) {
-    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim_);
+    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<double *>(data_ptr));
 }
 
 // Get reference to an element at a given C-contiguous index
 __cudevice__ double & array::Parcel::operator[](std::uint64_t index) {
-    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_, this->ndim_);
+    std::uint64_t leap = array::get_leap(index, this->shape_.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<double *>(data_ptr));
 }
 
 // Get const reference to an element at a given n-dim index
 __cudevice__ const double & array::Parcel::operator[](const Index & index) const {
-    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim_);
+    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<double *>(data_ptr));
 }
 
 // Get constant reference to an element at a given C-contiguous index
 __cudevice__ const double & array::Parcel::operator[](std::uint64_t index) const {
-    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_, this->ndim_);
+    std::uint64_t leap = array::get_leap(index, this->shape_.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<double *>(data_ptr));
 }
@@ -46,14 +46,16 @@ __cudevice__ const double & array::Parcel::operator[](std::uint64_t index) const
 __cudevice__ void * array::Parcel::copy_by_block(array::Parcel * dest_ptr, void * data_ptr, std::uint64_t thread_idx,
                                                  std::uint64_t block_size) const {
     // copy pointer to data and size
+    std::uint64_t ndim = this->ndim();
     if (thread_idx == 0) {
         dest_ptr->data_ = this->data_;
         dest_ptr->size_ = this->size_;
-        dest_ptr->ndim_ = this->ndim_;
+        dest_ptr->shape_.resize(ndim);
+        dest_ptr->strides_.resize(ndim);
     }
     __syncthreads();
     // copy shape and strides
-    for (std::uint64_t i_dim = thread_idx; i_dim < this->ndim_; i_dim++) {
+    for (std::uint64_t i_dim = thread_idx; i_dim < ndim; i_dim++) {
         dest_ptr->shape_[i_dim] = this->shape_[i_dim];
         dest_ptr->strides_[i_dim] = this->strides_[i_dim];
     }
@@ -64,11 +66,13 @@ __cudevice__ void * array::Parcel::copy_by_block(array::Parcel * dest_ptr, void 
 // Copy to shared memory
 __cudevice__ void * array::Parcel::copy_by_thread(array::Parcel * dest_ptr, void * data_ptr) const {
     // copy meta data
+    std::uint64_t ndim = this->ndim();
     dest_ptr->data_ = this->data_;
     dest_ptr->size_ = this->size_;
-    dest_ptr->ndim_ = this->ndim_;
+    dest_ptr->shape_.resize(ndim);
+    dest_ptr->strides_.resize(ndim);
     // copy shape and strides
-    for (std::uint64_t i_dim = 0; i_dim < this->ndim_; i_dim++) {
+    for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
         dest_ptr->shape_[i_dim] = this->shape_[i_dim];
         dest_ptr->strides_[i_dim] = this->strides_[i_dim];
     }

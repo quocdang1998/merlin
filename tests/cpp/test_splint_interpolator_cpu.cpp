@@ -14,7 +14,7 @@
 using namespace merlin;
 
 
-double foo(const DoubleVec & v) {
+double foo(const Point & v) {
     return (2.f*v[0] + v[2])*v[2] + 3.f*v[1];
 }
 
@@ -23,7 +23,7 @@ array::Array point_generator(std::uint64_t num_point, const grid::CartesianGrid 
     std::vector<std::uniform_real_distribution<double>> dists;
     dists.reserve(grid.ndim());
     for (std::uint64_t i_dim = 0; i_dim < grid.ndim(); i_dim++) {
-        const DoubleVec grid_vector = grid.grid_vector(i_dim);
+        DoubleView grid_vector = grid.grid_vector(i_dim);
         const auto [it_min, it_max] = std::minmax_element(grid_vector.cbegin(), grid_vector.cend());
         dists.push_back(std::uniform_real_distribution<double>(*it_min, *it_max));
     }
@@ -48,7 +48,7 @@ int main(void) {
 
     // calculate interpolation coefficients
     array::Array coeff(value);
-    Vector<splint::Method> methods = {
+    vector::DynamicVector<splint::Method> methods = {
         splint::Method::Lagrange,
         splint::Method::Newton,
         splint::Method::Newton
@@ -64,7 +64,7 @@ int main(void) {
     array::Array points = point_generator(npoints, cart_gr);
     Message out_stream("Function values:");
     for (std::uint64_t i_point = 0; i_point < npoints; i_point++) {
-        out_stream << " " << foo(DoubleVec(points.data() + 3 * i_point, 3));
+        out_stream << " " << foo(Point(points.data() + 3 * i_point, 3));
     }
     out_stream << "\n";
     out_stream.emit();

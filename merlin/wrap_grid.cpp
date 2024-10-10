@@ -21,7 +21,7 @@ static void wrap_cartgrid(py::module & grid_module) {
     cartgrid_pyclass.def(
         py::init(
             [](py::list & grid_vectors) {
-                Vector<DoubleVec> cpp_grid_vector(grid_vectors.size());
+                DVecArray cpp_grid_vector(grid_vectors.size());
                 std::uint64_t i_dim = 0;
                 for (auto it = grid_vectors.begin(); it != grid_vectors.end(); ++it) {
                     cpp_grid_vector[i_dim++] = pyseq_to_vector<double>(it->cast<py::sequence>());
@@ -40,7 +40,7 @@ static void wrap_cartgrid(py::module & grid_module) {
     );
     cartgrid_pyclass.def_property_readonly(
         "shape",
-        [](const grid::CartesianGrid & self) { return array_to_pylist(self.shape(), self.ndim()); },
+        [](const grid::CartesianGrid & self) { return array_to_pylist(self.shape()); },
         "Get shape."
     );
     cartgrid_pyclass.def_property_readonly(
@@ -55,14 +55,14 @@ static void wrap_cartgrid(py::module & grid_module) {
     );
     cartgrid_pyclass.def(
         "get_grid_vector",
-        [](const grid::CartesianGrid & self, std::uint64_t i_dim) { return vector_to_pylist(self.grid_vector(i_dim)); },
+        [](const grid::CartesianGrid & self, std::uint64_t i_dim) { return view_to_pylist(self.grid_vector(i_dim)); },
         "Get grid vector of a given dimension.",
         py::arg("i_dim")
     );
     // slicing operator
     cartgrid_pyclass.def(
         "get",
-        [](const grid::CartesianGrid & self, std::uint64_t index) { return vector_to_pylist(self[index]); },
+        [](const grid::CartesianGrid & self, std::uint64_t index) { return array_to_pylist(self[index]); },
         "Get element at a given flatten index.",
         py::arg("index")
     );

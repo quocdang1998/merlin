@@ -73,8 +73,7 @@ void test_qr_solve(void) {
         53.8,  9.6, 30.9, 35.5, 38.3, 30.4, 48.3, 41.9,
     };
     double residual = qrp.solve(problem);
-    DoubleVec solution;
-    solution.assign(problem, 4);
+    DoubleVec solution(problem, 4, true);
     Message("Solution: %s\n", solution.str().c_str());
     Message("Residual: %f\n", residual);
 }
@@ -88,8 +87,7 @@ void test_permutation(void) {
     p.inv_permute(a, vec_b.data());
     Message("Vec_b: %s\n", vec_b.str().c_str());
     p.inplace_inv_permute(a);
-    DoubleVec vec_a;
-    vec_a.assign(a, 6);
+    DoubleVec vec_a(a, 6, true);
     Message("Vec_a: %s\n", vec_a.str().c_str());
 }
 

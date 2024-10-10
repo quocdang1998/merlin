@@ -35,24 +35,26 @@ void vandermonde_entry(std::uint64_t * power, double * point, const std::uint64_
 
 // Constructor from a full polynomial and Cartesian grid
 regpl::Vandermonde::Vandermonde(const Index & order, const grid::CartesianGrid & grid, std::uint64_t n_threads) :
-order_(order), term_idx_(prod_elements(order.data(), grid.ndim())) {
+order_(order), term_idx_(prod_elements(order.data(), order.size())) {
+    // argument checking
+    if (order.size() != grid.ndim()) {
+        Fatal<std::invalid_argument>("Polynomial order and grid must have the same ndim.\n");
+    }
     // create term index vector
     std::iota(this->term_idx_.begin(), this->term_idx_.end(), 0);
     // create Vandermonde matrix
     this->solver_ = linalg::QRPDecomp(grid.size(), this->term_idx_.size());
     _Pragma("omp parallel num_threads(n_threads)") {
         std::uint64_t thread_idx = ::omp_get_thread_num();
-        Index power;
-        power.fill(0);
-        Point point;
-        point.fill(0);
+        Index power(order.size());
+        Point point(order.size());
         for (std::uint64_t i_term = thread_idx; i_term < this->term_idx_.size(); i_term += n_threads) {
             // get power per dimension of the term
-            contiguous_to_ndim_idx(i_term, order.data(), grid.ndim(), power.data());
+            contiguous_to_ndim_idx(i_term, order.data(), order.size(), power.data());
             // calculate vandermonde matrix for each point in the grid
             for (std::uint64_t i_point = 0; i_point < grid.size(); i_point++) {
                 grid.get(i_point, point.data());
-                vandermonde_entry(power.data(), point.data(), grid.ndim(), this->solver_.core().get(i_point, i_term));
+                vandermonde_entry(power.data(), point.data(), order.size(), this->solver_.core().get(i_point, i_term));
             }
         }
     }
@@ -62,24 +64,26 @@ order_(order), term_idx_(prod_elements(order.data(), grid.ndim())) {
 
 // Constructor from a full polynomial and grid points
 regpl::Vandermonde::Vandermonde(const Index & order, const grid::RegularGrid & grid, std::uint64_t n_threads) :
-order_(order), term_idx_(prod_elements(order.data(), grid.ndim())) {
+order_(order), term_idx_(prod_elements(order.data(), order.size())) {
+    // argument checking
+    if (order.size() != grid.ndim()) {
+        Fatal<std::invalid_argument>("Polynomial order and grid must have the same ndim.\n");
+    }
     // create term index vector
     std::iota(this->term_idx_.begin(), this->term_idx_.end(), 0);
     // create Vandermonde matrix
     this->solver_ = linalg::QRPDecomp(grid.size(), this->term_idx_.size());
     _Pragma("omp parallel num_threads(n_threads)") {
         std::uint64_t thread_idx = ::omp_get_thread_num();
-        Index power;
-        power.fill(0);
-        Point point;
-        point.fill(0);
+        Index power(order.size());
+        Point point(order.size());
         for (std::uint64_t i_term = thread_idx; i_term < this->term_idx_.size(); i_term += n_threads) {
             // get power per dimension of the term
-            contiguous_to_ndim_idx(i_term, order.data(), grid.ndim(), power.data());
+            contiguous_to_ndim_idx(i_term, order.data(), order.size(), power.data());
             // calculate vandermonde matrix for each point in the grid
             for (std::uint64_t i_point = 0; i_point < grid.size(); i_point++) {
                 grid.get(i_point, point.data());
-                vandermonde_entry(power.data(), point.data(), grid.ndim(), this->solver_.core().get(i_point, i_term));
+                vandermonde_entry(power.data(), point.data(), order.size(), this->solver_.core().get(i_point, i_term));
             }
         }
     }

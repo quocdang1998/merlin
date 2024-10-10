@@ -2,19 +2,19 @@
 #ifndef MERLIN_ARRAY_STOCK_HPP_
 #define MERLIN_ARRAY_STOCK_HPP_
 
-#include <cstdint>  // std::uint64_t, std::uintptr_t
+#include <cstdint>  // std::uint64_t
 #include <cstdio>   // std::FILE
 #include <string>   // std::string
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Stock
 #include "merlin/array/nddata.hpp"       // merlin::array::NdData
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
-#include "merlin/filelock.hpp"           // merlin::FileLock
+#include "merlin/io/file_lock.hpp"       // merlin::io::FileLock
 
 namespace merlin {
 
 /** @brief Multi-dimensional array exported to a file.
- *  @details The read/write is garanteed to the threadsafe by the member merlin::array::Stock::thread_safe_. When it is
+ *  @details The read/write is guaranteed to the threadsafe by the member merlin::array::Stock::thread_safe_. When it is
  *  set to ``true``, multiple threads/processes can read file at the same time, but only one can write the file. If a
  *  thread/process opening the file for reading (respectively writing), it will have to wait until all currently writing
  *  (respectively reading) threads/processes finished their jobs. By switching off this option, user is responsible for
@@ -63,7 +63,7 @@ class array::Stock : public array::NdData {
     /** @brief Get pointer to file.*/
     std::FILE * get_file_ptr(void) const noexcept { return this->file_ptr_; }
     /** @brief Get filelock.*/
-    FileLock & get_file_lock(void) const noexcept { return this->flock_; }
+    io::FileLock & get_file_lock(void) const noexcept { return this->flock_; }
     /** @brief Check if the policy is thread safe.*/
     constexpr bool is_thread_safe(void) const noexcept { return this->thread_safe_; }
     /** @brief Check if the file is created with the same endianess as the machine.*/
@@ -140,7 +140,7 @@ class array::Stock : public array::NdData {
     /** @brief Pointer to file stream.*/
     mutable std::FILE * file_ptr_;
     /** @brief Lock file.*/
-    mutable FileLock flock_;
+    mutable io::FileLock flock_;
 
   private:
     /** @brief Read metadata from file.

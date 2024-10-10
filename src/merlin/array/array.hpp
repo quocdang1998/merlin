@@ -3,13 +3,14 @@
 #define MERLIN_ARRAY_ARRAY_HPP_
 
 #include <array>    // std::array
-#include <cstdint>  // std::uint64_t, std::uintptr_t
+#include <cstdint>  // std::uint64_t
 #include <string>   // std::string
 
 #include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::Parcel, merlin::array::Stock
 #include "merlin/array/nddata.hpp"       // merlin::array::NdData
 #include "merlin/cuda/stream.hpp"        // merlin::cuda::Stream
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
+#include "merlin/vector.hpp"             // merlin::Index
 
 namespace merlin {
 
@@ -34,7 +35,7 @@ class array::Array : public array::NdData {
      *  @note The original memory tied to the pointer will not be freed at destruction. But if copy is true, the
         copied tensor is automatically deallocated inside the destructor.
      */
-    MERLIN_EXPORTS Array(double * data, const UIntVec & shape, const UIntVec & strides, bool copy = false,
+    MERLIN_EXPORTS Array(double * data, const Index & shape, const Index & strides, bool copy = false,
                          bool pin_memory = true);
     /** @brief Constructor C-contiguous empty array from shape vector.*/
     MERLIN_EXPORTS Array(const Index & shape);

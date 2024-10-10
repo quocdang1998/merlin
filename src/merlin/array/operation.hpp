@@ -7,8 +7,9 @@
 #include <utility>  // std::pair
 
 #include "merlin/array/nddata.hpp"  // merlin::array::NdData
-#include "merlin/config.hpp"        // __cuhostdev__, merlin::Index
+#include "merlin/config.hpp"        // __cuhostdev__
 #include "merlin/exports.hpp"       // MERLIN_EXPORTS
+#include "merlin/vector.hpp"        // merlin::Index
 
 namespace merlin::array {
 
@@ -19,13 +20,12 @@ namespace merlin::array {
  *  @details Get stride vector from dims vector and size of one element as if the merlin::array::NdData is
  *  C-contiguous.
  *  @param shape Shape vector.
- *  @param ndim Number of dimensions.
  *  @param element_size Size on one element.
  */
-constexpr Index contiguous_strides(const Index & shape, std::uint64_t ndim, std::uint64_t element_size) {
+__cuhostdev__ constexpr Index contiguous_strides(const Index & shape, std::uint64_t element_size) {
     Index c_strides;
-    c_strides[ndim - 1] = element_size;
-    for (std::int64_t i = ndim - 2; i >= 0; i--) {
+    c_strides[shape.size() - 1] = element_size;
+    for (std::int64_t i = shape.size() - 2; i >= 0; i--) {
         c_strides[i] = shape[i + 1] * c_strides[i + 1];
     }
     return c_strides;
@@ -39,8 +39,16 @@ constexpr Index contiguous_strides(const Index & shape, std::uint64_t ndim, std:
  *  @param strides Strides vector.
  *  @param ndim Number of dimensions.
  */
-__cuhostdev__ std::uint64_t get_leap(std::uint64_t index, const Index & shape, const Index & strides,
-                                     std::uint64_t ndim) noexcept;
+__cuhostdev__ constexpr std::uint64_t get_leap(std::uint64_t index, const std::uint64_t * shape,
+                                               const std::uint64_t * strides, std::uint64_t ndim) noexcept {
+    std::uint64_t cum_prod = 1, nd_index = 0, leap = 0;
+    for (std::int64_t i_dim = ndim - 1; i_dim >= 0; i_dim--) {
+        nd_index = (index / cum_prod) % shape[i_dim];
+        leap += strides[i_dim] * nd_index;
+        cum_prod *= shape[i_dim];
+    }
+    return leap;
+}
 
 /** @brief Calculate the longest contiguous segment and break index of an tensor.
  *  @details Longest contiguous segment is the length (in bytes) of the longest sub-tensor that is C-contiguous in the
@@ -52,13 +60,12 @@ __cuhostdev__ std::uint64_t get_leap(std::uint64_t index, const Index & shape, c
  *  of 4 and break index of 0.
  *  @param shape Shape vector.
  *  @param strides Strides vector.
- *  @param ndim Number of dimension.
  */
-constexpr std::pair<std::uint64_t, std::int64_t> lcseg_and_brindex(const Index & shape, const Index & strides,
-                                                                   std::uint64_t ndim) {
+__cuhostdev__ constexpr std::pair<std::uint64_t, std::int64_t> lcseg_and_brindex(const Index & shape,
+                                                                                 const std::uint64_t * strides) {
     std::uint64_t longest_contiguous_segment = sizeof(double);
-    std::int64_t break_index = ndim - 1;
-    for (std::int64_t i = ndim - 1; i > 0; i--) {
+    std::int64_t break_index = shape.size() - 1;
+    for (std::int64_t i = shape.size() - 1; i > 0; i--) {
         if (strides[i] != longest_contiguous_segment) {
             break;
         }
@@ -109,7 +116,7 @@ concept TransferFunction = requires(Function & func, void * dest, const void * s
  */
 template <class CopyFunction>
 requires array::TransferFunction<CopyFunction>
-void copy(array::NdData * dest, const array::NdData * src, CopyFunction copy);
+void copy(array::NdData * dest, const array::NdData * src, CopyFunction && copy);
 
 /** @brief Fill all array with a given value.
  *  @tparam WriteFunction Function writing from a CPU array to the target pointer data, having the prototype of
@@ -121,7 +128,7 @@ void copy(array::NdData * dest, const array::NdData * src, CopyFunction copy);
  */
 template <class CopyFunction, std::uint64_t buffer = 1024>
 requires array::TransferFunction<CopyFunction>
-void fill(array::NdData * target, double fill_value, CopyFunction write_engine);
+void fill(array::NdData * target, double fill_value, CopyFunction && write_engine);
 
 /** @brief Calculate mean and variance of an array.
  *  @details Calculate mean and variance of all non-zero elements inside an array.
@@ -133,7 +140,7 @@ void fill(array::NdData * target, double fill_value, CopyFunction write_engine);
  */
 template <class CopyFunction, std::uint64_t buffer = 1024>
 requires array::TransferFunction<CopyFunction>
-std::array<double, 2> stat(const array::NdData * target, CopyFunction copy);
+std::array<double, 2> stat(const array::NdData * target, CopyFunction && copy);
 
 /** @brief String representation of an array.
  *  @param target Target array to print.

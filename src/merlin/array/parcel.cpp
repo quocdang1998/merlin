@@ -41,7 +41,7 @@ array::Parcel::Parcel(const array::Parcel & src) : array::NdData(src) {
     this->device_ = cuda::Device::get_current_gpu();
     cuda::CtxGuard guard(this->device_);
     // calculate stride and initialize attributes
-    this->strides_ = array::contiguous_strides(this->shape_, this->ndim_, sizeof(double));
+    this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
     this->release = true;
     // allocate data
     // this->data_ = reinterpret_cast<double *>(mem_alloc_device(sizeof(double) * this->size(), 0));
@@ -66,7 +66,7 @@ array::Parcel & array::Parcel::operator=(const array::Parcel & src) {
     cuda::CtxGuard guard(this->device_);
     // copy metadata and calculate strides vector
     this->array::NdData::operator=(src);
-    this->strides_ = array::contiguous_strides(this->shape_, this->ndim_, sizeof(double));
+    this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
     this->release = true;
     // allocate data
     // this->data_ = reinterpret_cast<double *>(mem_alloc_device(sizeof(double) * this->size(), 0));
@@ -110,7 +110,7 @@ array::Parcel & array::Parcel::operator=(array::Parcel && src) {
 // Get value of element at a n-dim index
 double array::Parcel::get(const Index & index) const {
     cuda::CtxGuard guard(this->device_);
-    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim_);
+    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     double result;
     memcpy_gpu_to_cpu(&result, reinterpret_cast<double *>(data_ptr), sizeof(double));
@@ -120,7 +120,7 @@ double array::Parcel::get(const Index & index) const {
 // Get value of element at a C-contiguous index
 double array::Parcel::get(std::uint64_t index) const {
     cuda::CtxGuard guard(this->device_);
-    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_, this->ndim_);
+    std::uint64_t leap = array::get_leap(index, this->shape_.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     double result;
     memcpy_gpu_to_cpu(&result, reinterpret_cast<double *>(data_ptr), sizeof(double));
@@ -130,7 +130,7 @@ double array::Parcel::get(std::uint64_t index) const {
 // Set value of element at a n-dim index
 void array::Parcel::set(const Index & index, double value) {
     cuda::CtxGuard guard(this->device_);
-    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim_);
+    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     memcpy_cpu_to_gpu(reinterpret_cast<double *>(data_ptr), &value, sizeof(double));
 }
@@ -138,7 +138,7 @@ void array::Parcel::set(const Index & index, double value) {
 // Set value of element at a C-contiguous index
 void array::Parcel::set(std::uint64_t index, double value) {
     cuda::CtxGuard guard(this->device_);
-    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_, this->ndim_);
+    std::uint64_t leap = array::get_leap(index, this->shape_.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     memcpy_cpu_to_gpu(reinterpret_cast<double *>(data_ptr), &value, sizeof(double));
 }

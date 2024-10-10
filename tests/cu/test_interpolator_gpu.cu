@@ -11,7 +11,7 @@
 
 using namespace merlin;
 
-double foo(const DoubleVec & v) {
+double foo(const Point & v) {
     return (2.f*v[0] + v[2])*v[2] + 3.f*v[1];
 }
 
@@ -27,9 +27,10 @@ int main(void) {
         value[i] = foo(cart_gr[i]);
     }
     Message("Value: %s\n", value.str().c_str());
+    Message("Grid shape: ") << cart_gr.shape().str() << " and value shape " << value.shape().str() << "\n";
 
     // calculate Newton coefficients (CPU)
-    Vector<splint::Method> methods = {
+    vector::DynamicVector<splint::Method> methods = {
         splint::Method::Newton,
         splint::Method::Lagrange,
         splint::Method::Newton

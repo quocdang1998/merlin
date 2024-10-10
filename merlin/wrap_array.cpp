@@ -32,12 +32,12 @@ static void wrap_nddata(py::module & array_module) {
     );
     nddata_pyclass.def_property_readonly(
         "shape",
-        [](const array::NdData & self) { return array_to_pylist(self.shape(), self.ndim()); },
+        [](const array::NdData & self) { return array_to_pylist(self.shape()); },
         "Get shape vector."
     );
     nddata_pyclass.def_property_readonly(
         "strides",
-        [](const array::NdData & self) { return array_to_pylist(self.strides(), self.ndim()); },
+        [](const array::NdData & self) { return array_to_pylist(self.strides()); },
         "Get stride vector."
     );
     nddata_pyclass.def_property_readonly(
@@ -80,7 +80,7 @@ static void wrap_nddata(py::module & array_module) {
     // operations
     nddata_pyclass.def(
         "reshape",
-        [](array::NdData & self, py::sequence & new_shape) { self.reshape(pyseq_to_vector<std::uint64_t>(new_shape)); },
+        [](array::NdData & self, py::sequence & new_shape) { self.reshape(pyseq_to_array<std::uint64_t>(new_shape)); },
         "Reshape the dataset.",
         py::arg("new_shape")
     );
@@ -123,7 +123,7 @@ static void wrap_array_(py::module & array_module) {
                     throw std::runtime_error("Incompatible format: expected a double array.");
                 }
                 std::uint64_t ndim(info.ndim);
-                UIntVec shape(info.ndim), strides(info.ndim);
+                Index shape(info.ndim), strides(info.ndim);
                 for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
                     shape[i_dim] = std::uint64_t(info.shape[i_dim]);
                     strides[i_dim] = std::uint64_t(info.strides[i_dim]);
@@ -151,10 +151,8 @@ static void wrap_array_(py::module & array_module) {
     // conversion to Numpy
     array_pyclass.def_buffer(
         [](array::Array & self) {
-            UIntVec py_shape(const_cast<std::uint64_t *>(self.shape().data()), self.ndim());
-            UIntVec py_strides(const_cast<std::uint64_t *>(self.strides().data()), self.ndim());
             return py::buffer_info(self.data(), sizeof(double), py::format_descriptor<double>::format(), self.ndim(),
-                                   py_shape, py_strides);
+                                   self.shape(), self.strides());
         }
     );
     // copy data from GPU

@@ -58,7 +58,7 @@ Some cautions when developing the package:
 Data serialization
 ------------------
 
-Data in Merlin can be serialized into a binary data file for transfering data across multiple executables. There are
+Data in Merlin can be serialized into a binary data file for transferring data across multiple executables. There are
 three classes that can be serialized/deserialized in Merlin: multi-dimensional array, regression polynomial and
 CANDECOMP-PARAFAC model.
 
@@ -67,6 +67,9 @@ type ``std::int64_t`` and ``std::uint64_t`` is preferred over ``int``, ``unsigne
 for floating points, the usage of ``double`` is preferred over ``float`` (to be converted to ``std::float64_t`` when
 CUDA officially supports the C++23 standard). Conventional C-types are only utilized at the interface with other
 libraries, such as CUDA.
+
+Data are serialized in **little endian**. Conversions between little endian and native endian are automatically handled
+by the read engine :cpp:class:`merlin::io::ReadEngine` and the write engine :cpp:class:`merlin::io::WriteEngine`.
 
 .. tabularcolumns:: \X{1}{2}\X{1}{2}
 

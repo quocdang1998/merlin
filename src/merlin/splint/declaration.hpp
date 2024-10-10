@@ -7,7 +7,7 @@ namespace merlin::splint {
 class Interpolator;
 
 /** @brief Interpolation method.*/
-enum class Method : unsigned int {
+enum class Method : std::uint64_t {
     /** @brief Linear interpolation.*/
     Linear = 0x00,
     /** @brief Polynomial interpolation by Lagrange method.*/

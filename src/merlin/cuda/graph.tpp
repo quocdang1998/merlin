@@ -34,7 +34,7 @@ void cuda::graph_callback_wrapper(void * data) {
 // Add CUDA kernel node
 template <typename Function, typename... Args>
 cuda::GraphNode cuda::Graph::add_kernel_node(Function * kernel, std::uint64_t n_blocks, std::uint64_t n_threads,
-                                             std::uint64_t shared_mem, const std::vector<cuda::GraphNode> & deps,
+                                             std::uint64_t shared_mem, const cuda::GraphNodeList & deps,
                                              Args &&... args) {
     // initialize kernel param
     ::cudaKernelNodeParams kernel_param;
@@ -58,8 +58,7 @@ cuda::GraphNode cuda::Graph::add_kernel_node(Function * kernel, std::uint64_t n_
 
 // Add CUDA host node
 template <typename Function, typename... Args>
-cuda::GraphNode cuda::Graph::add_host_node(Function && callback, const std::vector<cuda::GraphNode> & deps,
-                                           Args &&... args) {
+cuda::GraphNode cuda::Graph::add_host_node(Function && callback, const cuda::GraphNodeList & deps, Args &&... args) {
     std::decay_t<Function> * p_callback = new std::decay_t<Function>(std::forward<Function>(callback));
     std::tuple<Args...> * p_args = new std::tuple<Args...>(std::forward<Args>(args)...);
     std::uintptr_t * data = new std::uintptr_t[2];

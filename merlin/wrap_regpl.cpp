@@ -40,7 +40,7 @@ void wrap_polynomial(py::module & regpl_module) {
     // attributes
     polynomial_pyclass.def(
         "order",
-        [](const regpl::Polynomial & self) { return array_to_pylist(self.order(), self.ndim()); },
+        [](const regpl::Polynomial & self) { return array_to_pylist(self.order()); },
         "Get order per dimension of the polynomial."
     );
     // serialization
@@ -171,8 +171,7 @@ void wrap_regressor(py::module & regpl_module) {
         [](regpl::Regressor & self, const array::Array & points, std::uint64_t n_threads) {
             DoubleVec result(points.shape()[0]);
             self.evaluate(points, result, n_threads);
-            double * data = std::exchange(result.data(), nullptr);
-            return make_wrapper_array<double>(data, result.size());
+            return make_wrapper_array<double>(result.disown(), result.size());
         },
         "Evaluate regression by CPU parallelism.",
         py::arg("points"), py::arg("n_threads") = 1
@@ -182,8 +181,7 @@ void wrap_regressor(py::module & regpl_module) {
         [](regpl::Regressor & self, const array::Parcel & points, std::uint64_t n_threads) {
             DoubleVec result(points.shape()[0]);
             self.evaluate(points, result, n_threads);
-            double * data = std::exchange(result.data(), nullptr);
-            return make_wrapper_array<double>(data, result.size());
+            return make_wrapper_array<double>(result.disown(), result.size());
         },
         "Evaluate regression by GPU parallelism.",
         py::arg("points"), py::arg("n_threads") = 32

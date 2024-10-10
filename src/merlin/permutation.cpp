@@ -20,7 +20,7 @@ Permutation::Permutation(const UIntVec & index) : index_(index.size()) {
     // check if it is a valid permutation
     std::vector<bool> tracker(index.size());
     std::fill_n(tracker.begin(), tracker.size(), false);
-    for (const std::uint64_t i : index) {
+    for (const std::uint64_t & i : index) {
         if (i >= index.size()) {
             Fatal<std::invalid_argument>("Index out of range.\n");
         }
@@ -29,10 +29,7 @@ Permutation::Permutation(const UIntVec & index) : index_(index.size()) {
         }
         tracker[i] = true;
     }
-    // copy permutation index
-    for (std::uint64_t i = 0; i < index.size(); i++) {
-        this->index_[i] = index[i];
-    }
+    this->index_ = IntVec(index.begin(), index.end());
 }
 
 // Calculate the inverse permutation

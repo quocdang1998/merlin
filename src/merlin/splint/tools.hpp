@@ -2,7 +2,6 @@
 #ifndef MERLIN_SPLINT_TOOLS_HPP_
 #define MERLIN_SPLINT_TOOLS_HPP_
 
-#include <array>        // std::array
 #include <future>       // std::future
 #include <type_traits>  // std::add_pointer
 
@@ -10,7 +9,7 @@
 #include "merlin/cuda/declaration.hpp"     // merlin::cuda::Stream
 #include "merlin/exports.hpp"              // MERLIN_EXPORTS
 #include "merlin/grid/cartesian_grid.hpp"  // merlin::grid::CartesianGrid
-#include "merlin/vector.hpp"               // merlin::Vector
+#include "merlin/vector.hpp"               // merlin::Index
 
 namespace merlin::splint {
 
@@ -29,7 +28,7 @@ using ConstructionMethod = std::add_pointer<void(double *, const double *, const
  *  @param n_threads Number of threads to calculate.
  */
 void construct_coeff_cpu(std::future<void> && current_job, double * coeff, const grid::CartesianGrid * p_grid,
-                         const std::array<unsigned int, max_dim> * p_method, std::uint64_t n_threads) noexcept;
+                         const Index * p_method, std::uint64_t n_threads) noexcept;
 
 /** @brief Construct interpolation coefficients with GPU parallelism.
  *  @param coeff C-contiguous array of coefficients on GPU (value are pre-copied to this array).
@@ -39,9 +38,9 @@ void construct_coeff_cpu(std::future<void> && current_job, double * coeff, const
  *  @param shared_mem_size Size of share memory (at least ``p_grid`` and ``p_method``).
  *  @param stream_ptr Pointer to the CUDA stream performing this calculation.
  */
-void construct_coeff_gpu(double * coeff, const grid::CartesianGrid * p_grid,
-                         const std::array<unsigned int, max_dim> * p_method, std::uint64_t n_threads,
-                         std::uint64_t shared_mem_size, const cuda::Stream * stream_ptr) noexcept;
+void construct_coeff_gpu(double * coeff, const grid::CartesianGrid * p_grid, const Index * p_method,
+                         std::uint64_t n_threads, std::uint64_t shared_mem_size,
+                         const cuda::Stream * stream_ptr) noexcept;
 
 // Evaluate Interpolation
 // ----------------------
@@ -67,8 +66,7 @@ __cuhostdev__ void recursive_interpolate(const double * coeff, const std::uint64
                                          const std::uint64_t & c_index_coeff, const std::uint64_t * ndim_index_coeff,
                                          double * cache_array, const double * point, const std::int64_t & i_dim,
                                          const std::uint64_t * grid_shape, double * const * grid_vectors,
-                                         const std::array<unsigned int, max_dim> & method,
-                                         const std::uint64_t & ndim) noexcept;
+                                         const Index & method, const std::uint64_t & ndim) noexcept;
 
 /** @brief Evaluate interpolation with CPU parallelism.
  *  @param current_job Pointer to previous asynchronous job.
@@ -82,8 +80,8 @@ __cuhostdev__ void recursive_interpolate(const double * coeff, const std::uint64
  *  @param n_threads Number of threads to perform the interpolation.
  */
 void eval_intpl_cpu(std::future<void> && current_job, const double * coeff, const grid::CartesianGrid * p_grid,
-                    const std::array<unsigned int, max_dim> * p_method, const double * points, std::uint64_t n_points,
-                    double * result, std::uint64_t n_threads) noexcept;
+                    const Index * p_method, const double * points, std::uint64_t n_points, double * result,
+                    std::uint64_t n_threads) noexcept;
 
 /** @brief Evaluate interpolation with GPU parallelism.
  *  @param coeff C-contiguous array of coefficients on GPU (value are pre-copied to this array).
@@ -98,10 +96,9 @@ void eval_intpl_cpu(std::future<void> && current_job, const double * coeff, cons
  *  @param shared_mem_size Size of share memory (at least ``p_grid``, ``p_method``).
  *  @param stream_ptr Pointer to the CUDA stream performing this calculation.
  */
-void eval_intpl_gpu(double * coeff, const grid::CartesianGrid * p_grid,
-                    const std::array<unsigned int, max_dim> * p_method, double * points, std::uint64_t n_points,
-                    double * result, std::uint64_t n_threads, std::uint64_t ndim, std::uint64_t shared_mem_size,
-                    const cuda::Stream * stream_ptr) noexcept;
+void eval_intpl_gpu(double * coeff, const grid::CartesianGrid * p_grid, const Index * p_method, double * points,
+                    std::uint64_t n_points, double * result, std::uint64_t n_threads, std::uint64_t ndim,
+                    std::uint64_t shared_mem_size, const cuda::Stream * stream_ptr) noexcept;
 
 }  // namespace merlin::splint
 

@@ -1,14 +1,12 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/nddata.hpp"
 
-#include <algorithm>  // std::copy, std::fill, std::find
+#include <algorithm>  // std::copy
 #include <cinttypes>  // PRIu64
-#include <iterator>   // std::distance
-#include <utility>    // std::move, std::swap
-#include <vector>     // std::vector
 
 #include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides
 #include "merlin/logger.hpp"           // merlin::Fatal, merlin::Warning
+#include "merlin/utils.hpp"            // merlin::prod_elements
 
 namespace merlin {
 
@@ -27,6 +25,8 @@ void array::NdData::calc_array_size(void) noexcept {
 // Create sub-array
 void array::NdData::create_sub_array(array::NdData & sub_array, const SliceArray & slices) const noexcept {
     // create result
+    sub_array.shape_.resize(this->ndim());
+    sub_array.strides_.resize(this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_);
     for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
         auto [offset, shape, stride] = slices[i_dim].slice_on(this->shape_[i_dim], this->strides_[i_dim]);
@@ -34,36 +34,23 @@ void array::NdData::create_sub_array(array::NdData & sub_array, const SliceArray
         sub_array.shape_[i_dim] = shape;
         sub_array.strides_[i_dim] = stride;
     }
-    sub_array.ndim_ = this->ndim_;
     sub_array.data_ = reinterpret_cast<double *>(data_ptr);
     sub_array.calc_array_size();
     sub_array.release = false;
 }
 
 // Member initialization for C++ interface
-array::NdData::NdData(double * data, const UIntVec & shape, const UIntVec & strides) : data_(data) {
-    if (shape.size() > max_dim) {
-        Fatal<std::invalid_argument>("Exceeding maximum ndim (%" PRIu64 ").\n", max_dim);
-    }
-    if (!is_same_size(shape, strides)) {
+array::NdData::NdData(double * data, const Index & shape, const Index & strides) :
+data_(data), shape_(shape), strides_(strides) {
+    if (shape.size() != strides.size()) {
         Fatal<std::invalid_argument>("Shape and strides vectors must have the same size.\n");
     }
-    this->ndim_ = shape.size();
-    this->shape_.fill(0);
-    this->strides_.fill(0);
-    std::copy(shape.begin(), shape.end(), this->shape_.begin());
-    std::copy(strides.begin(), strides.end(), this->strides_.begin());
     this->calc_array_size();
 }
 
 // Constructor from shape vector
-array::NdData::NdData(const Index & shape) {
-    this->shape_.fill(0);
-    this->strides_.fill(0);
-    Index::const_iterator first_zero_element = std::find(shape.begin(), shape.end(), 0);
-    std::copy(shape.begin(), first_zero_element, this->shape_.begin());
-    this->ndim_ = std::distance(shape.begin(), first_zero_element);
-    this->strides_ = array::contiguous_strides(this->shape_, this->ndim_, sizeof(double));
+array::NdData::NdData(const Index & shape) : shape_(shape) {
+    this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
     this->calc_array_size();
 }
 
@@ -80,25 +67,18 @@ bool array::NdData::is_c_contiguous(void) const {
 }
 
 // Reshape
-void array::NdData::reshape(const UIntVec & new_shape) {
-    if (this->ndim_ != 1) {
+void array::NdData::reshape(const Index & new_shape) {
+    if (this->ndim() != 1) {
         Fatal<std::invalid_argument>("Cannot reshape array of n-dim bigger than 1.\n");
     }
-    if (new_shape.size() > max_dim) {
-        Fatal<std::invalid_argument>("Exceeding maximum ndim (%" PRIu64 ").\n", max_dim);
-    }
-    std::uint64_t new_size = 1;
-    for (std::uint64_t i_dim = 0; i_dim < new_shape.size(); i_dim++) {
-        new_size *= new_shape[i_dim];
-    }
+    std::uint64_t new_size = prod_elements(new_shape.data(), new_shape.size());
     if (new_size != this->size_) {
         Fatal<std::invalid_argument>("Cannot reshape to an array with different size (current size %" PRIu64
                                      ", new size %" PRIu64 ").\n",
                                      this->shape_[0], new_size);
     }
-    std::copy(new_shape.begin(), new_shape.end(), this->shape_.begin());
-    this->ndim_ = new_shape.size();
-    this->strides_ = array::contiguous_strides(this->shape_, this->ndim_, sizeof(double));
+    this->shape_ = new_shape;
+    this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
 }
 
 // Collapse dimension from felt (or right)
@@ -107,26 +87,25 @@ void array::NdData::remove_dim(std::uint64_t i_dim) {
         Warning("Cannot remove dimension with size differ than 1.\n");
         return;
     }
-    std::copy(this->shape_.begin() + i_dim + 1, this->shape_.begin() + this->ndim_, this->shape_.begin() + i_dim);
-    std::copy(this->strides_.begin() + i_dim + 1, this->strides_.begin() + this->ndim_, this->strides_.begin() + i_dim);
-    this->ndim_ -= 1;
-    this->shape_[this->ndim_] = 0;
-    this->strides_[this->ndim_] = 0;
+    std::copy(this->shape_.begin() + i_dim + 1, this->shape_.end(), this->shape_.begin() + i_dim);
+    std::copy(this->strides_.begin() + i_dim + 1, this->strides_.end(), this->strides_.begin() + i_dim);
+    std::uint64_t new_ndim = this->ndim() - 1;
+    this->shape_.resize(new_ndim);
+    this->strides_.resize(new_ndim);
 }
 
 // Collapse all dimensions with size 1
 void array::NdData::squeeze(void) {
     std::uint64_t new_ndim = 0;
-    for (std::uint64_t i = 0; i < this->ndim_; i++) {
+    for (std::uint64_t i = 0; i < this->ndim(); i++) {
         if (this->shape_[i] != 1) {
             this->shape_[new_ndim] = this->shape_[i];
             this->strides_[new_ndim] = this->strides_[i];
             new_ndim++;
         }
     }
-    std::fill(this->shape_.data() + new_ndim, this->shape_.data() + this->ndim_, 0);
-    std::fill(this->strides_.data() + new_ndim, this->strides_.data() + this->ndim_, 0);
-    this->ndim_ = new_ndim;
+    this->shape_.resize(new_ndim);
+    this->strides_.resize(new_ndim);
 }
 
 // String representation

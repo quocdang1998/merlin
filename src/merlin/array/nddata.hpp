@@ -7,10 +7,10 @@
 #include <string>   // std::string
 
 #include "merlin/array/declaration.hpp"  // merlin::array::NdData
-#include "merlin/config.hpp"             // __cuhostdev__, merlin::Index
+#include "merlin/config.hpp"             // __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/slice.hpp"              // merlin::SliceArray
-#include "merlin/vector.hpp"             // merlin::UIntVec
+#include "merlin/vector.hpp"             // merlin::Index
 
 namespace merlin {
 
@@ -27,7 +27,7 @@ class array::NdData {
      *  @param shape Shape vector.
      *  @param strides Strides vector.
      */
-    MERLIN_EXPORTS NdData(double * data, const UIntVec & shape, const UIntVec & strides);
+    MERLIN_EXPORTS NdData(double * data, const Index & shape, const Index & strides);
     /** @brief Constructor from shape vector.*/
     MERLIN_EXPORTS NdData(const Index & shape);
     /// @}
@@ -49,7 +49,7 @@ class array::NdData {
     /** @brief Get pointer to data.*/
     __cuhostdev__ constexpr double * data(void) const noexcept { return this->data_; }
     /** @brief Get number of dimension.*/
-    __cuhostdev__ constexpr const std::uint64_t & ndim(void) const noexcept { return this->ndim_; }
+    __cuhostdev__ constexpr const std::uint64_t & ndim(void) const noexcept { return this->shape_.size(); }
     /** @brief Get reference to shape vector.*/
     __cuhostdev__ constexpr Index & shape(void) noexcept { return this->shape_; }
     /** @brief Get constant reference to shape vector.*/
@@ -87,7 +87,7 @@ class array::NdData {
     /** @brief Reshape the dataset.
      *  @param new_shape New shape.
      */
-    MERLIN_EXPORTS void reshape(const UIntVec & new_shape);
+    MERLIN_EXPORTS void reshape(const Index & new_shape);
     /** @brief Remove dimension with size 1.
      *  @param i_dim Index of dimension to remove.
      */
@@ -103,6 +103,12 @@ class array::NdData {
         array::NdData * p_result = new array::NdData();
         this->create_sub_array(*p_result, slices);
         return p_result;
+    }
+    /** @brief Create sub-array with the same type.*/
+    array::NdData get_sub_array(const SliceArray & slices) const {
+        array::NdData sub_array;
+        this->create_sub_array(sub_array, slices);
+        return sub_array;
     }
     /// @}
 
@@ -123,8 +129,6 @@ class array::NdData {
     double * data_ = nullptr;
     /** @brief Number of elements.*/
     std::uint64_t size_ = 0;
-    /** @brief Number of dimensions.*/
-    std::uint64_t ndim_ = 0;
     /** @brief Shape vector.
      *  @details Size of each axis.
      */

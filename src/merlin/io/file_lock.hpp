@@ -1,12 +1,13 @@
 // Copyright 2022 quocdang1998
-#ifndef MERLIN_FILELOCK_HPP_
-#define MERLIN_FILELOCK_HPP_
+#ifndef MERLIN_IO_FILE_LOCK_HPP_
+#define MERLIN_IO_FILE_LOCK_HPP_
 
 #include <cstdint>  // std::uintptr_t
 #include <cstdio>   // std::FILE
 #include <string>   // std::string
 
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/exports.hpp"         // MERLIN_EXPORTS
+#include "merlin/io/declaration.hpp"  // merlin::io::FileLock
 
 namespace merlin {
 
@@ -28,7 +29,7 @@ namespace merlin {
  *  - On **Linux**, the lock is not bound to read/write permission. Any other thread/process can read/write the file
  *    normally even when the file is locked by another process.
  */
-class FileLock {
+class io::FileLock {
   public:
     /// @name Constructors
     /// @{
@@ -106,4 +107,4 @@ class FileLock {
 
 }  // namespace merlin
 
-#endif  // MERLIN_FILELOCK_HPP_
+#endif  // MERLIN_IO_FILE_LOCK_HPP_

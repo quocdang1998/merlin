@@ -50,7 +50,7 @@ void linalg::QRPDecomp::decompose(std::uint64_t nthreads) {
     for (std::uint64_t i_col = 0; i_col < this->ncol(); i_col++) {
         // permute current column with column of max norm
         std::uint64_t max_idx = std::distance(this->diag_.begin(),
-                                              std::max_element(this->diag_.data() + i_col, this->diag_.end()));
+                                              std::max_element(this->diag_.begin() + i_col, this->diag_.end()));
         std::swap(this->diag_[i_col], this->diag_[max_idx]);
         linalg::avx_swap(&(this->core_.get(0, i_col)), &(this->core_.get(0, max_idx)), nchunks, remainder);
         this->permut_.transpose(i_col, max_idx);

@@ -73,6 +73,8 @@ class candy::Optimizer {
     __cuhostdev__ constexpr double * dynamic_data(void) noexcept { return this->dynamic_data_; }
     /** @brief Get pointer to (constant) optimizer dynamic data.*/
     __cuhostdev__ constexpr const double * dynamic_data(void) const noexcept { return this->dynamic_data_; }
+    /** @brief Get dynamic size optimizer.*/
+    __cuhostdev__ constexpr const std::uint64_t & dynamic_size(void) const noexcept { return this->dynamic_size_; }
     /** @brief Allocate dynamic data.*/
     void allocate_data(std::uint64_t size);
     /// @}

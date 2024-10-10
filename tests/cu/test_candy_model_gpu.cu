@@ -1,6 +1,8 @@
 #include <cinttypes>
 
+#include "merlin/array/array.hpp"
 #include "merlin/candy/model.hpp"
+#include "merlin/candy/optimizer.hpp"
 #include "merlin/config.hpp"
 #include "merlin/cuda/copy_helpers.hpp"
 #include "merlin/cuda/device.hpp"
@@ -9,38 +11,43 @@
 #include "merlin/utils.hpp"
 #include "merlin/vector.hpp"
 
+#include <algorithm>
+
 using namespace merlin;
 
-__global__ void print_model_shr(candy::Model * model_ptr) {
+__global__ void print_model_shr(candy::Model * model_ptr, candy::Optimizer * optmz_ptr, int i) {
     extern __shared__ candy::Model share_ptr[];
     std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
-    auto [_, __] = cuda::copy_objects(share_ptr, thread_idx, block_size, *model_ptr);
-    CudaOut("Candecomp Model on GPU (rank = %" PRIu64 "):\n", share_ptr->rank());
-    for (int i = 0; i < share_ptr->ndim(); i++) {
-        std::printf("Vector %d:", i);
-        for (int j = 0; j < share_ptr->rshape()[i]; j++) {
-            std::printf(" %.2f", share_ptr->param_vectors()[i][j]);
+    auto [_, model_shr, optmz_shr, i_shr] = cuda::copy_objects(share_ptr, thread_idx, block_size, *model_ptr,
+                                                               *optmz_ptr, i);
+    CudaOut("Candecomp Model on GPU (rank = %" PRIu64 "):\n", model_shr->rank());
+    for (int i = 0; i < model_shr->rank(); i++) {
+        std::printf("Rank %d:", i);
+        for (int j = 0; j < model_shr->rstride(); j++) {
+            std::printf(" %.2f", model_shr->get_concatenated_param_vectors(i)[j]);
         }
         std::printf("\n");
     }
-    Index index;
-    index.fill(0);
-    CudaOut("Model get: %f.\n", share_ptr->get(0,0,0));
+    CudaOut("Model get: %f.\n", model_shr->get(0,0,0));
+    CudaOut("shared integer: %d.\n", *i_shr);
+    CudaOut("Optimizer type: %.lu\n", optmz_shr->static_data().index());
+    CudaOut("Optimizer dynamic size: %.lu\n", optmz_shr->dynamic_size());
 }
 
-__global__ void print_model(candy::Model * model_ptr) {
+__global__ void print_model(candy::Model * model_ptr, candy::Optimizer * optmz_ptr) {
     CudaOut("Candecomp Model on GPU (rank = %" PRIu64 "):\n", model_ptr->rank());
-    for (int i = 0; i < model_ptr->ndim(); i++) {
-        std::printf("Vector %d:", i);
-        for (int j = 0; j < model_ptr->rshape()[i]; j++) {
-            std::printf(" %.2f", model_ptr->param_vectors()[i][j]);
+    for (int i = 0; i < model_ptr->rank(); i++) {
+        std::printf("Rank %d:", i);
+        for (int j = 0; j < model_ptr->rstride(); j++) {
+            std::printf(" %.2f", model_ptr->get_concatenated_param_vectors(i)[j]);
         }
         std::printf("\n");
     }
-    Index index;
-    index.fill(0);
+    Index index = {1, 1};
     CudaOut("Model eval: %f.\n", model_ptr->eval(index));
     model_ptr->get(1, 2, 1) = 1.70;
+    CudaOut("Optimizer type: %.lu\n", optmz_ptr->static_data().index());
+    CudaOut("Optimizer dynamic size: %.lu\n", optmz_ptr->dynamic_size());
 }
 
 int main(void) {
@@ -51,17 +58,22 @@ int main(void) {
     // Initialize model
     candy::Model model(
         {
-            {1.0, 0.5, 2.1, 0.25},
+            {1.0, 0.5,      2.1, 0.25    },
             {2.0, 1.0, 2.4, 1.2, 2.7, 1.6}
         },
         2);
     Message("Model: %s\n", model.str().c_str());
+    std::cout << model.eval({1, 1}) << "\n";
+
+    // initialize optimizer
+    candy::Optimizer optmz = candy::optmz::create_adagrad(0.1, model.num_params());
 
     // Copy model on GPU
-    cuda::Dispatcher mem(0, model);
+    cuda::Dispatcher mem(0, model, optmz);
     candy::Model * gpu_model = mem.get<0>();
-    print_model<<<1, 1>>>(gpu_model);
-    print_model_shr<<<1, 1, model.sharedmem_size() + sizeof(double)>>>(gpu_model);
+    candy::Optimizer * gpu_optmz = mem.get<1>();
+    print_model<<<1, 1>>>(gpu_model, gpu_optmz);
+    print_model_shr<<<1, 1, model.sharedmem_size() + optmz.sharedmem_size() + sizeof(int)>>>(gpu_model, gpu_optmz, 100);
     cuda::Device::synchronize();
 
     // Copy model from GPU

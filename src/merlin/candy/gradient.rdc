@@ -34,9 +34,7 @@ __cuhostdev__ static double rlsquare_grad(const candy::Model & model, const arra
     // initialize gradient
     double gradient = 0.0;
     // get parameter index
-    auto [param_dim, param_index] = index_in_subsequence(i_param, model.rshape().data(), model.ndim());
-    std::uint64_t param_rank = param_index % model.rank();
-    param_index /= model.rank();
+    auto [param_dim, param_index, param_rank] = model.get_param_index(i_param);
     // loop over each point in the dataset to calculate the gradient
     std::uint64_t n_subset = train_data.size() / train_data.shape()[param_dim];
     index_mem[param_dim] = param_index;
@@ -75,9 +73,7 @@ __cuhostdev__ static double absquare_grad(const candy::Model & model, const arra
     // initialize gradient
     double gradient = 0.0;
     // get parameter index
-    auto [param_dim, param_index] = index_in_subsequence(i_param, model.rshape().data(), model.ndim());
-    std::uint64_t param_rank = param_index % model.rank();
-    param_index /= model.rank();
+    auto [param_dim, param_index, param_rank] = model.get_param_index(i_param);
     // loop over each point in the dataset to calculate the gradient
     std::uint64_t n_subset = train_data.size() / train_data.shape()[param_dim];
     index_mem[param_dim] = param_index;

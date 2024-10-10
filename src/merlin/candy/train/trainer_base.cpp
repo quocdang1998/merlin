@@ -14,7 +14,7 @@ namespace merlin {
 candy::train::TrainerBase::TrainerBase(std::uint64_t capacity) :
 details_(capacity), export_fnames_(capacity, std::string()) {
     for (std::uint64_t i_case = 0; i_case < capacity; i_case++) {
-        this->details_[i_case].first.fill(0);
+        this->details_[i_case].first = Index();
         this->details_[i_case].second = 0;
     }
 }
@@ -62,8 +62,7 @@ std::uint64_t candy::train::TrainerBase::get_index_or_create_key(const std::stri
 
 // Add model shape and total number of parameters to the detail array
 void candy::train::TrainerBase::update_details(std::uint64_t index, const candy::Model & model) {
-    std::transform(model.rshape().begin(), model.rshape().begin() + model.ndim(), this->details_[index].first.begin(),
-                   [r = model.rank()](const std::uint64_t & rs) { return rs / r; });
+    this->details_[index].first = model.shape();
     this->details_[index].second = model.rank();
 }
 

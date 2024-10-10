@@ -4,12 +4,11 @@
 
 #include <vector>  // std::vector
 
-#include "merlin/config.hpp"             // merlin::Index
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/grid/declaration.hpp"   // merlin::grid::CartesianGrid, merlin::grid::RegularGrid
 #include "merlin/linalg/qrp_decomp.hpp"  // merlin::linalg::QRPDecomp
 #include "merlin/regpl/declaration.hpp"  // merlin::regpl::Polynomial, merlin::regpl::Vandermonde
-#include "merlin/vector.hpp"             // merlin::UIntVec
+#include "merlin/vector.hpp"             // merlin::Index, merlin::UIntVec
 
 namespace merlin {
 

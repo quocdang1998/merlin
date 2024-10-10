@@ -173,7 +173,30 @@ users are relieved from the obligation of manual pre-installation of the depende
 CMake build options
 -------------------
 
-Options for customizing the compilation of C++/CUDA interface:
+Merlin offers 8 presets (compilation configurations). Preset names follow the following form:
+
+.. code-block:: sh
+
+   cmake --preset=[os][-cuda][-dev]
+
+-  ``os`` (mandatory): Specify the operating system on which Merlin is compiled and utilized. The value can be either
+   ``linux`` (using ``gcc`` and ``make``) or ``windows`` (using ``cl.exe`` and ``ninja``).
+
+-  ``-cuda`` (optional): Compile using CUDA the GPU functionalities of Merlin. This option requires a CUDA Toolkit
+   version of at least 12.6. The target GPUs are assumed to be attached to the CPU performing the compilation. Note that
+   when this option is not enabled, **invoking functions reserved for GPUs will raise a runtime error**.
+
+-  ``-dev`` (optional): Compile in debug mode, along with the unit test executables.
+
+Examples:
+
+.. code-block:: sh
+
+   cmake --preset=windows-cuda      # Windows, release mode, CUDA enabled
+   cmake --preset=linux-dev         # Linux,   debug mode,   CUDA disabled
+   cmake --preset=windows-cuda-dev  # Windows, debug mode,   CUDA enabled
+
+CMake variables for further customizing the compilation of C++/CUDA interface:
 
 .. envvar:: MERLIN_CUDA
 
@@ -185,8 +208,8 @@ Options for customizing the compilation of C++/CUDA interface:
 
 .. envvar:: MERLIN_DETECT_CUDA_ARCH
 
-   Automatically detect architechtures of all GPUs connected to the CPU employed for compilation. Otherwise, the
-   architechtures fallback to the cache variable ``CMAKE_CUDA_ARCHITECTURES``.
+   Automatically detect the architectures of all GPUs connected to the CPU employed for compilation. Otherwise, the
+   architectures fallback to the cache variable ``CMAKE_CUDA_ARCHITECTURES``.
 
    :Type: ``BOOL``
    :Value: ``ON``, ``OFF``
@@ -217,6 +240,13 @@ Options for customizing the compilation of C++/CUDA interface:
    :Type: ``STRING``
    :Value: ``""``, ``"spgrid"``
    :Default: ``""``
+
+Examples:
+
+.. code-block:: sh
+
+   cmake --preset=windows-cuda -DMERLIN_LIBKIND=SHARED
+   cmake --preset=linux -DMERLIN_TEST=ON
 
 Build documentation
 -------------------

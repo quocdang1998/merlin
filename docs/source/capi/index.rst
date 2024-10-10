@@ -23,14 +23,34 @@ Environment
 
    merlin::Environment
 
-Type aliasing
-^^^^^^^^^^^^^
+Vector types
+^^^^^^^^^^^^
+
+Template classes
+''''''''''''''''
 
 .. doxysummary::
    :toctree: generated
 
-   merlin::Vector
+   merlin::vector::View
+   merlin::vector::StaticVector
+   merlin::vector::DynamicVector
+
+Type aliases
+''''''''''''
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::UIntView
+   merlin::IntView
+   merlin::DoubleView
+
+.. doxysummary::
+   :toctree: generated
+
    merlin::UIntVec
+   merlin::IntVec
    merlin::DoubleVec
 
 .. doxysummary::
@@ -40,6 +60,12 @@ Type aliasing
    merlin::Index
    merlin::Point
    merlin::DPtrArray
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::DViewArray
+   merlin::DVecArray
 
 Grid API
 ^^^^^^^^
@@ -376,13 +402,27 @@ Log printing
    merlin::cuda_compile_error
    merlin::cuda_runtime_error
 
-IO mutex
-^^^^^^^^
+IO operations
+^^^^^^^^^^^^^
 
 .. doxysummary::
    :toctree: generated
 
-   merlin::FileLock
+   merlin::io::FileDeleter
+   merlin::io::FilePointer
+   merlin::io::open_file
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::io::FileLock
+
+.. doxysummary::
+   :toctree: generated
+
+   merlin::io::IoBuffer
+   merlin::io::ReadEngine
+   merlin::io::WriteEngine
 
 Get system info
 ^^^^^^^^^^^^^^^

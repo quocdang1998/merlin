@@ -13,9 +13,9 @@
 
 #include "merlin/candy/declaration.hpp"        // merlin::candy::Model, merlin::candy::Optimizer
 #include "merlin/candy/train/declaration.hpp"  // merlin::candy::train::TrainerBase
-#include "merlin/config.hpp"                   // merlin::Index
 #include "merlin/exports.hpp"                  // MERLIN_EXPORTS
 #include "merlin/synchronizer.hpp"             // merlin::Synchronizer
+#include "merlin/vector.hpp"                   // merlin::Index
 
 namespace merlin {
 

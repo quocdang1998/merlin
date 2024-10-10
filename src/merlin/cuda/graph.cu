@@ -17,7 +17,7 @@ namespace merlin {
 
 // Wrapper of the function adding CUDA callback to graph
 cuda::GraphNode cuda::add_callback_to_graph(std::uintptr_t graph_ptr, cuda::GraphCallback functor,
-                                            const std::vector<cuda::GraphNode> & deps, void * arg) {
+                                            const cuda::GraphNodeList & deps, void * arg) {
     ::cudaGraphNode_t graph_node;
     ::cudaHostNodeParams function_params;
     function_params.fn = functor;
@@ -137,9 +137,9 @@ std::uint64_t cuda::Graph::get_num_nodes(void) const {
 }
 
 // Get node list
-std::vector<cuda::GraphNode> cuda::Graph::get_node_list(void) const {
+cuda::GraphNodeList cuda::Graph::get_node_list(void) const {
     std::size_t num_nodes = this->get_num_nodes();
-    std::vector<cuda::GraphNode> node_list(num_nodes);
+    cuda::GraphNodeList node_list(num_nodes);
     ::cudaError_t err_ = ::cudaGraphGetNodes(reinterpret_cast<::cudaGraph_t>(this->graph_),
                                              reinterpret_cast<::cudaGraphNode_t *>(node_list.data()), &num_nodes);
     if (err_ != 0) {
@@ -162,10 +162,10 @@ std::uint64_t cuda::Graph::get_num_edges(void) const {
 }
 
 // Get edge list
-std::vector<std::array<cuda::GraphNode, 2>> cuda::Graph::get_edge_list(void) const {
+cuda::GraphEdgeList cuda::Graph::get_edge_list(void) const {
     // allocate memory
     std::size_t num_edges = this->get_num_edges();
-    std::vector<::cudaGraphNode_t> nodes_from(num_edges), nodes_to(num_edges);
+    vector::DynamicVector<::cudaGraphNode_t> nodes_from(num_edges), nodes_to(num_edges);
     // get edge list
     ::cudaError_t err_ = ::cudaGraphGetEdges(reinterpret_cast<::cudaGraph_t>(this->graph_), nodes_from.data(),
                                              nodes_to.data(), &num_edges);
@@ -174,7 +174,7 @@ std::vector<std::array<cuda::GraphNode, 2>> cuda::Graph::get_edge_list(void) con
                                   ::cudaGetErrorString(err_));
     }
     // transform result
-    std::vector<std::array<cuda::GraphNode, 2>> edge_list(num_edges);
+    cuda::GraphEdgeList edge_list(num_edges);
     for (std::uint64_t i = 0; i < num_edges; i++) {
         edge_list[i][0].node_id = reinterpret_cast<std::uintptr_t>(nodes_from[i]);
         edge_list[i][1].node_id = reinterpret_cast<std::uintptr_t>(nodes_to[i]);
@@ -183,8 +183,7 @@ std::vector<std::array<cuda::GraphNode, 2>> cuda::Graph::get_edge_list(void) con
 }
 
 // Add memory allocation node
-std::pair<cuda::GraphNode, void *> cuda::Graph::add_malloc_node(std::uint64_t size,
-                                                                const std::vector<cuda::GraphNode> & deps) {
+std::pair<cuda::GraphNode, void *> cuda::Graph::add_malloc_node(std::uint64_t size, const cuda::GraphNodeList & deps) {
     ::cudaGraphNode_t graph_node;
     ::cudaMemAllocNodeParams node_params;
     std::memset(&node_params, 0, sizeof(::cudaMemAllocNodeParams));
@@ -205,7 +204,7 @@ std::pair<cuda::GraphNode, void *> cuda::Graph::add_malloc_node(std::uint64_t si
 
 // Add memcpy node
 cuda::GraphNode cuda::Graph::add_memcpy_node(void * dest, const void * src, std::uint64_t size,
-                                             cuda::MemcpyKind copy_flag, const std::vector<cuda::GraphNode> & deps) {
+                                             cuda::MemcpyKind copy_flag, const cuda::GraphNodeList & deps) {
     ::cudaGraphNode_t graph_node;
     ::cudaError_t err_ = ::cudaGraphAddMemcpyNode1D(&graph_node, reinterpret_cast<::cudaGraph_t>(this->graph_),
                                                     reinterpret_cast<const ::cudaGraphNode_t *>(deps.data()),
@@ -218,7 +217,7 @@ cuda::GraphNode cuda::Graph::add_memcpy_node(void * dest, const void * src, std:
 }
 
 // Add CUDA deallocation node
-cuda::GraphNode cuda::Graph::add_memfree_node(void * ptr, const std::vector<cuda::GraphNode> & deps) {
+cuda::GraphNode cuda::Graph::add_memfree_node(void * ptr, const cuda::GraphNodeList & deps) {
     ::cudaGraphNode_t graph_node;
     ::cudaError_t err_ = ::cudaGraphAddMemFreeNode(&graph_node, reinterpret_cast<::cudaGraph_t>(this->graph_),
                                                    reinterpret_cast<const ::cudaGraphNode_t *>(deps.data()),
@@ -231,8 +230,7 @@ cuda::GraphNode cuda::Graph::add_memfree_node(void * ptr, const std::vector<cuda
 }
 
 // Add CUDA event record node
-cuda::GraphNode cuda::Graph::add_event_record_node(const cuda::Event & event,
-                                                   const std::vector<cuda::GraphNode> & deps) {
+cuda::GraphNode cuda::Graph::add_event_record_node(const cuda::Event & event, const cuda::GraphNodeList & deps) {
     ::cudaGraphNode_t graph_node;
     ::cudaError_t err_ = ::cudaGraphAddEventRecordNode(&graph_node, reinterpret_cast<::cudaGraph_t>(this->graph_),
                                                        reinterpret_cast<const ::cudaGraphNode_t *>(deps.data()),
@@ -246,7 +244,7 @@ cuda::GraphNode cuda::Graph::add_event_record_node(const cuda::Event & event,
 }
 
 // Add CUDA event wait node
-cuda::GraphNode cuda::Graph::add_event_wait_node(const cuda::Event & event, const std::vector<cuda::GraphNode> & deps) {
+cuda::GraphNode cuda::Graph::add_event_wait_node(const cuda::Event & event, const cuda::GraphNodeList & deps) {
     ::cudaGraphNode_t graph_node;
     ::cudaError_t err_ = ::cudaGraphAddEventWaitNode(&graph_node, reinterpret_cast<::cudaGraph_t>(this->graph_),
                                                      reinterpret_cast<const ::cudaGraphNode_t *>(deps.data()),
@@ -260,8 +258,7 @@ cuda::GraphNode cuda::Graph::add_event_wait_node(const cuda::Event & event, cons
 }
 
 // Add CUDA child graph node
-cuda::GraphNode cuda::Graph::add_child_graph_node(const cuda::Graph & child_graph,
-                                                  const std::vector<cuda::GraphNode> & deps) {
+cuda::GraphNode cuda::Graph::add_child_graph_node(const cuda::Graph & child_graph, const cuda::GraphNodeList & deps) {
     ::cudaGraphNode_t graph_node;
     ::cudaError_t err_ = ::cudaGraphAddChildGraphNode(&graph_node, reinterpret_cast<::cudaGraph_t>(this->graph_),
                                                       reinterpret_cast<const ::cudaGraphNode_t *>(deps.data()),

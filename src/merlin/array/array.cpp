@@ -1,11 +1,8 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/array.hpp"
 
-#include <cinttypes>     // PRIu64
-#include <cstdio>        // std::fread, std::fseek
 #include <cstring>       // std::memcpy
 #include <functional>    // std::bind, std::placeholders
-#include <ios>           // std::ios_base::failure
 #include <shared_mutex>  // std::shared_lock
 #include <utility>       // std::forward, std::move
 
@@ -14,6 +11,7 @@
 #include "merlin/array/parcel.hpp"     // merlin::array::Parcel
 #include "merlin/array/stock.hpp"      // merlin::array::Stock
 #include "merlin/cuda/device.hpp"      // merlin::cuda::CtxGuard
+#include "merlin/io/io_engine.hpp"     // merlin::io::ReadEngine
 #include "merlin/logger.hpp"           // merlin::Fatal, merlin::cuda_runtime_error
 #include "merlin/memory.hpp"           // merlin::mem_alloc_host, merlin::mem_free_host, merlin::mem_register_host,
                                        // merlin::mem_unregister_host, merlin::memcpy_gpu_to_cpu
@@ -22,28 +20,11 @@
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Read data
-// ---------------------------------------------------------------------------------------------------------------------
-
-// Read an array from file
-static inline void read_from_file(void * dest, std::FILE * file, const void * src, std::uint64_t bytes,
-                                  bool same_endianess) {
-    std::fseek(file, reinterpret_cast<std::uintptr_t>(src), SEEK_SET);
-    std::uint64_t count = bytes / sizeof(double);
-    if (std::fread(dest, sizeof(double), count, file) != count) {
-        Fatal<std::ios_base::failure>("Read file error.\n");
-    }
-    if (!same_endianess) {
-        flip_range(reinterpret_cast<std::uint64_t *>(dest), count);
-    }
-}
-
-// ---------------------------------------------------------------------------------------------------------------------
 // Array
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Construct Array from Numpy array
-array::Array::Array(double * data, const UIntVec & shape, const UIntVec & strides, bool copy, bool pin_memory) :
+array::Array::Array(double * data, const Index & shape, const Index & strides, bool copy, bool pin_memory) :
 array::NdData(data, shape, strides) {
     // copy or assign data
     this->release = copy;
@@ -52,7 +33,7 @@ array::NdData(data, shape, strides) {
         this->data_ = reinterpret_cast<double *>(mem_alloc_host(this->size() * sizeof(double)));
         this->is_pinned = false;
         // reform the stride tensor (force into C shape)
-        this->strides_ = array::contiguous_strides(this->shape_, this->ndim_, sizeof(double));
+        this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
         // copy data from old tensor to new tensor (optimized with memcpy)
         array::NdData src(data, shape, strides);
         array::copy(this, &src, std::memcpy);
@@ -61,7 +42,8 @@ array::NdData(data, shape, strides) {
         std::copy(strides.begin(), strides.end(), this->strides_.begin());
         this->data_ = data;
         // pin memory
-        std::uint64_t last_elem = array::get_leap(this->size_ - 1, this->shape_, this->strides_, this->ndim_);
+        std::uint64_t last_elem = array::get_leap(this->size_ - 1, this->shape_.data(), this->strides_.data(),
+                                                  this->shape_.size());
         if (pin_memory) {
             this->is_pinned = mem_register_host(reinterpret_cast<void *>(this->data_), last_elem + sizeof(double));
         }
@@ -79,7 +61,7 @@ array::Array::Array(const Index & shape) : array::NdData(shape) {
 // Copy constructor
 array::Array::Array(const array::Array & src) : array::NdData(src) {
     // copy / initialize meta data
-    this->strides_ = array::contiguous_strides(this->shape_, this->ndim_, sizeof(double));
+    this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
     this->release = true;
     // copy data
     this->data_ = reinterpret_cast<double *>(mem_alloc_host(this->size() * sizeof(double)));
@@ -88,12 +70,21 @@ array::Array::Array(const array::Array & src) : array::NdData(src) {
 
 // Copy assignment
 array::Array & array::Array::operator=(const array::Array & src) {
+    // check for self assignment
+    if (this == &src) {
+        return *this;
+    }
     // copy / initialize meta data
     this->array::NdData::operator=(src);
-    this->strides_ = array::contiguous_strides(this->shape_, this->ndim_, sizeof(double));
+    this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
     // free current data
-    if (this->release) {
-        mem_free_host(reinterpret_cast<void *>(this->data_));
+    if (this->data_ != nullptr) {
+        if (this->is_pinned) {
+            mem_unregister_host(reinterpret_cast<void *>(this->data_));
+        }
+        if (this->release) {
+            mem_free_host(reinterpret_cast<void *>(this->data_));
+        }
     }
     this->release = true;
     // copy data
@@ -113,9 +104,14 @@ array::Array::Array(array::Array && src) : array::NdData(std::move(src)) {
 
 // Move assignment
 array::Array & array::Array::operator=(array::Array && src) {
-    // disable release of the source and free current data
-    if (this->release) {
-        mem_free_host(reinterpret_cast<void *>(this->data_));
+    // free current data
+    if (this->data_ != nullptr) {
+        if (this->is_pinned) {
+            mem_unregister_host(reinterpret_cast<void *>(this->data_));
+        }
+        if (this->release) {
+            mem_free_host(reinterpret_cast<void *>(this->data_));
+        }
     }
     // copy meta data
     this->array::NdData::operator=(std::forward<array::Array>(src));
@@ -128,56 +124,56 @@ array::Array & array::Array::operator=(array::Array && src) {
 
 // Get reference to element at a given ndim index
 double & array::Array::operator[](const Index & index) {
-    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim_);
+    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<double *>(data_ptr));
 }
 
 // Get reference to element at a given C-contiguous index
 double & array::Array::operator[](std::uint64_t index) {
-    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_, this->ndim_);
+    std::uint64_t leap = array::get_leap(index, this->shape_.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<double *>(data_ptr));
 }
 
 // Get constant reference to element at a given ndim index
 const double & array::Array::operator[](const Index & index) const {
-    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim_);
+    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<const double *>(data_ptr));
 }
 
 // Get const reference to element at a given C-contiguous index
 const double & array::Array::operator[](std::uint64_t index) const {
-    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_, this->ndim_);
+    std::uint64_t leap = array::get_leap(index, this->shape_.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<const double *>(data_ptr));
 }
 
 // Get value of element at a n-dim index
 double array::Array::get(const Index & index) const {
-    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim_);
+    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<double *>(data_ptr));
 }
 
 // Get value of element at a C-contiguous index
 double array::Array::get(std::uint64_t index) const {
-    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_, this->ndim_);
+    std::uint64_t leap = array::get_leap(index, this->shape_.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     return *(reinterpret_cast<double *>(data_ptr));
 }
 
 // Set value of element at a n-dim index
 void array::Array::set(const Index & index, double value) {
-    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim_);
+    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     *(reinterpret_cast<double *>(data_ptr)) = value;
 }
 
 // Set value of element at a C-contiguous index
 void array::Array::set(std::uint64_t index, double value) {
-    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_, this->ndim_);
+    std::uint64_t leap = array::get_leap(index, this->shape_.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
     *(reinterpret_cast<double *>(data_ptr)) = value;
 }
@@ -198,16 +194,15 @@ void array::Array::clone_data_from_gpu(const array::Parcel & src, const cuda::St
     cuda::CtxGuard guard(src.get_gpu());
     auto copy_func = std::bind(memcpy_gpu_to_cpu, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
                                stream.get_stream_ptr());
-    array::copy(dynamic_cast<array::NdData *>(this), dynamic_cast<const array::NdData *>(&src), copy_func);
+    array::copy(this, &src, copy_func);
 }
 
 // Export data to a file
 void array::Array::extract_data_from_file(const array::Stock & src) {
-    auto read_func = std::bind(read_from_file, std::placeholders::_1, src.get_file_ptr(), std::placeholders::_2,
-                               std::placeholders::_3, src.is_same_endianess());
-    std::shared_lock<FileLock> lock = ((src.is_thread_safe()) ? std::shared_lock<FileLock>(src.get_file_lock())
-                                                              : std::shared_lock<FileLock>());
-    array::copy(this, &src, read_func);
+    std::shared_lock<io::FileLock> lock = ((src.is_thread_safe()) ? std::shared_lock<io::FileLock>(src.get_file_lock())
+                                                                  : std::shared_lock<io::FileLock>());
+    io::ReadEngine<double> reader(src.get_file_ptr());
+    array::copy(this, &src, reader);
 }
 
 // String representation

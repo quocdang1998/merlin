@@ -26,8 +26,8 @@ int main(void) {
     // initialize array
     Message("Initialize Array A.\n");
     double A[10] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
-    UIntVec dims({3, 2});
-    UIntVec strides({2*(dims[1] * sizeof(double)), sizeof(double)});
+    Index dims({3, 2});
+    Index strides({2*(dims[1] * sizeof(double)), sizeof(double)});
 
     // copy array
     // Array Ar_copy(A, ndim, dims, strides); // copy using pointer constructor

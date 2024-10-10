@@ -14,7 +14,9 @@ namespace py = pybind11;
 #include "merlin/config.hpp"
 #include "merlin/logger.hpp"
 #include "merlin/synchronizer.hpp"
-#include "merlin/vector.hpp"
+#include "merlin/vector/dynamic_vector.hpp"
+#include "merlin/vector/static_vector.hpp"
+#include "merlin/vector/view.hpp"
 
 namespace merlin {
 
@@ -23,8 +25,8 @@ namespace merlin {
 
 // Convert from Python to C++ vector
 template <typename T, class PySequence>
-Vector<T> pyseq_to_vector(const PySequence & py_seq) {
-    Vector<T> cpp_vec(py_seq.size());
+vector::DynamicVector<T> pyseq_to_vector(const PySequence & py_seq) {
+    vector::DynamicVector<T> cpp_vec(py_seq.size());
     std::uint64_t idx = 0;
     for (auto it = py_seq.begin(); it != py_seq.end(); ++it) {
         py::handle element = *it;
@@ -34,11 +36,10 @@ Vector<T> pyseq_to_vector(const PySequence & py_seq) {
 }
 
 // Convert from Python to C++ array
-template <typename T, class PySequence>
-std::array<T, max_dim> pyseq_to_array(const PySequence & py_seq) {
-    std::array<T, max_dim> cpp_arr;
-    cpp_arr.fill(T());
-    if (py_seq.size() > max_dim) {
+template <typename T, std::uint64_t Capacity = max_dim, class PySequence>
+vector::StaticVector<T, Capacity> pyseq_to_array(const PySequence & py_seq) {
+    vector::StaticVector<T, Capacity> cpp_arr(py_seq.size());
+    if (py_seq.size() > Capacity) {
         Fatal<std::invalid_argument>("Exceeding maximum ndim (%" PRIu64 ").\n", max_dim);
     }
     std::uint64_t idx = 0;
@@ -49,22 +50,26 @@ std::array<T, max_dim> pyseq_to_array(const PySequence & py_seq) {
     return cpp_arr;
 }
 
-// Convert from C++ vector to Python
+// Convert from C++ view to Python
 template <typename T>
-py::list vector_to_pylist(const Vector<T> & vector) {
+py::list view_to_pylist(vector::View<T> view) {
     py::list py_list;
-    for (const T & value : vector) {
+    for (const T & value : view) {
         py_list.append(value);
     }
     return py_list;
 }
 
-// Convert from C++ array to Python
+// Convert from C++ vector to Python
 template <typename T>
-py::list array_to_pylist(const std::array<T, max_dim> & array, std::uint64_t size) {
-    Vector<T> assigned_vector;
-    assigned_vector.assign(const_cast<T*>(array.data()), size);
-    return vector_to_pylist(assigned_vector);
+py::list vector_to_pylist(const vector::DynamicVector<T> & vector) {
+    return view_to_pylist<T>(vector.get_view());
+}
+
+// Convert from C++ array to Python
+template <typename T, std::uint64_t Capacity>
+py::list array_to_pylist(const vector::StaticVector<T, Capacity> & array) {
+    return view_to_pylist(array.get_view());
 }
 
 // Wrap l-value reference by a NumPy array

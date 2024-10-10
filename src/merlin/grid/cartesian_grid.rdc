@@ -12,7 +12,7 @@ namespace merlin {
 // Write coordinate of point to a pre-allocated memory
 __cuhostdev__ void grid::CartesianGrid::get(std::uint64_t index, double * point_data) const noexcept {
     std::uint64_t cum_prod = 1;
-    for (std::int64_t i = this->ndim_ - 1; i >= 0; i--) {
+    for (std::int64_t i = this->ndim() - 1; i >= 0; i--) {
         std::uint64_t nd_index = (index / cum_prod) % this->grid_shape_[i];
         point_data[i] = this->grid_vectors_[i][nd_index];
         cum_prod *= this->grid_shape_[i];
@@ -21,7 +21,7 @@ __cuhostdev__ void grid::CartesianGrid::get(std::uint64_t index, double * point_
 
 // Write coordinate of point to a pre-allocated memory given index vector
 __cuhostdev__ void grid::CartesianGrid::get(const Index & index, double * point_data) const noexcept {
-    for (std::uint64_t i = 0; i < this->ndim_; i++) {
+    for (std::uint64_t i = 0; i < this->ndim(); i++) {
         point_data[i] = this->grid_vectors_[i][index[i]];
     }
 }
@@ -33,15 +33,16 @@ __cudevice__ void * grid::CartesianGrid::copy_by_block(grid::CartesianGrid * des
                                                        std::uint64_t thread_idx, std::uint64_t block_size) const {
     // shallow copy of grid node, size and ndim
     double * p_grid_nodes = reinterpret_cast<double *>(grid_data_ptr);
+    std::uint64_t ndim = this->ndim();
     if (thread_idx == 0) {
-        dest_ptr->grid_nodes_.data() = p_grid_nodes;
-        dest_ptr->grid_nodes_.size() = this->num_nodes();
-        dest_ptr->ndim_ = this->ndim_;
+        dest_ptr->grid_nodes_.assign(p_grid_nodes, this->num_nodes());
+        dest_ptr->grid_shape_.resize(ndim);
         dest_ptr->size_ = this->size_;
+        dest_ptr->grid_vectors_.resize(ndim);
     }
     __syncthreads();
     // copy data of grid nodes and grid shape
-    std::uint64_t num_nodes = this->num_nodes(), ndim = this->ndim_;
+    std::uint64_t num_nodes = this->num_nodes();
     for (std::uint64_t i_node = thread_idx; i_node < num_nodes; i_node += block_size) {
         dest_ptr->grid_nodes_[i_node] = this->grid_nodes_[i_node];
     }
@@ -61,13 +62,14 @@ __cudevice__ void * grid::CartesianGrid::copy_by_block(grid::CartesianGrid * des
 // Copy to shared memory
 __cudevice__ void * grid::CartesianGrid::copy_by_thread(grid::CartesianGrid * dest_ptr, void * grid_data_ptr) const {
     // shallow copy of grid node, size and ndim
+    std::uint64_t ndim = this->ndim();
     double * p_grid_nodes = reinterpret_cast<double *>(grid_data_ptr);
-    dest_ptr->grid_nodes_.data() = p_grid_nodes;
-    dest_ptr->grid_nodes_.size() = this->num_nodes();
-    dest_ptr->ndim_ = this->ndim_;
+    dest_ptr->grid_nodes_.assign(p_grid_nodes, this->num_nodes());
+    dest_ptr->grid_shape_.resize(ndim);
     dest_ptr->size_ = this->size_;
+    dest_ptr->grid_vectors_.resize(ndim);
     // copy data of grid nodes and grid shape
-    std::uint64_t num_nodes = this->num_nodes(), ndim = this->ndim();
+    std::uint64_t num_nodes = this->num_nodes();
     for (std::uint64_t i_node = 0; i_node < num_nodes; i_node++) {
         dest_ptr->grid_nodes_[i_node] = this->grid_nodes_[i_node];
     }

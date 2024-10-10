@@ -16,8 +16,8 @@ using namespace merlin;
 int main(void) {
     // initialize array
     double A[10] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
-    UIntVec dims = {3, 2};
-    UIntVec strides = {2*(dims[1] * sizeof(double)), sizeof(double)};
+    Index dims = {3, 2};
+    Index strides = {2*(dims[1] * sizeof(double)), sizeof(double)};
     array::Array Ar(A, dims, strides, false);
     Message("CPU array: %s\n", Ar.str().c_str());
     {
@@ -26,13 +26,10 @@ int main(void) {
         Message("Stock array: %s\n", Stk.str().c_str());
     }
 
-    std::mutex m;
     _Pragma("omp parallel for") for (int i = 0; i < 10; i++) {
         array::Stock S("temp.txt", 0, true);
         array::Array Ar_read(S.shape());
         Ar_read.extract_data_from_file(S);
-        m.lock();
-        Message("From thread %d: %s\n", omp_get_thread_num(), Ar_read.str().c_str());
-        m.unlock();
+        Message("From thread %d: ", omp_get_thread_num()) << Ar_read.str() << "\n";
     }
 }

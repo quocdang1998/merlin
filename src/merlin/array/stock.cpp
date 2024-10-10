@@ -2,9 +2,7 @@
 #include "merlin/array/stock.hpp"
 
 #include <cinttypes>     // PRIu64
-#include <cstring>       // std::memcpy
 #include <filesystem>    // std::filesystem::filesystem_error, std::filesystem::file_size, std::filesystem::resize_file
-#include <functional>    // std::bind, std::placeholders
 #include <ios>           // std::ios_base::failure
 #include <mutex>         // std::unique_lock
 #include <shared_mutex>  // std::shared_lock
@@ -12,49 +10,14 @@
 #include "merlin/array/array.hpp"      // merlin::array::Array
 #include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides, merlin::array::get_leap,
                                        // merlin::array::copy, merlin::array::fill, merlin::array::print
-#include "merlin/config.hpp"           // merlin::max_dim
+#include "merlin/io/io_engine.hpp"     // merlin::io::ReadEngine, merlin::io::WriteEngine
 #include "merlin/logger.hpp"           // merlin::Fatal
-#include "merlin/platform.hpp"         // __MERLIN_LINUX__, __MERLIN_WINDOWS__
-#include "merlin/utils.hpp"            // merlin::flip_endianess, merlin::flip_range
 
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Data read/write
 // ---------------------------------------------------------------------------------------------------------------------
-
-// Read an array from file
-static inline void read_from_file(void * dest, std::FILE * file, const void * src, std::uint64_t bytes,
-                                  bool same_endianess) {
-    std::fseek(file, reinterpret_cast<std::uintptr_t>(src), SEEK_SET);
-    std::uint64_t count = bytes / sizeof(double);
-    if (std::fread(dest, sizeof(double), count, file) != count) {
-        Fatal<std::ios_base::failure>("Read file error.\n");
-    }
-    if (!same_endianess) {
-        flip_range(reinterpret_cast<std::uint64_t *>(dest), count);
-    }
-}
-
-// Write an array from file
-static inline void write_to_file(std::FILE * file, void * dest, const void * src, std::uint64_t bytes,
-                                 bool same_endianess) {
-    std::fseek(file, reinterpret_cast<std::uintptr_t>(dest), SEEK_SET);
-    std::uint64_t count = bytes / sizeof(double);
-    if (same_endianess) {
-        if (std::fwrite(src, sizeof(double), bytes / sizeof(double), file) != count) {
-            Fatal<std::ios_base::failure>("Write file error.\n");
-        }
-    } else {
-        char * flipped_src = new char[bytes];
-        std::memcpy(flipped_src, src, bytes);
-        flip_range(reinterpret_cast<std::uint64_t *>(flipped_src), count);
-        if (std::fwrite(flipped_src, sizeof(double), bytes / sizeof(double), file) != count) {
-            Fatal<std::ios_base::failure>("Write file error.\n");
-        }
-        delete[] flipped_src;
-    }
-}
 
 // Check if file exists
 static inline bool check_file_exist(const char * name) noexcept {
@@ -72,41 +35,27 @@ static inline bool check_file_exist(const char * name) noexcept {
 
 // Read metadata from file
 std::uint64_t array::Stock::read_metadata(void) {
-    // initialize lock guard
-    std::shared_lock<FileLock> lock = ((this->thread_safe_) ? std::shared_lock<FileLock>(this->flock_)
-                                                            : std::shared_lock<FileLock>());
-    // zero fill shape and stride
-    this->shape_.fill(0);
-    this->strides_.fill(0);
-    // read ndim and detect endianness
-    std::fseek(this->file_ptr_, this->offset_, SEEK_SET);
-    if (std::fread(&(this->ndim_), sizeof(std::uint64_t), 1, this->file_ptr_) != 1) {
-        Fatal<std::ios_base::failure>("Read file error.\n");
-    }
-    if (this->ndim_ > max_dim) {
-        this->ndim_ = flip_endianess(this->ndim_);
-        if (this->ndim_ > max_dim) {
-            Fatal<std::invalid_argument>("Ndim of the stock file is bigger than max_dim.\n");
-        } else {
-            this->same_endianess_ = false;
-        }
+    // initialize lock guard and reader
+    std::shared_lock<io::FileLock> lock = ((this->thread_safe_) ? std::shared_lock<io::FileLock>(this->flock_)
+                                                                : std::shared_lock<io::FileLock>());
+    io::ReadEngine<std::uint64_t> reader(this->file_ptr_);
+    // move cursor to offset
+    if (std::fseek(this->file_ptr_, this->offset_, SEEK_SET)) {
+        Fatal<std::ios_base::failure>("Seek file error.\n");
     }
     // read data shape
-    if (std::fread(this->shape_.data(), sizeof(std::uint64_t), this->ndim_, this->file_ptr_) != this->ndim_) {
-        Fatal<std::ios_base::failure>("Read file error.\n");
-    }
-    if (!this->same_endianess_) {
-        flip_range(this->shape_.data(), this->ndim_);
-    }
+    std::uint64_t ndim;
+    reader.read(&ndim, 1);
+    this->shape_.resize(ndim);
+    reader.read(this->shape_.data(), this->shape_.size());
     std::uint64_t cursor = std::ftell(this->file_ptr_);
     // calculate stride and assign data pointer
     this->calc_array_size();
-    this->strides_ = array::contiguous_strides(this->shape_, this->ndim_, sizeof(double));
+    this->strides_ = array::contiguous_strides(this->shape_, sizeof(double));
     this->data_ = reinterpret_cast<double *>(cursor);
     // check file size
     std::uint64_t file_size = std::filesystem::file_size(this->filename_);
-    std::uint64_t expected_size = this->offset_ + (1 + this->ndim_) * sizeof(std::uint64_t);
-    expected_size += this->size() * sizeof(double);
+    std::uint64_t expected_size = this->offset_ + (1 + ndim) * sizeof(std::uint64_t) + this->size() * sizeof(double);
     if (file_size < expected_size) {
         Fatal<std::filesystem::filesystem_error>("Expected filesize of at least %" PRIu64 ", got %" PRIu64 ".\n",
                                                  expected_size, file_size);
@@ -116,18 +65,18 @@ std::uint64_t array::Stock::read_metadata(void) {
 
 // Write metadata to file at offset position
 std::uint64_t array::Stock::write_metadata(void) {
-    // acquire file lock
-    std::unique_lock<FileLock> lock = ((this->thread_safe_) ? std::unique_lock<FileLock>(this->flock_)
-                                                            : std::unique_lock<FileLock>());
-    // write ndim and shape data to file at position offset
+    // initialize lock guard and writer
+    std::unique_lock<io::FileLock> lock = ((this->thread_safe_) ? std::unique_lock<io::FileLock>(this->flock_)
+                                                                : std::unique_lock<io::FileLock>());
+    io::WriteEngine<std::uint64_t> writer(this->file_ptr_);
+    // move cursor to offset
+    if (std::fseek(this->file_ptr_, this->offset_, SEEK_SET)) {
+        Fatal<std::ios_base::failure>("Seek file error.\n");
+    }
+    // write shape data
     std::uint64_t ndim = this->ndim();
-    std::fseek(this->file_ptr_, this->offset_, SEEK_SET);
-    if (std::fwrite(&ndim, sizeof(std::uint64_t), 1, this->file_ptr_) != 1) {
-        Fatal<std::ios_base::failure>("Write file error.\n");
-    }
-    if (std::fwrite(this->shape_.data(), sizeof(std::uint64_t), ndim, this->file_ptr_) != ndim) {
-        Fatal<std::ios_base::failure>("Write file error.\n");
-    }
+    writer.write(&ndim, 1);
+    writer.write(this->shape_.data(), this->shape_.size());
     std::uint64_t cursor = std::ftell(this->file_ptr_);
     // change data pointer to current cursor
     this->data_ = reinterpret_cast<double *>(cursor);
@@ -136,7 +85,7 @@ std::uint64_t array::Stock::write_metadata(void) {
 
 // Construct empty Array from shape vector
 array::Stock::Stock(const std::string & filename, const Index & shape, std::uint64_t offset, bool thread_safe) :
-array::NdData(shape), filename_(filename), offset_(0), thread_safe_(thread_safe) {
+array::NdData(shape), filename_(filename), offset_(offset), thread_safe_(thread_safe) {
     // create file if not exists
     bool file_exist = check_file_exist(filename.c_str());
     if (!file_exist) {
@@ -156,7 +105,7 @@ array::NdData(shape), filename_(filename), offset_(0), thread_safe_(thread_safe)
     }
     // assign file pointer
     this->file_ptr_ = std::fopen(filename.c_str(), "rb+");
-    this->flock_ = FileLock(this->file_ptr_);
+    this->flock_ = io::FileLock(this->file_ptr_);
     // write metatdata
     this->write_metadata();
     this->release = true;
@@ -173,78 +122,77 @@ filename_(filename), offset_(offset), thread_safe_(thread_safe) {
     }
     // open file
     this->file_ptr_ = std::fopen(filename.c_str(), "rb+");
-    this->flock_ = FileLock(this->file_ptr_);
+    this->flock_ = io::FileLock(this->file_ptr_);
     this->read_metadata();
     this->release = true;
 }
 
 // Get value of element at a n-dim index
 double array::Stock::get(const Index & index) const {
-    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim_);
+    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
-    std::shared_lock<FileLock> lock = ((this->thread_safe_) ? std::shared_lock<FileLock>(this->flock_)
-                                                            : std::shared_lock<FileLock>());
+    std::shared_lock<io::FileLock> lock = ((this->thread_safe_) ? std::shared_lock<io::FileLock>(this->flock_)
+                                                                : std::shared_lock<io::FileLock>());
+    io::ReadEngine<double> reader(this->file_ptr_);
     double result;
-    read_from_file(&result, this->file_ptr_, reinterpret_cast<double *>(data_ptr), sizeof(double),
-                   this->same_endianess_);
+    reader(&result, reinterpret_cast<double *>(data_ptr), sizeof(double));
     return result;
 }
 
 // Get value of element at a C-contiguous index
 double array::Stock::get(std::uint64_t index) const {
-    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_, this->ndim_);
+    std::uint64_t leap = array::get_leap(index, this->shape_.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
-    std::shared_lock<FileLock> lock = ((this->thread_safe_) ? std::shared_lock<FileLock>(this->flock_)
-                                                            : std::shared_lock<FileLock>());
+    std::shared_lock<io::FileLock> lock = ((this->thread_safe_) ? std::shared_lock<io::FileLock>(this->flock_)
+                                                                : std::shared_lock<io::FileLock>());
+    io::ReadEngine<double> reader(this->file_ptr_);
     double result;
-    read_from_file(&result, this->file_ptr_, reinterpret_cast<double *>(data_ptr), sizeof(double),
-                   this->same_endianess_);
+    reader(&result, reinterpret_cast<double *>(data_ptr), sizeof(double));
     return result;
 }
 
 // Set value of element at a n-dim index
 void array::Stock::set(const Index & index, double value) {
-    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim_);
+    std::uint64_t leap = inner_prod(index.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
-    std::unique_lock<FileLock> lock = ((this->thread_safe_) ? std::unique_lock<FileLock>(this->flock_)
-                                                            : std::unique_lock<FileLock>());
-    write_to_file(this->file_ptr_, reinterpret_cast<double *>(data_ptr), &value, sizeof(double), this->same_endianess_);
+    std::unique_lock<io::FileLock> lock = ((this->thread_safe_) ? std::unique_lock<io::FileLock>(this->flock_)
+                                                                : std::unique_lock<io::FileLock>());
+    io::WriteEngine<double> writer(this->file_ptr_);
+    writer(reinterpret_cast<double *>(data_ptr), &value, sizeof(double));
 }
 
 // Set value of element at a C-contiguous index
 void array::Stock::set(std::uint64_t index, double value) {
-    std::uint64_t leap = array::get_leap(index, this->shape_, this->strides_, this->ndim_);
+    std::uint64_t leap = array::get_leap(index, this->shape_.data(), this->strides_.data(), this->ndim());
     std::uintptr_t data_ptr = reinterpret_cast<std::uintptr_t>(this->data_) + leap;
-    std::unique_lock<FileLock> lock = ((this->thread_safe_) ? std::unique_lock<FileLock>(this->flock_)
-                                                            : std::unique_lock<FileLock>());
-    write_to_file(this->file_ptr_, reinterpret_cast<double *>(data_ptr), &value, sizeof(double), this->same_endianess_);
+    std::unique_lock<io::FileLock> lock = ((this->thread_safe_) ? std::unique_lock<io::FileLock>(this->flock_)
+                                                                : std::unique_lock<io::FileLock>());
+    io::WriteEngine<double> writer(this->file_ptr_);
+    writer(reinterpret_cast<double *>(data_ptr), &value, sizeof(double));
 }
 
 // Set value of all elements
 void array::Stock::fill(double value) {
-    auto write_func = std::bind(write_to_file, this->file_ptr_, std::placeholders::_1, std::placeholders::_2,
-                                std::placeholders::_3, this->same_endianess_);
-    std::unique_lock<FileLock> lock = ((this->thread_safe_) ? std::unique_lock<FileLock>(this->flock_)
-                                                            : std::unique_lock<FileLock>());
-    array::fill(this, value, write_func);
+    std::unique_lock<io::FileLock> lock = ((this->thread_safe_) ? std::unique_lock<io::FileLock>(this->flock_)
+                                                                : std::unique_lock<io::FileLock>());
+    io::WriteEngine<double> writer(this->file_ptr_);
+    array::fill(this, value, writer);
 }
 
 // Calculate mean and variance of all non-zero and finite elements
 std::array<double, 2> array::Stock::get_mean_variance(void) const {
-    auto read_func = std::bind(read_from_file, std::placeholders::_1, this->file_ptr_, std::placeholders::_2,
-                               std::placeholders::_3, this->same_endianess_);
-    std::shared_lock<FileLock> lock = ((this->thread_safe_) ? std::shared_lock<FileLock>(this->flock_)
-                                                            : std::shared_lock<FileLock>());
-    return array::stat(this, read_func);
+    std::shared_lock<io::FileLock> lock = ((this->thread_safe_) ? std::shared_lock<io::FileLock>(this->flock_)
+                                                                : std::shared_lock<io::FileLock>());
+    io::ReadEngine<double> reader(this->file_ptr_);
+    return array::stat(this, reader);
 }
 
 // Write data from an array to a file
 void array::Stock::record_data_to_file(const array::Array & src) {
-    auto write_func = std::bind(write_to_file, this->file_ptr_, std::placeholders::_1, std::placeholders::_2,
-                                std::placeholders::_3, this->same_endianess_);
-    std::unique_lock<FileLock> lock = ((this->thread_safe_) ? std::unique_lock<FileLock>(this->flock_)
-                                                            : std::unique_lock<FileLock>());
-    copy(this, &src, write_func);
+    std::unique_lock<io::FileLock> lock = ((this->thread_safe_) ? std::unique_lock<io::FileLock>(this->flock_)
+                                                                : std::unique_lock<io::FileLock>());
+    io::WriteEngine<double> writer(this->file_ptr_);
+    copy(this, &src, writer);
 }
 
 // String representation

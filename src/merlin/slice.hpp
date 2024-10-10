@@ -9,8 +9,9 @@
 #include <limits>            // std::numeric_limits
 #include <string>            // std::string
 
-#include "merlin/config.hpp"   // __cuhostdev__, merlin::max_dim
-#include "merlin/exports.hpp"  // MERLIN_EXPORTS
+#include "merlin/config.hpp"                // __cuhostdev__, merlin::max_dim
+#include "merlin/exports.hpp"               // MERLIN_EXPORTS
+#include "merlin/vector/static_vector.hpp"  // merlin::vector::StaticVector
 
 namespace merlin {
 
@@ -133,7 +134,7 @@ class Slice {
 };
 
 /** @brief Array of slices.*/
-using SliceArray = std::array<Slice, max_dim>;
+using SliceArray = vector::StaticVector<Slice, max_dim>;
 
 }  // namespace merlin
 

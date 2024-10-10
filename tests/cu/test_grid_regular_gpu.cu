@@ -20,11 +20,11 @@ int main(void) {
 
     // create grid
     grid::RegularGrid grid(3);
-    grid.push_back({1.1, 2.3, 4.5});
-    grid.push_back({-1.9, -2.5, 6.2});
-    grid.push_back({1.6, 7.3, 4.8});
-    grid.push_back({-9.0, 2.4, 7.2});
-    grid.push_back({5.0, 7.1, 8.2});
+    grid.push_back(DoubleVec({1.1, 2.3, 4.5}).get_view());
+    grid.push_back(DoubleVec({-1.9, -2.5, 6.2}).get_view());
+    grid.push_back(DoubleVec({1.6, 7.3, 4.8}).get_view());
+    grid.push_back(DoubleVec({-9.0, 2.4, 7.2}).get_view());
+    grid.push_back(DoubleVec({5.0, 7.1, 8.2}).get_view());
     grid.pop_back();
 
     // print

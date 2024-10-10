@@ -37,7 +37,7 @@ static void wrap_interpolator(py::module & splint_module) {
         py::init(
             [](const grid::CartesianGrid & grid, const array::Array & values, py::list & method,
                Synchronizer & synchronizer) {
-                Vector<splint::Method> cpp_method(pyseq_to_vector<splint::Method>(method));
+                vector::StaticVector<splint::Method, max_dim> cpp_method(pyseq_to_array<splint::Method>(method));
                 return new splint::Interpolator(grid, values, cpp_method.data(), synchronizer);
             }
         ),
@@ -63,8 +63,7 @@ static void wrap_interpolator(py::module & splint_module) {
         [](splint::Interpolator & self, const array::Array & points, std::uint64_t n_threads) {
             DoubleVec eval_values(points.shape()[0]);
             self.evaluate(points, eval_values, n_threads);
-            double * data = std::exchange(eval_values.data(), nullptr);
-            return make_wrapper_array<double>(data, eval_values.size());
+            return make_wrapper_array<double>(eval_values.disown(), eval_values.size());
         },
         "Evaluate interpolation by CPU.",
         py::arg("points"), py::arg("n_threads") = 1
@@ -74,8 +73,7 @@ static void wrap_interpolator(py::module & splint_module) {
         [](splint::Interpolator & self, const array::Parcel & points, std::uint64_t n_threads) {
             DoubleVec eval_values(points.shape()[0]);
             self.evaluate(points, eval_values, n_threads);
-            double * data = std::exchange(eval_values.data(), nullptr);
-            return make_wrapper_array<double>(data, eval_values.size());
+            return make_wrapper_array<double>(eval_values.disown(), eval_values.size());
         },
         "Evaluate interpolation by GPU.",
         py::arg("points"), py::arg("n_threads") = 32

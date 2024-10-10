@@ -13,7 +13,6 @@
 #include "merlin/candy/train/trainer_base.hpp"  // merlin::candy::train::TrainerBase
 #include "merlin/exports.hpp"                   // MERLIN_EXPORTS
 #include "merlin/synchronizer.hpp"              // merlin::Synchronizer
-#include "merlin/vector.hpp"                    // merlin::UIntVec
 
 namespace merlin {
 

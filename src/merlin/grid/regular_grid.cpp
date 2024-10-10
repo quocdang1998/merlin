@@ -66,7 +66,7 @@ grid::RegularGrid::RegularGrid(const array::Array & point_coordinates) {
 }
 
 // Add a point to the grid
-void grid::RegularGrid::push_back(const DoubleVec & new_point) noexcept {
+void grid::RegularGrid::push_back(DoubleView new_point) noexcept {
     // argument checking
     if (new_point.size() != this->ndim_) {
         Fatal<std::invalid_argument>("Inappropriate ndim provided.\n");
@@ -84,16 +84,24 @@ void grid::RegularGrid::push_back(const DoubleVec & new_point) noexcept {
 // Remove a point from the grid
 Point grid::RegularGrid::pop_back(void) noexcept {
     // copy coordinates of the last point
-    Point last_point;
-    last_point.fill(0);
     double * last_point_coordinates = this->grid_data_.data() + (this->num_points_ - 1) * this->ndim_;
-    std::copy(last_point_coordinates, last_point_coordinates + this->ndim_, last_point.data());
+    Point last_point(last_point_coordinates, this->ndim_);
     // resize data if needed
     this->num_points_ -= 1;
     if (this->num_points_ == smallest_power_of_2(this->num_points_)) {
         this->realloc(this->num_points_);
     }
     return last_point;
+}
+
+// Get all points in the grid
+array::Array grid::RegularGrid::get_points(void) const {
+    array::Array points({this->num_points_, this->ndim_});
+    for (std::uint64_t i_point = 0; i_point < this->num_points_; i_point++) {
+        double * point_data = &(points[{i_point, 0}]);
+        this->get(i_point, point_data);
+    }
+    return points;
 }
 
 // Copy data to a pre-allocated memory
@@ -106,15 +114,12 @@ void * grid::RegularGrid::copy_to_gpu(grid::RegularGrid * gpu_ptr, void * grid_d
     cloned_obj.num_points_ = this->num_points_;
     // assign pointer to GPU
     double * p_grid_data = reinterpret_cast<double *>(grid_data_ptr);
-    cloned_obj.grid_data_.data() = p_grid_data;
-    cloned_obj.grid_data_.size() = this->num_points_ * this->ndim_;
+    cloned_obj.grid_data_.assign(p_grid_data, this->num_points_ * this->ndim_);
     // copy grid points to GPU
     memcpy_cpu_to_gpu(grid_data_ptr, this->grid_data_.data(), cloned_obj.grid_data_.size() * sizeof(double),
                       stream_ptr);
     // copy temporary object to GPU
     memcpy_cpu_to_gpu(gpu_ptr, &cloned_obj, sizeof(grid::RegularGrid), stream_ptr);
-    // nullify pointer of temporary object to avoid de-allocate GPU pointer
-    cloned_obj.grid_data_.data() = nullptr;
     return p_grid_data + cloned_obj.grid_data_.size();
 }
 
@@ -122,7 +127,7 @@ void * grid::RegularGrid::copy_to_gpu(grid::RegularGrid * gpu_ptr, void * grid_d
 std::string grid::RegularGrid::str(void) const {
     std::ostringstream os;
     os << "<RegularGrid(";
-    DoubleVec point(this->ndim_);
+    Point point(this->ndim_);
     for (std::uint64_t i_point = 0; i_point < this->num_points_; i_point++) {
         if (i_point != 0) {
             os << " ";

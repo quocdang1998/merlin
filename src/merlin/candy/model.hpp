@@ -9,9 +9,9 @@
 #include "merlin/array/declaration.hpp"  // merlin::array::Array
 #include "merlin/candy/declaration.hpp"  // merlin::candy::Model
 #include "merlin/candy/randomizer.hpp"   // merlin::candy::Randomizer
-#include "merlin/config.hpp"             // __cudevice__, __cuhostdev__, merlin::DPtrArray, merlin::Index
+#include "merlin/config.hpp"             // __cudevice__, __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
-#include "merlin/vector.hpp"             // merlin::DoubleVec, merlin::Vector
+#include "merlin/vector.hpp"             // merlin::Index, merlin::DoubleVec, merlin::DViewArray, merlin::DVecArray
 
 namespace merlin {
 
@@ -28,18 +28,19 @@ class candy::Model {
      */
     MERLIN_EXPORTS Model(const Index & shape, std::uint64_t rank);
     /** @brief Constructor from model values.
-     *  @param param_vectors Vector of flatten parameters.
+     *  @param param_vectors List of concatenated parameter vectors at different rank of the same dimension.
+     *  Elements in each parameter vectors are placed contiguous. The rank index runs slower.
      *  @param rank Rank of the model.
      */
-    MERLIN_EXPORTS Model(const Vector<DoubleVec> & param_vectors, std::uint64_t rank);
+    MERLIN_EXPORTS Model(const DVecArray & param_vectors, std::uint64_t rank);
     /// @}
 
     /// @name Copy and move
     /// @{
     /** @brief Copy constructor.*/
-    MERLIN_EXPORTS Model(const candy::Model & src);
+    Model(const candy::Model & src) = default;
     /** @brief Copy assignment.*/
-    MERLIN_EXPORTS candy::Model & operator=(const candy::Model & src);
+    candy::Model & operator=(const candy::Model & src) = default;
     /** @brief Move constructor.*/
     Model(candy::Model && src) = default;
     /** @brief Move assignment.*/
@@ -52,30 +53,60 @@ class candy::Model {
     __cuhostdev__ constexpr double * data(void) noexcept { return this->parameters_.data(); }
     /** @brief Get pointer to (constant) model data.*/
     __cuhostdev__ constexpr const double * data(void) const noexcept { return this->parameters_.data(); }
-    /** @brief Get reference to parameters.*/
-    __cuhostdev__ constexpr DPtrArray & param_vectors(void) noexcept { return this->param_vectors_; }
-    /** @brief Get constant reference to parameters.*/
-    __cuhostdev__ constexpr const DPtrArray & param_vectors(void) const noexcept { return this->param_vectors_; }
-    /** @brief Get number of dimension.*/
-    __cuhostdev__ constexpr std::uint64_t ndim(void) const noexcept { return this->ndim_; }
-    /** @brief Get rank by shape.*/
-    __cuhostdev__ constexpr const Index & rshape(void) const noexcept { return this->rshape_; }
-    /** @brief Get rank.*/
-    __cuhostdev__ constexpr std::uint64_t rank(void) const noexcept { return this->rank_; }
     /** @brief Get number of parameters.*/
-    __cuhostdev__ std::uint64_t num_params(void) const noexcept { return this->parameters_.size(); }
+    __cuhostdev__ constexpr const std::uint64_t & num_params(void) const noexcept { return this->parameters_.size(); }
+    /** @brief Get number of dimension.*/
+    __cuhostdev__ constexpr const std::uint64_t & ndim(void) const noexcept { return this->shape_.size(); }
+    /** @brief Get shape of the model.*/
+    __cuhostdev__ constexpr const Index & shape(void) const noexcept { return this->shape_; }
+    /** @brief Get rank.*/
+    __cuhostdev__ constexpr const std::uint64_t & rank(void) const noexcept { return this->rank_; }
+    /** @brief Get number of parameter per rank.*/
+    __cuhostdev__ constexpr const std::uint64_t & rstride(void) const noexcept { return this->rstride_; }
+    /// @}
+
+        /// @name Index manipulation
+    /// @{
+    /** @brief Get flatten index corresponding to a dimension and rank.*/
+    __cuhostdev__ constexpr std::uint64_t get_flatten_index(std::uint64_t i_dim, std::uint64_t index,
+                                                            std::uint64_t rank) const noexcept {
+        return rank * this->rstride_ + this->offset_[i_dim] + index;
+    }
+    /** @brief Get dimension, index on that dimension and rank corresponding to a flatten index.*/
+    __cuhostdev__ std::array<std::uint64_t, 3> get_param_index(std::uint64_t i_param) const noexcept;
+    /// @}
+
+    /// @name Get parameter vectors
+    /// @{
+    /** @brief Get the set of views to parameter vectors corresponding to a given rank.*/
+    __cuhostdev__ constexpr DViewArray get_param_vector_set(std::uint64_t rank) const noexcept {
+        DViewArray param_vects(this->shape_.size());
+        const double * p_rank_param = this->parameters_.data() + rank * this->rstride_;
+        for (std::uint64_t i_dim = 0; i_dim < this->shape_.size(); i_dim++) {
+            param_vects[i_dim] = DoubleView(p_rank_param + this->offset_[i_dim], this->shape_[i_dim]);
+        }
+        return param_vects;
+    }
+    /** @brief Get the view to the concatenated vector of parameters corresponding to a given rank.*/
+    __cuhostdev__ constexpr DoubleView get_concatenated_param_vectors(std::uint64_t rank) const noexcept {
+        return DoubleView(this->parameters_.data() + rank * this->rstride_, this->rstride_);
+    }
+    /** @brief Get the view to a parameter vector of a dimension at a given rank.*/
+    __cuhostdev__ constexpr DoubleView get_param_vector(std::uint64_t i_dim, std::uint64_t rank) const noexcept {
+        return DoubleView(this->parameters_.data() + rank * this->rstride_ + this->offset_[i_dim], this->shape_[i_dim]);
+    }
     /// @}
 
     /// @name Get and set parameters
     /// @{
     /** @brief Get reference to an element at a given dimension, index and rank.*/
     __cuhostdev__ constexpr double & get(std::uint64_t i_dim, std::uint64_t index, std::uint64_t rank) noexcept {
-        return this->param_vectors_[i_dim][index * this->rank_ + rank];
+        return this->parameters_[this->get_flatten_index(i_dim, index, rank)];
     }
     /** @brief Get constant reference to an element at a given dimension, index and rank.*/
     __cuhostdev__ constexpr const double & get(std::uint64_t i_dim, std::uint64_t index,
                                                std::uint64_t rank) const noexcept {
-        return this->param_vectors_[i_dim][index * this->rank_ + rank];
+        return this->parameters_[this->get_flatten_index(i_dim, index, rank)];
     }
     /** @brief Get reference to element from flattened index.*/
     __cuhostdev__ double & operator[](std::uint64_t index) noexcept { return this->parameters_[index]; }
@@ -109,8 +140,6 @@ class candy::Model {
      *  @return Return ``false`` if these is a negative parameter in the model.
      */
     __cuhostdev__ bool all_positive(void) const noexcept;
-    /** @brief Check if a given data shape is compatible with the current model.*/
-    MERLIN_EXPORTS bool check_compatible_shape(const Index & shape) const noexcept;
     /// @}
 
     /// @name GPU related features
@@ -158,14 +187,16 @@ class candy::Model {
     /// @{
     /** @brief Write model into a file.
      *  @param fname Name of the output file.
+     *  @param offset Offset of the data to write.
      *  @param lock Lock the file when writing to prevent data race. The lock action may cause a delay.
      */
-    MERLIN_EXPORTS void save(const std::string & fname, bool lock = false) const;
+    MERLIN_EXPORTS void save(const std::string & fname, std::uint64_t offset = 0, bool lock = false) const;
     /** @brief Read model from a file.
      *  @param fname Name of the input file.
+     *  @param offset Offset of the file to read.
      *  @param lock Lock the file when reading to prevent data race. The lock action may cause a delay.
      */
-    MERLIN_EXPORTS void load(const std::string & fname, bool lock = false);
+    MERLIN_EXPORTS void load(const std::string & fname, std::uint64_t offset = 0, bool lock = false);
     /// @}
 
     /// @name Representation
@@ -177,24 +208,22 @@ class candy::Model {
     /// @name Destructor
     /// @{
     /** @brief Destructor.*/
-    MERLIN_EXPORTS ~Model(void);
+    MERLIN_EXPORTS ~Model(void) = default;
     /// @}
 
   protected:
     /** @brief Vector of contiguous parameters per dimension and rank.*/
     DoubleVec parameters_;
-    /** @brief Number of parameters per dimension.
-     *  @details Equals to rank times shape.
-     */
-    Index rshape_;
-    /** @brief Number of dimensions.*/
-    std::uint64_t ndim_ = 0;
+    /** @brief Number of parameters per dimension.*/
+    Index shape_;
     /** @brief Rank of the decomposition.*/
     std::uint64_t rank_ = 0;
 
   private:
-    /** @brief Pointer to the first parameters per dimension.*/
-    DPtrArray param_vectors_;
+    /** @brief Stride per rank.*/
+    std::uint64_t rstride_ = 0;
+    /** @brief Offset to add to pointer for each dimension.*/
+    Index offset_;
 };
 
 }  // namespace merlin

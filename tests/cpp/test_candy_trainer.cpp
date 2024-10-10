@@ -24,7 +24,7 @@ using namespace merlin;
 int main(void) {
     // double data[6] = {1.2, 2.3, 3.6, 4.8, 7.1, 2.5};
     double data[6] = {2.5, 3.0, 3.5, 4.45, 5.34, 6.07};
-    UIntVec data_dims = {2, 3}, data_strides = {data_dims[1] * sizeof(double), sizeof(double)};
+    Index data_dims = {2, 3}, data_strides = {data_dims[1] * sizeof(double), sizeof(double)};
     array::Array train_data(data, data_dims, data_strides);
     Message("Data: %s\n", train_data.str().c_str());
 
@@ -34,10 +34,10 @@ int main(void) {
     Message("Model before trained: %s\n", model.str().c_str());
 
     // candy::Optimizer opt = candy::optmz::create_grad_descent(0.5);
-    // candy::Optimizer opt = candy::optmz::create_adagrad(0.3, model.num_params());
-    // candy::Optimizer opt = candy::optmz::create_adam(0.5, 0.9, 0.99, model.num_params());
+    candy::Optimizer opt = candy::optmz::create_adagrad(0.3, model.num_params());
+    // candy::Optimizer opt = candy::optmz::create_adam(0.005, 0.99, 0.9999, model.num_params());
     // candy::Optimizer opt = candy::optmz::create_adadelta(3, 0.9999, model.num_params());
-    candy::Optimizer opt = candy::optmz::create_rmsprop(0.02, 0.99, model.num_params());
+    // candy::Optimizer opt = candy::optmz::create_rmsprop(0.02, 0.99, model.num_params());
     {
         Message m("Optimizer:");
         m << opt.str() << "\n";
@@ -56,11 +56,12 @@ int main(void) {
     cpu_train.dry_run(dryrun_map, policy);
     cpu_synch.synchronize();
     if (valid_result != policy.sum()) {
+        Warning("Failed dryrun with: ") << error.str() << "\n";
         Fatal<std::runtime_error>("Invalid optimizer.\n");
     }
     // cpu_train.set_export_fname("foo", "foo.txt");
-    cpu_train.update_until(1000, 0.01, 3, candy::TrainMetric::RelativeSquare, true);
-    // cpu_train.update_for(20000, 3, candy::TrainMetric::RelativeSquare, false);
+    // cpu_train.update_until(1000, 0.01, 3, candy::TrainMetric::RelativeSquare, true);
+    cpu_train.update_for(20000, 3, candy::TrainMetric::RelativeSquare, false);
     cpu_synch.synchronize();
     std::printf("Model new: %s\n", cpu_train.get_model("foo").str().c_str());
     array::Array destination(train_data.shape());
@@ -74,4 +75,12 @@ int main(void) {
     cpu_synch.synchronize();
     std::printf("Reconstructed data: %s\n", destination.str().c_str());
     std::printf("Reconstructed error: %f %f\n", rmse, rmae);
+
+    // save and load model
+    candy::Model & trained_model = cpu_train.get_model("foo");
+    Message("Model to save: %s\n", trained_model.str().c_str());
+    trained_model.save("mdl.txt", 0, true);
+    candy::Model loaded_model;
+    loaded_model.load("mdl.txt", 0, true);
+    Message("Model to load: %s\n", loaded_model.str().c_str());
 }

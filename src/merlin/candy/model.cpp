@@ -1,106 +1,102 @@
 // Copyright 2023 quocdang1998
 #include "merlin/candy/model.hpp"
 
-#include <algorithm>  // std::find
-#include <cmath>      // std::pow, std::sqrt
-#include <iterator>   // std::distance
-#include <memory>     // std::unique_ptr
-#include <random>     // std::mt19937_64, std::normal_distribution, std::uniform_real_distribution
-#include <sstream>    // std::ostringstream
-#include <vector>     // std::vector
+#include <algorithm>     // std::copy_n
+#include <cmath>         // std::pow, std::sqrt
+#include <cstdio>        // std::fopen, std::fseek
+#include <fstream>       // std::ifstream, std::ofstream
+#include <iterator>      // std::distance
+#include <memory>        // std::unique_ptr
+#include <mutex>         // std::unique_lock
+#include <shared_mutex>  // std::shared_lock
+#include <sstream>       // std::ostringstream
+#include <type_traits>   // std::add_pointer
 
-#include "merlin/array/array.hpp"  // merlin::array::Array
-#include "merlin/env.hpp"          // merlin::Environment
-#include "merlin/filelock.hpp"     // merlin::FileLock
-#include "merlin/logger.hpp"       // merlin::Fatal
-#include "merlin/memory.hpp"       // merlin::memcpy_cpu_to_gpu, merlin::memcpy_gpu_to_cpu
-#include "merlin/slice.hpp"        // merlin::SliceArray
-#include "merlin/utils.hpp"        // merlin::ptr_to_subsequence
+#include "merlin/array/array.hpp"      // merlin::array::Array
+#include "merlin/env.hpp"              // merlin::Environment
+#include "merlin/io/byteswap.hpp"      // merlin::io::little_endian
+#include "merlin/io/file_lock.hpp"     // merlin::io::FileLock
+#include "merlin/io/file_pointer.hpp"  // merlin::io::FilePointer, merlin::io::create_file
+#include "merlin/io/io_engine.hpp"     // merlin::io::ReadEngine, merlin::io::WriteEngine
+#include "merlin/logger.hpp"           // merlin::Fatal
+#include "merlin/memory.hpp"           // merlin::memcpy_cpu_to_gpu, merlin::memcpy_gpu_to_cpu
+#include "merlin/slice.hpp"            // merlin::SliceArray
+#include "merlin/utils.hpp"            // merlin::ptr_to_subsequence
 
 namespace merlin {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Utility
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Calculate rstride and offset
+static std::uint64_t get_rstride(const Index & shape, Index & offset) {
+    offset.resize(shape.size());
+    std::uint64_t cum_sum = 0;
+    for (std::uint64_t i_dim = 0; i_dim < shape.size(); i_dim++) {
+        offset[i_dim] = cum_sum;
+        cum_sum += shape[i_dim];
+    }
+    return cum_sum;
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Model
 // ---------------------------------------------------------------------------------------------------------------------
 
+// Calculate offset per dimension
+void assign_offset_rstride(void);
+
 // Constructor from shape and rank
-candy::Model::Model(const Index & shape, std::uint64_t rank) : rshape_(shape), rank_(rank) {
-    // check rank
+candy::Model::Model(const Index & shape, std::uint64_t rank) : shape_(shape), rank_(rank) {
+    // check argument
     if (rank == 0) {
         Fatal<std::invalid_argument>("Cannot initialize a canonical model with rank zero.\n");
     }
-    // get ndim
-    Index::const_iterator first_zero_element = std::find(shape.begin(), shape.end(), 0);
-    this->ndim_ = std::distance(shape.begin(), first_zero_element);
-    // calculate rshape and number of parameters
-    std::uint64_t num_params = 0;
-    for (std::uint64_t i_dim = 0; i_dim < this->ndim_; i_dim++) {
-        this->rshape_[i_dim] *= rank;
-        num_params += this->rshape_[i_dim];
-    }
-    // reserve parameter vector and calculate param_vectors
-    this->parameters_ = DoubleVec(num_params);
-    ptr_to_subsequence(this->parameters_.data(), this->rshape_.data(), this->ndim_, this->param_vectors_.data());
+    // get r-stride and offset
+    this->rstride_ = get_rstride(shape, this->offset_);
+    // reserve parameter vector
+    this->parameters_ = DoubleVec(this->rstride_ * rank);
 }
 
 // Constructor from model values
-candy::Model::Model(const Vector<DoubleVec> & param_vectors, std::uint64_t rank) :
-ndim_(param_vectors.size()), rank_(rank) {
-    // check rank
+candy::Model::Model(const DVecArray & param_vectors, std::uint64_t rank) : rank_(rank) {
+    // check argument
     if (rank == 0) {
         Fatal<std::invalid_argument>("Cannot initialize a canonical model with rank zero.\n");
     }
-    // calculate rshape and number of parameters
-    if (param_vectors.size() > max_dim) {
-        Fatal<std::invalid_argument>("Exceeding max dimension.\n");
-    }
-    std::uint64_t num_params = 0;
-    this->rshape_.fill(0);
-    for (std::uint64_t i_dim = 0; i_dim < this->ndim_; i_dim++) {
+    // get and check shape
+    std::uint64_t ndim = param_vectors.size();
+    this->shape_.resize(ndim);
+    for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
         if (param_vectors[i_dim].size() % rank != 0) {
-            Fatal<std::invalid_argument>("Size of all canonical model vectors must be divisible by the rank.\n");
+            Fatal<std::invalid_argument>("Size of concatenated parameter vectors must be divisible by the rank.\n");
         }
-        this->rshape_[i_dim] = param_vectors[i_dim].size();
-        num_params += this->rshape_[i_dim];
+        this->shape_[i_dim] = param_vectors[i_dim].size() / rank;
     }
-    // reserve parameter vector and calculate param_vectors
-    this->parameters_ = DoubleVec(num_params);
-    ptr_to_subsequence(this->parameters_.data(), this->rshape_.data(), this->ndim_, this->param_vectors_.data());
-    // copy parameter values
-    for (std::uint64_t i_dim = 0; i_dim < this->ndim_; i_dim++) {
-        for (std::uint64_t i_param = 0; i_param < this->rshape_[i_dim]; i_param++) {
-            this->param_vectors_[i_dim][i_param] = param_vectors[i_dim][i_param];
+    // get r-stride and offset
+    this->rstride_ = get_rstride(this->shape_, this->offset_);
+    // copy to parameter vector
+    this->parameters_ = DoubleVec(this->rstride_ * rank);
+    for (std::uint64_t i_dim = 0; i_dim < ndim; i_dim++) {
+        const DoubleVec & param_vector = param_vectors[i_dim];
+        for (std::uint64_t r = 0; r < rank; r++) {
+            std::copy_n(param_vector.data() + r * this->shape_[i_dim], this->shape_[i_dim],
+                        this->parameters_.data() + r * this->rstride_ + this->offset_[i_dim]);
         }
     }
-}
-
-// Copy constructor
-candy::Model::Model(const candy::Model & src) :
-parameters_(src.parameters_), rshape_(src.rshape_), ndim_(src.ndim_), rank_(src.rank_) {
-    ptr_to_subsequence(this->parameters_.data(), this->rshape_.data(), this->ndim_, this->param_vectors_.data());
-}
-
-// Copy assignment
-candy::Model & candy::Model::operator=(const candy::Model & src) {
-    this->parameters_ = src.parameters_;
-    this->rshape_ = src.rshape_;
-    this->ndim_ = src.ndim_;
-    this->rank_ = src.rank_;
-    ptr_to_subsequence(this->parameters_.data(), this->rshape_.data(), this->ndim_, this->param_vectors_.data());
-    return *this;
 }
 
 // Initialize values of model based on train data
 void candy::Model::initialize(const array::Array & train_data, candy::Randomizer * randomizer) {
     // check shape
-    if (!this->check_compatible_shape(train_data.shape())) {
+    if (this->shape_ != train_data.shape()) {
         Fatal<std::invalid_argument>("Incompatible shape between data and model.\n");
     }
     // initialize model parameters for each dimension
-    for (std::uint64_t i_dim = 0; i_dim < this->ndim_; i_dim++) {
-        std::uint64_t num_division = train_data.shape()[i_dim];
-        SliceArray slice_division;
-        slice_division.fill(Slice());
+    for (std::uint64_t i_dim = 0; i_dim < this->ndim(); i_dim++) {
+        SliceArray slice_division(this->ndim());
+        std::uint64_t num_division = this->shape_[i_dim];
         // loop on each hyper-slice
         for (std::uint64_t i_division = 0; i_division < num_division; i_division++) {
             // calculate mean value for each hyper-slice
@@ -131,16 +127,12 @@ void * candy::Model::copy_to_gpu(candy::Model * gpu_ptr, void * parameters_data_
     // initialize cloned version on GPU
     candy::Model cloned_obj;
     double * parameters_data = reinterpret_cast<double *>(parameters_data_ptr);
-    cloned_obj.parameters_.data() = parameters_data;
-    cloned_obj.parameters_.size() = this->num_params();
-    cloned_obj.rshape_ = this->rshape_;
-    cloned_obj.ndim_ = this->ndim_;
+    cloned_obj.parameters_.assign(parameters_data, this->num_params());
+    cloned_obj.shape_ = this->shape_;
     cloned_obj.rank_ = this->rank_;
-    cloned_obj.param_vectors_.fill(nullptr);
-    ptr_to_subsequence(parameters_data, this->rshape_.data(), this->ndim_, cloned_obj.param_vectors_.data());
+    cloned_obj.rstride_ = this->rstride_;
+    cloned_obj.offset_ = this->offset_;
     memcpy_cpu_to_gpu(gpu_ptr, &cloned_obj, sizeof(candy::Model), stream_ptr);
-    // nullify pointer of temporary object to avoid de-allocate GPU pointer
-    cloned_obj.parameters_.data() = nullptr;
     return reinterpret_cast<void *>(parameters_data + this->num_params());
 }
 
@@ -150,107 +142,73 @@ void * candy::Model::copy_from_gpu(double * data_from_gpu, std::uintptr_t stream
     return reinterpret_cast<void *>(data_from_gpu + this->num_params());
 }
 
-// Check if a given data shape is compatible with the current model
-bool candy::Model::check_compatible_shape(const Index & shape) const noexcept {
-    std::pair<Index::const_iterator, Index::const_iterator> iter = std::mismatch(
-        this->rshape_.cbegin(), this->rshape_.cend(), shape.cbegin(),
-        [this](const std::uint64_t & rshape, const std::uint64_t & shape) { return rshape == shape * this->rank_; });
-    return iter.first == this->rshape_.end();
-}
-
 // Write model into a file
-void candy::Model::save(const std::string & fname, bool lock) const {
+void candy::Model::save(const std::string & fname, std::uint64_t offset, bool lock) const {
     // open file
-    std::FILE * file_stream = std::fopen(fname.c_str(), "wb");
-    if (file_stream == nullptr) {
-        Fatal<std::filesystem::filesystem_error>("Cannot create file %s\n", fname.c_str());
-    }
-    FileLock flock(file_stream);
-    // lambda write file
-    auto write_lambda = [&file_stream](const void * data, std::size_t elem_size, std::size_t n_elems) {
-        std::size_t success_written = std::fwrite(data, elem_size, n_elems, file_stream);
-        if (success_written < n_elems) {
-            Fatal<std::filesystem::filesystem_error>("Error occurred when writing the file.\n");
-        }
-    };
-    if (lock) {
-        flock.lock();
-    }
-    // write ndim and size
-    std::uint64_t meta_data[3] = {this->rank_, this->ndim_, this->num_params()};
-    write_lambda(meta_data, sizeof(std::uint64_t), 3);
-    // write rshape
-    write_lambda(this->rshape_.data(), sizeof(std::uint64_t), this->ndim_);
+    io::FilePointer file_stream = io::open_file(fname.c_str());
+    file_stream.seek(offset);
+    // acquire file lock
+    io::FileLock flock(file_stream.get());
+    std::unique_lock<io::FileLock> guard = ((lock) ? std::unique_lock<io::FileLock>(flock)
+                                                   : std::unique_lock<io::FileLock>());
+    // initialize write engines
+    io::WriteEngine<std::uint64_t> uint_write(file_stream.get());
+    io::WriteEngine<double> float_write(file_stream.get());
+    // write rank and ndim
+    std::uint64_t meta_data[2] = {this->rank_, this->ndim()};
+    uint_write.write(meta_data, 2);
+    // write shape
+    uint_write.write(this->shape_.data(), this->shape_.size());
     // write parameters
-    write_lambda(this->parameters_.data(), sizeof(double), this->num_params());
-    // close file
-    if (lock) {
-        flock.unlock();
-    }
-    std::fclose(file_stream);
+    float_write.write(this->parameters_.data(), this->parameters_.size());
 }
 
 // Read polynomial data from a file
-void candy::Model::load(const std::string & fname, bool lock) {
+void candy::Model::load(const std::string & fname, std::uint64_t offset, bool lock) {
     // open file
-    std::FILE * file_stream = std::fopen(fname.c_str(), "rb");
-    if (file_stream == nullptr) {
-        Fatal<std::filesystem::filesystem_error>("Cannot read file %s\n", fname.c_str());
-    }
-    FileLock flock(file_stream);
-    // lambda read file
-    auto read_lambda = [&file_stream](void * data, std::size_t elem_size, std::size_t n_elems) {
-        std::size_t success_read = std::fread(data, elem_size, n_elems, file_stream);
-        if (success_read < n_elems) {
-            Fatal<std::filesystem::filesystem_error>("Error occurred when reading the file.\n");
-        }
-    };
-    if (lock) {
-        flock.lock_shared();
-    }
-    // read ndim and size
-    std::uint64_t meta_data[3];
-    read_lambda(meta_data, sizeof(std::uint64_t), 3);
+    io::FilePointer file_stream = io::open_file(fname.c_str());
+    file_stream.seek(offset);
+    // acquire file lock
+    io::FileLock flock(file_stream.get());
+    std::shared_lock<io::FileLock> guard = ((lock) ? std::shared_lock<io::FileLock>(flock)
+                                                   : std::shared_lock<io::FileLock>());
+    // initialize read engines
+    io::ReadEngine<std::uint64_t> uint_read(file_stream.get());
+    io::ReadEngine<double> float_read(file_stream.get());
+    // read rank, ndim and shape
+    std::uint64_t meta_data[2];
+    uint_read.read(meta_data, 2);
     this->rank_ = meta_data[0];
-    // read rshape
-    this->ndim_ = meta_data[1];
-    this->rshape_.fill(0);
-    read_lambda(this->rshape_.data(), sizeof(std::uint64_t), this->ndim_);
+    // read shape and calculate offset
+    this->shape_.resize(meta_data[1]);
+    uint_read.read(this->shape_.data(), this->shape_.size());
+    this->rstride_ = get_rstride(this->shape_, this->offset_);
     // read parameters
-    this->parameters_ = DoubleVec(meta_data[2]);
-    read_lambda(this->parameters_.data(), sizeof(double), meta_data[2]);
-    // calculate pointers
-    this->param_vectors_.fill(nullptr);
-    ptr_to_subsequence(this->parameters_.data(), this->rshape_.data(), this->ndim_, this->param_vectors_.data());
-    // close file
-    if (lock) {
-        flock.unlock();
-    }
-    std::fclose(file_stream);
+    this->parameters_ = DoubleVec(this->rstride_ * this->rank_);
+    float_read.read(this->parameters_.data(), this->parameters_.size());
 }
 
 // String representation
 std::string candy::Model::str(void) const {
     std::ostringstream out_stream;
     out_stream << "<Model(";
-    for (std::uint64_t i_dim = 0; i_dim < this->ndim_; i_dim++) {
-        out_stream << ((i_dim != 0) ? " " : "");
+    out_stream << "rank=" << this->rank_ << ", ";
+    out_stream << "shape=" << this->shape_.str() << ", ";
+    out_stream << "parameters=<";
+    for (std::uint64_t r = 0; r < this->rank_; r++) {
+        if (r != 0) {
+            out_stream << " ";
+        }
         out_stream << "<";
-        std::uint64_t dim_shape = this->rshape_[i_dim] / this->rank_;
-        for (std::uint64_t i_index = 0; i_index < dim_shape; i_index++) {
-            DoubleVec rank_vector;
-            double * rank_vector_data = this->param_vectors_[i_dim] + i_index * this->rank_;
-            rank_vector.assign(rank_vector_data, this->rank_);
-            out_stream << ((i_index != 0) ? " " : "");
-            out_stream << rank_vector.str();
+        for (std::uint64_t i = 0; i < this->ndim(); i++) {
+            DoubleView dim_view(this->parameters_.data() + r * this->rstride_ + this->offset_[i], this->shape_[i]);
+            out_stream << dim_view.str();
         }
         out_stream << ">";
     }
+    out_stream << ">";
     out_stream << ")>";
     return out_stream.str();
 }
-
-// Destructor
-candy::Model::~Model(void) {}
 
 }  // namespace merlin

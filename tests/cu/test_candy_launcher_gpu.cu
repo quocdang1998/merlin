@@ -27,7 +27,7 @@ int main (void) {
     // initialize train data
     double data[6] = {1.2, 2.3, 3.6, 4.8, 7.1, 2.5};
     // double data[6] = {2.5, 3.0, 3.5, 4.45, 5.34, 6.07};
-    UIntVec data_dims = {2, 3}, data_strides = {data_dims[1] * sizeof(double), sizeof(double)};
+    Index data_dims = {2, 3}, data_strides = {data_dims[1] * sizeof(double), sizeof(double)};
     array::Array train_data(data, data_dims, data_strides);
     Message("Data: %s\n", train_data.str().c_str());
 
@@ -73,10 +73,10 @@ int main (void) {
     }
     Message("Errors: ") << error.str() << "\n";
 
-    /*cpu_trainer.update_until(10000, 0.01);
-    gpu_trainer.update_until(10000, 0.01);*/
-    cpu_trainer.update_for(10);
-    gpu_trainer.update_for(10);
+    /*cpu_trainer.update_until(1000, 0.01);
+    gpu_trainer.update_until(1000, 0.01);*/
+    cpu_trainer.update_for(100);
+    gpu_trainer.update_for(100);
     cpu_sync.synchronize();
     gpu_sync.synchronize();
 

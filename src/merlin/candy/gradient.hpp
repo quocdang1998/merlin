@@ -8,9 +8,9 @@
 #include "merlin/array/declaration.hpp"  // merlin::array::Array, merlin::array::NdData, merlin::array::Parcel
 #include "merlin/candy/declaration.hpp"  // merlin::candy::Gradient
 #include "merlin/candy/model.hpp"        // merlin::candy::Model
-#include "merlin/config.hpp"             // __cudevice__, __cuhostdev__, merlin::Index
+#include "merlin/config.hpp"             // __cudevice__, __cuhostdev__
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
-#include "merlin/vector.hpp"             // merlin::DoubleVec
+#include "merlin/vector.hpp"             // merlin::Index, merlin::DoubleVec
 
 namespace merlin {
 
@@ -44,9 +44,7 @@ class candy::Gradient {
     __cuhostdev__ Gradient(void) {}
     /** @brief Assignment from initialized members.*/
     __cuhostdev__ Gradient(double * data, std::uint64_t num_params, candy::TrainMetric train_metric) :
-    train_metric_(train_metric) {
-        this->value_.assign(data, num_params);
-    }
+    value_(data, num_params, true), train_metric_(train_metric) {}
     /// @}
 
     /// @name Get members

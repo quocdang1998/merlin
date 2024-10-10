@@ -4,7 +4,7 @@
 #include <string>
 #include <thread>
 
-#include "merlin/filelock.hpp"
+#include "merlin/io/file_lock.hpp"
 #include "merlin/logger.hpp"
 
 using namespace merlin;
@@ -28,7 +28,7 @@ int main(int argc, char * argv[]) {
     } else {
         fp = fopen("monkey.txt", "ab");
     }
-    merlin::FileLock flock(fp);
+    merlin::io::FileLock flock(fp);
     if (arg.compare("2") == 0) {
         flock.lock_shared();
     } else {

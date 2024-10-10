@@ -1,5 +1,5 @@
 // Copyright 2022 quocdang1998
-#include "merlin/filelock.hpp"
+#include "merlin/io/file_lock.hpp"
 
 #include <ios>      // std::ios_base::failure
 #include <sstream>  // std::ostringstream
@@ -25,10 +25,10 @@ namespace merlin {
 #if defined(__MERLIN_WINDOWS__)
 
 // Constructor from file pointer
-FileLock::FileLock(std::FILE * file_ptr) { this->file_descriptor = ::_fileno(file_ptr); }
+io::FileLock::FileLock(std::FILE * file_ptr) { this->file_descriptor = ::_fileno(file_ptr); }
 
 // Exclusively lock file handle
-void FileLock::lock(void) {
+void io::FileLock::lock(void) {
     const unsigned long int len = ULONG_MAX;
     static OVERLAPPED ovrlap;
     intptr_t handle = ::_get_osfhandle(this->file_descriptor);
@@ -42,8 +42,8 @@ void FileLock::lock(void) {
     }
 }
 
-// Attemp to exclusively lock file
-bool FileLock::try_lock(void) {
+// Attempt to exclusively lock file
+bool io::FileLock::try_lock(void) {
     const unsigned long int len = ULONG_MAX;
     static OVERLAPPED ovrlap;
     std::memset(&ovrlap, 0, sizeof(OVERLAPPED));
@@ -65,7 +65,7 @@ bool FileLock::try_lock(void) {
 }
 
 // Exclusively unlock file handle
-void FileLock::unlock(void) {
+void io::FileLock::unlock(void) {
     const unsigned long int len = ULONG_MAX;
     OVERLAPPED ovrlap;
     std::memset(&ovrlap, 0, sizeof(OVERLAPPED));
@@ -81,7 +81,7 @@ void FileLock::unlock(void) {
 }
 
 // Sharable lock file handle
-void FileLock::lock_shared(void) {
+void io::FileLock::lock_shared(void) {
     const unsigned long int len = ULONG_MAX;
     OVERLAPPED ovrlap;
     std::memset(&ovrlap, 0, sizeof(OVERLAPPED));
@@ -96,8 +96,8 @@ void FileLock::lock_shared(void) {
     }
 }
 
-// Attemp to sharably lock file
-bool FileLock::try_lock_shared(void) {
+// Attempt to sharably lock file
+bool io::FileLock::try_lock_shared(void) {
     const unsigned long int len = ULONG_MAX;
     static OVERLAPPED ovrlap;
     std::memset(&ovrlap, 0, sizeof(OVERLAPPED));
@@ -126,10 +126,10 @@ bool FileLock::try_lock_shared(void) {
 #if defined(__MERLIN_LINUX__)
 
 // Constructor from file pointer
-FileLock::FileLock(std::FILE * file_ptr) { this->file_descriptor = ::fileno(file_ptr); }
+io::FileLock::FileLock(std::FILE * file_ptr) { this->file_descriptor = ::fileno(file_ptr); }
 
 // Exclusively lock file handle
-void FileLock::lock(void) {
+void io::FileLock::lock(void) {
     ::flock lock_;
     lock_.l_type = F_WRLCK;
     lock_.l_whence = SEEK_SET;
@@ -142,8 +142,8 @@ void FileLock::lock(void) {
     }
 }
 
-// Attemp to exclusively lock file
-bool FileLock::try_lock(void) {
+// Attempt to exclusively lock file
+bool io::FileLock::try_lock(void) {
     ::flock lock_;
     lock_.l_type = F_WRLCK;
     lock_.l_whence = SEEK_SET;
@@ -161,7 +161,7 @@ bool FileLock::try_lock(void) {
 }
 
 // Exclusively unlock file handle
-void FileLock::unlock(void) {
+void io::FileLock::unlock(void) {
     ::flock lock_;
     lock_.l_type = F_UNLCK;
     lock_.l_whence = SEEK_SET;
@@ -175,7 +175,7 @@ void FileLock::unlock(void) {
 }
 
 // Sharable lock file handle
-void FileLock::lock_shared(void) {
+void io::FileLock::lock_shared(void) {
     ::flock lock_;
     lock_.l_type = F_RDLCK;
     lock_.l_whence = SEEK_SET;
@@ -189,7 +189,7 @@ void FileLock::lock_shared(void) {
 }
 
 // Attemp to sharably lock file
-bool FileLock::try_lock_shared(void) {
+bool io::FileLock::try_lock_shared(void) {
     ::flock lock_;
     lock_.l_type = F_RDLCK;
     lock_.l_whence = SEEK_SET;
@@ -209,7 +209,7 @@ bool FileLock::try_lock_shared(void) {
 #endif  // __MERLIN_LINUX__
 
 // String representation
-std::string FileLock::str() const {
+std::string io::FileLock::str() const {
     std::ostringstream os;
     os << "<Filelock for file descriptor: " << this->file_descriptor << ">";
     return os.str();

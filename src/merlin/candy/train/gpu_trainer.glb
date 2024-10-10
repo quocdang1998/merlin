@@ -57,8 +57,7 @@ __global__ static void kernel_dry_run(candy::Model * p_model, candy::Optimizer *
     __shared__ unsigned long long normal_count;
     __shared__ double saved_error;
     __shared__ bool break_condition;
-    Index index_mem;
-    index_mem.fill(0);
+    Index index_mem(p_model_shr->ndim());
     // calculate initial error
     candy::rmse_gpu(p_model_shr, p_data_shr, &saved_error, &normal_count, thread_idx, block_size, index_mem);
     if (thread_idx == 0) {
@@ -119,6 +118,7 @@ __global__ static void kernel_dry_run(candy::Model * p_model, candy::Optimizer *
             break;
         }
     }
+    __syncthreads();
 }
 
 // Launch CUDA kernel dry-running
@@ -159,8 +159,7 @@ __global__ static void kernel_update_until(candy::Model * p_model, candy::Optimi
     }
     __syncthreads();
     // calculate posteriori error before training
-    Index index_mem;
-    index_mem.fill(0);
+    Index index_mem(p_model_shr->ndim());
     candy::rmse_gpu(p_model_shr, p_data_shr, &posteriori_error, &normal_count, thread_idx, block_size, index_mem);
     std::uint64_t step = 1;
     do {
@@ -210,8 +209,7 @@ __global__ static void kernel_update_for(candy::Model * p_model, candy::Optimize
     // assign data to gradient
     candy::Gradient gradient(reinterpret_cast<double *>(grad_mem), p_model_shr->num_params(), metric);
     // initialize cache memory
-    Index index_mem;
-    index_mem.fill(0);
+    Index index_mem(p_model_shr->ndim());
     // training loop
     for (std::uint64_t i = 1; i <= max_iter; i++) {
         gradient.calc_by_gpu(*p_model_shr, *p_data_shr, thread_idx, block_size, index_mem);
@@ -241,8 +239,7 @@ __global__ static void kernel_reconstruct(candy::Model * p_model, array::Parcel 
     array::Parcel & data = p_data[block_index];
     extern __shared__ char shared_mem[];
     auto [remain, p_model_shr, p_data_shr] = cuda::copy_objects(shared_mem, thread_idx, block_size, model, data);
-    Index index;
-    index.fill(0);
+    Index index(model.ndim());
     for (std::uint64_t c_index = thread_idx; c_index < p_data_shr->size(); c_index += block_size) {
         contiguous_to_ndim_idx(c_index, p_data_shr->shape().data(), p_data_shr->ndim(), index.data());
         p_data_shr->operator[](index) = p_model_shr->eval(index);
@@ -273,8 +270,7 @@ __global__ static void kernel_get_error(candy::Model * p_model, array::Parcel * 
     __shared__ double rmse_shr;
     __shared__ double rmae_shr;
     __shared__ unsigned long long normal_count;
-    Index index_mem;
-    index_mem.fill(0);
+    Index index_mem(model.ndim());
     candy::rmse_gpu(p_model_shr, p_data_shr, &rmse_shr, &normal_count, thread_idx, block_size, index_mem);
     candy::rmae_gpu(p_model_shr, p_data_shr, &rmae_shr, &normal_count, thread_idx, block_size, index_mem);
     // save results to global memory

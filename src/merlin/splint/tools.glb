@@ -20,7 +20,7 @@ namespace merlin {
 
 // Kernel calculating coefficients
 __global__ static void construct_coeff_kernel(double * coeff, const grid::CartesianGrid * p_grid,
-                                              const std::array<unsigned int, max_dim> * p_method) {
+                                              const Index * p_method) {
     // functor to coefficient construction methods
     static const std::array<splint::ConstructionMethod, 3> construction_funcs{
         splint::intpl::construct_linear,
@@ -32,7 +32,11 @@ __global__ static void construct_coeff_kernel(double * coeff, const grid::Cartes
     // copy data to dynamic shared memory
     extern __shared__ char dynamic_shmem[];
     auto [end_shr_ptr, grid_shr] = cuda::copy_objects(dynamic_shmem, thread_idx, block_size, *p_grid);
-    std::array<unsigned int, max_dim> cache_method(*p_method);
+    Index cache_method(*p_method);
+    if (thread_idx == 0) {
+        std::printf("Cache method: %lu %lu %lu\n", cache_method[0], cache_method[1], cache_method[2]);
+    }
+    __syncthreads();
     const Index & shape = grid_shr->shape();
     // initialization
     std::uint64_t num_subsystem = 1;
@@ -48,7 +52,7 @@ __global__ static void construct_coeff_kernel(double * coeff, const grid::Cartes
         std::uint64_t local_num_subsystem = num_subsystem;
         std::uint64_t local_subsystem_size = subsystem_size;
         std::uint64_t local_element_size = element_size;
-        unsigned int i_method = static_cast<unsigned int>(cache_method[i_dim]);
+        std::uint64_t i_method = cache_method[i_dim];
         for (std::uint64_t i_task = thr_grp.group_idx; i_task < local_num_subsystem; i_task += thr_grp.num_groups) {
             double * subsystem_start = coeff + i_task * local_subsystem_size;
             construction_funcs[i_method](subsystem_start, grid_shr->grid_vectors()[i_dim], shape[i_dim],
@@ -62,9 +66,9 @@ __global__ static void construct_coeff_kernel(double * coeff, const grid::Cartes
 }
 
 // Construct interpolation coefficients with GPU parallelism
-void splint::construct_coeff_gpu(double * coeff, const grid::CartesianGrid * p_grid,
-                                 const std::array<unsigned int, max_dim> * p_method, std::uint64_t n_threads,
-                                 std::uint64_t shared_mem_size, const cuda::Stream * stream_ptr) noexcept {
+void splint::construct_coeff_gpu(double * coeff, const grid::CartesianGrid * p_grid, const Index * p_method,
+                                 std::uint64_t n_threads, std::uint64_t shared_mem_size,
+                                 const cuda::Stream * stream_ptr) noexcept {
     // create an asynchrnous CUDA stream
     ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr->get_stream_ptr());
     // launch calculation
@@ -76,22 +80,18 @@ void splint::construct_coeff_gpu(double * coeff, const grid::CartesianGrid * p_g
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Kernel evaluating interpolation
-__global__ static void eval_intpl_kernel(double * coeff, const grid::CartesianGrid * p_grid,
-                                         const std::array<unsigned int, max_dim> * p_method, double * points,
-                                         std::uint64_t n_points, double * result) {
+__global__ static void eval_intpl_kernel(double * coeff, const grid::CartesianGrid * p_grid, const Index * p_method,
+                                         double * points, std::uint64_t n_points, double * result) {
     // get thread index and num threads
     std::uint64_t thread_idx = flatten_thread_index(), block_size = size_of_block();
     // copy to share memory
     extern __shared__ char dynamic_shmem[];
     auto [end_shr_ptr, grid_shr] = cuda::copy_objects(dynamic_shmem, thread_idx, block_size, *p_grid);
-    std::array<unsigned int, max_dim> cache_method(*p_method);
+    Index cache_method(*p_method);
     // initialization
-    Index loop_index;
-    loop_index.fill(0);
-    Point cache, point;
-    cache.fill(0.0);
-    point.fill(0.0);
-    std::uint64_t ndim = p_grid->ndim();
+    std::uint64_t ndim = grid_shr->ndim();
+    Index loop_index(ndim);
+    Point cache(ndim), point(ndim);
     // parallel calculation for each point
     std::uint64_t grid_size = grid_shr->size();
     const Index & shape = grid_shr->shape();
@@ -121,10 +121,9 @@ __global__ static void eval_intpl_kernel(double * coeff, const grid::CartesianGr
 }
 
 // Evaluate interpolation with GPU parallelism
-void splint::eval_intpl_gpu(double * coeff, const grid::CartesianGrid * p_grid,
-                            const std::array<unsigned int, max_dim> * p_method, double * points, std::uint64_t n_points,
-                            double * result, std::uint64_t n_threads, std::uint64_t ndim, std::uint64_t shared_mem_size,
-                            const cuda::Stream * stream_ptr) noexcept {
+void splint::eval_intpl_gpu(double * coeff, const grid::CartesianGrid * p_grid, const Index * p_method, double * points,
+                            std::uint64_t n_points, double * result, std::uint64_t n_threads, std::uint64_t ndim,
+                            std::uint64_t shared_mem_size, const cuda::Stream * stream_ptr) noexcept {
     // create an asynchrnous CUDA stream
     ::cudaStream_t stream = reinterpret_cast<::cudaStream_t>(stream_ptr->get_stream_ptr());
     // launch calculation

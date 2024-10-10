@@ -72,8 +72,21 @@ void candy::train::GpuTrainer::set_model(const std::string & name, const candy::
 
 // Add a optimizer to trainer
 void candy::train::GpuTrainer::set_optmz(const std::string & name, const candy::Optimizer & optmz) {
-    // get index
+    // check for model
+    const std::pair<std::uint64_t, std::array<bool, 3>> & status = this->map_.at(name);
+    if (!status.second[0]) {
+        Fatal<std::runtime_error>("Assign a model to key \"%s\" before adding optimizer.\n", name.c_str());
+    }
+    // check compatibility
     std::uint64_t index = this->get_index_or_create_key(name);
+    const Index & model_shape = this->details_[index].first;
+    auto operation = [rank = this->details_[index].second](std::uint64_t sum, std::uint64_t shape) {
+        return sum + rank * shape;
+    };
+    std::uint64_t num_param = std::accumulate(model_shape.begin(), model_shape.end(), 0, operation);
+    if (!optmz.is_compatible(num_param)) {
+        Fatal<std::invalid_argument>("Incompatible optimizer.\n");
+    }
     // get stream
     cuda::Stream & stream = std::get<cuda::Stream>(this->p_synch_->core);
     cuda::CtxGuard guard(stream.get_gpu());
@@ -94,8 +107,18 @@ void candy::train::GpuTrainer::set_optmz(const std::string & name, const candy::
 
 // Add data to trainer
 void candy::train::GpuTrainer::set_data(const std::string & name, const array::Parcel & data) {
-    // get index
+    // check for model
+    const std::pair<std::uint64_t, std::array<bool, 3>> & status = this->map_.at(name);
+    if (!status.second[0]) {
+        Fatal<std::runtime_error>("Assign a model to key \"%s\" before assigning data.\n", name.c_str());
+    }
+    // check compatibility
     std::uint64_t index = this->get_index_or_create_key(name);
+    const Index & model_shape = this->details_[index].first;
+    if (model_shape != data.shape()) {
+        Fatal<std::invalid_argument>("Incompatible data.\n");
+    }
+    // add reference to data
     this->map_.at(name).second[2] = true;
     // get stream
     cuda::Stream & stream = std::get<cuda::Stream>(this->p_synch_->core);

@@ -13,8 +13,8 @@ int main(void) {
 
     // initialize an tensor
     double A_data[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    UIntVec dims = {2, 3};
-    UIntVec strides = {5 * sizeof(double), 2 * sizeof(double)};
+    Index dims = {2, 3};
+    Index strides = {5 * sizeof(double), 2 * sizeof(double)};
     array::Array A(A_data, dims, strides, false);
 
     // copy data to GPU and print each element of the tensor

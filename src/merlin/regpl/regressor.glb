@@ -20,15 +20,12 @@ __global__ static void eval_kernel(const regpl::Polynomial * p_poly, const doubl
     extern __shared__ char shared_mem[];
     auto [remaining, p_poly_shr] = cuda::copy_objects(shared_mem, thread_idx, block_size, *p_poly);
     // initialize buffer
-    Point buffer;
-    buffer.fill(0.0);
-    Point coordinates;
-    coordinates.fill(0.0);
     std::uint64_t ndim = p_poly_shr->ndim();
+    Point buffer(ndim);
     // evaluate for each point
     for (std::uint64_t i_point = thread_idx; i_point < n_points; i_point += block_size) {
         const double * point = point_data + i_point * ndim;
-        std::copy_n(point, ndim, coordinates.begin());
+        Point coordinates(point, ndim);
         p_result[i_point] = p_poly->eval(coordinates, buffer);
     }
     __syncthreads();

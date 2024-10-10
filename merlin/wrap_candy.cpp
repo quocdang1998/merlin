@@ -59,9 +59,9 @@ void wrap_model(py::module & candy_module) {
         "Get number of dimension."
     );
     model_pyclass.def_property_readonly(
-        "rshape",
-        [](const candy::Model & self) { return array_to_pylist(self.rshape(), self.ndim()); },
-        "Get rank by shape."
+        "shape",
+        [](const candy::Model & self) { return array_to_pylist(self.shape()); },
+        "Get shape."
     );
     model_pyclass.def_property_readonly(
         "rank",
@@ -121,12 +121,11 @@ void wrap_model(py::module & candy_module) {
     model_pyclass.def(
         "initialize",
         [](candy::Model & self, const array::Array & train_data, py::list & randomizer) {
-            Vector<candy::Randomizer> cpp_randomizer(pyseq_to_vector<candy::Randomizer>(randomizer));
+            using RandomizerVector = vector::StaticVector<candy::Randomizer, max_dim>;
+            RandomizerVector cpp_randomizer(pyseq_to_array<candy::Randomizer>(randomizer));
             self.initialize(train_data, cpp_randomizer.data());
         },
-        "Initialize values of model based on train data.",
-        py::arg("train_data"), py::arg("randomizer")
-    );
+        "Initialize values of model based on train data.", py::arg("train_data"), py::arg("randomizer"));
     // serialization
     model_pyclass.def(
         "save",
@@ -215,7 +214,7 @@ void wrap_gradient(py::module & candy_module) {
         "__enter__",
         [](candy::Gradient & self) {
             double * gradient_memory = new double[self.value().size()];
-            self.value().data() = gradient_memory;
+            self.value().assign(gradient_memory, self.value().size());
             return &self;
         },
         "Allocate memory and make the gradient valid."
@@ -224,7 +223,6 @@ void wrap_gradient(py::module & candy_module) {
         "__exit__",
         [](candy::Gradient & self, py::object type, py::object value, py::object traceback) {
             delete[] self.value().data();
-            self.value().data() = nullptr;
         },
         "De-allocate memory and make the gradient invalid."
     );
