@@ -33,10 +33,6 @@ __global__ static void construct_coeff_kernel(double * coeff, const grid::Cartes
     extern __shared__ char dynamic_shmem[];
     auto [end_shr_ptr, grid_shr] = cuda::copy_objects(dynamic_shmem, thread_idx, block_size, *p_grid);
     Index cache_method(*p_method);
-    if (thread_idx == 0) {
-        std::printf("Cache method: %lu %lu %lu\n", cache_method[0], cache_method[1], cache_method[2]);
-    }
-    __syncthreads();
     const Index & shape = grid_shr->shape();
     // initialization
     std::uint64_t num_subsystem = 1;

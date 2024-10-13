@@ -95,7 +95,7 @@ Studio installed on their machines (see also `Building on the command line
 
 .. code-block:: powershell
 
-   vcvarsall x64
+   Launch-VsDevShell.ps1 -SkipAutomaticLocation -Arch amd64 # or vcvarsall x64
    cmake --preset=windows .
    cd build
    ninja

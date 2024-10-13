@@ -2,13 +2,13 @@
 #ifndef MERLIN_VECTOR_VIEW_HPP_
 #define MERLIN_VECTOR_VIEW_HPP_
 
-#include <concepts>  // std::convertible_to
-#include <cstddef>   // nullptr
-#include <cstdint>   // std::uint64_t
-#include <iterator>  // std::contiguous_iterator, std::distance, std::iter_reference_t
-#include <memory>    // std::to_address
-#include <ranges>    // std::ranges::equal
-#include <string>    // std::string
+#include <algorithm>  // std::ranges::equal
+#include <concepts>   // std::convertible_to
+#include <cstddef>    // nullptr
+#include <cstdint>    // std::uint64_t
+#include <iterator>   // std::contiguous_iterator, std::distance, std::iter_reference_t
+#include <memory>     // std::to_address
+#include <string>     // std::string
 
 #include "merlin/config.hpp"                   // __cuhostdev__, __cudevice__
 #include "merlin/vector/declaration.hpp"       // merlin::vector::View

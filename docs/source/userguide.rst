@@ -24,29 +24,37 @@ pre-allocated memory, thus avoiding unnecessary copies of the data.
 
    .. code-block:: c++
 
+      #include <cassert>  // assert
+
       #include "merlin/array/array.hpp"  // merlin::array::Array
-      #include "merlin/vector.hpp"       // merlin::UIntVec
+      #include "merlin/vector.hpp"       // merlin::Index
+
+      using namespace merlin;
 
       // example of a flatten data in memory
-      double data[6] = {
+      double data[24] = {
           0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0,
           12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0,
       };
-      merlin::UIntVec shape = {2, 3, 4};  // data shape
+      Index shape = {2, 3, 4};  // data shape
 
       // data strides
-      merlin::UIntVec c_strides = {  // C-contiguous
+      Index c_strides = {  // C-contiguous
           shape[1] * shape[2] * sizeof(double),
           shape[2] * sizeof(double),
           sizeof(double)
       };
-      merlin::UIntVec f_strides = {  // Fortran-contiguous
+      Index f_strides = {  // Fortran-contiguous
           sizeof(double),
           shape[0] * sizeof(double),
           shape[1] * shape[0] * sizeof(double)
       };
+
       // direct assignment (without data copy)
-      merlin::array::Array a(data, shape, c_strides, false);
+      array::Array a(data, shape, f_strides, false);
+      // copy data to C-contiguous
+      array::Array b(data, shape, f_strides, true);
+      assert(b.strides() == c_strides);
 
    .. code-block:: python
 
@@ -84,17 +92,19 @@ Merlin's ``Array`` first, then allocate and transfer data to/from GPU.
       #include "merlin/cuda/device.hpp"   // merlin::cuda::Device
       #include "merlin/cuda/stream.hpp"   // merlin::cuda::Stream
 
-      // for GPU specifications, please refer to merlin::cuda::print_gpus_spec
-      merlin::cuda::Device gpu(0);  // get GPU
-      gpu.set_as_current();         // set as current GPU
-      // initialize CUDA asynchronous stream
-      merlin::cuda::Stream synch_stream(merlin::cuda::StreamSetting::NonBlocking);
+      using namespace merlin;
 
-      merlin::array::Array a = ...;                      // construct an Array
-      merlin::array::Parcel p(a.shape(), synch_stream);  // allocate data
-      p.transfer_data_to_gpu(a, synch_stream);           // copy data to GPU
-      ...                                                // do something
-      a.clone_data_from_gpu(p, synch_stream);            // copy data from GPU
+      // for GPU specifications, please refer to cuda::print_gpus_spec
+      cuda::Device gpu(0);   // get GPU
+      gpu.set_as_current();  // set as current GPU
+      // initialize CUDA asynchronous stream
+      cuda::Stream synch_stream(cuda::StreamSetting::NonBlocking);
+
+      array::Array a = ...;                      // construct an Array
+      array::Parcel p(a.shape(), synch_stream);  // allocate data
+      p.transfer_data_to_gpu(a, synch_stream);   // copy data to GPU
+      ...                                        // do something
+      a.clone_data_from_gpu(p, synch_stream);    // copy data from GPU
 
    .. code-block:: python
 
@@ -130,15 +140,17 @@ classes :cpp:class:`merlin::array::Stock` (in C++) and :py:class:`merlin.array.S
       #include "merlin/array/array.hpp"   // merlin::array::Array
       #include "merlin/array/stock.hpp"   // merlin::array::Stock
 
+      using namespace merlin;
+
       // read data from storage to RAM
-      merlin::array::Stock s("/path/to/filename");  // // assign to a file
-      merlin::array::Array a(s.shape());            // allocate data on CPU
-      a.extract_data_from_file(s);                  // read data
+      array::Stock s("/path/to/filename");  // assign to a file
+      array::Array a(s.shape());            // allocate data on CPU
+      a.extract_data_from_file(s);          // read data
 
       // save data from RAM to storage
-      merlin::array::Array a = ...
-      merlin::array::Stock s("/path/to/filename", a.shape());  // allocate a file
-      s.record_data_to_file(a);                                // save data
+      array::Array a = ...
+      array::Stock s("/path/to/filename", a.shape());  // allocate a file
+      s.record_data_to_file(a);                        // save data
 
    .. code-block:: python
 
@@ -230,22 +242,40 @@ and repeats the comparison until the stop criterion is met. All actions listed a
 
    .. code-block:: c++
 
-      #include "merlin/array/array.hpp"      // merlin::array::Array
-      #include "merlin/candy/model.hpp"      // merlin::candy::Model
-      #include "merlin/candy/optimizer.hpp"  // merlin::candy::Optimizer, merlin::candy::create_grad_descent
-      #include "merlin/synchronizer.hpp"     // merlin::Synchronizer, merlin::ProcessorType
-      #include "merlin/candy/trainer.hpp"    // merlin::candy::Trainer
+      #include <cstdint>  // std::uint64_t
 
-      merlin::array::Array data = ...;   // initialize data
-      merlin::candy::Model model = ...;  // initialize model
+      #include "merlin/array/array.hpp"               // merlin::array::Array
+      #include "merlin/candy/model.hpp"               // merlin::candy::Model
+      #include "merlin/candy/optimizer.hpp"           // merlin::candy::Optimizer
+      #include "merlin/candy/optmz/grad_descent.hpp"  // merlin::candy::optmz::create_grad_descent
+      #include "merlin/synchronizer.hpp"              // merlin::Synchronizer, merlin::ProcessorType
+      #include "merlin/candy/randomizer.hpp"          // merlin::candy::Randomizer
+      #include "merlin/candy/trainer.hpp"             // merlin::candy::Trainer
+      #include "merlin/vector/static_vector.hpp"      // merlin::vector::StaticVector
 
-      // create an optimizer
-      merlin::candy::Optimizer optimizer = merlin::candy::create_grad_descent(...);
+      using namespace merlin;
+
+      // data and rank
+      std::uint64_t rank = 2;
+      array::Array data = ...;
       // create an asynchronous stream to work
-      merlin::Synchronizer synch_stream(merlin::ProcessorType::Cpu);
+      Synchronizer synch_stream(ProcessorType::Cpu);
+
+      // create a model
+      candy::Model model(data.shape(), rank);
+      // randomly initialize model parameters
+      vector::StaticVector<candy::Randomizer> rand = {
+          candy::rand::Gaussian,
+          candy::rand::Uniform,
+          ...
+          candy::rand::Gaussian,
+      };
+      model.initialize(data, rand);
+      // create an optimizer
+      candy::Optimizer optimizer = candy::create_grad_descent(...);
       // initialize a trainer to train CP model
       std::uint64_t capacity = 1;  // expect at most 1 model to train
-      merlin::candy::Trainer train(capacity, synch_stream);
+      candy::Trainer train(capacity, synch_stream);
       // assign trainer to model, optimizer and data
       std::string key = "foo";
       train.set_model(key, model);
@@ -260,14 +290,26 @@ and repeats the comparison until the stop criterion is met. All actions listed a
       from merlin import Synchronizer
       from merlin.array import Array
       from merlin.candy import Model, create_grad_descent, Trainer
+      from merlin.candy.rand import Gaussian, Uniform
 
+      # data and rank
+      rank = 2
       data = Array(...)   # initialize data
-      model = Model(...)  # initialize model
-
-      # create an optimizer
-      optimizer = create_grad_descent(...)
       #  create an asynchronous stream to work
       synch_stream = Synchronizer("cpu")
+
+      # create a model
+      model = Model(data.shape(), rank)
+      # randomly initialize model parameters
+      rand = [
+          Gaussian,
+          Uniform,
+          ...
+          Gaussian,
+      ]
+      model.initialize(data, rand);
+      # create an optimizer
+      optimizer = create_grad_descent(...)
       # initialize a trainer to train CP model
       capacity = 1
       train = Trainer(capacity, synch_stream)
@@ -301,35 +343,36 @@ GPUs.
 
    .. code-block:: c++
 
-      #include <vector>
+      #include "merlin/array/array.hpp"           // merlin::array::Array
+      #include "merlin/grid/cartesian_grid.hpp"   // merlin::grid::CartesianGrid
+      #include "merlin/splint/interpolator.hpp"   // merlin::splint::Interpolator, merlin::splint::Method
+      #include "merlin/synchronizer.hpp"          // merlin::Synchronizer, merlin::ProcessorType
+      #include "merlin/vector/static_vector.hpp"  // merlin::vector::StaticVector
+      #include "merlin/vector.hpp"                // merlin::DoubleVec
 
-      #include "merlin/array/array.hpp"          // merlin::array::Array
-      #include "merlin/grid/cartesian_grid.hpp"  // merlin::grid::CartesianGrid
-      #include "merlin/splint/interpolator.hpp"  // merlin::splint::Interpolator, merlin::splint::Method
-      #include "merlin/synchronizer.hpp"         // merlin::Synchronizer, merlin::ProcessorType
-      #include "merlin/vector.hpp"               // merlin::DoubleVec
+      using namespace merlin;
 
-      merlin::array::Array data = ...;         // initialize data
-      merlin::grid::CartesianGrid grid = ...;  // initialize grid
-      std::Vector<merlin::splint::Method> methods = {  // interpolation method on each dimension
-          merlin::splint::Method::Newton,
-          merlin::splint::Method::Linear,
-          merlin::splint::Method::Newton,
-          merlin::splint::Method::Lagrange,
+      array::Array data = ...;         // initialize data
+      grid::CartesianGrid grid = ...;  // initialize grid
+      vector::StaticVector<splint::Method> methods = {  // interpolation method on each dimension
+          splint::Method::Newton,
+          splint::Method::Linear,
+          splint::Method::Newton,
+          splint::Method::Lagrange,
           ...
-      }
+      };
 
       // create interpolator
-      merlin::Synchronizer synch_stream(merlin::ProcessorType::Cpu);
-      merlin::splint::Interpolator interp(grid, data, methods.data(), synch_stream);
+      Synchronizer synch_stream(ProcessorType::Cpu);
+      splint::Interpolator interp(grid, data, methods.data(), synch_stream);
       interp.build_coefficients(4);  // build coefficients with 4 threads in the background
 
       // interpolation
-      merlin::array::Array points = ...      // points has shape [npoints, ndim] and must be C-contiguous
-      // merlin::array::Parcel points = ...  // use GPU array if the synch_stream is on GPU
-      merlin::DoubleVec result(npoints);     // initialize memory for storing interpolation result
-      interp.evaluate(points, result, 8);    // asynchronous interpolation using 8 threads
-      synch_stream.synchronize();            // for the main thread to wait until all tasks finished
+      array::Array points = ...            // points has shape [npoints, ndim] and must be C-contiguous
+      // array::Parcel points = ...        // use GPU array if the synch_stream is on GPU
+      DoubleVec result(npoints);           // initialize memory for storing interpolation result
+      interp.evaluate(points, result, 8);  // asynchronous interpolation using 8 threads
+      synch_stream.synchronize();          // for the main thread to wait until all tasks finished
 
    .. code-block:: python
 
@@ -375,7 +418,6 @@ is similar to ``splint``.
    .. code-block:: c++
 
       #include "merlin/array/array.hpp"          // merlin::array::Array
-      #include "merlin/config.hpp"               // merlin::Index, merlin::make_array
       #include "merlin/grid/cartesian_grid.hpp"  // merlin::grid::CartesianGrid
       #include "merlin/regpl/polynomial.hpp"     // merlin::regpl::Polynomial
       #include "merlin/regpl/regressor.hpp"      // merlin::regpl::Regressor
@@ -383,14 +425,16 @@ is similar to ``splint``.
       #include "merlin/synchronizer.hpp"         // merlin::Synchronizer, merlin::ProcessorType
       #include "merlin/vector.hpp"               // merlin::DoubleVec
 
-      merlin::array::Array data = ...;         // initialize data (C-contiguous array!)
-      merlin::grid::CartesianGrid grid = ...;  // initialize grid
+      using namespace merlin;
+
+      array::Array data = ...;         // initialize data (C-contiguous array!)
+      grid::CartesianGrid grid = ...;  // initialize grid
 
       // QR decomposition of the Vandermonde matrix
-      merlin::regpl::Vandermonde coeff_calc(
-          merlin::make_array({2, 3, 5, 10, ...}),  // order per axis of the polynomial
-          grid,                                    // grid of points to fit
-          4,                                       // number of CPU threads to process
+      regpl::Vandermonde coeff_calc(
+          {2, 3, 5, 10, ...},  // order per axis of the polynomial
+          grid,                // grid of points to fit
+          4,                   // number of CPU threads to process
       );
 
       // calculate polynomial coefficients and evaluate in parallel
@@ -419,7 +463,7 @@ is similar to ``splint``.
 
       # calculate polynomial coefficients and evaluate in parallel
       synch_stream = Synchronizer("cpu")
-      polynom = coeff_calc.solve(data)  # calculate coefficients
+      polynom = coeff_calc.solve(data)           # calculate coefficients
       reg_poly = Regressor(polynom, synch_stream)
       result = reg_poly.evaluate_cpu(points, 8)  # evaluate (similar to Interpolator)
       synch_stream.synchronize()

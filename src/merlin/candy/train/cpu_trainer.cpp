@@ -316,7 +316,7 @@ void candy::train::CpuTrainer::set_optmz(const std::string & name, const candy::
     auto operation = [rank = this->details_[index].second](std::uint64_t sum, std::uint64_t shape) {
         return sum + rank * shape;
     };
-    std::uint64_t num_param = std::accumulate(model_shape.begin(), model_shape.end(), 0, operation);
+    std::uint64_t num_param = std::accumulate(model_shape.begin(), model_shape.end(), std::uint64_t(0), operation);
     if (!optmz.is_compatible(num_param)) {
         Fatal<std::invalid_argument>("Incompatible optimizer.\n");
     }

@@ -9,19 +9,31 @@
 #include "merlin/avx.hpp"
 #include "merlin/config.hpp"
 #include "merlin/exports.hpp"
-#include "merlin/filelock.hpp"
 #include "merlin/memory.hpp"
 #include "merlin/thread_divider.hpp"
 
 // Environment
 // -----------
+
 #include "merlin/color.hpp"
 #include "merlin/env.hpp"
 #include "merlin/logger.hpp"
 
+// IO engines
+// ----------
+
+#include "merlin/io/byteswap.hpp"
+#include "merlin/io/file_lock.hpp"
+#include "merlin/io/file_pointer.hpp"
+#include "merlin/io/io_engine.hpp"
+
 // Vector API
 // ----------
-#include "merlin/vector.hpp"
+
+#include "merlin/vector/view.hpp"
+#include "merlin/vector/dynamic_vector.hpp"
+#include "merlin/vector/static_vector.hpp"
+
 #include "merlin/utils.hpp"
 #include "merlin/permutation.hpp"
 
@@ -46,7 +58,6 @@
 #include "merlin/cuda/device.hpp"
 #include "merlin/cuda/stream.hpp"
 #include "merlin/cuda/event.hpp"
-#include "merlin/cuda/event.hpp"
 #include "merlin/cuda/graph.hpp"
 #include "merlin/cuda/copy_helpers.hpp"
 
@@ -60,5 +71,10 @@
 #include "merlin/candy/randomizer.hpp"
 #include "merlin/candy/trial_policy.hpp"
 #include "merlin/candy/trainer.hpp"
+
+// Interpolation
+// -------------
+
+#include "merlin/splint/interpolator.hpp"
 
 #endif  // MERLIN_HPP_

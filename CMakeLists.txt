@@ -70,7 +70,6 @@ list(
 list(
     APPEND
     MERLIN_SRC_CU
-    candy/train/gpu_trainer.cu
     cuda/device.cu
     cuda/event.cu
     cuda/graph.cu
