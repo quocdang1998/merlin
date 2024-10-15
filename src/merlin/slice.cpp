@@ -1,7 +1,6 @@
 // Copyright 2022 quocdang1998
 #include "merlin/slice.hpp"
 
-#include <cinttypes>  // PRIu64
 #include <sstream>    // std::ostringstream
 
 #include "merlin/logger.hpp"  // merlin::Fatal
@@ -18,8 +17,7 @@ void Slice::check_validity(void) const {
         Fatal<std::invalid_argument>("Slice step cannot be zero.\n");
     }
     if (this->stop_ < this->start_) {
-        Fatal<std::invalid_argument>("Stop index %" PRIu64 " must be greater than start index %" PRIu64 ".\n",
-                                     this->stop_, this->start_);
+        Fatal<std::invalid_argument>("Stop index {} must be greater than start index {}.\n", this->stop_, this->start_);
     }
 }
 
@@ -49,13 +47,13 @@ Slice::Slice(std::initializer_list<std::uint64_t> list) {
             break;
         }
         default : {
-            Fatal<std::invalid_argument>("Expected intializer list with size at most 3, got %u.\n",
-                                         static_cast<unsigned int>(list.size()));
+            Fatal<std::invalid_argument>("Expected initializer list with size at most 3, got {}.\n", list.size());
             break;
         }
     }
 }
 
+// String representation
 std::string Slice::str(void) const {
     std::ostringstream os;
     os << "<Slice object: " << this->start_ << ", " << this->stop_ << ", " << this->step_ << ">";

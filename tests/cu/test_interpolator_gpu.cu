@@ -26,7 +26,7 @@ int main(void) {
     for (std::uint64_t i = 0; i < cart_gr.size(); i++) {
         value[i] = foo(cart_gr[i]);
     }
-    Message("Value: %s\n", value.str().c_str());
+    Message("Value: {}\n", value.str());
     Message("Grid shape: ") << cart_gr.shape().str() << " and value shape " << value.shape().str() << "\n";
 
     // calculate Newton coefficients (CPU)
@@ -46,9 +46,9 @@ int main(void) {
     interp_cpu.build_coefficients(8);
     interp_gpu.build_coefficients(32);
     cpu_sync.synchronize();
-    Message("Coefficients calculated by CPU: %s\n", interp_cpu.get_coeff().str().c_str());
+    Message("Coefficients calculated by CPU: {}\n", interp_cpu.get_coeff().str());
     gpu_sync.synchronize();
-    Message("Coefficients calculated by GPU: %s\n", interp_gpu.get_coeff().str().c_str());
+    Message("Coefficients calculated by GPU: {}\n", interp_gpu.get_coeff().str());
 
     // initialize point
     double point_coordinates_data[9] = {0.0, 2.0, 1.0, 1.0, 1.0, 1.2, 0.5, 0.25, 2.4};
@@ -62,7 +62,7 @@ int main(void) {
     DoubleVec gpu_result(3);
     interp_gpu.evaluate(point_gpu, gpu_result, 32);
     cpu_sync.synchronize();
-    Message("Value evaluated by CPU: %s\n", cpu_result.str().c_str());
+    Message("Value evaluated by CPU: {}\n", cpu_result.str());
     gpu_sync.synchronize();
-    Message("Value evaluated by GPU: %s\n", gpu_result.str().c_str());
+    Message("Value evaluated by GPU: {}\n", gpu_result.str());
 }

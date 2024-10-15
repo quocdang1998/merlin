@@ -4,6 +4,7 @@
 
 \usepackage{etoolbox}
 \usepackage{calc}
+\usepackage{xfp}
 
 % Supress list of table and list of figure
 \usepackage[notlot,nottoc,notlof]{}
@@ -58,6 +59,7 @@
 \definecolor{codeprop}{RGB}{0, 63, 224}
 \definecolor{codearg}{RGB}{93, 122, 166}
 \definecolor{codetype}{RGB}{31, 147, 255}
+\definecolor{codenumeric}{RGB}{0, 0, 0}
 
 % Hyperref
 \usepackage{hyperref}
@@ -149,7 +151,7 @@
     \pagenumbering{gobble}%
     \begin{titlepage}%
     \begin{tikzpicture}[remember picture, overlay]
-        \node [anchor = center, outer sep = 0] at (current page.center) {\includegraphics[width = \paperwidth, height = \paperheight]{azura.pdf}};
+        \node [anchor = center, inner sep = 0, outer sep = 0] at (current page.center) {\includegraphics[width = \paperwidth, height = \paperheight]{azura.pdf}};
         \node [anchor = north west, inner sep = 0, outer sep = 0, text width = 0.7\paperwidth, align = left, font = \bfseries\color{white}] at ($(current page.north west) + (\titlepadding, -\titlepadding)$) {%
             %Department AAA\\
             %Institut BBB
@@ -192,35 +194,31 @@
 \makeatother
 
 % Guide box
-\newlength{\sdcardwidth}
-\setlength{\sdcardwidth}{0.33\textwidth-6\fboxsep}
+\newlength{\sdcolwidth}
+\newlength{\sdcolheight}
+\newenvironment{sphinxclasssd-container-fluid}{\noindent\begin{center}}{\end{center}}
+\newenvironment{sphinxclasssd-row-cols-3}{\setlength{\sdcolwidth}{\fpeval{1/3}\linewidth-2\fboxsep-\fpeval{4/3}\fboxrule}}{}
+\newenvironment{sphinxclasscontainer-lg}{\setlength{\sdcolheight}{8\baselineskip}}{}
+\newenvironment{sphinxclasssd-col}{\begin{minipage}[t][\sdcolheight][t]{\sdcolwidth}\centering}{\end{minipage}}
 \newenvironment{sphinxclasssd-card}{%
-    \vspace{\baselineskip}%
-    \begin{tikzpicture} [remember picture, baseline]
-        \node [rectangle, rounded corners, fill = guidebox, anchor = north, outer sep = 0, inner sep = 0, align = center] \bgroup%
-            \begin{minipage}[t][7\baselineskip]{\sdcardwidth}%
+\begin{tikzpicture} [remember picture, baseline]
+    \node [rectangle, rounded corners, fill = guidebox, anchor = north, outer sep = 0, inner sep = 0] \bgroup%
+        \begin{minipage}[t][\sdcolheight-\baselineskip]{\sdcolwidth-1em}%
 }{%
-            \end{minipage}%
-        \egroup;%
-    \end{tikzpicture}%
+        \end{minipage}%
+    \egroup;%
+\end{tikzpicture}%
 }
 \newenvironment{sphinxclasssd-card-title}{%
-    \begin{tikzpicture} [remember picture, baseline]
-        \node (B) [rectangle, rounded corners, fill = guideboxtitle, minimum height = 2\baselineskip, anchor = north, outer sep = 0, inner sep = 0, align = center] \bgroup%
-            \begin{minipage}{\textwidth}%
-            \color{white}\bfseries\centering%
+\begin{tikzpicture} [remember picture, baseline]
+    \node (B) [rectangle, rounded corners, fill = guideboxtitle, minimum height = 2\baselineskip, minimum width = \textwidth,
+               outer sep = 0, inner sep = 0, align = center, font=\color{white}\bfseries, anchor = north] \bgroup%
 }{%
-            \end{minipage}%
-        \egroup;%
-    \end{tikzpicture}%
-    \newline\vspace{0.5\baselineskip}\newline%
+    \egroup;%
+\end{tikzpicture}%
+\newline\vspace{0.5\baselineskip}\newline%
 }
-\newenvironment{sphinxclasssd-text-center}{%
-    \begin{center}%
-}{%
-    \end{center}%
-    \vspace{\baselineskip}%
-}
+\newenvironment{sphinxclasssd-text-center}{\begin{center}}{\end{center}}
 
 % =============================================================================
 % CODE DOCUMENTATION
@@ -266,7 +264,7 @@
 \let\oldsphinxbfcode\sphinxbfcode
 \makeatletter
 \renewcommand{\pysiglinewithargsret}[3]{%
-  % overload macro in sig desc
+    % overload macro in sig desc
     \ifnum \value{codelanguage} = 0 {% Python
         \ifnum \value{siglevel} = 1 {%
             \global\protected\def\sphinxbfcode##1{{\color{codeprop}\sphinxcode{##1}}}%
@@ -291,6 +289,7 @@
     % overload macro in sig desc
     \global\protected\def\sphinxbfcode##1{\sphinxcode{##1}}%
     \global\expandafter\def\csname DUrolen\endcsname##1{\textcolor{codedefault}{\sphinxcode{##1}}}%
+    \global\expandafter\def\csname DUrolem\endcsname##1{\textcolor{codenumeric}{\sphinxcode{##1}}}%
     \global\expandafter\def\csname DUrolek\endcsname##1{\textcolor{codeprop}{\sphinxcode{##1}}}%
     \global\expandafter\def\csname DUrolep\endcsname##1{\textcolor{codedefault}{\sphinxcode{##1}}}%
     \global\expandafter\def\csname DUrolew\endcsname##1{\textcolor{codedefault}{\sphinxcode{##1}}}%

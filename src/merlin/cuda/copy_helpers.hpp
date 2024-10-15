@@ -15,9 +15,10 @@ namespace merlin {
 // Helper classes for transferring data
 // ------------------------------------
 
-/** @brief Automatic CUDA memory allocator and transfer for a tuple of classes.
- *  @details This template serves as a helper for allocating and freeing CUDA memory with a simple syntax.
- *  
+/** @brief Automatic memory allocator and asynchronous transporter.
+ *  @details This template serves as a helper for allocating, transporting and freeing data on the GPU global memory
+ *  with a simple syntax.
+ *
  *  Each element of the variadic template ``Args`` must be either trivially copyable (i.e. object can be copied to a new
  *  address using directly ``std::memcpy``), or support the cloning interface as follows:
  *  - ``cumalloc_size(void) -> std::uint64_t``: return the memory size (in bytes) needed for the object itself and data
@@ -28,6 +29,23 @@ namespace merlin {
  *  - ``copy_by_block(T * dest_ptr, void * data_ptr, std::uint64_t thread_idx, std::uint64_t block_size) -> void *``:
  *    similar to ``copy_to_gpu``, but this function will copy an object on GPU to another memory address also on GPU
  *    (the destination can be on either the global or the shared memory).
+ *  Example:
+ *  @code {.cu}
+ *  // object initialization
+ *  merlin::DoubleVec v(1, 2, 3, 4);
+ *  int i = 5;
+ *  merlin::candy::Model m({5, 2, 3, 4}, 2);
+ *
+ *  // usage
+ *  merlin::cuda::Stream s(merlin::cuda::StreamSetting::NonBlocking);
+ *  merlin::cuda::Dispatcher transporter(s.get_stream_ptr(), v, i, m);
+ *
+ *  // retrieve GPU pointer to passing to a CUDA kernel
+ *  merlin::DoubleVec * v_ = transporter.get<0>();
+ *  int * i_ = transporter.get<1>();
+ *  merlin::candy::Model * m_ = transporter.get<2>();
+ *  custom_kernel<<<...>>>(v_, i, m_);
+ *  @endcode
  */
 template <typename... Args>
 class cuda::Dispatcher {
@@ -81,10 +99,23 @@ namespace cuda {
 
 #ifdef __NVCC__
 
-/** @brief Copy a list of object to GPU shared memory.
+/** @brief Copy a tuple of objects to between two memory places.
  *  @details This function provides a simple compile-time API function for call the method ``copy_by_block`` of each
- *  object in the list.
- *  @param share_ptr Pointer to available shared memory.
+ *  object in the tuple. Each object must be either trivially copyable, or having a method called ``copy_by_block`` to
+ *  copy data between two places. The destination may reside on the GPU global memory, the block shared memory or the
+ *  thread register memory.
+ *  Example:
+ *  @code {.cu}
+ *  __global__ void kernel_name(merlin::DoubleVec * v, merlin::candy::Model * m) {
+ *      extern char shared_mem[];
+ *      auto [end, v_shared, m_shared] = merlin::cuda::copy_objects(shared_mem, *v, *m);
+ *      // do somethings with the shared memory
+ *      ...
+ *      // copy back to global memory in order to be transferred to CPU
+ *      auto [_, __] = merlin::cuda::copy_objects(m, *m_shared);
+ *  }
+ *  @endcode
+ *  @param dest Pointer to destination.
  *  @param thread_idx Index of the current CUDA thread in the block.
  *  @param block_size Number of threads in the current CUDA block.
  *  @param args List of objects to be copied to shared memory.
@@ -92,7 +123,7 @@ namespace cuda {
  *  have been copied. The rest is the list of pointers to copied objects on shared memory.
  */
 template <typename... Args>
-__cudevice__ std::tuple<void *, Args *...> copy_objects(void * share_ptr, const std::uint64_t & thread_idx,
+__cudevice__ std::tuple<void *, Args *...> copy_objects(void * dest, const std::uint64_t & thread_idx,
                                                         const std::uint64_t & block_size, const Args &... args);
 
 #endif  // __NVCC__

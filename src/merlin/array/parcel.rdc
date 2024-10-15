@@ -4,8 +4,6 @@
 #include "merlin/array/operation.hpp"  //merlin::array::get_leap
 #include "merlin/utils.hpp"            // merlin::inner_prod
 
-#include <cinttypes>
-
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------

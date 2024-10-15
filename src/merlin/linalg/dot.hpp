@@ -28,7 +28,7 @@ inline void multiply(double a, const double * x, double * y, std::uint64_t size)
 MERLIN_EXPORTS void avx_saxpy(double a, const double * x, double * y, std::uint64_t nchunks,
                               std::uint64_t remain) noexcept;
 
-/** @brief %Vector operation with another vector.
+/** @brief Vector operation with another vector.
  *  @details Perform the operation @f$ \boldsymbol{y} = a \boldsymbol{x} + \boldsymbol{y} @f$.
  *  @param a Scalar.
  *  @param x Multiplier vector.

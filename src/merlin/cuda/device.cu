@@ -58,7 +58,7 @@ static inline std::uintptr_t get_current_context(void) {
     ::CUcontext current_ctx;
     ::cudaError_t err_ = static_cast<::cudaError_t>(::cuCtxGetCurrent(&current_ctx));
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Get current context failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Get current context failed with message \"{}\".\n", ::cudaGetErrorString(err_));
     }
     // a dummy context initialized (return nullptr)
     return reinterpret_cast<std::uintptr_t>(current_ctx);
@@ -76,13 +76,13 @@ static inline void record_primary_context(int gpu) {
     if (current_ctx != 0) {
         err_ = static_cast<::cudaError_t>(::cuCtxPushCurrent(reinterpret_cast<::CUcontext>(current_ctx)));
         if (err_ != 0) {
-            Fatal<cuda_runtime_error>("cuCtxPushCurrent failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+            Fatal<cuda_runtime_error>("cuCtxPushCurrent failed with message \"{}\".\n", ::cudaGetErrorName(err_));
         }
     }
     // replace current context with the primary context of the GPU
     err_ = ::cudaSetDevice(gpu);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("cudaSetDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("cudaSetDevice failed with message \"{}\".\n", ::cudaGetErrorName(err_));
     }
     // record primary context
     Environment::primary_ctx[gpu] = get_current_context();
@@ -90,7 +90,7 @@ static inline void record_primary_context(int gpu) {
     ::CUcontext ctx;
     err_ = static_cast<::cudaError_t>(::cuCtxPopCurrent(&ctx));
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("cuCtxPopCurrent failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("cuCtxPopCurrent failed with message \"{}\".\n", ::cudaGetErrorName(err_));
     }
 }
 
@@ -103,7 +103,7 @@ cuda::Device::Device(int id) {
     // check argument
     int limit = cuda::Device::get_num_gpu();
     if ((id < 0) || (id >= limit)) {
-        Fatal<cuda_runtime_error>("Invalid ID of GPU (expected value between 0 and less than %d).\n", limit);
+        Fatal<cuda_runtime_error>("Invalid ID of GPU (expected value between 0 and less than {}).\n", limit);
     }
     this->id_ = id;
 }
@@ -113,7 +113,7 @@ cuda::Device cuda::Device::get_current_gpu(void) {
     int current_device;
     ::cudaError_t err_ = ::cudaGetDevice(&current_device);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("cudaGetDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("cudaGetDevice failed with message \"{}\".\n", ::cudaGetErrorName(err_));
     }
     return cuda::Device(current_device);
 }
@@ -123,7 +123,7 @@ std::uint64_t cuda::Device::get_num_gpu(void) {
     int count;
     ::cudaError_t err_ = ::cudaGetDeviceCount(&count);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("cudaGetDeviceCount failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("cudaGetDeviceCount failed with message \"{}\".\n", ::cudaGetErrorName(err_));
     }
     return count;
 }
@@ -131,7 +131,7 @@ std::uint64_t cuda::Device::get_num_gpu(void) {
 // Print limit of device
 void cuda::Device::print_specification(void) const {
     if (this->id_ == -1) {
-        Warning("Device initialized without a valid id (id = %d).\n", this->id_);
+        Warning("Device initialized without a valid id (id = {}).\n", this->id_);
     }
     ::cudaDeviceProp prop;
     ::cudaGetDeviceProperties(&prop, this->id_);
@@ -183,33 +183,33 @@ bool cuda::Device::test_gpu(void) const {
     // set device (also change the current context)
     err_ = ::cudaSetDevice(this->id_);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("cudaSetDevice for id = %d failed with message \"%s\".\n", this->id_,
+        Fatal<cuda_runtime_error>("cudaSetDevice for id = {} failed with message \"{}\".\n", this->id_,
                                   ::cudaGetErrorName(err_));
     }
     // malloc
     err_ = ::cudaMalloc(&gpu_int, 3 * sizeof(int));
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("cudaMalloc failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("cudaMalloc failed with message \"{}\".\n", ::cudaGetErrorName(err_));
     }
     // copy to gpu
     err_ = ::cudaMemcpy(gpu_int, cpu_int, 3 * sizeof(int), cudaMemcpyHostToDevice);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("cudaMemcpyHostToDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("cudaMemcpyHostToDevice failed with message \"{}\".\n", ::cudaGetErrorName(err_));
     }
     // launch kernel
     cuda::add_integers_on_gpu(gpu_int, gpu_int + 1, gpu_int + 2);
     err_ = ::cudaGetLastError();
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Launch kernel failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("Launch kernel failed with message \"{}\".\n", ::cudaGetErrorName(err_));
     }
     // copy to cpu
     err_ = ::cudaMemcpy(cpu_int, gpu_int, 3 * sizeof(int), cudaMemcpyDeviceToHost);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("cudaMemcpyDeviceToHost failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("cudaMemcpyDeviceToHost failed with message \"{}\".\n", ::cudaGetErrorName(err_));
     }
     // check result
     if (cpu_int[2] != reference) {
-        Warning("Expected result of adding %d and %d on GPU ID %d is %d, got %d.\n", cpu_int[0], cpu_int[1], this->id_,
+        Warning("Expected result of adding {} and {} on GPU ID {} is {}, got {}.\n", cpu_int[0], cpu_int[1], this->id_,
                 reference, cpu_int[2]);
         return false;
     }
@@ -221,7 +221,7 @@ void cuda::Device::set_as_current(void) const {
     // set GPU to current context
     ::cudaError_t err_ = ::cudaSetDevice(this->id_);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("cudaSetDevice failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("cudaSetDevice failed with message \"{}\".\n", ::cudaGetErrorName(err_));
     }
     // update primary context map
     std::unique_lock<std::mutex> lock(Environment::mutex);
@@ -237,7 +237,7 @@ std::uintptr_t cuda::Device::push_context(void) const {
     std::uintptr_t primary_context = Environment::primary_ctx.at(this->id_);
     ::cudaError_t err_ = static_cast<::cudaError_t>(::cuCtxPushCurrent(reinterpret_cast<::CUcontext>(primary_context)));
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("cuCtxPushCurrent failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("cuCtxPushCurrent failed with message \"{}\".\n", ::cudaGetErrorName(err_));
     }
     return current_context;
 }
@@ -248,7 +248,7 @@ void cuda::Device::pop_context(std::uintptr_t previous_context) noexcept {
         ::CUcontext ctx;
         ::cudaError_t err_ = static_cast<::cudaError_t>(::cuCtxPopCurrent(&ctx));
         if (err_ != 0) {
-            Warning("cuCtxPopCurrent failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+            Warning("cuCtxPopCurrent failed with message \"{}\".\n", ::cudaGetErrorName(err_));
         }
         if (previous_context != reinterpret_cast<std::uintptr_t>(ctx)) {
             Warning("Wrong context provided.\n");
@@ -269,7 +269,7 @@ std::uint64_t cuda::Device::limit(cuda::DeviceLimit limit, std::uint64_t size) {
         size_t limit_value = static_cast<size_t>(size);
         ::cudaError_t err_ = ::cudaDeviceSetLimit(static_cast<::cudaLimit>(limit), limit_value);
         if (err_ != 0) {
-            Fatal<cuda_runtime_error>("cudaDeviceSetLimit failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+            Fatal<cuda_runtime_error>("cudaDeviceSetLimit failed with message \"{}\".\n", ::cudaGetErrorName(err_));
         }
         result = size;
     }
@@ -283,7 +283,7 @@ void cuda::Device::reset_all(void) { ::cudaDeviceReset(); }
 void cuda::Device::synchronize(void) {
     ::cudaError_t err_ = ::cudaDeviceSynchronize();
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("cudaDeviceSynchronize failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("cudaDeviceSynchronize failed with message \"{}\".\n", ::cudaGetErrorName(err_));
     }
 }
 
@@ -315,7 +315,7 @@ bool cuda::test_all_gpu(void) {
         cuda::Device gpu(i);
         result = result && gpu.test_gpu();
         if (!result) {
-            Warning("\rCheck on device %d has failed.\n", i);
+            Warning("\rCheck on device {} has failed.\n", i);
         } else {
             std::printf("\r");
         }

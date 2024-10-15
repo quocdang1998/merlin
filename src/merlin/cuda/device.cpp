@@ -13,7 +13,7 @@ namespace merlin {
 
 // Construct a device from its ID
 cuda::Device::Device(int id) {
-    Fatal<cuda_compile_error>("Cannot detect GPU %d in non-CUDA mode.\n", id);
+    Fatal<cuda_compile_error>("Cannot detect GPU {} in non-CUDA mode.\n", id);
 }
 
 // Get instance point to current GPU

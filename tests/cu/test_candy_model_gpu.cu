@@ -30,8 +30,8 @@ __global__ void print_model_shr(candy::Model * model_ptr, candy::Optimizer * opt
     }
     CudaOut("Model get: %f.\n", model_shr->get(0,0,0));
     CudaOut("shared integer: %d.\n", *i_shr);
-    CudaOut("Optimizer type: %.lu\n", optmz_shr->static_data().index());
-    CudaOut("Optimizer dynamic size: %.lu\n", optmz_shr->dynamic_size());
+    CudaOut("Optimizer type: %u.\n", (unsigned) optmz_shr->static_data().index());
+    CudaOut("Optimizer dynamic size: %" PRIu64 ".\n", optmz_shr->dynamic_size());
 }
 
 __global__ void print_model(candy::Model * model_ptr, candy::Optimizer * optmz_ptr) {
@@ -46,8 +46,8 @@ __global__ void print_model(candy::Model * model_ptr, candy::Optimizer * optmz_p
     Index index = {1, 1};
     CudaOut("Model eval: %f.\n", model_ptr->eval(index));
     model_ptr->get(1, 2, 1) = 1.70;
-    CudaOut("Optimizer type: %.lu\n", optmz_ptr->static_data().index());
-    CudaOut("Optimizer dynamic size: %.lu\n", optmz_ptr->dynamic_size());
+    CudaOut("Optimizer type: %u.\n", (unsigned) optmz_ptr->static_data().index());
+    CudaOut("Optimizer dynamic size: %" PRIu64 ".\n", optmz_ptr->dynamic_size());
 }
 
 int main(void) {
@@ -62,7 +62,7 @@ int main(void) {
             {2.0, 1.0, 2.4, 1.2, 2.7, 1.6}
         },
         2);
-    Message("Model: %s\n", model.str().c_str());
+    Message("Model: {}\n", model.str());
     std::cout << model.eval({1, 1}) << "\n";
 
     // initialize optimizer
@@ -84,5 +84,5 @@ int main(void) {
         },
         2);
     model_cpu.copy_from_gpu(reinterpret_cast<double *>(gpu_model + 1));
-    Message("Model copied from GPU: %s\n", model_cpu.str().c_str());
+    Message("Model copied from GPU: {}\n", model_cpu.str());
 }

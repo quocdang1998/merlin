@@ -2,7 +2,6 @@
 #include "merlin/candy/train/gpu_trainer.hpp"
 
 #include <algorithm>  // std::max
-#include <cinttypes>  // PRIu64
 #include <numeric>    // std::accumulate
 
 #include "merlin/array/parcel.hpp"       // merlin::array::Parcel
@@ -12,7 +11,7 @@
 #include "merlin/cuda/copy_helpers.hpp"  // merlin::cuda::Dispatcher
 #include "merlin/cuda/device.hpp"        // merlin::cuda::CtxGuard
 #include "merlin/cuda/stream.hpp"        // merlin::cuda::Stream
-#include "merlin/logger.hpp"             // merlin::Fatal, merlin::Warning
+#include "merlin/logger.hpp"             // merlin::cuda_compile_error, merlin::Fatal, merlin::Warning
 #include "merlin/memory.hpp"             // merlin::mem_alloc_device, merlin::mem_free_device, merlin::memcpy_gpu_to_cpu
 #include "merlin/vector.hpp"             // merlin::DoubleVec, merlin::UIntVec
 
@@ -22,12 +21,54 @@ namespace merlin {
 // Utility
 // ---------------------------------------------------------------------------------------------------------------------
 
+#ifndef __MERLIN_CUDA__
+
+// Launch CUDA kernel dry-running
+void candy::train::launch_dry_run(candy::Model * p_model, candy::Optimizer * p_optmz, const array::Parcel * p_data,
+                                  std::uint64_t * p_cases, double * p_error, std::uint64_t * p_count,
+                                  std::uint64_t size, candy::TrialPolicy policy, candy::TrainMetric metric,
+                                  std::uint64_t block_size, std::uint64_t shared_mem_size, std::uintptr_t stream_ptr) {
+    Fatal<cuda_compile_error>("Cannot launch dry-run kernel on GPU in non-CUDA mode.\n");
+}
+
+// Launch CUDA kernel training a model until a given threshold is met
+void candy::train::launch_update_until(candy::Model * p_model, candy::Optimizer * p_optmz, const array::Parcel * p_data,
+                                       std::uint64_t size, std::uint64_t rep, double threshold,
+                                       std::uint64_t block_size, candy::TrainMetric metric,
+                                       std::uint64_t shared_mem_size, std::uintptr_t stream_ptr) {
+    Fatal<cuda_compile_error>("Cannot launch update-until kernel on GPU in non-CUDA mode.\n");
+}
+
+// Launch CUDA kernel training a model for a fixed number of iterations
+void candy::train::launch_update_for(candy::Model * p_model, candy::Optimizer * p_optmz, const array::Parcel * p_data,
+                                     std::uint64_t size, std::uint64_t max_iter, std::uint64_t block_size,
+                                     candy::TrainMetric metric, std::uint64_t shared_mem_size,
+                                     std::uintptr_t stream_ptr) {
+    Fatal<cuda_compile_error>("Cannot launch update-for kernel on GPU in non-CUDA mode.\n");
+}
+
+// Launch CUDA kernel reconstructing data
+void candy::train::launch_reconstruct(candy::Model * p_model, array::Parcel * p_data, std::uint64_t size,
+                                      std::uint64_t block_size, std::uint64_t shared_mem_size,
+                                      std::uintptr_t stream_ptr) {
+    Fatal<cuda_compile_error>("Cannot launch reconstruct kernel on GPU in non-CUDA mode.\n");
+}
+
+/** @brief Launch CUDA kernel calculating error.*/
+void candy::train::launch_get_error(candy::Model * p_model, array::Parcel * p_data, double * p_error,
+                                    std::uint64_t size, std::uint64_t block_size, std::uint64_t shared_mem_size,
+                                    std::uintptr_t stream_ptr) {
+    Fatal<cuda_compile_error>("Cannot launch get-error kernel on GPU in non-CUDA mode.\n");
+}
+
+#endif  // __MERLIN_CUDA__
+
 // Transfer vector of data to GPU
 static inline array::Parcel * transfer_parcels(std::vector<array::Parcel *> & p_rec_data, cuda::Stream & stream) {
     // check if all data are initialized on the same GPU as the stream
     for (std::uint64_t index = 0; index < p_rec_data.size(); index++) {
         if (p_rec_data[index]->get_gpu() != stream.get_gpu()) {
-            Fatal<std::runtime_error>("Array %" PRIu64 " is allocated on a diffrent GPU than the stream.\n", index);
+            Fatal<std::runtime_error>("Array {} is allocated on a different GPU than the stream.\n", index);
         }
     }
     // allocate array for reconstructed data on GPU
@@ -104,7 +145,7 @@ void candy::train::GpuTrainer::set_optmz(const std::string & name, const candy::
     // check for model
     const std::pair<std::uint64_t, std::array<bool, 3>> & status = this->map_.at(name);
     if (!status.second[0]) {
-        Fatal<std::runtime_error>("Assign a model to key \"%s\" before adding optimizer.\n", name.c_str());
+        Fatal<std::runtime_error>("Assign a model to key \"{}\" before adding optimizer.\n", name);
     }
     // check compatibility
     std::uint64_t index = this->get_index_or_create_key(name);
@@ -139,7 +180,7 @@ void candy::train::GpuTrainer::set_data(const std::string & name, const array::P
     // check for model
     const std::pair<std::uint64_t, std::array<bool, 3>> & status = this->map_.at(name);
     if (!status.second[0]) {
-        Fatal<std::runtime_error>("Assign a model to key \"%s\" before assigning data.\n", name.c_str());
+        Fatal<std::runtime_error>("Assign a model to key \"{}\" before assigning data.\n", name);
     }
     // check compatibility
     std::uint64_t index = this->get_index_or_create_key(name);
@@ -161,7 +202,7 @@ candy::Model candy::train::GpuTrainer::get_model(const std::string & name) {
     // check if model is initialized
     const std::pair<std::uint64_t, std::array<bool, 3>> & status = this->map_.at(name);
     if (!status.second[0]) {
-        Fatal<std::runtime_error>("No model assigned to key \"%s\".\n", name.c_str());
+        Fatal<std::runtime_error>("No model assigned to key \"{}\".\n", name);
     }
     // get index
     std::uint64_t index = status.first;

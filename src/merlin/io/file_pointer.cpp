@@ -38,12 +38,12 @@ io::FilePointer io::open_file(const char * fname, bool exist_ok) {
     if (std::FILE * read_file = std::fopen(fname, "rb")) {
         std::fclose(read_file);
         if (!exist_ok) {
-            Fatal<std::invalid_argument>("File \"%s\" already exist.\n");
+            Fatal<std::invalid_argument>("File \"{}\" already exist.\n", fname);
         }
     } else {
         std::FILE * create_file = std::fopen(fname, "wb");
         if (create_file == nullptr) {
-            Fatal<std::invalid_argument>("Failed to create file \"%s\".\n");
+            Fatal<std::invalid_argument>("Failed to create file \"{}\".\n", fname);
         }
         std::fclose(create_file);
     }

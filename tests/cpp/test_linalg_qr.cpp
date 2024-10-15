@@ -24,12 +24,12 @@ void test_triu_one_solve(void) {
     };
     linalg::Matrix mat(10, 10);
     std::memcpy(mat.data(), data, 100 * sizeof(double));
-    Message("Matrix: %s\n", mat.str().c_str());
+    Message("Matrix: ") << mat.str() << "\n";
     DoubleVec vec = {219.7, 216.4, 299.3, 186.8, 254.9, 169.7, 146.5,  94.6,  38. , 10.};
-    Message("Vector: %s\n", vec.str().c_str());
+    Message("Vector: ") << vec.str() << "\n";
     linalg::triu_one_solve(mat, vec.data());
     // expected solution [1.0, 2.0, 3.0, ..., 9.0, 10.0]
-    Message("Solution: %s\n", vec.str().c_str());
+    Message("Solution: ") << vec.str() << "\n";
 }
 
 void test_triu_solve(void) {
@@ -48,12 +48,12 @@ void test_triu_solve(void) {
     };
     linalg::Matrix mat(10, 10);
     std::memcpy(mat.data(), data, 100 * sizeof(double));
-    Message("Matrix: %s\n", mat.str().c_str());
+    Message("Matrix: ") << mat.str() << "\n";
     DoubleVec vec = {222.8, 224.8, 321.2, 208.4, 277.4, 187.7, 159.1,  95.4,  62.3, 73.};
-    Message("Vector: %s\n", vec.str().c_str());
+    Message("Vector: ") << vec.str() << "\n";
     linalg::triu_solve(mat, vec.data());
     // expected solution [1.0, 2.0, 3.0, ..., 9.0, 10.0]
-    Message("Solution: %s\n", vec.str().c_str());
+    Message("Solution: ") << vec.str() << "\n";
 }
 
 void test_qr_solve(void) {
@@ -66,7 +66,7 @@ void test_qr_solve(void) {
     };
     linalg::QRPDecomp qrp(20, 4);
     std::memcpy(qrp.core().data(), data, 80 * sizeof(double));
-    Message("Matrix: %s\n", qrp.core().str().c_str());
+    Message("Matrix: ") << qrp.core().str() << "\n";
     qrp.decompose();
     double problem[20] = {
         59.8, 41.8, 77.2, 54.6, 70.3, 53.8, 47. , 62.4, 74. , 18. , 33.4, 51. ,
@@ -74,21 +74,21 @@ void test_qr_solve(void) {
     };
     double residual = qrp.solve(problem);
     DoubleVec solution(problem, 4, true);
-    Message("Solution: %s\n", solution.str().c_str());
-    Message("Residual: %f\n", residual);
+    Message("Solution: ") << solution.str() << "\n";
+    Message("Residual: ") << residual << "\n";
 }
 
 void test_permutation(void) {
     Permutation p({1, 5, 2, 4, 3, 0});
     Permutation p_1 = p.inv();
-    Message("Inverse: %s\n", p_1.str().c_str());
+    Message("Inverse: {}\n", p_1.str());
     double a[6] = {1.8, 2.1, 3.2, 4.5, 5.7, 6.2};
     DoubleVec vec_b(6);
     p.inv_permute(a, vec_b.data());
-    Message("Vec_b: %s\n", vec_b.str().c_str());
+    Message("Vec_b: {}\n", vec_b.str());
     p.inplace_inv_permute(a);
     DoubleVec vec_a(a, 6, true);
-    Message("Vec_a: %s\n", vec_a.str().c_str());
+    Message("Vec_a: {}\n", vec_a.str());
 }
 
 int main(void) {

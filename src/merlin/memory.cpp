@@ -3,11 +3,39 @@
 
 #include <cstddef>  // nullptr
 #include <cstdint>  // std::uint64_t
-#include <cstdlib>  // std::aligned_alloc, std::free
 
 #include "merlin/logger.hpp"  // merlin::cuda_compile_error, merlin::Fatal
+#include "merlin/platform.hpp"  // __MERLIN_WINDOWS__, __MERLIN_LINUX__
+
+#if defined(__MERLIN_WINDOWS__)
+    #include <malloc.h>  // ::_aligned_malloc, ::_aligned_free
+#elif defined(__MERLIN_LINUX__)
+    #include <cstdlib>  // std::aligned_alloc, std::free
+#endif
 
 namespace merlin {
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Wrapper for aligned_alloc
+// ---------------------------------------------------------------------------------------------------------------------
+
+// Align-alloc
+static inline void * aligned_alloc(std::size_t alignment, std::size_t size) {
+#if defined(__MERLIN_WINDOWS__)
+    return ::_aligned_malloc(size, alignment);
+#elif defined(__MERLIN_LINUX__)
+    return std::aligned_alloc(alignment, size);
+#endif
+}
+
+// Align-free
+static inline void aligned_free(void * ptr) {
+#if defined(__MERLIN_WINDOWS__)
+    ::_aligned_free(ptr);
+#elif defined(__MERLIN_LINUX__)
+    std::free(ptr);
+#endif
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // CPU Memory Allocator
@@ -20,11 +48,11 @@ void * mem_alloc_host(std::size_t size) {
     // allocate memory
     void * allocated_mem = nullptr;
     if (size % sizeof(double) == 0) {
-        allocated_mem = std::aligned_alloc(alignof(double), size);
+        allocated_mem = aligned_alloc(alignof(double), size);
     } else if (size % sizeof(std::uint64_t) == 0) {
-        allocated_mem = std::aligned_alloc(alignof(std::uint64_t), size);
+        allocated_mem = aligned_alloc(alignof(std::uint64_t), size);
     } else {
-        allocated_mem = std::malloc(size);
+        allocated_mem = aligned_alloc(alignof(char), size);
     }
     // error checking
     if (allocated_mem == nullptr) {
@@ -36,7 +64,7 @@ void * mem_alloc_host(std::size_t size) {
 // Free page-locked CPU memory
 void mem_free_host(void * ptr) {
     // deallocate memory
-    std::free(ptr);
+    aligned_free(ptr);
 }
 
 // Pin a pre-allocated CPU memory

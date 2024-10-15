@@ -26,12 +26,12 @@ int main(void) {
     double data[6] = {2.5, 3.0, 3.5, 4.45, 5.34, 6.07};
     Index data_dims = {2, 3}, data_strides = {data_dims[1] * sizeof(double), sizeof(double)};
     array::Array train_data(data, data_dims, data_strides);
-    Message("Data: %s\n", train_data.str().c_str());
+    Message("Data: ") << train_data.str() << "\n";
 
     candy::Model model({{1.0, 0.5, 1.6, 2.7}, {2.0, 1.0, 2.4, 1.2, 4.6, 3.5}}, 2);
     std::array<candy::Randomizer, 2> randomizer = {candy::rand::Gaussian(), candy::rand::Gaussian()};
     model.initialize(train_data, randomizer.data());
-    Message("Model before trained: %s\n", model.str().c_str());
+    Message("Model before trained: {}\n", model.str());
 
     // candy::Optimizer opt = candy::optmz::create_grad_descent(0.5);
     candy::Optimizer opt = candy::optmz::create_adagrad(0.3, model.num_params());
@@ -63,7 +63,7 @@ int main(void) {
     // cpu_train.update_until(1000, 0.01, 3, candy::TrainMetric::RelativeSquare, true);
     cpu_train.update_for(20000, 3, candy::TrainMetric::RelativeSquare, false);
     cpu_synch.synchronize();
-    std::printf("Model new: %s\n", cpu_train.get_model("foo").str().c_str());
+    std::printf("Model new: {}\n", cpu_train.get_model("foo").str());
     array::Array destination(train_data.shape());
     std::map<std::string, array::Array *> destination_map;
     destination_map["foo"] = &destination;
@@ -73,14 +73,14 @@ int main(void) {
     error_map["foo"] = {&rmse, &rmae};
     cpu_train.get_error(error_map, 3);
     cpu_synch.synchronize();
-    std::printf("Reconstructed data: %s\n", destination.str().c_str());
-    std::printf("Reconstructed error: %f %f\n", rmse, rmae);
+    std::printf("Reconstructed data: {}\n", destination.str());
+    std::printf("Reconstructed error: {} {}\n", rmse, rmae);
 
     // save and load model
     candy::Model & trained_model = cpu_train.get_model("foo");
-    Message("Model to save: %s\n", trained_model.str().c_str());
+    Message("Model to save: {}\n", trained_model.str());
     trained_model.save("mdl.txt", 0, true);
     candy::Model loaded_model;
     loaded_model.load("mdl.txt", 0, true);
-    Message("Model to load: %s\n", loaded_model.str().c_str());
+    Message("Model to load: {}\n", loaded_model.str());
 }

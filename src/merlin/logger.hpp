@@ -3,19 +3,19 @@
 #define MERLIN_LOGGER_HPP_
 
 #include <cinttypes>        // PRIdLEAST32
-#include <cstdio>           // std::fprintf, std::snprintf
+#include <cstdio>           // std::printf
 #include <filesystem>       // std::filesystem::filesystem_error
+#include <format>           // std::format, std::vformat
 #include <iostream>         // std::cout, std::clog
+#include <ostream>          // std::ostream
 #include <source_location>  // std::source_location
 #include <stdexcept>        // std::runtime_error
 #include <syncstream>       // std::osyncstream
 #include <utility>          // std::forward
-#include <format>
 
-#include "merlin/color.hpp"     // __MERLIN_COLOR
-#include "merlin/config.hpp"    // merlin::printf_buffer, __cudevice__, __cuhostdev__
-#include "merlin/exports.hpp"   // MERLINENV_EXPORTS
-#include "merlin/platform.hpp"  // __MERLIN_LINUX__
+#include "merlin/color.hpp"    // merlin::color, merlin::color_out, merlin::color_err
+#include "merlin/config.hpp"   // __cudevice__
+#include "merlin/exports.hpp"  // MERLIN_EXPORTS
 
 namespace merlin {
 
@@ -23,13 +23,13 @@ namespace merlin {
 // -------------
 
 /** @brief Print the stacktrace at the crash moment.*/
-MERLINENV_EXPORTS void print_stacktrace(int skip = 1);
+MERLIN_EXPORTS void print_stacktrace(std::ostream & output, int skip = 1);
 
 // Get error message from Windows and Unix
 // ---------------------------------------
 
 /** @brief Get error message from Windows or Linux.*/
-MERLINENV_EXPORTS std::string throw_sys_last_error(unsigned long int last_error = static_cast<unsigned long int>(-1));
+MERLIN_EXPORTS std::string throw_sys_last_error(unsigned long int last_error = static_cast<unsigned long int>(-1));
 
 // Custom exceptions
 // -----------------
@@ -55,71 +55,72 @@ class not_implemented_error : public std::runtime_error {
     const char * what() const noexcept { return std::runtime_error::what(); }
 };
 
-// Log Message, Warning and Fatal for CPU
-// --------------------------------------
+// Log Message, Warning, DebugLog and Fatal for CPU
+// ------------------------------------------------
 
-/** @brief Wrapper around format string and current source location.*/
-struct FmtString {
-  public:
-    consteval FmtString(const char * data, std::source_location location = std::source_location::current()) :
-    str(data), loc(location) {}
-    const char * str;
-    std::source_location loc;
-};
-
-/** @brief Get length of a string.*/
-constexpr int len(const char * str) {
-    int length = 0;
-    while (*(str++) != '\0') {
-        ++length;
+/** @brief Compile-time function to calculate string length.*/
+constexpr std::size_t get_length(const char * str) {
+    std::size_t len = 0;
+    while (str[len] != '\0') {
+        ++len;
     }
-    return length;
+    return len;
 }
 
-/** @brief Concatenate 2 strings.*/
-constexpr void cat_str(char * dest_end, const char * src) {
-    do {
-        *(dest_end++) = *src;
-    } while (*(src++) != '\0');
-}
-
-/** @brief Get filename from absolute path.*/
-constexpr const char * get_fname(const char * abs_path) {
-    const char * fname = abs_path;
-    for (; *abs_path != '\0'; abs_path++) {
-        if ((*abs_path == '/') || (*abs_path == '\\')) {
-            fname = abs_path + 1;
+/** @brief Compile-time function to extract the filename from a file path.*/
+constexpr const char * extract_filename(const char * path) {
+    const std::size_t len = get_length(path);
+    const char * last_slash = path;
+    for (std::size_t i = 0; i < len; ++i) {
+        if (path[i] == '/' || path[i] == '\\') {
+            last_slash = &path[i + 1];
         }
     }
-    return fname;
+    return last_slash;
 }
+
+/** @brief Wrapper for format string and current source location.*/
+struct FmtString {
+    /** @brief Constructor.*/
+    template <std::size_t N>
+    constexpr FmtString(const char (&data)[N],
+                        const std::source_location & location = std::source_location::current()) :
+    str{data}, size{N}, loc{location}, filename{extract_filename(location.file_name())} {}
+
+    /** @brief Pointer to the associated message.*/
+    const char * const str;
+    /** @brief Size of the string.*/
+    const std::size_t size;
+    /** @brief Location of the source.*/
+    const std::source_location & loc;
+    /** @brief Filename.*/
+    const std::string_view filename;
+};
 
 /** @brief Print message to the standard output.
  *  @details Example:
  *  @code {.cpp}
  *  // use case 1: single output
- *  Message("A message with a value %d.\n", -2);
+ *  Message("A message with a value {}.\n", -2);
  *  // use case 2: multiple output
- *  Message m("A printf ");
+ *  Message m("A message ");
  *  m << "that takes " << "extra arguments. ";
  *  m << "And this message will not be mixed up even in multi-threading.";
  *  @endcode
  */
 struct Message {
   public:
-    /** @brief Constructor from ``std::printf``'s syntax.
-     *  @param fmt Format string (same syntax as ``std::printf``).
+    /** @brief Constructor from formatting string and variadic template arguments.
+     *  @param fmt Format string (same syntax as ``std::format``).
      *  @param args Arguments to be formatted.
      */
     template <typename... Args>
-    Message(FmtString fmt = "", Args &&... args) {
-        char format_buffer[printf_buffer] = "%smessage%s [%s] in %s l.%" PRIdLEAST32 " : ";
-        cat_str(format_buffer + len(format_buffer), fmt.str);
-        char buffer[printf_buffer];
-        std::snprintf(buffer, printf_buffer, format_buffer, color_out(color::bold_blue), color_out(color::normal),
-                      fmt.loc.function_name(), get_fname(fmt.loc.file_name()), fmt.loc.line(),
-                      std::forward<Args>(args)...);
-        this->stream << buffer;
+    Message(const FmtString & fmt, Args &&... args) {
+#if !defined(__CUDA_ARCH__)
+        this->stream << std::format(Message::prefix, color_out(color::bold_blue), color_out(color::normal),
+                                    fmt.loc.function_name(), fmt.filename, fmt.loc.line());
+        this->stream << std::vformat(std::string_view(fmt.str, fmt.size), std::make_format_args(args...));
+#endif  // __CUDA_ARCH__
     }
     /** @brief Stream operator.*/
     template <typename T>
@@ -131,14 +132,17 @@ struct Message {
     void emit(void) { this->stream.emit(); }
 
   private:
+    /** @brief Associated asynchronous stream.*/
     std::osyncstream stream{std::cout};
+    /** @brief Appended prefix.*/
+    static constexpr const char prefix[] = "{}message{} [{}] in {} l.{} : ";
 };
 
 /** @brief Print warning to the standard error.
  *  @details Example:
  *  @code {.cpp}
  *  // use case 1: single output
- *  Warning("A warning with a value %f.\n", 0.5);
+ *  Warning("A warning with a value {}.\n", 0.5);
  *  // use case 2: multiple output
  *  Warning w("A warning ");
  *  w << "that takes " << "extra arguments. ";
@@ -147,19 +151,17 @@ struct Message {
  */
 struct Warning {
   public:
-    /** @brief Constructor from ``std::printf``'s syntax.
-     *  @param fmt Format string (same syntax as ``std::printf``).
+    /** @brief Constructor from formatting string and variadic template arguments.
+     *  @param fmt Format string (same syntax as ``std::format``).
      *  @param args Arguments to be formatted.
      */
     template <typename... Args>
-    Warning(FmtString fmt = "", Args &&... args) {
-        char format_buffer[printf_buffer] = "%swarning%s [%s] in %s l.%" PRIdLEAST32 " : ";
-        cat_str(format_buffer + len(format_buffer), fmt.str);
-        char buffer[printf_buffer];
-        std::snprintf(buffer, printf_buffer, format_buffer, color_err(color::bold_yellow), color_err(color::normal),
-                      fmt.loc.function_name(), get_fname(fmt.loc.file_name()), fmt.loc.line(),
-                      std::forward<Args>(args)...);
-        this->stream << buffer;
+    Warning(const FmtString & fmt, Args &&... args) {
+#if !defined(__CUDA_ARCH__)
+        this->stream << std::format(Warning::prefix, color_out(color::bold_yellow), color_out(color::normal),
+                                    fmt.loc.function_name(), fmt.filename, fmt.loc.line());
+        this->stream << std::vformat(std::string_view(fmt.str, fmt.size), std::make_format_args(args...));
+#endif  // __CUDA_ARCH__
     }
     /** @brief Stream operator.*/
     template <typename T>
@@ -171,31 +173,47 @@ struct Warning {
     void emit(void) { this->stream.emit(); }
 
   private:
+    /** @brief Associated asynchronous stream.*/
     std::osyncstream stream{std::clog};
+    /** @brief Appended prefix.*/
+    static constexpr const char prefix[] = "{}warning{} [{}] in {} l.{} : ";
 };
 
-/** @brief Message that is printed only in debug mode.
+/** @brief Log messages that is printed only in debug mode.
  *  @details Example:
  *  @code {.cpp}
- *  DebugLog("A message with a value %f.\n", 0.5);
+ *  DebugLog("A debug log with a value {} that is only printed in debug mode.\n", 0.5);
  *  @endcode
  */
-template <typename... Args>
 struct DebugLog {
   public:
-    /** @brief Constructor from ``std::printf``'s syntax.
-     *  @param fmt Format string (same syntax as ``std::printf``).
+    /** @brief Constructor from formatting string and variadic template arguments.
+     *  @param fmt Format string (same syntax as ``std::format``).
      *  @param args Arguments to be formatted.
      */
-    DebugLog(FmtString fmt, Args &&... args) {
-#ifndef NDEBUG
-        char buffer[printf_buffer] = "%sdebug%s [%s] in %s l.%" PRIdLEAST32 " : ";
-        cat_str(buffer + len(buffer), fmt.str);
-        std::fprintf(stderr, buffer, color_err(color::bold_green), color_err(color::normal), fmt.loc.function_name(),
-                     get_fname(fmt.loc.file_name()), fmt.loc.line(), std::forward<Args>(args)...);
-        print_stacktrace(2);
-#endif
+    template <typename... Args>
+    DebugLog(const FmtString & fmt, Args &&... args) {
+#if !defined(__CUDA_ARCH__) && !defined(NDEBUG)
+        this->stream << std::format(DebugLog::prefix, color_out(color::bold_green), color_out(color::normal),
+                                    fmt.loc.function_name(), fmt.filename, fmt.loc.line());
+        this->stream << std::vformat(std::string_view(fmt.str, fmt.size), std::make_format_args(args...));
+#endif  // !__CUDA_ARCH__ && !NDEBUG
+        print_stacktrace(this->stream, 2);
     }
+    /** @brief Stream operator.*/
+    template <typename T>
+    DebugLog & operator<<(T && obj) {
+        this->stream << std::forward<T>(obj);
+        return *this;
+    }
+    /** @brief Force print out content to the output stream.*/
+    void emit(void) { this->stream.emit(); }
+
+  private:
+    /** @brief Associated asynchronous stream.*/
+    std::osyncstream stream{std::clog};
+    /** @brief Appended prefix.*/
+    static constexpr const char prefix[] = "{}debug{} [{}] in {} l.{} : ";
 };
 
 /** @brief Print error message and throw an instance of type exception.
@@ -211,44 +229,58 @@ template <class Exception>
 struct Fatal {
   public:
     /** @brief Throw default constructed exception.*/
-    Fatal(void) {
-#ifndef NDEBUG
-        print_stacktrace(2);
-#endif  // NDEBUG
+    Fatal(const std::source_location & loc = std::source_location::current()) {
+#if !defined(__CUDA_ARCH__)
+        this->stream << std::format(Fatal::default_prefix, color_out(color::bold_red), color_out(color::normal),
+                                    loc.function_name(), extract_filename(loc.file_name()), loc.line());
+#endif  // __CUDA_ARCH__
+        print_stacktrace(this->stream, 2);
+        this->stream.emit();
         throw Exception();
     }
-    /** @brief Constructor from ``std::printf``'s syntax.
-     *  @param fmt Format string (same syntax as ``std::printf``).
+    /** @brief @brief Constructor from formatting string and variadic template arguments.
+     *  @param fmt Format string (same syntax as ``std::format``).
      *  @param args Arguments to be formatted.
      */
     template <typename... Args>
-    Fatal(FmtString fmt, Args &&... args) {
-        // create exception message
-        char exception_buffer[printf_buffer];
-#if defined(__MERLIN_LINUX__)
-        _Pragma("GCC diagnostic ignored \"-Wformat-security\"");
-#endif  // __MERLIN_LINUX__
-        std::snprintf(exception_buffer, printf_buffer, fmt.str, std::forward<Args>(args)...);
-#if defined(__MERLIN_LINUX__)
-        _Pragma("GCC diagnostic pop");
-#endif  // __MERLIN_LINUX__
-        // concatenate exception message to source location info
-        std::fprintf(stderr, "%sfatal%s [%s] in %s l.%" PRIdLEAST32 " : %s", color_err(color::bold_red),
-                     color_err(color::normal), fmt.loc.function_name(), get_fname(fmt.loc.file_name()), fmt.loc.line(),
-                     exception_buffer);
-#ifndef NDEBUG
-        print_stacktrace(2);
-#endif  // NDEBUG
+    Fatal(const FmtString & fmt, Args &&... args) {
+        std::string error_message;
+#if !defined(__CUDA_ARCH__)
+        error_message = std::vformat(std::string_view(fmt.str, fmt.size), std::make_format_args(args...));
+        this->stream << std::format(Fatal::prefix, color_out(color::bold_red), color_out(color::normal),
+                                    fmt.loc.function_name(), fmt.filename, fmt.loc.line());
+#endif  // __CUDA_ARCH__
+        this->stream << error_message;
+        print_stacktrace(this->stream, 2);
+        this->stream.emit();
         if constexpr (std::is_same<Exception, std::filesystem::filesystem_error>::value) {
-            throw std::filesystem::filesystem_error(exception_buffer, std::error_code(1, std::iostream_category()));
+            throw std::filesystem::filesystem_error(error_message.c_str(),
+                                                    std::error_code(1, std::iostream_category()));
         } else {
-            throw Exception(exception_buffer);
+            throw Exception(error_message.c_str());
         }
     }
+
+  private:
+    /** @brief Associated asynchronous stream.*/
+    std::osyncstream stream{std::clog};
+    /** @brief Appended prefix.*/
+    static constexpr const char prefix[] = "{}fatal{} [{}] in {} l.{} : ";
+    /** @brief Default prefix for the case without message.*/
+    static constexpr const char default_prefix[] = "{}fatal{} [{}] in {} l.{}";
 };
 
 // Log CudaOut and CudaDeviceError for GPU
 // ---------------------------------------
+
+/** @brief Joint to string literals into a compile-time array.*/
+template <std::size_t N1, std::size_t N2>
+constexpr auto join_str(const char (&s1)[N1], const char (&s2)[N2]) {
+    std::array<char, N1 + N2 - 1> result;
+    std::copy_n(s1, N1 - 1, result.data());
+    std::copy_n(s2, N2, result.data() + N1 - 1);
+    return result;
+}
 
 #if defined(__NVCC__)
 
@@ -261,19 +293,25 @@ struct Fatal {
  *  @endcode
  *  @note This class is only available on device code.
  */
+template <std::size_t N, typename... Args>
 struct CudaOut {
     /** @brief Constructor from ``std::printf``'s syntax.
      *  @param fmt Format string (same syntax as ``std::printf``).
      *  @param args Arguments to be formatted.
+     *  @param loc SOurce location.
      */
-    template <typename... Args>
-    __cudevice__ CudaOut(FmtString fmt, Args &&... args) {
-        char buffer[printf_buffer] = "%scudaout%s [%s] in %s l.%" PRIdLEAST32 " : ";
-        cat_str(buffer + len(buffer), fmt.str);
-        std::printf(buffer, color_cuda(color::bold_cyan), color_cuda(color::normal), fmt.loc.function_name(),
-                    get_fname(fmt.loc.file_name()), fmt.loc.line(), std::forward<Args>(args)...);
+    __cudevice__ CudaOut(const char (&fmt)[N], Args &&... args,
+                         const std::source_location & loc = std::source_location::current()) {
+        auto str = join_str("%scudaout%s [%s] in %s l.%" PRIdLEAST32 " : ", fmt);
+        std::printf(str.data(), color::bold_cyan, color::normal, loc.function_name(), extract_filename(loc.file_name()),
+                    loc.line(), std::forward<Args>(args)...);
     }
 };
+#if !defined(__DOXYGEN_PARSER__)
+template <std::size_t N, typename... Args>
+CudaOut(const char (&)[N], Args &&...) -> CudaOut<N, Args...>;
+#endif  // !__DOXYGEN_PARSER__
+
 
 /** @brief Print error message (for usage inside a GPU function) and terminate GPU kernel.
  *  @details Example:
@@ -284,20 +322,25 @@ struct CudaOut {
  *  @endcode
  *  @note This class is only available on device code.
  */
+template <std::size_t N, typename... Args>
 struct DeviceError {
     /** @brief Constructor from ``std::printf``'s syntax.
      *  @param fmt Format string (same syntax as ``std::printf``).
      *  @param args Arguments to be formatted.
+     *  @param loc SOurce location.
      */
-    template <typename... Args>
-    __cudevice__ DeviceError(FmtString fmt, Args &&... args) {
-        char buffer[printf_buffer] = "cudaerror [%s] in %s l.%" PRIdLEAST32 " : ";
-        cat_str(buffer + len(buffer), fmt.str);
-        std::printf(buffer, fmt.loc.function_name(), get_fname(fmt.loc.file_name()), fmt.loc.line(),
-                    std::forward<Args>(args)...);
+    __cudevice__ DeviceError(const char (&fmt)[N], Args &&... args,
+                             const std::source_location & loc = std::source_location::current()) {
+        auto str = join_str("%cudaerr%s [%s] in {%s} l.%" PRIdLEAST32 " : ", fmt);
+        std::printf(str.data(), color::bold_magenta, color::normal, loc.function_name(),
+                    extract_filename(loc.file_name()), loc.line(), std::forward<Args>(args)...);
         asm("trap;");
     }
 };
+#if !defined(__DOXYGEN_PARSER__)
+template <std::size_t N, typename... Args>
+DeviceError(const char (&)[N], Args &&...) -> DeviceError<N, Args...>;
+#endif  // !__DOXYGEN_PARSER__
 
 #endif  // __NVCC__
 

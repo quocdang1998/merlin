@@ -35,8 +35,8 @@ int main(void) {
 
     // create UIntVec instance
     UIntVec x({1, 2, 3}), y({7, 8, 9});
-    Message("Initialize UIntVec with values: %" PRIu64 " %" PRIu64 " %" PRIu64 ".\n", x[0], x[1], x[2]);
-    Message("Values expected from all tests: {1, 2, 3}.\n");
+    Message("Initialize UIntVec with values: {}.\n", x.str(", "));
+    Message("Values expected from all tests: {{1, 2, 3}}.\n");
 
     // allocate and copy UIntVec to GPU
     cuda::Dispatcher m(0, x);
@@ -50,5 +50,5 @@ int main(void) {
     // copy vector back to CPU
     y.copy_from_gpu(reinterpret_cast<std::uint64_t *>(ptr_x_gpu + 1));
     cuda::Device::synchronize();
-    Message("After copied x from GPU: %s.\n", y.str().c_str());
+    Message("After copied x from GPU: {}.\n", y.str());
 }

@@ -20,7 +20,7 @@ requires array::TransferFunction<CopyFunction>
 void array::copy(array::NdData * dest, const array::NdData * src, CopyFunction && copy) {
     // check if shape vector are the same
     if (src->ndim() != dest->ndim()) {
-        Fatal<std::invalid_argument>("Cannot copy array of different ndim (%u to %u).\n", src->ndim(), dest->ndim());
+        Fatal<std::invalid_argument>("Cannot copy array of different ndims ({} to {}).\n", src->ndim(), dest->ndim());
     }
     std::uint64_t ndim = src->ndim();
     if (!(dest->shape() == src->shape())) {

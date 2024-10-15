@@ -29,7 +29,7 @@ int main (void) {
     // double data[6] = {2.5, 3.0, 3.5, 4.45, 5.34, 6.07};
     Index data_dims = {2, 3}, data_strides = {data_dims[1] * sizeof(double), sizeof(double)};
     array::Array train_data(data, data_dims, data_strides);
-    Message("Data: %s\n", train_data.str().c_str());
+    Message("Data: {}\n", train_data.str());
 
     // copy data to GPU
     array::Parcel gpu_data(train_data.shape());
@@ -37,7 +37,7 @@ int main (void) {
 
     // initialize model
     candy::Model model({{1.0, 0.5, 2.1, 0.25}, {2.0, 1.0, 2.4, 1.2, 2.7, 1.6}}, 2);
-    Message("Model before trained: %s\n", model.str().c_str());
+    Message("Model before trained: {}\n", model.str());
 
     // initialize optimizer
     // candy::Optimizer opt = candy::create_grad_descent(0.2);
@@ -82,9 +82,9 @@ int main (void) {
 
     // print model
     candy::Model gpu_model = gpu_trainer.get_model("foo");
-    Message("Model after trained (GPU): %s\n", gpu_model.str().c_str());
+    Message("Model after trained (GPU): {}\n", gpu_model.str());
     candy::Model cpu_model = cpu_trainer.get_model("foo");
-    Message("Model after trained (CPU): %s\n", cpu_model.str().c_str());
+    Message("Model after trained (CPU): {}\n", cpu_model.str());
 
     // print reconstructed data
     array::Array cpu_recdata(train_data.shape());
@@ -97,8 +97,8 @@ int main (void) {
     gpu_trainer.reconstruct(gpu_recmap);
     cpu_sync.synchronize();
     gpu_sync.synchronize();
-    Message("Reconstructed data (GPU): %s\n", gpu_recdata.str().c_str());
-    Message("Reconstructed data (CPU): %s\n", cpu_recdata.str().c_str());
+    Message("Reconstructed data (GPU): {}\n", gpu_recdata.str());
+    Message("Reconstructed data (CPU): {}\n", cpu_recdata.str());
 
     // print error
     double cpu_rmse, cpu_rmae;
@@ -111,8 +111,8 @@ int main (void) {
     gpu_trainer.get_error(gpu_errmap);
     cpu_sync.synchronize();
     gpu_sync.synchronize();
-    Message("Error (GPU): %f %f\n", gpu_rmse, gpu_rmae);
-    Message("Error (CPU): %f %f\n", cpu_rmse, cpu_rmae);
+    Message("Error (GPU): {} {}\n", gpu_rmse, gpu_rmae);
+    Message("Error (CPU): {} {}\n", cpu_rmse, cpu_rmae);
 
     // export models
     gpu_trainer.export_models();

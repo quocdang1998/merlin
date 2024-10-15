@@ -45,13 +45,13 @@ int main(void) {
     Index dims = {2, 3};
     Index strides = {5*sizeof(double), 2*sizeof(double)};
     array::Array A(A_data, dims, strides, false);
-    Message("CPU Array: %s\n", A.str().c_str());
+    Message("CPU Array: ") << A.str() << "\n";
 
     // copy data to GPU
     cuda::Stream s(cuda::StreamSetting::Default);
     array::Parcel B(A.shape(), s);
     B.transfer_data_to_gpu(A, s);
-    Message("GPU Array: %s\n", B.str().c_str());
+    Message("GPU Array: ") << B.str() << "\n";
 
     // print each element of the tensor
     cuda::Dispatcher mem(s.get_stream_ptr(), B);

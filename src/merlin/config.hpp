@@ -8,12 +8,6 @@
 
 namespace merlin {
 
-// Print buffer
-// ------------
-
-/** @brief Size of printf buffer (default = 10kB).*/
-inline constexpr std::uint64_t printf_buffer = 10240;
-
 // Array with known max number of size
 // -----------------------------------
 
@@ -30,6 +24,13 @@ inline constexpr const std::uint64_t max_dim = 16;
 #else
     #define __cudevice__ static_assert(false, "Cannot compile pure device function without CUDA.\n");
     #define __cuhostdev__
+#endif
+
+// Indicator when the source is compiled in GPU mode
+#ifdef __CUDA_ARCH__
+inline constexpr bool device_mode = true;
+#else
+inline constexpr bool device_mode = false;
 #endif
 
 // Advanced vectorization

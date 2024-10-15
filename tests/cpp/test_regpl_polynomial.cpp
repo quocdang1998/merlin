@@ -15,15 +15,15 @@ int main(void) {
     UIntVec coef_idx = {9, 3, 11, 7, 16, 13};
     regpl::Polynomial p({2, 3, 3});
     p.set(coeff_simplified, coef_idx);
-    Message("Polynomial: %s\n", p.str().c_str());
+    Message("Polynomial: {}\n", p.str());
 
     Point buffer;
     Point point = {1.8, 0.7, 1.5};
-    Message("Evaluation at point %s is %f\n", point.str().c_str(), p.eval(point, buffer));
-    Message("Reference  of point %s is %f\n", point.str().c_str(), reference(point.data()));
+    Message("Evaluation at point {} is {}}\n", point.str(), p.eval(point, buffer));
+    Message("Reference  of point {} is {}\n", point.str(), reference(point.data()));
 
     p.save("polynom.txt", true);
     regpl::Polynomial p_read;
     p_read.load("polynom.txt", true);
-    Message("Read polynomial: %s\n", p_read.str().c_str());
+    Message("Read polynomial: {}\n", p_read.str());
 }

@@ -107,7 +107,7 @@ class cuda::Graph {
     /// @{
     /** @brief Add memory allocation node on the current GPU.
      *  @param size Size (in bytes) to allocate on GPU.
-     *  @param deps %Vector of nodes on which the node depends.
+     *  @param deps Vector of nodes on which the node depends.
      *  @return Tuple of added graph node and pointer to allocated data.
      */
     MERLIN_EXPORTS std::pair<cuda::GraphNode, void *> add_malloc_node(std::uint64_t size,
@@ -117,7 +117,7 @@ class cuda::Graph {
      *  @param src Pointer to source destination.
      *  @param size Number bytes to copy.
      *  @param copy_flag Copy flag.
-     *  @param deps %Vector of nodes on which the node depends.
+     *  @param deps Vector of nodes on which the node depends.
      */
     MERLIN_EXPORTS cuda::GraphNode add_memcpy_node(void * dest, const void * src, std::uint64_t size,
                                                    cuda::MemcpyKind copy_flag,
@@ -128,7 +128,7 @@ class cuda::Graph {
      *  @param n_blocks Number of blocks in the grid.
      *  @param n_threads Number of threads per block.
      *  @param shared_mem Size in bytes of shared memory.
-     *  @param deps %Vector of nodes on which the node depends.
+     *  @param deps Vector of nodes on which the node depends.
      *  @param args List of arguments to provide to the kernel.
      */
     template <typename Function, typename... Args>
@@ -136,7 +136,7 @@ class cuda::Graph {
                                     std::uint64_t shared_mem, const cuda::GraphNodeList & deps, Args &&... args);
     /** @brief Add CUDA host node.
      *  @param callback Pointer to CPU function take in a pointer to ``void`` argument.
-     *  @param deps %Vector of nodes on which the node depends.
+     *  @param deps Vector of nodes on which the node depends.
      *  @param args Arguments to pass to the function.
      */
     template <typename Function, typename... Args>
@@ -144,22 +144,22 @@ class cuda::Graph {
 #endif  // __NVCC__
     /** @brief Add CUDA deallocation node.
      *  @param ptr GPU pointer to be freed.
-     *  @param deps %Vector of nodes on which the node depends.
+     *  @param deps Vector of nodes on which the node depends.
      */
     MERLIN_EXPORTS cuda::GraphNode add_memfree_node(void * ptr, const cuda::GraphNodeList & deps);
     /** @brief Add CUDA event record node.
      *  @param event CUDA event to be recorded.
-     *  @param deps %Vector of nodes on which the node depends.
+     *  @param deps Vector of nodes on which the node depends.
      */
     MERLIN_EXPORTS cuda::GraphNode add_event_record_node(const cuda::Event & event, const cuda::GraphNodeList & deps);
     /** @brief Add CUDA event wait node.
      *  @param event CUDA event to be synchronized.
-     *  @param deps %Vector of nodes on which the node depends.
+     *  @param deps Vector of nodes on which the node depends.
      */
     MERLIN_EXPORTS cuda::GraphNode add_event_wait_node(const cuda::Event & event, const cuda::GraphNodeList & deps);
     /** @brief Add CUDA child graph node.
      *  @param child_graph CUDA graph as child graph to be added.
-     *  @param deps %Vector of nodes on which the node depends.
+     *  @param deps Vector of nodes on which the node depends.
      */
     MERLIN_EXPORTS cuda::GraphNode add_child_graph_node(const cuda::Graph & child_graph,
                                                         const cuda::GraphNodeList & deps);

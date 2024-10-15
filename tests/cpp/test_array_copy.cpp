@@ -21,7 +21,7 @@ int main(void) {
 
     /*array::Array X({20,16,8});
     X.fill(std::nan(""));
-    MESSAGE("Array X: %s\n", X.str().c_str());*/
+    MESSAGE("Array X: {}\n", X.str());*/
 
     // initialize array
     Message("Initialize Array A.\n");
@@ -32,12 +32,12 @@ int main(void) {
     // copy array
     // Array Ar_copy(A, ndim, dims, strides); // copy using pointer constructor
     array::Array Ar(A, dims, strides, false);  // copy using copy constructor
-    Message("Original array: %s\n", Ar.str().c_str());
+    Message("Original array: {}\n", Ar.str());
     array::Array Ar_copy = Ar;
 
     // print array
     Message("Expected values : 1.0 2.0 5.0 6.0 9.0 10.0\n");
-    Message("Result          : %s\n", Ar_copy.str().c_str());
+    Message("Result          : {}\n", Ar_copy.str());
 
     auto [m, v] = Ar.get_mean_variance();
 

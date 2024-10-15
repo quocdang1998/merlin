@@ -28,7 +28,7 @@ int main(void) {
     grid.pop_back();
 
     // print
-    Message("RegularGrid CPU: %s\n", grid.str().c_str());
+    Message("RegularGrid CPU: ") << grid.str() << "\n";
 
     // copy to GPU
     cuda::Dispatcher mem(0, grid);

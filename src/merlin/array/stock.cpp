@@ -1,7 +1,6 @@
 // Copyright 2022 quocdang1998
 #include "merlin/array/stock.hpp"
 
-#include <cinttypes>     // PRIu64
 #include <filesystem>    // std::filesystem::filesystem_error, std::filesystem::file_size, std::filesystem::resize_file
 #include <ios>           // std::ios_base::failure
 #include <mutex>         // std::unique_lock
@@ -57,8 +56,8 @@ std::uint64_t array::Stock::read_metadata(void) {
     std::uint64_t file_size = std::filesystem::file_size(this->filename_);
     std::uint64_t expected_size = this->offset_ + (1 + ndim) * sizeof(std::uint64_t) + this->size() * sizeof(double);
     if (file_size < expected_size) {
-        Fatal<std::filesystem::filesystem_error>("Expected filesize of at least %" PRIu64 ", got %" PRIu64 ".\n",
-                                                 expected_size, file_size);
+        Fatal<std::filesystem::filesystem_error>("Expected filesize of at least {}, got {}.\n", expected_size,
+                                                 file_size);
     }
     return cursor;
 }
@@ -117,8 +116,8 @@ filename_(filename), offset_(offset), thread_safe_(thread_safe) {
     // check if file exists
     bool file_exist = check_file_exist(filename.c_str());
     if (!file_exist) {
-        Fatal<std::filesystem::filesystem_error>("Cannot find file \"%s\", please make sure that the file exists.\n",
-                                                 filename.c_str());
+        Fatal<std::filesystem::filesystem_error>("Cannot find file \"{}\", please make sure that the file exists.\n",
+                                                 filename);
     }
     // open file
     this->file_ptr_ = std::fopen(filename.c_str(), "rb+");
@@ -203,7 +202,7 @@ array::Stock::~Stock(void) {
     if (this->release && (this->file_ptr_ != nullptr)) {
         int err_ = std::fclose(this->file_ptr_);
         if (err_ != 0) {
-            Fatal<std::ios_base::failure>("Cannot close file \"%s\".\n", this->filename_.c_str());
+            Fatal<std::ios_base::failure>("Cannot close file \"{}\".\n", this->filename_);
         }
     }
 }

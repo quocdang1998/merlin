@@ -26,7 +26,7 @@ cuda::GraphNode cuda::add_callback_to_graph(std::uintptr_t graph_ptr, cuda::Grap
                                                 reinterpret_cast<const ::cudaGraphNode_t *>(deps.data()), deps.size(),
                                                 &function_params);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Add host function node to graph failed with message \"%s\".\n",
+        Fatal<cuda_runtime_error>("Add host function node to graph failed with message \"{}\".\n",
                                   ::cudaGetErrorString(err_));
     }
     return cuda::GraphNode(reinterpret_cast<std::uintptr_t>(graph_node));
@@ -41,7 +41,7 @@ cuda::NodeType cuda::GraphNode::get_node_type(void) const {
     ::cudaGraphNodeType type;
     ::cudaError_t err_ = ::cudaGraphNodeGetType(reinterpret_cast<::cudaGraphNode_t>(this->node_id), &type);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("CUDA get node type failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("CUDA get node type failed with message \"{}\".\n", ::cudaGetErrorString(err_));
     }
     return static_cast<cuda::NodeType>(type);
 }
@@ -55,7 +55,7 @@ void cuda::Graph::destroy_graph(void) {
     if (this->graph_ != 0) {
         ::cudaError_t err_ = ::cudaGraphDestroy(reinterpret_cast<::cudaGraph_t>(this->graph_));
         if (err_ != 0) {
-            Fatal<cuda_runtime_error>("CUDA destroy graph failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+            Fatal<cuda_runtime_error>("CUDA destroy graph failed with message \"{}\".\n", ::cudaGetErrorString(err_));
         }
         this->graph_ = 0;
     }
@@ -72,14 +72,14 @@ cuda::Graph::Graph(int flag) {
             ::cudaGraph_t graph_;
             err_ = ::cudaGraphCreate(&graph_, 0);
             if (err_ != 0) {
-                Fatal<cuda_runtime_error>("CUDA create graph failed with message \"%s\".\n",
+                Fatal<cuda_runtime_error>("CUDA create graph failed with message \"{}\".\n",
                                           ::cudaGetErrorString(err_));
             }
             this->graph_ = reinterpret_cast<std::uintptr_t>(graph_);
             break;
         }
         default : {  // error unknown argument
-            Fatal<std::invalid_argument>("Expected 0 (new empty graph) or -1 (NULL graph), got %d.\n", flag);
+            Fatal<std::invalid_argument>("Expected 0 (new empty graph) or -1 (NULL graph), got {}.\n", flag);
             break;
         }
     }
@@ -90,7 +90,7 @@ cuda::Graph::Graph(const cuda::Graph & src) {
     ::cudaGraph_t graph_, graph_src = reinterpret_cast<::cudaGraph_t>(src.graph_);
     ::cudaError_t err_ = ::cudaGraphClone(&graph_, graph_src);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("CUDA clone graph failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("CUDA clone graph failed with message \"{}\".\n", ::cudaGetErrorString(err_));
     }
     this->graph_ = reinterpret_cast<std::uintptr_t>(graph_);
 }
@@ -103,7 +103,7 @@ cuda::Graph & cuda::Graph::operator=(const cuda::Graph & src) {
     ::cudaGraph_t graph_, graph_src = reinterpret_cast<::cudaGraph_t>(src.graph_);
     ::cudaError_t err_ = ::cudaGraphClone(&graph_, graph_src);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("CUDA clone graph failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("CUDA clone graph failed with message \"{}\".\n", ::cudaGetErrorString(err_));
     }
     this->graph_ = reinterpret_cast<std::uintptr_t>(graph_);
     return *this;
@@ -130,7 +130,7 @@ std::uint64_t cuda::Graph::get_num_nodes(void) const {
     std::size_t num_nodes;
     ::cudaError_t err_ = ::cudaGraphGetNodes(reinterpret_cast<::cudaGraph_t>(this->graph_), nullptr, &num_nodes);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Get number of nodes of CUDA graph failed with message \"%s\".\n",
+        Fatal<cuda_runtime_error>("Get number of nodes of CUDA graph failed with message \"{}\".\n",
                                   ::cudaGetErrorString(err_));
     }
     return std::uint64_t(num_nodes);
@@ -143,7 +143,7 @@ cuda::GraphNodeList cuda::Graph::get_node_list(void) const {
     ::cudaError_t err_ = ::cudaGraphGetNodes(reinterpret_cast<::cudaGraph_t>(this->graph_),
                                              reinterpret_cast<::cudaGraphNode_t *>(node_list.data()), &num_nodes);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Get node list of CUDA graph failed with message \"%s\".\n",
+        Fatal<cuda_runtime_error>("Get node list of CUDA graph failed with message \"{}\".\n",
                                   ::cudaGetErrorString(err_));
     }
     return node_list;
@@ -155,7 +155,7 @@ std::uint64_t cuda::Graph::get_num_edges(void) const {
     ::cudaError_t err_ = ::cudaGraphGetEdges(reinterpret_cast<::cudaGraph_t>(this->graph_), nullptr, nullptr,
                                              &num_edges);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Get number of edges of CUDA graph failed with message \"%s\".\n",
+        Fatal<cuda_runtime_error>("Get number of edges of CUDA graph failed with message \"{}\".\n",
                                   ::cudaGetErrorString(err_));
     }
     return std::uint64_t(num_edges);
@@ -170,7 +170,7 @@ cuda::GraphEdgeList cuda::Graph::get_edge_list(void) const {
     ::cudaError_t err_ = ::cudaGraphGetEdges(reinterpret_cast<::cudaGraph_t>(this->graph_), nodes_from.data(),
                                              nodes_to.data(), &num_edges);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Get edge list of CUDA graph failed with message \"%s\".\n",
+        Fatal<cuda_runtime_error>("Get edge list of CUDA graph failed with message \"{}\".\n",
                                   ::cudaGetErrorString(err_));
     }
     // transform result
@@ -195,7 +195,7 @@ std::pair<cuda::GraphNode, void *> cuda::Graph::add_malloc_node(std::uint64_t si
                                                     reinterpret_cast<const ::cudaGraphNode_t *>(deps.data()),
                                                     deps.size(), &node_params);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Add memory allocation node to graph failed with message \"%s\".\n",
+        Fatal<cuda_runtime_error>("Add memory allocation node to graph failed with message \"{}\".\n",
                                   ::cudaGetErrorString(err_));
     }
     return std::pair<cuda::GraphNode, void *>(cuda::GraphNode(reinterpret_cast<std::uintptr_t>(graph_node)),
@@ -211,7 +211,7 @@ cuda::GraphNode cuda::Graph::add_memcpy_node(void * dest, const void * src, std:
                                                     deps.size(), dest, src, size,
                                                     static_cast<::cudaMemcpyKind>(copy_flag));
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Add memcpy node to graph failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Add memcpy node to graph failed with message \"{}\".\n", ::cudaGetErrorString(err_));
     }
     return cuda::GraphNode(reinterpret_cast<std::uintptr_t>(graph_node));
 }
@@ -223,7 +223,7 @@ cuda::GraphNode cuda::Graph::add_memfree_node(void * ptr, const cuda::GraphNodeL
                                                    reinterpret_cast<const ::cudaGraphNode_t *>(deps.data()),
                                                    deps.size(), ptr);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Add memfree node to graph failed with message \"%s\".\n",
+        Fatal<cuda_runtime_error>("Add memfree node to graph failed with message \"{}\".\n",
                                   ::cudaGetErrorString(err_));
     }
     return cuda::GraphNode(reinterpret_cast<std::uintptr_t>(graph_node));
@@ -237,7 +237,7 @@ cuda::GraphNode cuda::Graph::add_event_record_node(const cuda::Event & event, co
                                                        deps.size(),
                                                        reinterpret_cast<::cudaEvent_t>(event.get_event_ptr()));
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Add event record node to graph failed with message \"%s\".\n",
+        Fatal<cuda_runtime_error>("Add event record node to graph failed with message \"{}\".\n",
                                   ::cudaGetErrorString(err_));
     }
     return cuda::GraphNode(reinterpret_cast<std::uintptr_t>(graph_node));
@@ -251,7 +251,7 @@ cuda::GraphNode cuda::Graph::add_event_wait_node(const cuda::Event & event, cons
                                                      deps.size(),
                                                      reinterpret_cast<::cudaEvent_t>(event.get_event_ptr()));
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Add event wait node to graph failed with message \"%s\".\n",
+        Fatal<cuda_runtime_error>("Add event wait node to graph failed with message \"{}\".\n",
                                   ::cudaGetErrorString(err_));
     }
     return cuda::GraphNode(reinterpret_cast<std::uintptr_t>(graph_node));
@@ -264,7 +264,7 @@ cuda::GraphNode cuda::Graph::add_child_graph_node(const cuda::Graph & child_grap
                                                       reinterpret_cast<const ::cudaGraphNode_t *>(deps.data()),
                                                       deps.size(), reinterpret_cast<::cudaGraph_t>(child_graph.graph_));
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Add child graph node to graph failed with message \"%s\".\n",
+        Fatal<cuda_runtime_error>("Add child graph node to graph failed with message \"{}\".\n",
                                   ::cudaGetErrorString(err_));
     }
     return cuda::GraphNode(reinterpret_cast<std::uintptr_t>(graph_node));
@@ -283,15 +283,15 @@ void cuda::Graph::execute(const cuda::Stream & stream) {
     ::cudaError_t err_ = ::cudaGraphInstantiate(&exec_graph, reinterpret_cast<::cudaGraph_t>(this->graph_), nullptr,
                                                 log_buffer, sizeof(log_buffer));
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Create executable graph failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Create executable graph failed with message \"{}\".\n", ::cudaGetErrorString(err_));
     }
     if (log_buffer[0]) {  // not a null started string
-        Warning("Instantiate graph executable failed with error \"%s\"\n", log_buffer);
+        Warning("Instantiate graph executable failed with error \"{}\"\n", log_buffer);
     }
     cuda::CtxGuard guard(stream.get_gpu());
     err_ = ::cudaGraphLaunch(exec_graph, reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr()));
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Launch graph failed with error: \"%s\"\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Launch graph failed with error: \"{}\"\n", ::cudaGetErrorString(err_));
     }
 }
 

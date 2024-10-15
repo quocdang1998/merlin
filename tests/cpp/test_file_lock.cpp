@@ -41,11 +41,11 @@ int main(int argc, char * argv[]) {
     if (arg.compare("2") == 0) {
         int written_char = std::fwrite("abcdefg\n", sizeof(char), 8, fp);
         std::fflush(fp);
-        Message("Written character: %d.\n", written_char);
+        Message("Written character: {}.\n", written_char);
     }
     flock.unlock();
     std::fclose(fp);
     std::chrono::time_point<std::chrono::high_resolution_clock> stop = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = stop - start;
-    Message("Elapsed time: %.4f.\n", duration.count());
+    Message("Elapsed time: {}.\n", duration.count());
 }

@@ -50,7 +50,7 @@ std::uint64_t candy::train::TrainerBase::get_index_or_create_key(const std::stri
         index = this->map_.at(name).first;
     } else {
         if (this->is_full()) {
-            Fatal<std::runtime_error>("Maximum capacity reached.\n");
+            Fatal<std::runtime_error>("Maximum capacity ({}) reached.\n", this->capacity_);
         }
         std::pair<std::uint64_t, std::array<bool, 3>> map_value(this->size_, {false, false, false});
         this->map_.insert(std::make_pair(name, map_value));
@@ -70,7 +70,7 @@ void candy::train::TrainerBase::update_details(std::uint64_t index, const candy:
 void candy::train::TrainerBase::check_models(void) {
     for (const auto & [name, map_value] : this->map_) {
         if (!map_value.second[0]) {
-            Fatal<std::runtime_error>("Model at key %s is not assigned.\n", name.c_str());
+            Fatal<std::runtime_error>("Model at key {} is not assigned.\n", name);
         }
     }
 }
@@ -79,7 +79,7 @@ void candy::train::TrainerBase::check_models(void) {
 void candy::train::TrainerBase::check_complete(void) {
     for (const auto & [name, map_value] : this->map_) {
         if (!std::all_of(map_value.second.begin(), map_value.second.end(), [](bool x) { return x; })) {
-            Fatal<std::runtime_error>("Key %s is incomplet.\n", name.c_str());
+            Fatal<std::runtime_error>("Key {} is incomplet.\n", name);
         }
     }
 }

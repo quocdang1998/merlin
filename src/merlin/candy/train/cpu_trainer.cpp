@@ -308,7 +308,7 @@ void candy::train::CpuTrainer::set_optmz(const std::string & name, const candy::
     // check for model
     const std::pair<std::uint64_t, std::array<bool, 3>> & status = this->map_.at(name);
     if (!status.second[0]) {
-        Fatal<std::runtime_error>("Assign a model to key \"%s\" before adding optimizer.\n", name.c_str());
+        Fatal<std::runtime_error>("Assign a model to key \"{}\" before adding optimizer.\n", name);
     }
     // check compatibility
     std::uint64_t index = this->get_index_or_create_key(name);
@@ -330,7 +330,7 @@ void candy::train::CpuTrainer::set_data(const std::string & name, const array::A
     // check for model
     const std::pair<std::uint64_t, std::array<bool, 3>> & status = this->map_.at(name);
     if (!status.second[0]) {
-        Fatal<std::runtime_error>("Assign a model to key \"%s\" before assigning data.\n", name.c_str());
+        Fatal<std::runtime_error>("Assign a model to key \"{}\" before assigning data.\n", name);
     }
     // check compatibility
     std::uint64_t index = this->get_index_or_create_key(name);
@@ -347,7 +347,7 @@ void candy::train::CpuTrainer::set_data(const std::string & name, const array::A
 candy::Model & candy::train::CpuTrainer::get_model(const std::string & name) {
     const std::pair<std::uint64_t, std::array<bool, 3>> & status = this->map_.at(name);
     if (!status.second[0]) {
-        Fatal<std::runtime_error>("No model assigned to key \"%s\".\n", name.c_str());
+        Fatal<std::runtime_error>("No model assigned to key \"{}\".\n", name);
     }
     return this->p_model_[status.first];
 }
@@ -356,7 +356,7 @@ candy::Model & candy::train::CpuTrainer::get_model(const std::string & name) {
 candy::Optimizer & candy::train::CpuTrainer::get_optmz(const std::string & name) {
     const std::pair<std::uint64_t, std::array<bool, 3>> & status = this->map_.at(name);
     if (!status.second[1]) {
-        Fatal<std::runtime_error>("No optimizer assigned to key \"%s\".\n", name.c_str());
+        Fatal<std::runtime_error>("No optimizer assigned to key \"{}\".\n", name);
     }
     return this->p_optmz_[status.first];
 }
@@ -424,7 +424,7 @@ void candy::train::CpuTrainer::reconstruct(const std::map<std::string, array::Ar
     // check shape
     for (std::uint64_t i_case = 0; i_case < this->size_; i_case++) {
         if (this->p_model_[i_case].shape() != p_rec_data[i_case]->shape()) {
-            Fatal<std::runtime_error>("Model at index %" PRIu64 " is not compatible with destination array.\n", i_case);
+            Fatal<std::runtime_error>("Model at index {} is not compatible with destination array.\n", i_case);
         }
     }
     // launch

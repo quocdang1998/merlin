@@ -12,7 +12,7 @@ namespace merlin {
 // Throw CUDA error
 static inline void check_cuda_error(::cudaError_t error, const std::string & step_name) {
     if (error != 0) {
-        Fatal<cuda_runtime_error>("%s failed with error \"%s\".\n", step_name.c_str(), ::cudaGetErrorString(error));
+        Fatal<cuda_runtime_error>("{} failed with error \"{}\".\n", step_name, ::cudaGetErrorString(error));
     }
 }
 

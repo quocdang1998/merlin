@@ -147,10 +147,10 @@ cuda::Dispatcher<Args...>::~Dispatcher(void) {
 
 // Copy class to shared memory
 template <typename... Args>
-__cudevice__ std::tuple<void *, Args *...> cuda::copy_objects(void * share_ptr, const std::uint64_t & thread_idx,
+__cudevice__ std::tuple<void *, Args *...> cuda::copy_objects(void * dest, const std::uint64_t & thread_idx,
                                                               const std::uint64_t & block_size, const Args &... args) {
     void * final = nullptr;
-    std::tuple<Args *...> result = copy_metadata_to_shmem(share_ptr, thread_idx, block_size, &final, args...);
+    std::tuple<Args *...> result = copy_metadata_to_shmem(dest, thread_idx, block_size, &final, args...);
     std::tuple<void *> final_tpl(final);
     return std::tuple_cat(final_tpl, result);
 }

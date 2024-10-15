@@ -18,26 +18,6 @@
 namespace merlin {
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Utility
-// ---------------------------------------------------------------------------------------------------------------------
-
-#ifndef __MERLIN_CUDA__
-
-// Create pointer to copied members of merlin::splint::Interpolator on GPU
-void splint::create_intpl_gpuptr(const grid::CartesianGrid & cpu_grid, const splint::Method * cpu_methods,
-                                 grid::CartesianGrid *& gpu_pgrid, std::array<unsigned int, max_dim> *& gpu_pmethods,
-                                 std::uintptr_t stream_ptr) {
-    Fatal<cuda_compile_error>("Cannot invoke GPU function since merlin is not compiled with CUDA option.\n");
-}
-
-// Deallocate memory on the global memory space of the current GPU.
-void splint::cuda_mem_free(void * ptr, std::uint64_t stream_ptr) {
-    Fatal<cuda_compile_error>("Compile the library with CUDA option to enable memory deallocation on GPU.\n");
-}
-
-#endif  // __MERLIN_CUDA__
-
-// ---------------------------------------------------------------------------------------------------------------------
 // Interpolator
 // ---------------------------------------------------------------------------------------------------------------------
 

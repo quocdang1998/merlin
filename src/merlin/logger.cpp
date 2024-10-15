@@ -8,8 +8,9 @@
 #if defined(__MERLIN_WINDOWS__)
     #include <windows.h>  // ::FormatMessageA, ::GetCurrentProcess
     #ifndef NDEBUG
+        #include <cstddef>    // std::size_t
         #include <cstdint>    // std::uint64_t
-        #include <cstdlib>    // std::calloc
+        #include <cstdlib>    // std::calloc, std::free
         #include <cstring>    // std::strlen
         #include <dbghelp.h>  // ::CaptureStackBackTrace, ::SymInitialize, ::SymFromAddr, ::SYMBOL_INFO
     #endif
@@ -35,6 +36,9 @@ using native_frame_ptr_t = void *;
 // Max depth of the stacktrace
 inline constexpr std::uint64_t stacktrace_buffer = 128;
 
+// Tab
+inline constexpr const char tab[5] = "    ";
+
 #if defined(__MERLIN_WINDOWS__)
 
 // Get error from Windows API
@@ -53,7 +57,7 @@ std::string throw_sys_last_error(unsigned long int last_error) {
 }
 
 // Print stacktrace
-void print_stacktrace(int skip) {
+void print_stacktrace(std::ostream & output, int skip) {
     #ifndef NDEBUG
     // get current process
     native_frame_ptr_t process = ::GetCurrentProcess();
@@ -65,13 +69,13 @@ void print_stacktrace(int skip) {
     symbol->MaxNameLen = 255;
     symbol->SizeOfStruct = sizeof(::SYMBOL_INFO);
     // print symbol name
-    std::fprintf(stderr, "Stack backtrace:\n");
+    output << "Stack backtrace:\n";
     for (unsigned int i = 0; i < frames; i++) {
         ::SymFromAddr(process, reinterpret_cast<std::uint64_t>(buffer[i]), 0, symbol);
         if (std::strlen(symbol->Name)) {
-            std::fprintf(stderr, "    %s\n", symbol->Name);
+            output << tab << symbol->Name << "\n";
         } else {
-            std::fprintf(stderr, "    %p\n", buffer[i]);
+            output << tab << buffer[i] << "\n";
         }
     }
     std::free(symbol);
@@ -91,7 +95,7 @@ std::string throw_sys_last_error(unsigned long int last_error) {
 }
 
 // Print stacktrace
-void print_stacktrace(int skip) {
+void print_stacktrace(std::ostream & output, int skip) {
     #ifndef NDEBUG
     // get number of frame in the stack
     native_frame_ptr_t buffer[stacktrace_buffer];
@@ -102,7 +106,7 @@ void print_stacktrace(int skip) {
         --frames_count;
     }
     // get name (demangled) for each frame
-    std::fprintf(stderr, "Stack backtrace:\n");
+    output << "Stack backtrace:\n";
     for (int i = 0; i < frames_count; i++) {
         ::Dl_info dli;
         bool dl_ok = !!::dladdr(const_cast<void *>(buffer[i]), &dli);
@@ -113,13 +117,13 @@ void print_stacktrace(int skip) {
             char * demangled_name = ::abi::__cxa_demangle(dli.dli_sname, NULL, &size, &status);
             // if demangle success
             if (demangled_name != nullptr) {
-                std::fprintf(stderr, "    %s\n", demangled_name);
+                output << tab << demangled_name << "\n";
                 free(demangled_name);
             } else {
-                std::fprintf(stderr, "    %s\n", dli.dli_sname);
+                output << tab << dli.dli_sname << "\n";
             }
         } else {
-            std::fprintf(stderr, "    %p\n", buffer[i]);
+            output << tab << buffer[i] << "\n";
         }
     }
     #endif

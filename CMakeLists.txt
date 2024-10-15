@@ -17,7 +17,7 @@ set(MERLIN_TEST OFF CACHE BOOL "Build test executables") # -DMERLIN_TEST=ON
 set(MERLIN_EXT "" CACHE STRING "Space-separated list of extensions to be built") # -DMERLIN_EXT="readmpo spgrid"
 
 # package version
-set(MERLIN_VERSION "1.6.1")
+set(MERLIN_VERSION "1.7.1")
 
 # source list
 list(
@@ -58,6 +58,7 @@ list(
     linalg/matrix.cpp
     linalg/qrp_decomp.cpp
     linalg/tri_solve.cpp
+    logger.cpp
     memory.cpp
     permutation.cpp
     regpl/polynomial.cpp
@@ -103,7 +104,7 @@ list(
     splint/intpl/newton.rdc
     splint/tools.rdc
     utils.rdc)
-list(APPEND MERLIN_SRC_ENV env.cpp logger.cpp color.cpp version.cpp)
+list(APPEND MERLIN_SRC_ENV env.cpp color.cpp version.cpp)
 
 # convert path to source to absolute path
 list(TRANSFORM MERLIN_SRC_CPP PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/src/merlin/)
@@ -123,7 +124,7 @@ else()
 endif(MERLIN_CUDA)
 
 # detect automatically library kind in AUTO mode
-if(MERLIN_LIBKIND MATCHES "AUTO")
+if(MERLIN_LIBKIND STREQUAL "AUTO")
     # auto: dynamic on Linux, static on Windows
     message(STATUS "Auto-decide the kind of library")
     if(UNIX)
@@ -137,7 +138,8 @@ if(MERLIN_LIBKIND MATCHES "AUTO")
 endif()
 
 # query build type
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE)
+if((BUILD_TYPE STREQUAL "DEBUG"))
     message(STATUS "Compile library in debug mode")
     set(MERLIN_DEBUG ON)
 else()
@@ -240,11 +242,12 @@ if(MERLIN_CUDA)
 endif()
 
 # main library
-if(MERLIN_LIBKIND MATCHES "STATIC") # build static lib
+string(TOUPPER "${MERLIN_LIBKIND}" MERLIN_LIBKIND)
+if(MERLIN_LIBKIND STREQUAL "STATIC") # build static lib
     message(STATUS "Build static library")
     add_library(libmerlin STATIC ${MERLIN_SRC})
     target_compile_definitions(libmerlin PUBLIC __MERLIN_BUILT_AS_STATIC__)
-elseif(MERLIN_LIBKIND MATCHES "SHARED") # build dynamic lib
+elseif(MERLIN_LIBKIND STREQUAL "SHARED") # build dynamic lib
     message(STATUS "Build dynamic library")
     add_library(libmerlin SHARED ${MERLIN_SRC})
 else()
@@ -262,7 +265,7 @@ if(MERLIN_CUDA)
     if(MSVC)
         target_link_libraries(libmerlin PUBLIC libmerlincuda)
     endif(MSVC)
-    if(MERLIN_LIBKIND MATCHES "SHARED")
+    if(MERLIN_LIBKIND STREQUAL "SHARED")
         set_property(TARGET libmerlin PROPERTY CUDA_SEPARABLE_COMPILATION OFF)
     endif()
 endif(MERLIN_CUDA)

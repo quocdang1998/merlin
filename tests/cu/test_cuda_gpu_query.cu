@@ -18,12 +18,8 @@ __global__ void foo(void) {
     std::printf("Static CUDA graph kernel execution.\n");
 }
 
-/*void str_callback(const std::string & a, int b) {
-    std::printf("Static graph callback arguments: \"%s\" and %d\n", a.c_str(), b);
-}*/
-
 void str_callback(const std::string & s, std::vector<int> && vec) {
-    Message m("%s:", s.c_str());
+    Message m("{}:", s);
     for (int & v : vec) {
         m << v << " ";
     }
@@ -53,15 +49,15 @@ int main(void) {
     cuda::print_gpus_spec();
 
     // get GPU limits
-    Message("Test 2 : GPU limits\n");
+    Message m2("Test 2 : GPU limits\n");
     std::uint64_t stack_size = cuda::Device::limit(cuda::DeviceLimit::StackSize);
-    std::printf("Stack size: %" PRIu64 ".\n", stack_size);
+    m2 << "Stack size: " << stack_size << ".\n";
     cuda::test_all_gpu();
 
     // static graph with callback
-    Message("Test 3 : Static CUDA Graph\n");
+    Message m3("Test 3 : Static CUDA Graph\n");
     cuda::Stream s(cuda::StreamSetting::NonBlocking);
-    std::printf("Default stream: %s.\n", s.str().c_str());
+    m3 << "Default stream: " << s.str() << ".\n";
     s.check_cuda_context();
     cuda::begin_capture_stream(s);
     ::foo<<<2, 2, 0, reinterpret_cast<::cudaStream_t>(s.get_stream_ptr())>>>();
@@ -71,10 +67,10 @@ int main(void) {
     // s.add_callback(str_callback, data, 4);
     s.add_callback(str_callback, std::cref(data), std::vector<int>({1, 2, 5, 4}));
     s.add_callback(str_callback, std::cref(data), std::vector<int>({6, 8, 7, 3}));
-    s.add_callback([&data](void) { Message("Lambda capturing by l-value called \"%s\"\n", data.c_str()); });
+    s.add_callback([&data](void) { Message("Lambda capturing by l-value called \"{}\"\n", data); });
     std::unique_ptr<std::string> p_data = std::make_unique<std::string>(data);
     s.add_callback([p_data = std::move(p_data)](void) {
-        Message("Lambda capturing by r-value called \"%s\"\n", p_data->c_str());
+        Message("Lambda capturing by r-value called \"{}\"\n", *p_data);
     });
     s.synchronize();
 

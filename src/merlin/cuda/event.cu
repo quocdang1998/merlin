@@ -14,7 +14,7 @@ cuda::Event::Event(unsigned int category) : category_(category), device_(cuda::D
     ::cudaEvent_t event;
     ::cudaError_t err_ = ::cudaEventCreateWithFlags(&event, category);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Create event failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("Create event failed with message \"{}\".\n", ::cudaGetErrorName(err_));
     }
     this->event_ = reinterpret_cast<std::uintptr_t>(event);
 }
@@ -23,7 +23,7 @@ cuda::Event::Event(unsigned int category) : category_(category), device_(cuda::D
 bool cuda::Event::is_complete(void) const {
     ::cudaError_t err_ = ::cudaEventQuery(reinterpret_cast<::cudaEvent_t>(this->event_));
     if ((err_ != 0) && (err_ != 600)) {
-        Fatal<cuda_runtime_error>("Query event failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("Query event failed with message \"{}\".\n", ::cudaGetErrorName(err_));
     }
     if (err_ == 0) {
         return true;
@@ -42,7 +42,7 @@ void cuda::Event::check_cuda_context(void) const {
 void cuda::Event::synchronize(void) const {
     ::cudaError_t err_ = ::cudaEventSynchronize(reinterpret_cast<::cudaEvent_t>(this->event_));
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Event synchronization failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+        Fatal<cuda_runtime_error>("Event synchronization failed with message \"{}\".\n", ::cudaGetErrorName(err_));
     }
 }
 
@@ -55,7 +55,7 @@ float cuda::operator-(const cuda::Event & ev_1, const cuda::Event & ev_2) {
     ::cudaError_t err_ = ::cudaEventElapsedTime(&result, reinterpret_cast<::cudaEvent_t>(ev_1.event_),
                                                 reinterpret_cast<::cudaEvent_t>(ev_2.event_));
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Calculate elapsed time between 2 events failed with message \"%s\".\n",
+        Fatal<cuda_runtime_error>("Calculate elapsed time between 2 events failed with message \"{}\".\n",
                 ::cudaGetErrorName(err_));
     }
     return result;
@@ -66,7 +66,7 @@ cuda::Event::~Event(void) {
     if (this->event_ != 0) {
         ::cudaError_t err_ = ::cudaEventDestroy(reinterpret_cast<::cudaEvent_t>(this->event_));
         if (err_ != 0) {
-            Fatal<cuda_runtime_error>("Destroy event failed with message \"%s\".\n", ::cudaGetErrorName(err_));
+            Fatal<cuda_runtime_error>("Destroy event failed with message \"{}\".\n", ::cudaGetErrorName(err_));
         }
     }
 }

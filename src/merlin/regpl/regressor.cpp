@@ -10,7 +10,7 @@
 #include "merlin/array/parcel.hpp"       // merlin::array::Parcel
 #include "merlin/cuda/copy_helpers.hpp"  // merlin::cuda::Dispatcher
 #include "merlin/cuda/device.hpp"        // merlin::cuda::CtxGuard
-#include "merlin/logger.hpp"             // merlin::Fatal
+#include "merlin/logger.hpp"             // merlin::cuda_compile_error, merlin::Fatal
 #include "merlin/memory.hpp"             // merlin::mem_alloc_device, merlin::mem_free_device, merlin::memcpy_gpu_to_cpu
 
 namespace merlin {
@@ -40,6 +40,17 @@ void regpl::eval_by_cpu(std::future<void> && synch, const regpl::Polynomial * p_
         }
     }
 }
+
+#ifndef __MERLIN_CUDA__
+
+// Evaluate regression by GPU
+void regpl::eval_by_gpu(const regpl::Polynomial * p_poly, const double * point_data, double * p_result,
+                        std::uint64_t n_points, std::uint64_t shared_mem_size, std::uint64_t n_threads,
+                        const cuda::Stream & stream) noexcept {
+    Fatal<cuda_compile_error>("Cannot evaluate polynomial on GPU in non-CUDA mode.\n");
+}
+
+#endif  // __MERLIN_CUDA__
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Regressor
@@ -97,9 +108,7 @@ void regpl::Regressor::evaluate(const array::Parcel & points, DoubleVec & result
     std::uintptr_t stream_ptr = stream.get_stream_ptr();
     // asynchronous calculate
     double * result_gpu;
-    Message("GPU pointer pre-allocated:") << result_gpu << "\n";
     mem_alloc_device(reinterpret_cast<void **>(&result_gpu), num_points * sizeof(double), stream_ptr);
-    Message("GPU pointer post-allocated:") << result_gpu << "\n";
     cuda::Dispatcher mem(stream_ptr, this->poly_);
     regpl::eval_by_gpu(mem.get<0>(), points.data(), result_gpu, num_points, n_threads, this->poly_.sharedmem_size(),
                        stream);

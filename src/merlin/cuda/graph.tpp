@@ -51,7 +51,7 @@ cuda::GraphNode cuda::Graph::add_kernel_node(Function * kernel, std::uint64_t n_
                                                   reinterpret_cast<const ::cudaGraphNode_t *>(deps.data()), deps.size(),
                                                   &kernel_param);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Add kernel node to graph failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Add kernel node to graph failed with message \"{}\".\n", ::cudaGetErrorString(err_));
     }
     return cuda::GraphNode(reinterpret_cast<std::uintptr_t>(graph_node));
 }

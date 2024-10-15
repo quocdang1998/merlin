@@ -89,7 +89,7 @@ Asynchronous launch
 GPU with CUDA
 -------------
 
-Device Management
+Device management
 ^^^^^^^^^^^^^^^^^
 
 .. doxysummary::
@@ -99,8 +99,8 @@ Device Management
    merlin::cuda::print_gpus_spec
    merlin::cuda::test_all_gpu
 
-Concurrency
-^^^^^^^^^^^
+Asynchronous operations
+^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxysummary::
    :toctree: generated

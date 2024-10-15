@@ -38,7 +38,7 @@ void io::FileLock::lock(void) {
     bool succeed = ::LockFileEx(reinterpret_cast<void *>(handle), LOCKFILE_EXCLUSIVE_LOCK, 0, len, len, &ovrlap);
     if (!succeed) {
         std::string err_message = throw_sys_last_error(::GetLastError());
-        Fatal<std::ios_base::failure>("Exclusive lock file failed with message \"%s\".\n", err_message.c_str());
+        Fatal<std::ios_base::failure>("Exclusive lock file failed with message \"{}\".\n", err_message);
     }
 }
 
@@ -59,7 +59,7 @@ bool io::FileLock::try_lock(void) {
             return false;
         }
         std::string err_message = throw_sys_last_error(err_);
-        Fatal<std::ios_base::failure>("Try exclusive lock file failed with message \"%s\".\n", err_message.c_str());
+        Fatal<std::ios_base::failure>("Try exclusive lock file failed with message \"{}\".\n", err_message);
     }
     return true;
 }
@@ -76,7 +76,7 @@ void io::FileLock::unlock(void) {
     bool succeed = ::UnlockFileEx(reinterpret_cast<void *>(handle), 0, len, len, &ovrlap);
     if (!succeed) {
         std::string err_message = throw_sys_last_error(::GetLastError());
-        Fatal<std::ios_base::failure>("Unlock exclusively file failed with message \"%s\".\n", err_message.c_str());
+        Fatal<std::ios_base::failure>("Unlock exclusively file failed with message \"{}\".\n", err_message);
     }
 }
 
@@ -92,7 +92,7 @@ void io::FileLock::lock_shared(void) {
     bool succeed = ::LockFileEx(reinterpret_cast<void *>(handle), 0, 0, len, len, &ovrlap);
     if (!succeed) {
         std::string err_message = throw_sys_last_error(::GetLastError());
-        Fatal<std::ios_base::failure>("Shared lock file failed with message \"%s\".\n", err_message.c_str());
+        Fatal<std::ios_base::failure>("Shared lock file failed with message \"{}\".\n", err_message);
     }
 }
 
@@ -112,7 +112,7 @@ bool io::FileLock::try_lock_shared(void) {
             return false;
         }
         std::string err_message = throw_sys_last_error(err_);
-        Fatal<std::ios_base::failure>("Try shared lock file failed with message \"%s\".\n", err_message.c_str());
+        Fatal<std::ios_base::failure>("Try shared lock file failed with message \"{}\".\n", err_message);
     }
     return true;
 }
@@ -138,7 +138,7 @@ void io::FileLock::lock(void) {
     int err_ = ::fcntl(this->file_descriptor, F_SETLKW, &lock_);
     if (err_ == -1) {
         std::string err_message = throw_sys_last_error();
-        Fatal<std::ios_base::failure>("Exclusive lock file failed with message \"%s\".\n", err_message.c_str());
+        Fatal<std::ios_base::failure>("Exclusive lock file failed with message \"{}\".\n", err_message);
     }
 }
 
@@ -155,7 +155,7 @@ bool io::FileLock::try_lock(void) {
             return false;
         }
         std::string err_message = throw_sys_last_error();
-        Fatal<std::ios_base::failure>("Try exclusive lock file failed with message \"%s\".\n", err_message.c_str());
+        Fatal<std::ios_base::failure>("Try exclusive lock file failed with message \"{}\".\n", err_message);
     }
     return true;
 }
@@ -170,7 +170,7 @@ void io::FileLock::unlock(void) {
     int err_ = ::fcntl(this->file_descriptor, F_SETLK, &lock_);
     if (err_ == -1) {
         std::string err_message = throw_sys_last_error();
-        Fatal<std::ios_base::failure>("Unlock exclusively file failed with message \"%s\".\n", err_message.c_str());
+        Fatal<std::ios_base::failure>("Unlock exclusively file failed with message \"{}\".\n", err_message);
     }
 }
 
@@ -184,7 +184,7 @@ void io::FileLock::lock_shared(void) {
     int err_ = ::fcntl(this->file_descriptor, F_SETLKW, &lock_);
     if (err_ == -1) {
         std::string err_message = throw_sys_last_error();
-        Fatal<std::ios_base::failure>("Exclusive lock file failed with message \"%s\".\n", err_message.c_str());
+        Fatal<std::ios_base::failure>("Exclusive lock file failed with message \"{}\".\n", err_message);
     }
 }
 
@@ -201,7 +201,7 @@ bool io::FileLock::try_lock_shared(void) {
             return false;
         }
         std::string err_message = throw_sys_last_error();
-        Fatal<std::ios_base::failure>("Try exclusive lock file failed with message \"%s\".\n", err_message.c_str());
+        Fatal<std::ios_base::failure>("Try exclusive lock file failed with message \"{}\".\n", err_message);
     }
     return true;
 }

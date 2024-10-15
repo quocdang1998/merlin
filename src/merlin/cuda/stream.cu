@@ -17,7 +17,7 @@ namespace merlin {
 void cuda::add_callback_to_stream(std::uintptr_t stream, cuda::StreamCallback func, void * arg) {
     ::cudaError_t err_ = ::cudaStreamAddCallback(reinterpret_cast<::cudaStream_t>(stream), func, arg, 0);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Add callback to stream failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Add callback to stream failed with message \"{}\".\n", ::cudaGetErrorString(err_));
     }
 }
 
@@ -26,9 +26,7 @@ void cuda::add_callback_to_stream(std::uintptr_t stream, cuda::StreamCallback fu
 // ---------------------------------------------------------------------------------------------------------------------
 
 // Default constructor (the null stream)
-cuda::Stream::Stream(void) {
-    this->device_ = cuda::Device::get_current_gpu();
-}
+cuda::Stream::Stream(void) { this->device_ = cuda::Device::get_current_gpu(); }
 
 // Constructor from setting flag and priority
 cuda::Stream::Stream(cuda::StreamSetting setting, int priority) {
@@ -37,14 +35,14 @@ cuda::Stream::Stream(cuda::StreamSetting setting, int priority) {
     ::cudaDeviceGetStreamPriorityRange(&min_priority, &max_priority);
     int clamped_priority = std::clamp(priority, max_priority, min_priority);
     if (clamped_priority != priority) {
-        Warning("Priority out of range (expected priority in range [%d, %d], got %d), the priority will be clamped.",
+        Warning("Priority out of range (expected priority in range [{}, {}], got {}), the priority will be clamped.",
                 max_priority, min_priority, priority);
     }
     // create a stream within the context
     ::cudaStream_t stream;
     ::cudaError_t err_ = ::cudaStreamCreateWithPriority(&stream, static_cast<unsigned int>(setting), clamped_priority);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Create stream failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Create stream failed with message \"{}\".\n", ::cudaGetErrorString(err_));
     }
     this->stream_ = reinterpret_cast<std::uintptr_t>(stream);
     this->device_ = cuda::Device::get_current_gpu();
@@ -55,7 +53,7 @@ cuda::StreamSetting cuda::Stream::get_setting(void) const {
     unsigned int flag;
     ::cudaError_t err_ = ::cudaStreamGetFlags(reinterpret_cast<::cudaStream_t>(this->stream_), &flag);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Get flag of stream failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Get flag of stream failed with message \"{}\".\n", ::cudaGetErrorString(err_));
     }
     return static_cast<cuda::StreamSetting>(flag);
 }
@@ -65,7 +63,7 @@ int cuda::Stream::get_priority(void) const {
     int priority;
     ::cudaError_t err_ = ::cudaStreamGetPriority(reinterpret_cast<::cudaStream_t>(this->stream_), &priority);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Get priority of stream failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Get priority of stream failed with message \"{}\".\n", ::cudaGetErrorString(err_));
     }
     return priority;
 }
@@ -76,7 +74,7 @@ bool cuda::Stream::is_complete(void) const {
     if (err_ == 0) {
         return true;
     } else if (err_ != 600) {
-        Fatal<cuda_runtime_error>("Query stream status failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Query stream status failed with message \"{}\".\n", ::cudaGetErrorString(err_));
     }
     return false;
 }
@@ -86,8 +84,8 @@ bool cuda::Stream::is_capturing(void) const {
     ::cudaStreamCaptureStatus capture_status;
     ::cudaError_t err_ = ::cudaStreamIsCapturing(reinterpret_cast<::cudaStream_t>(this->stream_), &capture_status);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Query stream capture status failed with message \"%s\".\n",
-                ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Query stream capture status failed with message \"{}\".\n",
+                                  ::cudaGetErrorString(err_));
     }
     if (capture_status == 2) {
         Warning("Stream is capturing, but end capture is not beeing called.\n");
@@ -112,7 +110,7 @@ void cuda::Stream::record_event(const cuda::Event & event) const {
     ::cudaError_t err_ = ::cudaEventRecord(reinterpret_cast<::cudaEvent_t>(event.get_event_ptr()),
                                            reinterpret_cast<::cudaStream_t>(this->stream_));
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Record event failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Record event failed with message \"{}\".\n", ::cudaGetErrorString(err_));
     }
 }
 
@@ -122,7 +120,7 @@ void cuda::Stream::wait_event(const cuda::Event & event, cuda::EventWaitFlag fla
                                                reinterpret_cast<::cudaEvent_t>(event.get_event_ptr()),
                                                static_cast<unsigned int>(flag));
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Record event failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Record event failed with message \"{}\".\n", ::cudaGetErrorString(err_));
     }
 }
 
@@ -130,7 +128,7 @@ void cuda::Stream::wait_event(const cuda::Event & event, cuda::EventWaitFlag fla
 void cuda::Stream::synchronize(void) const {
     ::cudaError_t err_ = ::cudaStreamSynchronize(reinterpret_cast<::cudaStream_t>(this->stream_));
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Stream synchronization failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Stream synchronization failed with message \"{}\".\n", ::cudaGetErrorString(err_));
     }
 }
 
@@ -139,7 +137,7 @@ cuda::Stream::~Stream(void) {
     if (this->stream_ != 0) {
         cudaError_t err_ = ::cudaStreamDestroy(reinterpret_cast<cudaStream_t>(this->stream_));
         if (err_ != 0) {
-            Fatal<cuda_runtime_error>("cudaStreamDestroy failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+            Fatal<cuda_runtime_error>("cudaStreamDestroy failed with message \"{}\".\n", ::cudaGetErrorString(err_));
         }
     }
 }
@@ -156,7 +154,7 @@ void cuda::begin_capture_stream(const cuda::Stream & stream, StreamCaptureMode m
     ::cudaError_t err_ = ::cudaStreamBeginCapture(reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr()),
                                                   static_cast<::cudaStreamCaptureMode>(mode));
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Capture stream failed with message \"%s\".\n", ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Capture stream failed with message \"{}\".\n", ::cudaGetErrorString(err_));
     }
 }
 
@@ -165,8 +163,8 @@ cuda::Graph cuda::end_capture_stream(const cuda::Stream & stream) {
     ::cudaGraph_t graph_ptr;
     ::cudaError_t err_ = ::cudaStreamEndCapture(reinterpret_cast<::cudaStream_t>(stream.get_stream_ptr()), &graph_ptr);
     if (err_ != 0) {
-        Fatal<cuda_runtime_error>("Retunr graph from captured stream failed with message \"%s\".\n",
-                ::cudaGetErrorString(err_));
+        Fatal<cuda_runtime_error>("Return graph from captured stream failed with message \"{}\".\n",
+                                  ::cudaGetErrorString(err_));
     }
     return cuda::Graph(reinterpret_cast<std::uintptr_t>(graph_ptr));
 }

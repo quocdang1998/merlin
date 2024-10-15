@@ -2,7 +2,6 @@
 #include "merlin/array/nddata.hpp"
 
 #include <algorithm>  // std::copy
-#include <cinttypes>  // PRIu64
 
 #include "merlin/array/operation.hpp"  // merlin::array::contiguous_strides
 #include "merlin/logger.hpp"           // merlin::Fatal, merlin::Warning
@@ -73,8 +72,7 @@ void array::NdData::reshape(const Index & new_shape) {
     }
     std::uint64_t new_size = prod_elements(new_shape.data(), new_shape.size());
     if (new_size != this->size_) {
-        Fatal<std::invalid_argument>("Cannot reshape to an array with different size (current size %" PRIu64
-                                     ", new size %" PRIu64 ").\n",
+        Fatal<std::invalid_argument>("Cannot reshape to an array with different size (current size {}, new size {}).\n",
                                      this->shape_[0], new_size);
     }
     this->shape_ = new_shape;
