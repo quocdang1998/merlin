@@ -1,40 +1,27 @@
-include(CheckCXXSourceRuns)
+# ======================================================================================================================
+# Detect architechture
+# ======================================================================================================================
 
-# source code for AVX
-set(AVX_CODE
-    "
-#include <immintrin.h>
+# copy file to build directory
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindAVX
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles)
 
-int main(void) {
-    __m256d a = _mm256_set1_pd(0.0), b = _mm256_set1_pd(1.0), c = _mm256_set1_pd(2.0);
-    c = _mm256_fmadd_pd(a, b, c);
-}
-")
-
-# macro defined for checking AVX
-macro(check_avx FLAG)
-    set(CMAKE_REQUIRED_QUIET 1)
-    set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
-    set(CMAKE_REQUIRED_FLAGS ${FLAG})
-    check_cxx_source_runs("${AVX_CODE}" CXX_HAS_AVX)
-    if(CXX_HAS_AVX)
-        message(STATUS "Current CPU supports ${FLAG}")
-    else()
-        message(STATUS "Current CPU do not support ${FLAG}")
-    endif()
-    set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
-endmacro()
-
-# check for AVX and save the compile option to AVX_COMPILE_OPTION
-set(AVX_COMPILE_OPTION)
-if(UNIX)
-    check_avx("-mfma -mavx")
-    if(CXX_HAS_AVX)
-        set(AVX_COMPILE_OPTION -mfma -mavx)
-    endif(CXX_HAS_AVX)
-elseif(MSVC)
-    check_avx("/arch:AVX2")
-    if(CXX_HAS_AVX)
-        set(AVX_COMPILE_OPTION /arch:AVX2)
-    endif(CXX_HAS_AVX)
+# configure, build and execute avx_detector
+if (NOT MERLIN_VECTOR_SIZE)
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} -DCMAKE_GENERATOR=${CMAKE_GENERATOR} .
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/FindAVX
+        OUTPUT_QUIET
+    )
+    execute_process(
+        COMMAND ${CMAKE_GENERATOR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/FindAVX
+        OUTPUT_QUIET
+    )
+    execute_process(
+        COMMAND ./avx_detector
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/FindAVX
+        OUTPUT_VARIABLE MERLIN_VECTOR_SIZE
+    )
 endif()
+message(STATUS "Detected vector size ${MERLIN_VECTOR_SIZE}")

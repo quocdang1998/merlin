@@ -6,9 +6,7 @@
 #include <cmath>    // std::fma
 #include <cstdint>  // std::uint64_t
 
-#ifdef __AVX__
-    #include <immintrin.h>
-#endif  // __AVX__
+#include <immintrin.h>
 
 #include "merlin/config.hpp"  // merlin::AvxFlag, merlin::use_avx
 

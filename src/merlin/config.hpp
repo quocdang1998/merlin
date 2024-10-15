@@ -44,11 +44,11 @@ enum class AvxFlag {
     AvxOn,
 };
 
-#ifdef __AVX__
+//// Temporary patch, to be fixed in the future
 inline constexpr AvxFlag use_avx = AvxFlag::AvxOn;
-#else
-inline constexpr AvxFlag use_avx = AvxFlag::NoAvx;
-#endif  // __AVX__
+#if __MERLIN_VECTOR_SIZE__ >= 2
+#define __AVX__
+#endif
 
 #ifdef __DOXYGEN_PARSER__
 /** @brief Flag indicate if AVX is enabled during the compilation.*/

@@ -175,6 +175,7 @@ endif(MERLIN_CUDA)
 include(cmake/FindOpenMP.cmake)
 
 # AVX
+set(MERLIN_VECTOR_SIZE "" CACHE STRING "Vector size that can be handled by the current CPU.")
 include(cmake/FindAVX.cmake)
 
 # ======================================================================================================================
@@ -189,7 +190,7 @@ function(merlinsettargetproperties target_library)
     target_include_directories(${target_library} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
                                                         $<INSTALL_INTERFACE:include>)
     set_property(TARGET ${target_library} PROPERTY INTERPROCEDURAL_OPTIMIZATION ON)
-    target_compile_options(${target_library} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${AVX_COMPILE_OPTION}>)
+    target_compile_definitions(${target_library} PUBLIC __MERLIN_VECTOR_SIZE__=${MERLIN_VECTOR_SIZE})  # to be PRIVATE
     if(MERLIN_CUDA)
         set_property(TARGET ${target_library} PROPERTY CUDA_ARCHITECTURES "${CUDA_ARCH_LIST}")
         target_compile_definitions(${target_library} PRIVATE __MERLIN_CUDA__)
