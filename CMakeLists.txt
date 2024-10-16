@@ -17,7 +17,7 @@ set(MERLIN_TEST OFF CACHE BOOL "Build test executables") # -DMERLIN_TEST=ON
 set(MERLIN_EXT "" CACHE STRING "Space-separated list of extensions to be built") # -DMERLIN_EXT="readmpo spgrid"
 
 # package version
-set(MERLIN_VERSION "1.7.1")
+set(MERLIN_VERSION "1.7.2")
 
 # source list
 list(
@@ -191,7 +191,7 @@ function(merlinsettargetproperties target_library)
     target_include_directories(${target_library} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
                                                         $<INSTALL_INTERFACE:include>)
     set_property(TARGET ${target_library} PROPERTY INTERPROCEDURAL_OPTIMIZATION ON)
-    target_compile_definitions(${target_library} PUBLIC __MERLIN_VECTOR_SIZE__=${MERLIN_VECTOR_SIZE})  # to be PRIVATE
+    target_compile_options(${target_library} PRIVATE ${MERLIN_VECTORIZATION})
     if(MERLIN_CUDA)
         set_property(TARGET ${target_library} PROPERTY CUDA_ARCHITECTURES "${CUDA_ARCH_LIST}")
         target_compile_definitions(${target_library} PRIVATE __MERLIN_CUDA__)

@@ -1,5 +1,7 @@
-#include <immintrin.h>
-#include <iostream>
+// Copyright 2024 quocdang1998
+#include <iostream>  // std::cout
+#include <map>       // std::map
+#include <string>    // std::string
 
 #ifdef _MSC_VER
     #include <intrin.h>  // For __cpuid on MSVC
@@ -7,73 +9,94 @@
     #include <cpuid.h>  // For __get_cpuid on GCC/Clang
 #endif
 
-// Check if CPU supports AVX
-bool cpu_supports_avx() {
-    // initialize registers
-    unsigned int eax, ebx, ecx, edx;
-    // retrieve the ECX register
-#ifdef _MSC_VER
-    int cpu_info[4];
-    __cpuid(cpu_info, 1);
-    ecx = cpu_info[2];
-#else
-    __get_cpuid(1, &eax, &ebx, &ecx, &edx);
+// Vectorization options
+static std::map<unsigned int, std::string> vector_options {
+    {1, ""},
+#if defined(_MSC_VER)
+    {2, "/arch:SSE2"},
+    {4, "/arch:AVX"},
+    {8, "/arch:AVX512"}
+#elif defined(__GNUC__) || defined(__clang__)
+    {2, "-msse2"},
+    {4, "-mavx"},
+    {8, "-mavx512f"}
 #endif
-    // check if AVX is supported usign the bit 28-th of ECX (CPUID.01H:ECX.AVX[bit 28])
-    bool os_uses_xsave_xrstor = (ecx & (1 << 27)) != 0;
-    bool avx_supported = (ecx & (1 << 28)) != 0;
+};
 
-    // check if XGETBV instruction supports AVX by checking XCR0 register
-    if (os_uses_xsave_xrstor && avx_supported) {
-        unsigned long long xcr_feature_mask = _xgetbv(0);
-        return (xcr_feature_mask & 0x6) == 0x6;
+// Fused add-multiplication option
+static std::map<unsigned int, std::string> fma_options {
+    {0, ""},
+#if defined(_MSC_VER)
+    {1, ""}
+#elif defined(__GNUC__) || defined(__clang__)
+    {1, "-mfma"}
+#endif
+};
+
+// Helper function to execute the CPUID instruction
+void cpuid(int info[4], int function_id) {
+#if defined(_MSC_VER)
+    __cpuid(info, function_id);
+#elif defined(__GNUC__) || defined(__clang__)
+    __asm__ __volatile__(
+        "cpuid"
+        : "=a"(info[0]), "=b"(info[1]), "=c"(info[2]), "=d"(info[3])
+        : "a"(function_id), "c"(0)
+    );
+#endif
+}
+
+// Check if CPU supports FMA
+bool supports_fma() {
+    int info[4];
+    cpuid(info, 1);
+    return (info[2] & (1 << 12)) != 0; // FMA support is bit 12 of ECX for function_id 1
+}
+
+// Check if CPU supports SSE2
+bool supports_sse2() {
+    int info[4];
+    cpuid(info, 1);
+    return (info[3] & (1 << 26)) != 0; // SSE2 is bit 26 of EDX for function_id 1
+}
+
+// Check if CPU supports AVX
+bool supports_avx() {
+    int info[4];
+    cpuid(info, 1);
+    bool os_avx_support = (info[2] & (1 << 27)) != 0; // Check OS support (bit 27 of ECX)
+    bool avx_support = (info[2] & (1 << 28)) != 0;    // AVX support (bit 28 of ECX)
+    return os_avx_support && avx_support;
+}
+
+// Check if CPU supports AVX-512
+bool supports_avx512() {
+    int info[4];
+    cpuid(info, 0);
+    if (info[0] >= 7) { // Check if function_id 7 is supported
+        cpuid(info, 7);
+        return (info[1] & (1 << 16)) != 0; // AVX-512F is bit 16 of EBX for function_id 7
     }
     return false;
 }
 
-// Check if CPU supports AVX2
-bool cpu_supports_avx2() {
-    // initialize registers
-    unsigned int eax, ebx, ecx, edx;
-    // retrieve the EBX register
-#ifdef _MSC_VER
-    int cpu_info[4];
-    __cpuid(cpu_info, 7);
-    ebx = cpu_info[1];
-#else
-    __get_cpuid(7, &eax, &ebx, &ecx, &edx);
-#endif
-    // check AVX2 support using the bit 5-th of EBX (CPUID.07H:EBX.AVX2[bit 5])
-    return (ebx & (1 << 5)) != 0;
-}
-
-// Check if CPU supports AVX-512
-bool cpu_supports_avx512() {
-    // initialize registers
-    unsigned int eax, ebx, ecx, edx;
-    // retrieve the EBX register
-#ifdef _MSC_VER
-    int cpu_info[4];
-    __cpuid(cpu_info, 7);
-    ebx = cpu_info[1];
-#else
-    __get_cpuid(7, &eax, &ebx, &ecx, &edx);
-#endif
-    // check AVX-512 support using the bit 16-th of EBX (CPUID.07H:EBX.AVX512F[bit 16])
-    return (ebx & (1 << 16)) != 0;
-}
-
 int main() {
+    // get vector size
     unsigned int vector_size = 1;
-    if (cpu_supports_avx()) {
+    if (supports_sse2()) {
         vector_size = 2;
     }
-    if (cpu_supports_avx2()) {
+    if (supports_avx()) {
         vector_size = 4;
     }
-    if (cpu_supports_avx512()) {
+    if (supports_avx512()) {
         vector_size = 8;
     }
-    std::cout << vector_size;
+    // get fused add-multiplication
+    unsigned int fma_supports = 0;
+    if (supports_fma()) {
+        fma_supports = 1;
+    }
+    std::cout << (vector_options[vector_size] + " " + fma_options[fma_supports]);
     return 0;
 }

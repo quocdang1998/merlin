@@ -2,6 +2,7 @@
 #ifndef MERLIN_LOGGER_HPP_
 #define MERLIN_LOGGER_HPP_
 
+#include <algorithm>        // std::copy_n
 #include <cinttypes>        // PRIdLEAST32
 #include <cstdio>           // std::printf
 #include <filesystem>       // std::filesystem::filesystem_error
