@@ -45,9 +45,8 @@ enum class AvxFlag {
 };
 
 //// Temporary patch, to be fixed in the future
+#ifdef __AVX__
 inline constexpr AvxFlag use_avx = AvxFlag::AvxOn;
-#if __MERLIN_VECTOR_SIZE__ >= 2
-#define __AVX__
 #endif
 
 #ifdef __DOXYGEN_PARSER__
