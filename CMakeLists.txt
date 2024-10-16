@@ -54,16 +54,18 @@ list(
     io/file_lock.cpp
     io/file_pointer.cpp
     io/io_engine.cpp
-    linalg/dot.cpp
-    linalg/matrix.cpp
-    linalg/qrp_decomp.cpp
-    linalg/tri_solve.cpp
+    linalg/allocator.cpp
+    linalg/vector.cpp
+    # linalg/dot.cpp
+    # linalg/matrix.cpp
+    # linalg/qrp_decomp.cpp
+    # linalg/tri_solve.cpp
     logger.cpp
     memory.cpp
     permutation.cpp
-    regpl/polynomial.cpp
-    regpl/vandermonde.cpp
-    regpl/regressor.cpp
+    # regpl/polynomial.cpp
+    # regpl/vandermonde.cpp
+    # regpl/regressor.cpp
     slice.cpp
     splint/interpolator.cpp
     splint/tools.cpp
@@ -175,7 +177,6 @@ endif(MERLIN_CUDA)
 include(cmake/FindOpenMP.cmake)
 
 # AVX
-set(MERLIN_VECTOR_SIZE "" CACHE STRING "Vector size that can be handled by the current CPU.")
 include(cmake/FindAVX.cmake)
 
 # ======================================================================================================================
