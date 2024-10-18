@@ -6,7 +6,7 @@
 
 #include "merlin/exports.hpp"            // MERLIN_EXPORTS
 #include "merlin/grid/declaration.hpp"   // merlin::grid::CartesianGrid, merlin::grid::RegularGrid
-#include "merlin/linalg/qrp_decomp.hpp"  // merlin::linalg::QRPDecomp
+#include "merlin/old_linalg/qrp_decomp.hpp"  // merlin::linalg::QRPDecomp
 #include "merlin/regpl/declaration.hpp"  // merlin::regpl::Polynomial, merlin::regpl::Vandermonde
 #include "merlin/vector.hpp"             // merlin::Index, merlin::UIntVec
 

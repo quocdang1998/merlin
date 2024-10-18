@@ -76,7 +76,7 @@ class vector::StaticVector {
     /// @name Get members
     /// @{
     /** @brief Get reference to pointer of data.*/
-    __cuhostdev__ constexpr T * data(void) { return this->data_holder_.data(); }
+    __cuhostdev__ constexpr T * data(void) noexcept { return this->data_holder_.data(); }
     /** @brief Get constant reference to pointer of data.*/
     __cuhostdev__ constexpr const T * data(void) const noexcept { return this->data_holder_.data(); }
     /** @brief Get constant reference to size.*/

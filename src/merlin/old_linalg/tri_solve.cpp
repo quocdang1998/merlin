@@ -1,10 +1,10 @@
 // Copyright 2023 quocdang1998
-#include "merlin/linalg/tri_solve.hpp"
+#include "merlin/old_linalg/tri_solve.hpp"
 
 #include <cstdint>  // std::uint64_t
 
 #include "merlin/avx.hpp"            // merlin::AvxDouble, merlin::use_avx
-#include "merlin/linalg/matrix.hpp"  // merlin::linalg::Matrix
+#include "merlin/old_linalg/matrix.hpp"  // merlin::linalg::Matrix
 
 namespace merlin {
 

@@ -30,6 +30,8 @@ class Environment {
 
     /// @name CUDA environment
     /// @{
+    /** @brief Flag indicating if the package was compiled using CUDA.*/
+    MERLINENV_EXPORTS static bool use_cuda;
     /** @brief Primary context of each GPU.*/
     MERLINENV_EXPORTS static std::map<int, std::uintptr_t> primary_ctx;
     /// @}

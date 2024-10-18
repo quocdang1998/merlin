@@ -54,18 +54,19 @@ list(
     io/file_lock.cpp
     io/file_pointer.cpp
     io/io_engine.cpp
-    linalg/allocator.cpp
-    linalg/vector.cpp
-    # linalg/dot.cpp
-    # linalg/matrix.cpp
-    # linalg/qrp_decomp.cpp
-    # linalg/tri_solve.cpp
+    linalg/aligned_vector.cpp
+    linalg/level1.cpp
+    old_linalg/dot.cpp
+    old_linalg/matrix.cpp
+    old_linalg/qrp_decomp.cpp
+    old_linalg/tri_solve.cpp
     logger.cpp
     memory.cpp
     permutation.cpp
-    # regpl/polynomial.cpp
-    # regpl/vandermonde.cpp
-    # regpl/regressor.cpp
+    regpl/polynomial.cpp
+    regpl/vandermonde.cpp
+    regpl/regressor.cpp
+    simd/aligned_allocator.cpp
     slice.cpp
     splint/interpolator.cpp
     splint/tools.cpp
@@ -185,13 +186,19 @@ include(cmake/FindAVX.cmake)
 
 # set compilation options
 function(merlinsettargetproperties target_library)
+    # position independent code
     set_property(TARGET ${target_library} PROPERTY POSITION_INDEPENDENT_CODE ON)
     set_property(TARGET ${target_library} PROPERTY INTERFACE_POSITION_INDEPENDENT_CODE ON)
+    # standard
     target_compile_features(${target_library} PUBLIC cxx_std_20 cuda_std_20)
+    # include
     target_include_directories(${target_library} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
                                                         $<INSTALL_INTERFACE:include>)
+    # LTO
     set_property(TARGET ${target_library} PROPERTY INTERPROCEDURAL_OPTIMIZATION ON)
-    target_compile_options(${target_library} PRIVATE ${MERLIN_VECTORIZATION})
+    # compile options
+    target_compile_options(${target_library} PRIVATE $<$<COMPILE_LANGUAGE:CXX>:${MERLIN_VECTORIZATION}>)
+    # set architecture and linked library for CUDA
     if(MERLIN_CUDA)
         set_property(TARGET ${target_library} PROPERTY CUDA_ARCHITECTURES "${CUDA_ARCH_LIST}")
         target_compile_definitions(${target_library} PRIVATE __MERLIN_CUDA__)
@@ -199,6 +206,7 @@ function(merlinsettargetproperties target_library)
         set_property(TARGET ${target_library} PROPERTY CUDA_RUNTIME_LIBRARY Static)
         set_property(TARGET ${target_library} APPEND PROPERTY EXPORT_PROPERTIES CUDA_ARCHITECTURES)
     endif(MERLIN_CUDA)
+    # extra links and options for debug mode
     if(MERLIN_DEBUG)
         if(UNIX)
             target_compile_options(${target_library} PRIVATE -rdynamic)

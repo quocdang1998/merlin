@@ -8,7 +8,7 @@
 #include <utility>  // std::swap
 
 #include "merlin/exports.hpp"             // MERLIN_EXPORTS
-#include "merlin/linalg/declaration.hpp"  // merlin::linalg::Matrix
+#include "merlin/old_linalg/declaration.hpp"  // merlin::linalg::Matrix
 
 namespace merlin {
 

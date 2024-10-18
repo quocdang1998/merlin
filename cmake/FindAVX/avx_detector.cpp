@@ -15,10 +15,12 @@ static std::map<unsigned int, std::string> vector_options {
 #if defined(_MSC_VER)
     {2, "/arch:SSE2"},
     {4, "/arch:AVX"},
+    {5, "/arch:AVX2"},
     {8, "/arch:AVX512"}
 #elif defined(__GNUC__) || defined(__clang__)
     {2, "-msse2"},
     {4, "-mavx"},
+    {5, "-mavx2"},
     {8, "-mavx512f"}
 #endif
 };
@@ -69,6 +71,17 @@ bool supports_avx() {
     return os_avx_support && avx_support;
 }
 
+// Check if CPU supports AVX2
+bool supports_avx2() {
+    int info[4];
+    cpuid(info, 0);
+    if (info[0] >= 7) { // Check if function_id 7 is supported
+        cpuid(info, 7);
+        return (info[1] & (1 << 5)) != 0;  // AVX2 support (bit 5 of EBX)
+    }
+    return false;
+}
+
 // Check if CPU supports AVX-512
 bool supports_avx512() {
     int info[4];
@@ -88,6 +101,9 @@ int main() {
     }
     if (supports_avx()) {
         vector_size = 4;
+        if (supports_avx2()) {
+            vector_size = 5;
+        }
     }
     if (supports_avx512()) {
         vector_size = 8;

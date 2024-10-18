@@ -3,8 +3,8 @@
 #define MERLIN_LINALG_QRP_DECOMP_HPP_
 
 #include "merlin/exports.hpp"             // MERLIN_EXPORTS
-#include "merlin/linalg/declaration.hpp"  // merlin::linalg::QRPDecomp
-#include "merlin/linalg/matrix.hpp"       // merlin::linalg::Matrix
+#include "merlin/old_linalg/declaration.hpp"  // merlin::linalg::QRPDecomp
+#include "merlin/old_linalg/matrix.hpp"       // merlin::linalg::Matrix
 #include "merlin/permutation.hpp"         // merlin::Permutation
 #include "merlin/vector.hpp"              // merlin::DoubleVec
 

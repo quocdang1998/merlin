@@ -1,5 +1,5 @@
 // Copyright 2023 quocdang1998
-#include "merlin/linalg/matrix.hpp"
+#include "merlin/old_linalg/matrix.hpp"
 
 #include <cstring>  // std::memcpy
 #include <new>      // std::align_val_t

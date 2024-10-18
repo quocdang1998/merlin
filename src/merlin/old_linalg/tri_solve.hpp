@@ -3,7 +3,7 @@
 #define MERLIN_LINALG_TRI_SOLVE_HPP_
 
 #include "merlin/exports.hpp"             // MERLIN_EXPORTS
-#include "merlin/linalg/declaration.hpp"  // merlin::Matrix
+#include "merlin/old_linalg/declaration.hpp"  // merlin::Matrix
 
 namespace merlin::linalg {
 

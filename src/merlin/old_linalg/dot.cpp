@@ -1,5 +1,5 @@
 // Copyright 2023 quocdang1998
-#include "merlin/linalg/dot.hpp"
+#include "merlin/old_linalg/dot.hpp"
 
 #include <array>    // std::array
 #include <cmath>    // std::fma

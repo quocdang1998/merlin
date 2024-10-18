@@ -4,7 +4,7 @@
 
 namespace merlin::linalg {
 
-class Vector;
+class AlignedVector;
 
 }  // namespace merlin::linalg
 

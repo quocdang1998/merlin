@@ -1,5 +1,5 @@
 // Copyright 2023 quocdang1998
-#include "merlin/linalg/qrp_decomp.hpp"
+#include "merlin/old_linalg/qrp_decomp.hpp"
 
 #include <algorithm>  // std::max_element, std::swap
 #include <cmath>      // std::copysign, std::sqrt
@@ -9,9 +9,9 @@
 
 #include <iostream>
 
-#include "merlin/linalg/dot.hpp"        // merlin::linalg::norm
-#include "merlin/linalg/matrix.hpp"     // merlin::linalg::Matrix
-#include "merlin/linalg/tri_solve.hpp"  // merlin::linalg::triu_one_solve
+#include "merlin/old_linalg/dot.hpp"        // merlin::linalg::norm
+#include "merlin/old_linalg/matrix.hpp"     // merlin::linalg::Matrix
+#include "merlin/old_linalg/tri_solve.hpp"  // merlin::linalg::triu_one_solve
 #include "merlin/logger.hpp"            // merlin::Fatal
 
 namespace merlin {

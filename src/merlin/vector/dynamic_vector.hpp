@@ -66,7 +66,7 @@ class vector::DynamicVector {
     /// @name Get members
     /// @{
     /** @brief Get reference to pointer of data.*/
-    __cuhostdev__ constexpr T * data(void) { return this->data_; }
+    __cuhostdev__ constexpr T * data(void) noexcept { return this->data_; }
     /** @brief Get constant reference to pointer of data.*/
     __cuhostdev__ constexpr const T * data(void) const noexcept { return this->data_; }
     /** @brief Get constant reference to size.*/
@@ -86,7 +86,7 @@ class vector::DynamicVector {
     /** @brief Assign the object to a pre-allocated memory.
      *  @details Give up ownership to the current associated memory without deleting it, and assign the pointer to the
      *  pre-allocated memory. Assigned memory will not be freed at destruction.
-     *  
+     *
      *  Calling this method on an object with ownership to its memory will result in memory leak. This method should
      *  only be used when the memory holding the object is in random state, such as when allocated with ``std::malloc``
      *  or GPU shared memory.
@@ -100,7 +100,7 @@ class vector::DynamicVector {
      *  @details Give up the ownership to the current pointer. After this operation, the pointer associated to the
      *  object is set to ``nullptr``. Size and assignment state are still retrievable, but element accessing methods
      *  will be unusable.
-     * 
+     *
      *  This function will return the pointer used to be owned by the object.
      */
     __cuhostdev__ constexpr T * disown(void) noexcept {
