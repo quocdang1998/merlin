@@ -39,7 +39,10 @@ static int convert_SM_version_to_core(int major, int minor) {
         {0x86, 128},
         {0x87, 128},
         {0x89, 128},
-        {0x90, 128}
+        {0x90, 128},
+        {0xa0, 128},
+        {0xa1, 128},
+        {0xc0, 128}
     };
     int SM = (major << 4) + minor;
     if (num_gpu_arch_cores_per_SM.find(SM) == num_gpu_arch_cores_per_SM.end()) {
